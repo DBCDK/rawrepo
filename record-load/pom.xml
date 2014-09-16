@@ -9,7 +9,7 @@
 
     <parent>
         <groupId>dk.dbc</groupId>
-        <artifactId>dbc-rawrepo-commons</artifactId>
+        <artifactId>rawrepo</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
