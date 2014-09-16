@@ -41,11 +41,6 @@ import static org.junit.Assert.assertTrue;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -134,9 +129,8 @@ public class RawRepoDAOIT {
         };
 
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 870970, merger)), "B:870970", "C:870970", "D:870970");
-        System.out.println("------------------------------------------------");
+
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, merger)), "B:870970", "C:870970", "D:1");
-        System.out.println("------------------------------------------------");
 
         collectionIs(idsFromCollection(dao.fetchRecordCollection("G", 1, merger)), "B:870970", "F:1", "G:870970");
 
