@@ -1,0 +1,125 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>dk.dbc</groupId>
+    <artifactId>dbc-rawrepo-commons</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>dbc-rawrepo-commons</name>
+    <url>http://oss.dbc.dk</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>mavenrepo.dbc.dk</id>
+            <url>http://mavenrepo.dbc.dk/content/groups/public</url>
+        </repository>
+    </repositories>
+
+    <modules>
+        <module>access</module>
+        <module>solr-indexer</module>
+        <module>queue-bulkload</module>
+        <module>record-load</module>
+        <module>record-inspector</module>
+        <!-- module></module -->
+        <module>solr-indexer-deploy</module>
+        <module>notify</module>
+	<module>notify-deploy</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.9</version>
+            </plugin>
+        </plugins>
+    </build>
+    <!--  <reporting>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+        </plugin>
+      </plugins>
+    </reporting>-->
+
+    <dependencies>
+
+
+
+        <!--Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-ext</artifactId>
+                <version>1.7.6</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>1.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>1.9.5</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- For deployment -->
+    <distributionManagement>
+        <repository>
+            <id>mavenrepo.dbc.dk</id>
+            <name>DBC Maven Repository</name>
+            <url>http://mavenrepo.dbc.dk/content/repositories/snapshots</url>
+        </repository>
+    </distributionManagement>
+
+</project>

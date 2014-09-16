@@ -1,0 +1,10 @@
+<marcx:record format="danMARC2" type="Bibliographic" xmlns:marcx="info:lc/xmlns/marcxchange-v1">
+    <marcx:leader>00000n    2200000   4500</marcx:leader>
+    <marcx:datafield tag="001" ind1="0" ind2="0">
+        <marcx:subfield code="a">870970</marcx:subfield>
+        <marcx:subfield code="b">1 234 567 8</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield tag="239" ind1="0" ind2="0">
+        <marcx:subfield code="t">Præsidentens mænd, alle</marcx:subfield>
+    </marcx:datafield>
+</marcx:record>
