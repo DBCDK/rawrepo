@@ -42,7 +42,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private static final int SCHEMA_VERSION = 2;
 
-    private static final String VALIDATE_SCHEMA = "SELECT MAX(version) FROM version";
+    private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE bibliographicrecordid=? AND agencyid=? AND content IS NOT NULL";
     private static final String DELETE_RECORD = "UPDATE records SET content=NULL, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
@@ -75,22 +75,22 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     protected void validateConnection() throws RawRepoException {
-        int version = -1;
         try {
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
+                stmt.setInt(1, SCHEMA_VERSION);
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
-                        version = resultSet.getInt(1);
+                        if (resultSet.getInt(1) == 1) {
+                            return;
+                        }
                     }
                 }
             }
         } catch (SQLException ex) {
             log.error("Validating schema", ex);
         }
-        if (version != SCHEMA_VERSION) {
-            log.error("Incompatible database schema db=" + version + ", software=" + SCHEMA_VERSION);
-            throw new RawRepoException("Incompatible database schema");
-        }
+        log.error("Incompatible database schema software=" + SCHEMA_VERSION);
+        throw new RawRepoException("Incompatible database schema");
     }
 
     /**

@@ -1,13 +1,13 @@
-CREATE TABLE version (
+CREATE TABLE version ( -- V2
        version NUMERIC(6) NOT NULL PRIMARY KEY
 );
-
+-- Compatible versions
 INSERT INTO version VALUES(2);
 
 
 -- records:
 -- bibliographicrecordid, agencyid => content(blob), created
-CREATE TABLE records (
+CREATE TABLE records ( -- V2
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,
        content TEXT, -- base64 encoded - NULL is deleted
@@ -16,7 +16,7 @@ CREATE TABLE records (
        CONSTRAINT records_pk PRIMARY KEY (bibliographicrecordid, agencyid)
 );
 
-CREATE TABLE records_archive (
+CREATE TABLE records_archive ( -- V2
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,
        content TEXT, -- base64 encoded - NULL is deleted
@@ -29,7 +29,7 @@ CREATE INDEX records_archive_pk ON records_archive (bibliographicrecordid, agenc
 CREATE INDEX records_archive_id ON records_archive (bibliographicrecordid, agencyid);
 CREATE INDEX records_archive_modified ON records_archive (modified);
 
-CREATE OR REPLACE FUNCTION archive_record() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION archive_record() RETURNS TRIGGER AS $$ -- V2
 DECLARE
     ts TIMESTAMP;
 BEGIN
@@ -43,13 +43,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER archive_record_update
+CREATE TRIGGER archive_record_update -- V2
     AFTER UPDATE ON records
     FOR EACH ROW
     WHEN (OLD.* IS DISTINCT FROM NEW.*)
     EXECUTE PROCEDURE archive_record();
 
-CREATE TRIGGER archive_record_delete
+CREATE TRIGGER archive_record_delete -- V2
     AFTER DELETE ON records
     FOR EACH ROW
     EXECUTE PROCEDURE archive_record();
@@ -58,7 +58,7 @@ CREATE TRIGGER archive_record_delete
 
 -- relations:
 -- bibliographicrecordid, agencyid => refer(bibliographicrecordid, agencyid)
-CREATE TABLE relations (
+CREATE TABLE relations ( -- V2
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,
        refer_bibliographicrecordid VARCHAR(64) NOT NULL,
@@ -79,14 +79,14 @@ CREATE INDEX relations_reverse ON relations (refer_bibliographicrecordid, refer_
 --
 -- List of known workers and attributes to these
 --
-CREATE TABLE queueworkers (
+CREATE TABLE queueworkers ( -- V1
        worker VARCHAR(32) NOT NULL,            -- name of designated worker
        CONSTRAINT queueworkers_pk PRIMARY KEY (worker)
 );
 
 
 
-CREATE TABLE queue (
+CREATE TABLE queue ( -- V2
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,
        worker VARCHAR(32) NOT NULL,              -- name of designated worker
@@ -103,7 +103,7 @@ CREATE TABLE queue (
 -- Rules to tell which workses should get which types of events
 -- When a given provider queues a job
 --
-CREATE TABLE queuerules (
+CREATE TABLE queuerules ( -- V1
        provider VARCHAR(32) NOT NULL, -- name of worker adding data
        worker VARCHAR(32) NOT NULL,   -- name of designated worker
        changed CHAR(1) NOT NULL,      -- queue jobs if changes Y(es), N(no), A(ll)
@@ -121,7 +121,7 @@ CREATE INDEX queue_idx_queued ON queue(queued);
 
 
 
-CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$
+CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$ -- V2
 DECLARE
     row queuerules;
     exists queue;
@@ -151,7 +151,7 @@ END
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128)) RETURNS SETOF queue AS $$
+CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128)) RETURNS SETOF queue AS $$ -- V2
 DECLARE
  row queue;
  upd queue;
