@@ -111,7 +111,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
+                    if (resultSet.next()) {
                         final String base64Content = resultSet.getString("CONTENT");
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         Timestamp created = resultSet.getTimestamp("CREATED");
