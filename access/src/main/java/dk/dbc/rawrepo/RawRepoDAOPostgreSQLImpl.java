@@ -79,10 +79,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
                 stmt.setInt(1, SCHEMA_VERSION);
                 try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        if (resultSet.getInt(1) == 1) {
-                            return;
-                        }
+                    if (resultSet.next() && resultSet.getInt(1) == 1) {
+                        return;
                     }
                 }
             }
