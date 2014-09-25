@@ -134,8 +134,8 @@ public class Notifier {
 
     private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException {
         log.debug("Processing {}", job);
-        //TODO notify someone about something
 
+        // notify someone about something
         queueSuccess(dao, job);
     }
 
