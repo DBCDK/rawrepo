@@ -70,8 +70,8 @@ public class RecordInspector implements Closeable {
 
     public ArrayList<Timestamp> timestamps(int agencyId, String bibliographicRecordId) throws SQLException {
         ArrayList<Timestamp> ret = new ArrayList<>();
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT modified FROM records WHERE library=? AND id=?"
-                                                                  + " UNION SELECT modified FROM records_archive WHERE library=? AND id=?"
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT modified FROM records WHERE agencyid=? AND bibliographicrecordid=?"
+                                                                  + " UNION SELECT modified FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
                                                                   + " ORDER BY modified DESC");) {
             stmt.setInt(1, agencyId);
             stmt.setString(2, bibliographicRecordId);
@@ -89,8 +89,8 @@ public class RecordInspector implements Closeable {
 
     public byte[] get(int agencyId, String bibliographicRecordId, Timestamp timestamp) throws SQLException {
         byte[] content = null;
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT content FROM records WHERE library=? AND id=? AND modified=?"
-                                                                  + " UNION SELECT content FROM records_archive WHERE library=? AND id=? AND modified=?");) {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?"
+                                                                  + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?");) {
             stmt.setInt(1, agencyId);
             stmt.setString(2, bibliographicRecordId);
             stmt.setTimestamp(3, timestamp);
@@ -111,7 +111,7 @@ public class RecordInspector implements Closeable {
         Set<RecordId> relations = dao.getRelationsFrom(new RecordId(bibliographicRecordId, agencyId));
         ArrayList<String> ret = new ArrayList<>(relations.size());
         for (RecordId relation : relations) {
-            ret.add(relation.getLibrary() + ":" + relation.getId());
+            ret.add(relation.getAgencyId() + ":" + relation.getBibliographicRecordId());
         }
         Collections.sort(ret);
         return ret;
@@ -121,7 +121,7 @@ public class RecordInspector implements Closeable {
         Set<RecordId> relations = dao.getRelationsChildren(new RecordId(bibliographicRecordId, agencyId));
         ArrayList<String> ret = new ArrayList<>(relations.size());
         for (RecordId relation : relations) {
-            ret.add(relation.getLibrary() + ":" + relation.getId());
+            ret.add(relation.getAgencyId() + ":" + relation.getBibliographicRecordId());
         }
         Collections.sort(ret);
         return ret;
