@@ -405,6 +405,26 @@ public class RawRepoDAOIT {
         assertNotNull(job);
     }
 
+    @Test
+    public void testArchive() throws SQLException, RawRepoException {
+        setupData();
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        connection.setAutoCommit(false);
+
+        Record record1 = dao.fetchRecord("1 234 567 8", 123456);
+        record1.setContent("HELLO".getBytes());
+        dao.saveRecord(record1);
+        connection.commit();
+        connection.setAutoCommit(false);
+        Record record2 = dao.fetchRecord("1 234 567 8", 123456);
+        record2.setContent("HELLO AGAIN".getBytes());
+        dao.saveRecord(record2);
+
+        ResultSet resultSet = connection.prepareStatement("SELECT COUNT(*) FROM records_archive").executeQuery();
+        resultSet.next();
+        assertTrue("Archived records", resultSet.getInt(1) > 0);
+    }
+
 //  _   _      _                   _____                 _   _
 // | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
 // | |_| |/ _ \ | '_ \ / _ \ '__| | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
@@ -455,7 +475,7 @@ public class RawRepoDAOIT {
             String[] split2 = split1[1].split(",");
             for (String lib : split2) {
                 RecordId recordId = new RecordId(split1[0], Integer.parseInt(lib));
-                Record record = dao.fetchRecord(recordId.getId(), recordId.getLibrary());
+                Record record = dao.fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
                 record.setContent(id.getBytes());
                 dao.saveRecord(record);
             }
@@ -471,8 +491,8 @@ public class RawRepoDAOIT {
             String[] list = relation.split(",", 2);
             RecordId from = recordIdFromString(list[0]);
             RecordId to = recordIdFromString(list[1]);
-            if (dao.recordExists(from.getId(), from.getLibrary())
-                && dao.recordExists(to.getId(), to.getLibrary())) {
+            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId())
+                && dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
                 Set<RecordId> relationsFrom = dao.getRelationsFrom(from);
                 relationsFrom.add(to);
                 dao.setRelationsFrom(from, relationsFrom);
@@ -488,7 +508,7 @@ public class RawRepoDAOIT {
 
     Collection<String> getQueue() throws SQLException {
         Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT id, library, worker FROM QUEUE");
+        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker FROM QUEUE");
         if (stmt.execute()) {
             ResultSet resultSet = stmt.executeQuery();
             while (resultSet.next()) {
@@ -500,7 +520,7 @@ public class RawRepoDAOIT {
 
     Collection<String> getQueueState() throws SQLException {
         Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT id, library, worker, blocked, COUNT(queued) FROM QUEUE GROUP BY id, library, worker, blocked");
+        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, blocked, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker, blocked");
         if (stmt.execute()) {
             ResultSet resultSet = stmt.executeQuery();
             while (resultSet.next()) {
@@ -513,7 +533,7 @@ public class RawRepoDAOIT {
     public Collection<String> idsFromCollection(Map<String, Record> records) {
         Collection<String> collection = new HashSet<>();
         for (Record record : records.values()) {
-            collection.add(record.getId().getId() + ":" + record.getId().getLibrary());
+            collection.add(record.getId().getBibliographicRecordId() + ":" + record.getId().getAgencyId());
         }
         return collection;
     }

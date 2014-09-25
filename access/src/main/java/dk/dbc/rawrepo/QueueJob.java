@@ -33,8 +33,8 @@ public class QueueJob {
     QueueJob() {
     }
 
-    QueueJob(String id, int library, String worker, Timestamp queued) {
-        this.job = new RecordId(id, library);
+    QueueJob(String bibliographicRecordId, int agencyId, String worker, Timestamp queued) {
+        this.job = new RecordId(bibliographicRecordId, agencyId);
         this.worker = worker;
         this.queued = queued;
     }

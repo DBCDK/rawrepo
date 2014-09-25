@@ -1,80 +1,61 @@
-CREATE TABLE version (
-       version NUMERIC(6) NOT NULL PRIMARY KEY
-);
-
-INSERT INTO version VALUES(2);
-
+DROP INDEX IF EXISTS relations_reverse;
+DROP INDEX IF EXISTS records_modified;
+DROP TABLE IF EXISTS relations;
+DROP TABLE IF EXISTS records;
+DROP TABLE IF EXISTS records_archive;
 
 -- records:
--- bibliographicrecordid, agencyid => content(blob), created
+-- id, library => content(blob), created
 CREATE TABLE records (
-       bibliographicrecordid VARCHAR(64) NOT NULL,
-       agencyid NUMERIC(6) NOT NULL,
+       id VARCHAR(64) NOT NULL,
+       library NUMERIC(6) NOT NULL,
        content TEXT, -- base64 encoded - NULL is deleted
        created TIMESTAMP NOT NULL,
        modified TIMESTAMP NOT NULL,
-       CONSTRAINT records_pk PRIMARY KEY (bibliographicrecordid, agencyid)
+       CONSTRAINT records_pk PRIMARY KEY (id, library)
 );
 
 CREATE TABLE records_archive (
-       bibliographicrecordid VARCHAR(64) NOT NULL,
-       agencyid NUMERIC(6) NOT NULL,
+       id VARCHAR(64) NOT NULL,
+       library NUMERIC(6) NOT NULL,
        content TEXT, -- base64 encoded - NULL is deleted
        created TIMESTAMP NOT NULL,
-       modified TIMESTAMP NOT NULL
+       modified TIMESTAMP NOT NULL,
+       CONSTRAINT records_archive_pk PRIMARY KEY (id, library, modified)
 );
 --
--- index for looking up records in archive
-CREATE INDEX records_archive_pk ON records_archive (bibliographicrecordid, agencyid, modified);
-CREATE INDEX records_archive_id ON records_archive (bibliographicrecordid, agencyid);
-CREATE INDEX records_archive_modified ON records_archive (modified);
-
-CREATE OR REPLACE FUNCTION archive_record() RETURNS TRIGGER AS $$
-DECLARE
-    ts TIMESTAMP;
-BEGIN
-    INSERT INTO records_archive VALUES(OLD.*);
-    FOR ts IN
-        SELECT modified FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid ORDER BY modified DESC OFFSET 10 LIMIT 1
-    LOOP
-	DELETE FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid AND modified<=ts;
-    END LOOP;
-    RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER archive_record_update
-    AFTER UPDATE ON records
-    FOR EACH ROW
-    WHEN (OLD.* IS DISTINCT FROM NEW.*)
-    EXECUTE PROCEDURE archive_record();
-
-CREATE TRIGGER archive_record_delete
-    AFTER DELETE ON records
-    FOR EACH ROW
-    EXECUTE PROCEDURE archive_record();
-
-
+-- reverse index for getRelationsChildren()
+CREATE INDEX records_modified ON records (modified);
 
 -- relations:
--- bibliographicrecordid, agencyid => refer(bibliographicrecordid, agencyid)
+-- id, library => refer(id, library)
 CREATE TABLE relations (
-       bibliographicrecordid VARCHAR(64) NOT NULL,
-       agencyid NUMERIC(6) NOT NULL,
-       refer_bibliographicrecordid VARCHAR(64) NOT NULL,
-       refer_agencyid NUMERIC(6) NOT NULL,
-       CONSTRAINT relations_pk PRIMARY KEY (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid),
-       CONSTRAINT relations_fk_owner FOREIGN KEY (bibliographicrecordid, agencyid) REFERENCES records(bibliographicrecordid, agencyid),
-       CONSTRAINT relations_fk_refer FOREIGN KEY (refer_bibliographicrecordid, refer_agencyid) REFERENCES records(bibliographicrecordid, agencyid)
+       id VARCHAR(64) NOT NULL,
+       library NUMERIC(6) NOT NULL,
+       refer_id VARCHAR(64) NOT NULL,
+       refer_library NUMERIC(6) NOT NULL,
+       CONSTRAINT relations_pk PRIMARY KEY (id, library, refer_id, refer_library),
+       CONSTRAINT relations_fk_owner FOREIGN KEY (id, library) REFERENCES records(id, library),
+       CONSTRAINT relations_fk_refer FOREIGN KEY (refer_id, refer_library) REFERENCES records(id, library)
 );
 
 --
 -- reverse index for getRelationsChildren()
-CREATE INDEX relations_reverse ON relations (refer_bibliographicrecordid, refer_agencyid);
+CREATE INDEX relations_reverse ON relations (refer_id, refer_library);
 
 --
 -- QUEUE complex
 --
+DROP FUNCTION IF EXISTS dequeue(worker VARCHAR(128));
+DROP FUNCTION IF EXISTS enqueue(id VARCHAR(64), library NUMERIC(6), worker VARCHAR(32), changed CHAR(1), leaf CHAR(1));
+
+DROP INDEX IF EXISTS queue_idx_job;
+DROP INDEX IF EXISTS queue_idx_worker;
+DROP INDEX IF EXISTS queue_idx_queued;
+
+DROP TABLE IF EXISTS queue;
+DROP TABLE IF EXISTS queuerules;
+DROP TABLE IF EXISTS queueworkers;
 
 --
 -- List of known workers and attributes to these
@@ -87,8 +68,8 @@ CREATE TABLE queueworkers (
 
 
 CREATE TABLE queue (
-       bibliographicrecordid VARCHAR(64) NOT NULL,
-       agencyid NUMERIC(6) NOT NULL,
+       id VARCHAR(64) NOT NULL,
+       library NUMERIC(6) NOT NULL,
        worker VARCHAR(32) NOT NULL,              -- name of designated worker
        blocked VARCHAR(128) NOT NULL DEFAULT '', -- blocked for some reason
        queued TIMESTAMP NOT NULL DEFAULT timeofday()::timestamp,  -- timestamp for when it has been put into the queue
@@ -114,14 +95,14 @@ CREATE TABLE queuerules (
 );
 
 
-CREATE INDEX queue_idx_job ON queue(bibliographicrecordid, agencyid, worker, blocked);
+CREATE INDEX queue_idx_job ON queue(id, library, worker, blocked);
 CREATE INDEX queue_idx_worker ON queue(worker, blocked);
 CREATE INDEX queue_idx_queued ON queue(queued);
 
 
 
 
-CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$
+CREATE OR REPLACE FUNCTION enqueue(id_ VARCHAR(64), library_ NUMERIC(6), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$
 DECLARE
     row queuerules;
     exists queue;
@@ -129,19 +110,19 @@ DECLARE
 BEGIN
     FOR row IN SELECT * FROM queuerules WHERE provider=provider_ AND (changed='A' OR changed=changed_) AND (leaf='A' OR leaf=leaf_) LOOP
     	-- RAISE NOTICE 'worker=%', row.worker;
-	SELECT COUNT(*) INTO rows FROM queue WHERE bibliographicrecordid=bibliographicrecordid_ AND agencyid=agencyid_ AND worker=row.worker AND blocked='';
+	SELECT COUNT(*) INTO rows FROM queue WHERE id=id_ AND library=library_ AND worker=row.worker AND blocked='';
 	-- RAISE NOTICE 'rows=%', rows;
 	CASE
 	    WHEN rows = 0 THEN -- none is queued
-	        INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES(bibliographicrecordid_, agencyid_, row.worker);
+	        INSERT INTO queue(id, library, worker) VALUES(id_, library_, row.worker);
 	    WHEN rows = 1 THEN -- one is queued - but may be locked by a worker
 	    	BEGIN
-		    SELECT * INTO exists FROM queue WHERE bibliographicrecordid=bibliographicrecordid_ AND agencyid=agencyid_ AND worker=row.worker AND blocked='' FOR UPDATE NOWAIT;
+		    SELECT * INTO exists FROM queue WHERE id=id_ AND library=library_ AND worker=row.worker AND blocked='' FOR UPDATE NOWAIT;
                     -- By locking the row, we ensure that no worker can take this row until we commit / rollback
                     -- Ensuring that even if this job is next, it will not be processed until we're sure our data is used.
 		EXCEPTION
 	    	    WHEN lock_not_available THEN
-                        INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES(bibliographicrecordid_, agencyid_, row.worker);
+                        INSERT INTO queue(id, library, worker) VALUES(id_, library_, row.worker);
 		END;
 	    ELSE
 	        -- nothing
@@ -163,7 +144,7 @@ BEGIN
 	    -- IF FIRST WITH THIS row.job IS TAKEN NONE WILL BE SELECTED
 	    -- EVEN IF AN IDENTICAL IS LATER IN THE QUEUE
 	    -- NO 2 WORKERS CAN RUN THE SAME JOB AT THE SAME TIME
-            FOR upd IN SELECT * FROM queue WHERE bibliographicrecordid=row.bibliographicrecordid AND agencyid=row.agencyid AND worker=worker_ AND blocked='' FOR UPDATE NOWAIT LOOP
+            FOR upd IN SELECT * FROM queue WHERE id=row.id AND library=row.library AND worker=worker_ AND blocked='' FOR UPDATE NOWAIT LOOP
                 RETURN NEXT row;
                 -- RAISE NOTICE 'job=%', row.job;
                 EXIT done; -- We got one - exit

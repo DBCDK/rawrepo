@@ -590,7 +590,7 @@ public class RawRepoDAOTest {
             for (String target : from.get(id)) {
                 RecordId rec = recordIdFromString(target);
                 all.add(rec);
-                if (rec.getId().equals(recordId.getId())) {
+                if (rec.getBibliographicRecordId().equals(recordId.getBibliographicRecordId())) {
                     siblingsFromMe.add(rec);
                 } else {
                     parents.add(rec);
@@ -598,7 +598,7 @@ public class RawRepoDAOTest {
             }
             for (String target : to.get(id)) {
                 RecordId rec = recordIdFromString(target);
-                if (rec.getId().equals(recordId.getId())) {
+                if (rec.getBibliographicRecordId().equals(recordId.getBibliographicRecordId())) {
                     siblingsToMe.add(rec);
                 } else {
                     children.add(rec);
@@ -609,7 +609,7 @@ public class RawRepoDAOTest {
             when(access.getRelationsChildren(recordId)).thenReturn(children);
             when(access.getRelationsSiblingsToMe(recordId)).thenReturn(siblingsToMe);
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
-            when(access.recordExists(recordId.getId(), recordId.getLibrary())).thenReturn(Boolean.TRUE);
+            when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
         }
         doAnswer(new Answer<Record>() {
 
@@ -702,7 +702,7 @@ public class RawRepoDAOTest {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                collection.add(((RecordId) arguments[0]).getId() + ":" + ((RecordId) arguments[0]).getLibrary()
+                collection.add(((RecordId) arguments[0]).getBibliographicRecordId() + ":" + ((RecordId) arguments[0]).getAgencyId()
                                + (((Boolean) arguments[2]) ? ":Y" : ":N")
                                + (((Boolean) arguments[3]) ? ":Y" : ":N"));
                 return null;

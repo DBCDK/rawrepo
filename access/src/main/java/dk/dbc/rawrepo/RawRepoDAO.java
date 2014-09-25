@@ -64,11 +64,16 @@ public abstract class RawRepoDAO {
                 throw new RawRepoException("Unable to load driver");
             }
             Constructor<?> constructor = clazz.getConstructor(Connection.class);
-            return (RawRepoDAO) constructor.newInstance(connection);
+            RawRepoDAO dao = (RawRepoDAO) constructor.newInstance(connection);
+            dao.validateConnection();
+            return dao;
         } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             log.error("Caught exception tryini to instantiate dao", ex);
             throw new RawRepoException("Unable to load driver", ex);
         }
+    }
+
+    protected void validateConnection() throws RawRepoException {
     }
 
     /**
@@ -76,78 +81,78 @@ public abstract class RawRepoDAO {
      *
      * Create one if none exists in the database
      *
-     * @param id String with record id
-     * @param library library number
+     * @param bibliographicRecordId String with record id
+     * @param agencyId library number
      * @return fetched / new Record
      * @throws RawRepoException
      */
-    public abstract Record fetchRecord(String id, int library) throws RawRepoException;
+    public abstract Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
      * Check for existence of a record
      *
-     * @param id String with record id
-     * @param library library number
+     * @param bibliographicRecordId String with record id
+     * @param agencyId library number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
-    public abstract boolean recordExists(String id, int library) throws RawRepoException;
+    public abstract boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
      * Get a collection of all the records, that are that are related to this
      *
-     * @param id String with record id
-     * @param library library number
+     * @param bibliographicRecordId String with record id
+     * @param agencyId library number
      * @param merger
      * @return a collection of Record
      * @throws RawRepoException
      * @throws MarcXMergerException
      */
-    public Map<String, Record> fetchRecordCollection(String id, int library, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         HashMap<String, Record> ret = new HashMap<>();
-        List<Integer> libraries = allCommonLibraries(library);
-        fetchRecordCollection(ret, id, library, libraries, merger);
+        List<Integer> agencyIds = allCommonAgencies(agencyId);
+        fetchRecordCollection(ret, bibliographicRecordId, agencyId, agencyIds, merger);
         return ret;
     }
 
     /**
-     * This is slow (creates a new marcx merger with xml parser & xml writer)
+     * USE fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger)
      *
-     * @param id
-     * @param library
+     * @param bibliographicRecordId
+     * @param agencyId
      * @return
      * @throws RawRepoException
      * @throws MarcXMergerException
      */
     @Deprecated
-    public Map<String, Record> fetchRecordCollection(String id, int library) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId) throws RawRepoException, MarcXMergerException {
         MarcXMerger merger = new MarcXMerger();
-        return fetchRecordCollection(id, library, merger);
+        return fetchRecordCollection(bibliographicRecordId, agencyId, merger);
     }
 
     /**
      * Traverse references and fill into collection
      *
      * @param collection
-     * @param id
-     * @param library
-     * @param libraries
+     * @param bibliographicRecordId
+     * @param agencyId
+     * @param agencyIds
      * @param merger
      * @throws RawRepoException
      * @throws MarcXMergerException
      */
-    private void fetchRecordCollection(Map<String, Record> collection, String id, int library, List<Integer> libraries, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
-        if (!collection.containsKey(id)) {
-            ArrayList<Integer> allLibraries = new ArrayList<>(libraries);
-            allLibraries.add(library); // Ensure we get id:library even if library isn't in libraries list
+    private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        if (!collection.containsKey(bibliographicRecordId)) {
+            ArrayList<Integer> allAgencies = new ArrayList<>(agencyIds);
+            allAgencies.add(agencyId); // Ensure we get id:agency even if agency isn't in agencies list
 
-            Record record = fetchMergedRecord(id, allLibraries, merger);
-            collection.put(id, record);
+            Record record = fetchMergedRecord(bibliographicRecordId, allAgencies, merger);
+            collection.put(bibliographicRecordId, record);
 
-            int mostCommonLibrary = mostCommonLibraryForRecord(id, allLibraries);
-            Set<RecordId> parents = getRelationsParents(new RecordId(id, mostCommonLibrary));
+            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, allAgencies);
+            Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
-                fetchRecordCollection(collection, parent.getId(), parent.getLibrary(), libraries, merger);
+                fetchRecordCollection(collection, parent.getBibliographicRecordId(), parent.getAgencyId(), agencyIds, merger);
             }
         }
     }
@@ -155,25 +160,25 @@ public abstract class RawRepoDAO {
     /**
      * Fetch record for id, merging more common records with this
      *
-     * @param id local id
-     * @param libraries least to most common
+     * @param bibliographicRecordId local id
+     * @param agencyIds least to most common
      * @param merger
      * @return Record merged
      * @throws RawRepoException if there's a data error or recoed isn't found
      * @throws MarcXMergerException if we can't merge record
      */
-    private Record fetchMergedRecord(String id, List<Integer> libraries, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
-        for (Integer library : libraries) {
-            if (recordExists(id, library) /* && not deleted */) { // Least common library for this record
+    private Record fetchMergedRecord(String bibliographicRecordId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        for (Integer agencyId : agencyIds) {
+            if (recordExists(bibliographicRecordId, agencyId) /* && not deleted */) { // Least common agency for this record
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
-                    Record record = fetchRecord(id, library);
+                    Record record = fetchRecord(bibliographicRecordId, agencyId);
                     records.addFirst(record);
                     Set<RecordId> siblings = getRelationsSiblingsFromMe(record.getId());
                     if (siblings.isEmpty()) {
                         break;
                     }
-                    library = siblings.iterator().next().getLibrary();
+                    agencyId = siblings.iterator().next().getAgencyId();
                 }
                 Iterator<Record> iterator = records.iterator();
                 Record record = iterator.next();
@@ -197,19 +202,19 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     * List of least to most common library numbers for this library
+     * List of least to most common agency numbers for this agency
      *
      * @param recordId
      * @return
      * @throws RawRepoException
      */
-    private List<Integer> allCommonLibraries(int library) throws RawRepoException {
-        List<Integer> libraries = new ArrayList<>();
-        if (library != COMMON_LIBRARY) {
-            libraries.add(library);
+    private List<Integer> allCommonAgencies(int agencyId) throws RawRepoException {
+        List<Integer> agencyIds = new ArrayList<>();
+        if (agencyId != COMMON_LIBRARY) {
+            agencyIds.add(agencyId);
         }
-        libraries.add(COMMON_LIBRARY);
-        return libraries;
+        agencyIds.add(COMMON_LIBRARY);
+        return agencyIds;
     }
 
     /**
@@ -314,11 +319,24 @@ public abstract class RawRepoDAO {
      * Get all libraries that has id
      *
      *
-     * @param id local id
+     * @param bibliographicRecordId local id
      * @return Collection of libraries that has localid
      * @throws RawRepoException
      */
-    public abstract Set<Integer> allLibrariesForId(String id) throws RawRepoException;
+    public abstract Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException;
+
+    /**
+     * USE allAgenciesForBibliographicRecordId
+     *
+     * @param bibliographicRecordId
+     * @return
+     * @throws RawRepoException
+     * @deprecated
+     */
+    @Deprecated
+    public Set<Integer> allLibrariesForId(String bibliographicRecordId) throws RawRepoException {
+        return allAgenciesForBibliographicRecordId(bibliographicRecordId);
+    }
 
     /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change
@@ -328,12 +346,12 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        int mostCommonLibrary = mostCommonLibraryForRecord(recordId.getId(), allCommonLibraries(recordId.getLibrary()));
+        int mostCommonLibrary = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), allCommonAgencies(recordId.getAgencyId()));
         // The mostCommonLibrary, is the one that defines parent/child relationship
         Set<Integer> libraries = allParentLibrariesAffectedByChange(recordId);
-        Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getId(), mostCommonLibrary));
-        for (Integer library : libraries) {
-            enqueue(new RecordId(recordId.getId(), library), provider, library == recordId.library, children.isEmpty());
+        Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonLibrary));
+        for (Integer agencyId : libraries) {
+            enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, agencyId == recordId.getAgencyId(), children.isEmpty());
         }
         for (RecordId child : children) {
             touchChildRecords(libraries, provider, child);
@@ -346,25 +364,25 @@ public abstract class RawRepoDAO {
      *
      * Then traverse siblings to find most common version of record, which is either the COMMON_LIBRARY version or a LOCALRECORD
      *
-     * @param recordId
+     * @param bibliographicRecordId
      * @return
      * @throws IllegalStateException
      * @throws RawRepoException
      */
-    private int mostCommonLibraryForRecord(String recordId, List<Integer> libraries) throws RawRepoException {
-        for (Integer library : libraries) {
-            if (recordExists(recordId, library)) { // first available record
+    private int mostCommonAgencyForRecord(String bibliographicRecordId, List<Integer> agencyIds) throws RawRepoException {
+        for (Integer agencyId : agencyIds) {
+            if (recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
                 // find most common through sibling relations
                 // stops at localrecord or commonrecord
-                while (!(siblings = getRelationsSiblingsFromMe(new RecordId(recordId, library))).isEmpty()) {
+                while (!(siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId))).isEmpty()) {
                     if (siblings.size() != 1) {
-                        throw new RawRepoException("record " + new RecordId(recordId, library) + " points to multiple siblings");
+                        throw new RawRepoException("record " + new RecordId(bibliographicRecordId, agencyId) + " points to multiple siblings");
                     }
                     RecordId sibling = siblings.iterator().next();
-                    library = sibling.getLibrary();
+                    agencyId = sibling.getAgencyId();
                 }
-                return library;
+                return agencyId;
             }
         }
         return COMMON_LIBRARY;
@@ -441,7 +459,7 @@ public abstract class RawRepoDAO {
             Iterator<RecordId> iterator = tmp.iterator();
             RecordId next = iterator.next();
             iterator.remove();
-            ret.add(next.getLibrary());
+            ret.add(next.getAgencyId());
             tmp.addAll(getRelationsSiblingsToMe(next));
         }
         return ret;
@@ -450,19 +468,19 @@ public abstract class RawRepoDAO {
     /**
      * When having a list of libraries and an id then return a new list (copy) of all libraries, and all libraries that points towards something in this collection
      *
-     * @param libraries
-     * @param id
+     * @param agencyIds
+     * @param bibliographicRecordId
      * @return collection of library numbers
      * @throws RawRepoException
      */
-    private Set<Integer> expandSiblingsForId(Set<Integer> libraries, String id) throws RawRepoException {
+    private Set<Integer> expandSiblingsForId(Set<Integer> agencyIds, String bibliographicRecordId) throws RawRepoException {
         Set<Integer> ret = new HashSet<>();
-        Set<Integer> tmp = new HashSet<>(libraries);
+        Set<Integer> tmp = new HashSet<>(agencyIds);
         while (!tmp.isEmpty()) {
             Iterator<Integer> iterator = tmp.iterator();
             int next = iterator.next();
             iterator.remove();
-            ret.addAll(allSiblingLibrariesForRecord(new RecordId(id, next)));
+            ret.addAll(allSiblingLibrariesForRecord(new RecordId(bibliographicRecordId, next)));
         }
         return ret;
     }
@@ -484,7 +502,7 @@ public abstract class RawRepoDAO {
             RecordId next = iterator.next();
             iterator.remove();
             ret.addAll(allSiblingLibrariesForRecord(next));
-            tmp.addAll(getRelationsParents(new RecordId(next.getId(), recordId.getLibrary())));
+            tmp.addAll(getRelationsParents(new RecordId(next.getBibliographicRecordId(), recordId.getAgencyId())));
         }
         return ret;
     }
@@ -498,10 +516,10 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     private void touchChildRecords(Set<Integer> libraries, String provider, RecordId recordId) throws RawRepoException {
-        Set<Integer> siblings = expandSiblingsForId(libraries, recordId.getId());
+        Set<Integer> siblings = expandSiblingsForId(libraries, recordId.getBibliographicRecordId());
         Set<RecordId> children = getRelationsChildren(recordId);
-        for (Integer library : siblings) {
-            enqueue(new RecordId(recordId.getId(), library), provider, false, children.isEmpty());
+        for (Integer agencyId : siblings) {
+            enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, false, children.isEmpty());
         }
         for (RecordId child : children) {
             touchChildRecords(siblings, provider, child);

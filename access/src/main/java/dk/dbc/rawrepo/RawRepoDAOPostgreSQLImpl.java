@@ -40,28 +40,29 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final String SELECT_RECORD = "SELECT content, created, modified FROM records WHERE id=? AND library=?";
-    private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE id=? AND library=? AND content IS NOT NULL";
-    private static final String DELETE_RECORD = "UPDATE records SET content=NULL, modified=? WHERE id=? AND library=?";
-    private static final String PURGE_RECORD = "DELETE FROM records WHERE id=? AND library=? ";
-    private static final String INSERT_RECORD = "INSERT INTO records(id, library, content, created, modified) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_RECORD = "UPDATE records SET content=?, modified=? WHERE id=? AND library=?";
-    //private static final String ARCHIVE_RECORD = "INSERT INTO records_archive (id, library, content, modified, created) SELECT id, library, content, modified, created FROM records WHERE id=? AND library=?";
-    private static final String ARCHIVE_RECORD = "INSERT INTO records_archive(id, library, content, created, modified) SELECT id, library, content, created, modified FROM records WHERE id=? AND library=?";
+    private static final int SCHEMA_VERSION = 2;
 
-    private static final String SELECT_RELATIONS = "SELECT refer_id, refer_library FROM relations WHERE id=? AND library=?";
-    private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_id, refer_library FROM relations WHERE id=? AND library=? AND refer_id <> id";
-    private static final String SELECT_RELATIONS_CHILDREN = "SELECT id, library FROM relations WHERE refer_id=? AND refer_library=? AND refer_id <> id";
-    private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT id, library FROM relations WHERE refer_id=? AND refer_library=? AND refer_id = id";
-    private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT refer_id, refer_library FROM relations WHERE id=? AND library=? AND refer_id = id";
-    private static final String SELECT_ALL_LIBRARIES_FOR_ID = "SELECT library FROM records WHERE id=?";
-    private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE id=? AND library=?";
-    private static final String INSERT_RELATION = "INSERT INTO relations (id, library, refer_id, refer_library) VALUES(?, ?, ?, ?)";
+    private static final String VALIDATE_SCHEMA = "SELECT MAX(version) FROM version";
+    private static final String SELECT_RECORD = "SELECT content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE bibliographicrecordid=? AND agencyid=? AND content IS NOT NULL";
+    private static final String DELETE_RECORD = "UPDATE records SET content=NULL, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=? ";
+    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, content, created, modified) VALUES(?, ?, ?, ?, ?)";
+    private static final String UPDATE_RECORD = "UPDATE records SET content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+
+    private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
+    private static final String SELECT_RELATIONS_CHILDREN = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
+    private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
+    private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
+    private static final String SELECT_ALL_LIBRARIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
+    private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
     private static final String CALL_ENQUEUE = "{CALL enqueue(?, ?, ?, ?, ?)}";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
-    private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE id=? AND library=? AND worker=? AND queued=?";
-    private static final String QUEUE_SUCCESS = "DELETE FROM queue WHERE id=? AND library=? AND worker=? AND queued=?";
+    private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
+    private static final String QUEUE_SUCCESS = "DELETE FROM queue WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
 
     /**
      * Constructor
@@ -72,21 +73,41 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         this.connection = connection;
     }
 
+    @Override
+    protected void validateConnection() throws RawRepoException {
+        int version = -1;
+        try {
+            try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        version = resultSet.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            log.error("Validating schema", ex);
+        }
+        if (version != SCHEMA_VERSION) {
+            log.error("Incompatible database schema db=" + version + ", software=" + SCHEMA_VERSION);
+            throw new RawRepoException("Incompatible database schema");
+        }
+    }
+
     /**
      * Fetch a record from the database
      *
      * Create one if none exists in the database
      *
-     * @param id String with record id
-     * @param library library number
+     * @param bibliographicRecordId String with record bibliographicRecordId
+     * @param agencyId agencyId number
      * @return fetched / new Record
      * @throws RawRepoException
      */
     @Override
-    public Record fetchRecord(String id, int library) throws RawRepoException {
+    public Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RECORD)) {
-            stmt.setString(1, id);
-            stmt.setInt(2, library);
+            stmt.setString(1, bibliographicRecordId);
+            stmt.setInt(2, agencyId);
 
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
@@ -95,7 +116,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         Timestamp created = resultSet.getTimestamp("CREATED");
                         Timestamp modified = resultSet.getTimestamp("MODIFIED");
-                        Record record = new RecordImpl(id, library, content, created, modified, false);
+                        Record record = new RecordImpl(bibliographicRecordId, agencyId, content, created, modified, false);
 
                         resultSet.close();
                         stmt.close();
@@ -107,23 +128,23 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         }
-        return new RecordImpl(new RecordId(id, library));
+        return new RecordImpl(new RecordId(bibliographicRecordId, agencyId));
     }
 
     /**
      * Check for existence of a record
      *
-     * @param id String with record id
-     * @param library library number
+     * @param bibliographicRecordId String with record bibliographicRecordId
+     * @param agencyId agencyId number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
     @Override
-    public boolean recordExists(String id, int library) throws RawRepoException {
+    public boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException {
         boolean result = false;
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RECORD_EXISTS)) {
-            stmt.setString(1, id);
-            stmt.setInt(2, library);
+            stmt.setString(1, bibliographicRecordId);
+            stmt.setInt(2, agencyId);
 
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
@@ -149,14 +170,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public void deleteRecord(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RECORD)) {
             stmt.setTimestamp(1, new Timestamp(new Date().getTime()));
-            stmt.setString(2, recordId.getId());
-            stmt.setInt(3, recordId.getLibrary());
+            stmt.setString(2, recordId.getBibliographicRecordId());
+            stmt.setInt(3, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting record", ex);
         }
-        archiveRecord(recordId);
     }
 
     /**
@@ -168,14 +188,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void purgeRecord(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(PURGE_RECORD)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error purging record", ex);
         }
-        archiveRecord(recordId);
     }
     private static final String LOG_DATABASE_ERROR = "Error accessing database";
 
@@ -192,11 +211,10 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
             stmt.setString(1, DatatypeConverter.printBase64Binary(record.getContent()));
             stmt.setTimestamp(2, new Timestamp(record.getModified().getTime()));
-            stmt.setString(3, record.getId().getId());
-            stmt.setInt(4, record.getId().getLibrary());
+            stmt.setString(3, record.getId().getBibliographicRecordId());
+            stmt.setInt(4, record.getId().getAgencyId());
             if (stmt.executeUpdate() > 0) {
                 stmt.close();
-                archiveRecord(record.getId());
                 return;
             }
         } catch (SQLException ex) {
@@ -204,13 +222,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error updating record", ex);
         }
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
-            stmt.setString(1, record.getId().getId());
-            stmt.setInt(2, record.getId().getLibrary());
+            stmt.setString(1, record.getId().getBibliographicRecordId());
+            stmt.setInt(2, record.getId().getAgencyId());
             stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
             stmt.setTimestamp(4, new Timestamp(record.getCreated().getTime()));
             stmt.setTimestamp(5, new Timestamp(record.getModified().getTime()));
             stmt.execute();
-            archiveRecord(record.getId());
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error saving record", ex);
@@ -221,18 +238,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get a collection of my "dependencies". All relations that id have
+     * Get a collection of my "dependencies". All relations that bibliographicRecordId have
      *
      * @param recordId complex key for a record
-     * @return collection of recordids of whom id depends
+     * @return collection of recordids of whom bibliographicRecordId depends
      * @throws RawRepoException
      */
     @Override
     public Set<RecordId> getRelationsFrom(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -248,16 +265,16 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Delete all relations related to an id
+     * Delete all relations related to an bibliographicRecordId
      *
-     * @param recordId complex key of id
+     * @param recordId complex key of bibliographicRecordId
      * @throws RawRepoException
      */
     @Override
     public void deleteRelationsFrom(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RELATIONS)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -269,7 +286,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Clear all existing relations and set the new ones
      *
      * @param recordId recordid to update
-     * @param refers collection of recordids id depends on
+     * @param refers collection of recordids bibliographicRecordId depends on
      * @throws RawRepoException
      */
     @Override
@@ -277,7 +294,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         int siblings = 0;
         int parents = 0;
         for (RecordId refer : refers) {
-            if (refer.getId().equals(refer.getId())) {
+            if (refer.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
                 siblings++;
             } else {
                 parents++;
@@ -301,11 +318,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
         deleteRelationsFrom(recordId);
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RELATION)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             for (RecordId refer : refers) {
-                stmt.setString(3, refer.getId());
-                stmt.setInt(4, refer.getLibrary());
+                stmt.setString(3, refer.getBibliographicRecordId());
+                stmt.setInt(4, refer.getAgencyId());
                 stmt.execute();
             }
         } catch (SQLException ex) {
@@ -315,18 +332,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get all records who has id as relation, but no siblings
+     * Get all records who has bibliographicRecordId as relation, but no siblings
      *
      * @param recordId recordid to find relations to
-     * @return collection of recordids that list id at relation
+     * @return collection of recordids that list bibliographicRecordId at relation
      * @throws RawRepoException
      */
     @Override
     public Set<RecordId> getRelationsChildren(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_CHILDREN)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -342,18 +359,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get a collection of my "dependencies". All relations that id have
+     * Get a collection of my "dependencies". All relations that bibliographicRecordId have
      *
      * @param recordId complex key for a record
-     * @return collection of recordids of whom id depends
+     * @return collection of recordids of whom bibliographicRecordId depends
      * @throws RawRepoException
      */
     @Override
     public Set<RecordId> getRelationsParents(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_PARENTS)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -378,8 +395,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -404,8 +421,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsSiblingsFromMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
+            stmt.setString(1, recordId.getBibliographicRecordId());
+            stmt.setInt(2, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -421,17 +438,17 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get all libraries that has local data to id
+     * Get all libraries that has local data to bibliographicRecordId
      *
-     * @param id record id
+     * @param bibliographicRecordId record bibliographicRecordId
      * @return Collection of libraries that has localdata for this record
      * @throws RawRepoException
      */
     @Override
-    public Set<Integer> allLibrariesForId(String id) throws RawRepoException {
+    public Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException {
         Set<Integer> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_LIBRARIES_FOR_ID)) {
-            stmt.setString(1, id);
+            stmt.setString(1, bibliographicRecordId);
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -458,8 +475,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
         try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE)) {
-            stmt.setString(1, job.getId());
-            stmt.setInt(2, job.getLibrary());
+            stmt.setString(1, job.getBibliographicRecordId());
+            stmt.setInt(2, job.getAgencyId());
             stmt.setString(3, provider);
             stmt.setString(4, changed ? "Y" : "N");
             stmt.setString(5, leaf ? "Y" : "N");
@@ -510,8 +527,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
-                        result = new QueueJob(resultSet.getString("id"),
-                                              resultSet.getInt("library"),
+                        result = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                                              resultSet.getInt("agencyid"),
                                               resultSet.getString("worker"),
                                               resultSet.getTimestamp("queued"));
                     }
@@ -533,8 +550,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void queueSuccess(QueueJob queueJob) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_SUCCESS)) {
-            stmt.setString(1, queueJob.job.id);
-            stmt.setInt(2, queueJob.job.library);
+            stmt.setString(1, queueJob.job.bibliographicRecordId);
+            stmt.setInt(2, queueJob.job.agencyId);
             stmt.setString(3, queueJob.worker);
             stmt.setTimestamp(4, queueJob.queued);
             stmt.execute();
@@ -558,8 +575,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
             stmt.setString(1, error);
-            stmt.setString(2, queueJob.job.id);
-            stmt.setInt(3, queueJob.job.library);
+            stmt.setString(2, queueJob.job.bibliographicRecordId);
+            stmt.setInt(3, queueJob.job.agencyId);
             stmt.setString(4, queueJob.worker);
             stmt.setTimestamp(5, queueJob.queued);
             stmt.executeUpdate();
@@ -588,23 +605,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error rolling back", ex);
         }
         queueFail(queueJob, error);
-    }
-
-    /**
-     * Archive a record
-     *
-     * @param recordId
-     * @throws SQLException
-     */
-    private void archiveRecord(RecordId recordId) throws RawRepoException {
-        try (PreparedStatement stmt = connection.prepareStatement(ARCHIVE_RECORD)) {
-            stmt.setString(1, recordId.getId());
-            stmt.setInt(2, recordId.getLibrary());
-            stmt.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error archiving record", ex);
-        }
     }
 
 }

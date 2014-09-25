@@ -26,33 +26,53 @@ import java.util.Objects;
  */
 public class RecordId {
 
-    protected String id;
-    protected int library;
+    protected String bibliographicRecordId;
+    protected int agencyId;
 
     public RecordId() {
     }
 
-    public RecordId(String id, int library) {
-        if (id == null) {
+    public RecordId(String bibliographicRecordId, int agencyId) {
+        if (bibliographicRecordId == null) {
             throw new IllegalArgumentException("Id cannot be 'null'");
         }
-        this.id = id;
-        this.library = library;
+        this.bibliographicRecordId = bibliographicRecordId;
+        this.agencyId = agencyId;
     }
 
+    public String getBibliographicRecordId() {
+        return bibliographicRecordId;
+    }
+
+    /**
+     * USE getBibliographicRecordId
+     *
+     * @return
+     */
+    @Deprecated
     public String getId() {
-        return id;
+        return bibliographicRecordId;
     }
 
+    public int getAgencyId() {
+        return agencyId;
+    }
+
+    /**
+     * USE getAgencyId()
+     *
+     * @return
+     */
+    @Deprecated
     public int getLibrary() {
-        return library;
+        return agencyId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.id);
-        hash = 53 * hash + this.library;
+        hash = 53 * hash + Objects.hashCode(this.bibliographicRecordId);
+        hash = 53 * hash + this.agencyId;
         return hash;
     }
 
@@ -65,10 +85,10 @@ public class RecordId {
             return false;
         }
         final RecordId other = (RecordId) obj;
-        if (!Objects.equals(this.id, other.id)) {
+        if (!Objects.equals(this.bibliographicRecordId, other.bibliographicRecordId)) {
             return false;
         }
-        if (this.library != other.library) {
+        if (this.agencyId != other.agencyId) {
             return false;
         }
         return true;
@@ -76,7 +96,7 @@ public class RecordId {
 
     @Override
     public String toString() {
-        return "RecordId{" + "id=" + id + ", library=" + library + '}';
+        return "RecordId{" + "bibliographicRecordId=" + bibliographicRecordId + ", agencyId=" + agencyId + '}';
     }
 
 }
