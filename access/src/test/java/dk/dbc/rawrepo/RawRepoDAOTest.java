@@ -33,17 +33,12 @@ import static org.mockito.Mockito.*;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -518,7 +513,6 @@ public class RawRepoDAOTest {
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt());
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2",

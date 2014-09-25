@@ -166,8 +166,8 @@ public class Indexer {
     private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException {
         log.debug("Indexing {}", job);
         RecordId jobId = job.getJob();
-        String id = jobId.getId();
-        int library = jobId.getLibrary();
+        String id = jobId.getBibliographicRecordId();
+        int library = jobId.getAgencyId();
         try {
             Record record = fetchRecord(dao, id, library);
 
@@ -201,9 +201,9 @@ public class Indexer {
         Timer.Context time = createIndexDocumentTimer.time();
         final SolrInputDocument doc = new SolrInputDocument();
         RecordId recordId = record.getId();
-        doc.addField("id", recordId.getId() + ":" + recordId.getLibrary());
-        doc.addField("marc.001a", recordId.getId());
-        doc.addField("marc.001b", recordId.getLibrary());
+        doc.addField("id", recordId.getBibliographicRecordId()+ ":" + recordId.getAgencyId());
+        doc.addField("marc.001a", recordId.getBibliographicRecordId());
+        doc.addField("marc.001b", recordId.getAgencyId());
 
         // Extract fields from content
         byte[] content = record.getContent();
