@@ -26,7 +26,6 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.logging.Level;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -149,6 +148,7 @@ public class Notifier {
         return job;
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException {
         Timer.Context time = fetchRecordTimer.time();
         Record record = dao.fetchRecord(id, library);
@@ -163,6 +163,7 @@ public class Notifier {
         time.stop();
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private void queueFail(RawRepoDAO dao, QueueJob job, String id) throws RawRepoException {
         Timer.Context time = queueFailTimer.time();
         dao.queueFail(job, id);

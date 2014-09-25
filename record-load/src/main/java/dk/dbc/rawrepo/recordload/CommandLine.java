@@ -28,8 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -39,12 +37,12 @@ public abstract class CommandLine {
 
     public interface ArgumentParser {
 
-        public Object parse(String argument, String value);
+        Object parse(String argument, String value);
     }
 
     public interface DefaultArgument {
 
-        public Object parse(String argument);
+        Object parse(String argument);
     }
 
     static class DefaultString implements DefaultArgument {
@@ -77,7 +75,6 @@ public abstract class CommandLine {
 
     }
 
-    private static final Logger log = LoggerFactory.getLogger(CommandLine.class);
     private static final Pattern OPTION = Pattern.compile("^--([^=]+)(=(.*))?$", Pattern.MULTILINE | Pattern.DOTALL);
 
     private final Set<String> requiredOptions;
@@ -164,6 +161,7 @@ public abstract class CommandLine {
         return this;
     }
 
+    @SuppressWarnings("PMD.UselessParentheses")
     public String usage() {
         String[] options = knownOptions.toArray(new String[knownOptions.size()]);
         Arrays.sort(options);
@@ -180,11 +178,11 @@ public abstract class CommandLine {
                     text.append("=argument");
                 }
             }
-            String string = text.toString();
-            if (string.length() > max) {
-                max = string.length();
+            String content = text.toString();
+            if (content.length() > max) {
+                max = content.length();
             }
-            optionsList.put(option, string);
+            optionsList.put(option, content);
         }
 
         String spaces = new String(new char[max + 7]).replace("\0", " ");

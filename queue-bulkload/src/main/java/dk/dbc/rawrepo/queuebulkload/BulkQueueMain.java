@@ -44,7 +44,7 @@ public class BulkQueueMain {
 
     private static final Logger log = LoggerFactory.getLogger(BulkQueueMain.class);
 
-    private static SimpleDateFormat dateFormats[] = {
+    private static final SimpleDateFormat dateFormats[] = {
         new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS"),
         new SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
     };
@@ -57,6 +57,7 @@ public class BulkQueueMain {
             try {
                 return new Timestamp(dateFormat.parse(s).getTime());
             } catch (ParseException ex) {
+                log.debug("error parsing date-format");
             }
         }
         throw new IllegalArgumentException(s + " is not a valid timestamp");
@@ -154,7 +155,7 @@ public class BulkQueueMain {
             configurator.setContext(context);
             configurator.doConfigure(stream); // loads logback file
         } catch (Exception ex) {
-            ex.printStackTrace(); // Just in case, so we see a stacktrace
+            System.err.println("Set loglevel exception: " + ex.getMessage());
         }
         StatusPrinter.printInCaseOfErrorsOrWarnings(context); // Internal status data is printed in case of warnings or errors.
     }

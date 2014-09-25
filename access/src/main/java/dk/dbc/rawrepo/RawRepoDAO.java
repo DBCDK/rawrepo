@@ -141,6 +141,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      * @throws MarcXMergerException
      */
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         if (!collection.containsKey(bibliographicRecordId)) {
             ArrayList<Integer> allAgencies = new ArrayList<>(agencyIds);
@@ -167,6 +168,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException if there's a data error or recoed isn't found
      * @throws MarcXMergerException if we can't merge record
      */
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private Record fetchMergedRecord(String bibliographicRecordId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         for (Integer agencyId : agencyIds) {
             if (recordExists(bibliographicRecordId, agencyId) /* && not deleted */) { // Least common agency for this record

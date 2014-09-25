@@ -33,7 +33,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
@@ -42,8 +41,6 @@ import org.xml.sax.SAXException;
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
 public class RecordInspectorMain {
-
-    private static final Logger log = LoggerFactory.getLogger(RecordInspectorMain.class);
 
     public static void main(String[] args) {
         boolean exitOk = true;
@@ -67,9 +64,8 @@ public class RecordInspectorMain {
             if (output > 1) {
                 throw new IllegalArgumentException("only one of: --color --text --quiet");
             }
-            if (relations && arguments.size() == 2) {
-            } else if (!relations && arguments.size() >= 2 && arguments.size() <= 4) {
-            } else {
+            if (!(relations && arguments.size() == 2)
+                && (!(!relations && arguments.size() >= 2 && arguments.size() <= 4))) {
                 throw new IllegalArgumentException("Syntax error");
             }
 

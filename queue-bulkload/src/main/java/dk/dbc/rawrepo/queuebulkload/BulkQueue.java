@@ -24,7 +24,6 @@ import dk.dbc.rawrepo.RecordId;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.regex.Matcher;
