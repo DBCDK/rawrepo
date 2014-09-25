@@ -64,8 +64,10 @@ public class RecordInspectorMain {
             if (output > 1) {
                 throw new IllegalArgumentException("only one of: --color --text --quiet");
             }
-            if (!(relations && arguments.size() == 2)
-                && (!(!relations && arguments.size() >= 2 && arguments.size() <= 4))) {
+            boolean hasRelationsAndRightArgumentCount = relations && arguments.size() == 2;
+            boolean hasNoRelationsAndRightArgumentCount = !relations && arguments.size() >= 2 && arguments.size() <= 4;
+            if (!hasRelationsAndRightArgumentCount
+                && !hasNoRelationsAndRightArgumentCount) {
                 throw new IllegalArgumentException("Syntax error");
             }
 
