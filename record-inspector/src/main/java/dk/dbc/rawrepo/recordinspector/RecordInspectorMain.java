@@ -24,7 +24,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.xmldiff.XmlDiff;
-import dk.dbc.xmldiff.XmlDiffWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +32,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.parsers.ParserConfigurationException;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
@@ -118,27 +117,24 @@ public class RecordInspectorMain {
                             System.out.println("Right side (" + rightIndex + ") is deleted");
                         }
                         if (left != null && right != null) {
-                            Writer writer;
+                            XmlDiff.Writer writer;
                             if (commandLine.hasOption("color")) {
-                                writer = new Writer("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m", "\u001B[44m", "\u001B[49m");
+                                writer = new XmlDiff.TextWriter("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m", "\u001B[44m", "\u001B[49m");
                             } else if (commandLine.hasOption("text")) {
-                                writer = new Writer("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]", "{", "}");
+                                writer = new XmlDiff.TextWriter("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]", "{", "}");
                             } else if (commandLine.hasOption("quiet")) {
-                                writer = new Writer() {
-
-                                    @Override
-                                    public void text(String text) {
-                                    }
-                                };
+                                writer = new XmlDiff.Writer();
                             } else {
-                                writer = new Writer("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m", "\u001B[7m", "\u001B[27m");
+                                writer = new XmlDiff.TextWriter("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m", "\u001B[7m", "\u001B[27m");
                             }
-                            new XmlDiff(writer).compare(left, right);
+                            XmlDiff xmlDiff = new XmlDiff();
+                            xmlDiff.indent("    ").strip(true).trim(false).unicodeNormalize(true);
+                            boolean same = xmlDiff.diff(new ByteArrayInputStream(left), new ByteArrayInputStream(right), writer);
                             String content = writer.toString();
                             if (!content.isEmpty()) {
                                 System.out.println(content);
                             }
-                            if (writer.isChanged()) {
+                            if (!same) {
                                 exitOk = false;
                             }
                         }
@@ -147,7 +143,7 @@ public class RecordInspectorMain {
                 }
             }
             System.exit(exitOk ? 0 : 1);
-        } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException | ParserConfigurationException | SAXException e) {
+        } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException | SAXException e) {
             System.err.println(commandLine.usage());
             System.err.println("Cauth: " + e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
             System.exit(1);
@@ -191,92 +187,6 @@ public class RecordInspectorMain {
         @Override
         String usageCommandLine() {
             return "prog [options] agency id [ index [ index ] ]";
-        }
-
-    }
-
-    static class Writer implements XmlDiffWriter {
-
-        StringBuilder sb = new StringBuilder();
-
-        String lb, le, rb, re, nb, ne, ub, ue;
-        boolean changed = false;
-
-        public Writer(String lb, String le, String rb, String re, String nb, String ne, String ub, String ue) {
-            this.lb = lb;
-            this.le = le;
-            this.rb = rb;
-            this.re = re;
-            this.nb = nb;
-            this.ne = ne;
-            this.ub = ub;
-            this.ue = ue;
-        }
-
-        public Writer() {
-            lb = le = rb = re = nb = ne = ub = ue = "";
-        }
-
-        @Override
-        public void text(String text) {
-            sb.append(text);
-        }
-
-        @Override
-        public void leftBegin() {
-            changed = true;
-            sb.append(lb);
-        }
-
-        @Override
-        public void leftEnd() {
-            changed = true;
-            sb.append(le);
-        }
-
-        @Override
-        public void rightBegin() {
-            changed = true;
-            sb.append(rb);
-        }
-
-        @Override
-        public void rightEnd() {
-            changed = true;
-            sb.append(re);
-        }
-
-        @Override
-        public void nsNameBegin() {
-            changed = true;
-            sb.append(nb);
-        }
-
-        @Override
-        public void nsNameEnd() {
-            changed = true;
-            sb.append(ne);
-        }
-
-        @Override
-        public void nsUriBegin() {
-            changed = true;
-            sb.append(ub);
-        }
-
-        @Override
-        public void nsUriEnd() {
-            changed = true;
-            sb.append(ue);
-        }
-
-        public boolean isChanged() {
-            return changed;
-        }
-
-        @Override
-        public String toString() {
-            return sb.toString();
         }
 
     }
