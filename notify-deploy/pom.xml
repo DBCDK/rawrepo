@@ -22,11 +22,25 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
+        <version>1.5</version>
+        <configuration>
+          <providerSelection>2.0</providerSelection>
+          <stacktrace>true</stacktrace>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2.1</version>
         <executions>
           <execution>
             <id>jar-with-dependencies</id>
@@ -47,6 +61,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -65,16 +80,19 @@
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
+      <version>2.0.7</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.linkedin</groupId>
       <artifactId>org.linkedin.glu.agent-api</artifactId>
+      <version>4.7.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.linkedin</groupId>
       <artifactId>org.linkedin.glu.scripts-test-fwk</artifactId>
+      <version>4.7.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

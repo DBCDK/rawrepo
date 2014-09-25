@@ -54,6 +54,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.7</version>
                 <executions>
                     <execution>
                         <id>reserve-network-port</id>
@@ -132,6 +133,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>9.3-1101-jdbc41</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
