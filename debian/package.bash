@@ -1,7 +1,12 @@
 #!/bin/bash -e
 
+cd "${0%/*}"
+if [ "${0:0:1}" != '/' ]; then
+    exec "`pwd`/${0/*\//}" "$@"
+fi
+
 if [ `whoami` != root ]; then
-	exec fakeroot "$0" "$@"
+    exec fakeroot "$0" "$@"
 fi
 
 cd "${0%/*}"
