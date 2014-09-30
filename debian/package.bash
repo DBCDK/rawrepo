@@ -26,7 +26,7 @@ echo 5 > debian/compat
 
 sed -e '1,/^__CONTROL__/d;/^__END__/,$d' -e '/^#/d' $0 | perl -p -e 'BEGIN{%h=map{split"=",$_,2}@ARGV;@ARGV=()}s{\@(\w+)\@}{$h{$1}}ge' \
     PACKAGE="$PACKAGE" \
-    REVISION="$BUILDNO.$REVISION" \
+    REVISION="$BUILD_NUMBER.$REVISION" \
     USER="$USER" \
     TIMESTAMP="$TIMESTAMP" \
     > debian/control
@@ -63,7 +63,7 @@ EOF
 svn log -l 100 .. | (
     # Ensure newest revision in changelog
     if eval [ \$\{r$REVISION:-0\} != 1 ]; then
-	echo "$PACKAGE-dbc ($BUILDNO.$REVISION) stable; urgency=low"
+	echo "$PACKAGE-dbc ($BUILD_NUMBER.$REVISION) stable; urgency=low"
 	echo ""
 	echo "  * Automated build"
 	echo ""
@@ -84,7 +84,7 @@ svn log -l 100 .. | (
 	    echo=true
 	fi
 
-	$echo "$PACKAGE-dbc ($BUILDNO.${rev//[^0-9]/}) stable; urgency=low"
+	$echo "$PACKAGE-dbc ($BUILD_NUMBER.${rev//[^0-9]/}) stable; urgency=low"
 	$echo ""
 	declare -i i=${lines//[^0-9]/}
 	read blank || exit 0
@@ -132,8 +132,8 @@ dh_installdeb
 dh_gencontrol
 dh_md5sums
 dh_builddeb --destdir=.
-dpkg-genchanges -b -u. > $PACKAGE-tools-dbc_$BUILDNO.$REVISION.changes
-LD_PRELOAD= rsync $PACKAGE-tools-dbc_$BUILDNO.$REVISION.changes $PACKAGE-tools-dbc_$BUILDNO.${REVISION}_all.deb drift@debian.dbc.dk:is/$DIST
+dpkg-genchanges -b -u. > $PACKAGE-tools-dbc_$BUILD_NUMBER.$REVISION.changes
+LD_PRELOAD= rsync $PACKAGE-tools-dbc_$BUILD_NUMBER.$REVISION.changes $PACKAGE-tools-dbc_$BUILD_NUMBER.${REVISION}_all.deb drift@debian.dbc.dk:is/$DIST
 
 
 
