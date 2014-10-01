@@ -34,6 +34,7 @@
     <module>solr-indexer-deploy</module>
     <module>notify</module>
     <module>notify-deploy</module>
+    <module>debian</module>
   </modules>
 
   <build>
