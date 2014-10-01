@@ -110,7 +110,6 @@ public abstract class RawRepoDAO {
      */
     public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         HashMap<String, Record> ret = new HashMap<>();
-        List<Integer> agencyIds = allCommonAgencies(agencyId);
         fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger);
         return ret;
     }
