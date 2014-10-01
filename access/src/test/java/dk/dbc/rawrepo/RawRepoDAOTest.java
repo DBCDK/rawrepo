@@ -514,6 +514,7 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2",
                               "B:870970", // HEAD
@@ -677,6 +678,7 @@ public class RawRepoDAOTest {
     private static void recordCollectionIs(Map<String, Record> collection, String... elems) {
         Set<String> set = new HashSet<>(collection.size());
         for (Record record : collection.values()) {
+            System.out.println("record = " + record);
             set.add(new String(record.getContent()));
         }
         collectionIs(set, elems);

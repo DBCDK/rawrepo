@@ -111,7 +111,7 @@ public abstract class RawRepoDAO {
     public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         HashMap<String, Record> ret = new HashMap<>();
         List<Integer> agencyIds = allCommonAgencies(agencyId);
-        fetchRecordCollection(ret, bibliographicRecordId, agencyId, agencyIds, merger);
+        fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger);
         return ret;
     }
 
@@ -142,18 +142,15 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
-    private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+    private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         if (!collection.containsKey(bibliographicRecordId)) {
-            ArrayList<Integer> allAgencies = new ArrayList<>(agencyIds);
-            allAgencies.add(agencyId); // Ensure we get id:agency even if agency isn't in agencies list
-
-            Record record = fetchMergedRecord(bibliographicRecordId, allAgencies, merger);
+            Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger);
             collection.put(bibliographicRecordId, record);
 
-            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, allAgencies);
+            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, agencyId);
             Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
-                fetchRecordCollection(collection, parent.getBibliographicRecordId(), parent.getAgencyId(), agencyIds, merger);
+                fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
             }
         }
     }
@@ -162,15 +159,14 @@ public abstract class RawRepoDAO {
      * Fetch record for id, merging more common records with this
      *
      * @param bibliographicRecordId local id
-     * @param agencyIds least to most common
+     * @param originalAgencyId least to most common
      * @param merger
      * @return Record merged
-     * @throws RawRepoException if there's a data error or recoed isn't found
+     * @throws RawRepoException if there's a data error or record isn't found
      * @throws MarcXMergerException if we can't merge record
      */
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
-    private Record fetchMergedRecord(String bibliographicRecordId, List<Integer> agencyIds, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
-        for (Integer agencyId : agencyIds) {
+    public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        for (Integer agencyId : allCommonAgencies(originalAgencyId)) {
             if (recordExists(bibliographicRecordId, agencyId) /* && not deleted */) { // Least common agency for this record
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
@@ -205,6 +201,8 @@ public abstract class RawRepoDAO {
 
     /**
      * List of least to most common agency numbers for this agency
+     *
+     * When using a webservice, this needs to be cached. This is called repeatedly, for each record processed.
      *
      * @param recordId
      * @return
@@ -348,7 +346,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        int mostCommonLibrary = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), allCommonAgencies(recordId.getAgencyId()));
+        int mostCommonLibrary = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
         // The mostCommonLibrary, is the one that defines parent/child relationship
         Set<Integer> libraries = allParentLibrariesAffectedByChange(recordId);
         Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonLibrary));
@@ -371,8 +369,8 @@ public abstract class RawRepoDAO {
      * @throws IllegalStateException
      * @throws RawRepoException
      */
-    private int mostCommonAgencyForRecord(String bibliographicRecordId, List<Integer> agencyIds) throws RawRepoException {
-        for (Integer agencyId : agencyIds) {
+    private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
+        for (Integer agencyId : allCommonAgencies(originalAgencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
                 // find most common through sibling relations
