@@ -11,6 +11,11 @@ if [ $# = 0 ]; then
     version=`ls -f $name-*-upgrade.sql | sort -n | tail -n 1`
     version=${version/$name-/}
     version=${version/-*/}
+
+    if ! cmp -s $name-$version.sql $name.sql; then
+	echo "updating latest stable ($version) from current"
+	cp $name.sql $name-$version.sql
+    fi
 else
     version=$(($1))
 fi
