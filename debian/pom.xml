@@ -69,7 +69,7 @@
                     <!-- Run scripts to build debian packages -->
                     <execution>
                         <id>Upload .deb</id>
-                        <phase>deploy</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -90,4 +90,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>java-debian</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
 </project>
