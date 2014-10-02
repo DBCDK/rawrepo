@@ -65,6 +65,7 @@ public class MarcXMerger {
 
     private static final String MARCX_NS = "info:lc/xmlns/marcxchange-v1";
     private static final String ATTRIBUTE_TAG = "tag";
+    private static final String ELEMENT_RECORD = "record";
     private static final String ELEMENT_DATAFIELD = "datafield";
     private static final String UTF8 = "UTF-8";
 
@@ -153,9 +154,25 @@ public class MarcXMerger {
         try {
             Document commonDom = documentBuilder.parse(new ByteArrayInputStream(common));
             Document localDom = documentBuilder.parse(new ByteArrayInputStream(local));
+            Element commonRootElement = commonDom.getDocumentElement();
+            Element localRootElement = localDom.getDocumentElement();
+
+            if (!commonRootElement.getLocalName().equals(ELEMENT_RECORD)
+                || !commonRootElement.getNamespaceURI().equals(MARCX_NS)) {
+                throw new MarcXMergerException("Outermost tag in common record: "
+                                               + "{" + commonRootElement.getNamespaceURI() + "}" + commonRootElement.getLocalName()
+                                               + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
+            }
+
+            if (!localRootElement.getLocalName().equals(ELEMENT_RECORD)
+                || !localRootElement.getNamespaceURI().equals(MARCX_NS)) {
+                throw new MarcXMergerException("Outermost tag in local record: "
+                                               + "{" + localRootElement.getNamespaceURI() + "}" + localRootElement.getLocalName()
+                                               + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
+            }
 
             Document targetDom = commonDom; // reuse common dom's leader
-            Element targetElement = targetDom.getDocumentElement();
+            Element targetRootElement = commonRootElement;
 
             FieldRules.RuleSet ruleSet = fieldRules.newRuleSet();
 
@@ -168,7 +185,7 @@ public class MarcXMerger {
             removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom); // sets up which common fields, that should be removed
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
 
-            mergeCommonAndLocalIntoTarget(localFields, commonFields, targetElement);
+            mergeCommonAndLocalIntoTarget(localFields, commonFields, targetRootElement);
 
             return documentToBytes(targetDom);
         } catch (SAXException | IOException | TransformerException ex) {
