@@ -78,7 +78,7 @@
                 <executions>
                     <execution>
                         <id>build-jar</id>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
