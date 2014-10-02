@@ -12,11 +12,11 @@ BEGIN
     INSERT INTO records_archive(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified)
         VALUES(OLD.bibliographicrecordid, OLD.agencyid, OLD.deleted, OLD.mimetype, OLD.content, OLD.created, OLD.modified);
     FOR ts IN
-        SELECT modified FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid ORDER BY modified DESC OFFSET 10 LIMIT 1
+        SELECT modified FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid AND
+                                                   modified <=  NOW() - INTERVAL '42 DAYS' ORDER BY modified DESC OFFSET 1 LIMIT 1
     LOOP
 	DELETE FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid AND modified<=ts;
     END LOOP;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
-
