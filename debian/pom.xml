@@ -41,9 +41,8 @@
                                     <artifactId>java-debian</artifactId>
                                     <version>1.0-SNAPSHOT</version>
                                     <type>tar.gz</type>
-                                    <classifier>scripts</classifier>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/java-debian</outputDirectory>
                                     <includes>*</includes>
                                 </artifactItem>
                             </artifactItems>
@@ -63,7 +62,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.build.directory}/java-debian-1.0-SNAPSHOT/package.bash</executable>
+                            <executable>${project.build.directory}/java-debian/package.bash</executable>
                         </configuration>
                     </execution>
                     <!-- Run scripts to build debian packages -->
@@ -74,7 +73,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.build.directory}/java-debian-1.0-SNAPSHOT/upload.bash</executable>
+                            <executable>${project.build.directory}/java-debian/upload.bash</executable>
                         </configuration>
                     </execution>
                 </executions>
