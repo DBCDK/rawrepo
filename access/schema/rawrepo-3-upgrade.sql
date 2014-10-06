@@ -104,3 +104,5 @@ CREATE TRIGGER validate_relation_fk_rev_delete -- V3
     FOR EACH ROW
     EXECUTE PROCEDURE validate_relation_fk_rev();
 
+
+INSERT INTO version VALUES(3);
