@@ -26,9 +26,19 @@ import java.util.Date;
  */
 public interface Record {
 
+    String MIMETYPE_MARCXCHANGE = "text/marcxchange";
+
     byte[] getContent();
 
-    boolean hasContent();
+    boolean isDeleted();
+
+    void delete();
+
+    void undelete();
+
+    String getMimeType();
+
+    void setMimeType(String mimeType);
 
     Date getCreated();
 

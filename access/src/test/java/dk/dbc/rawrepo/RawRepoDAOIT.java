@@ -41,6 +41,7 @@ import static org.junit.Assert.assertTrue;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import java.util.Properties;
 
 /**
  *
@@ -55,7 +56,10 @@ public class RawRepoDAOIT {
     public void setup() throws SQLException, ClassNotFoundException {
         String port = System.getProperty("postgresql.port");
         jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
-        connection = DriverManager.getConnection(jdbc);
+        Properties properties = new Properties();
+
+        connection = DriverManager.getConnection(jdbc, properties);
+        connection.prepareStatement("SET log_statement = 'mod';").execute();
         resetDatabase();
     }
 
@@ -161,7 +165,8 @@ public class RawRepoDAOIT {
         //Ensure record is in base
         Record recA = dao.fetchRecord("A", 870970);
         assertFalse(recA.isOriginal());
-        assertTrue(recA.hasContent());
+        assertFalse(recA.isDeleted());
+        dao.saveRecord(recA);
 
         // Delete Record
 //        dao.deleteRecord(recA.getId());
@@ -169,8 +174,18 @@ public class RawRepoDAOIT {
 //        assertFalse(dao.recordExists("A", 870970));
         // Record is deleted
         recA = dao.fetchRecord("A", 870970);
+        recA.delete();
+        dao.saveRecord(recA);
+
+        recA = dao.fetchRecord("A", 870970);
         assertFalse(recA.isOriginal());
-//        assertFalse(recA.hasContent());
+        assertTrue(recA.isDeleted());
+        recA.undelete();
+        dao.saveRecord(recA);
+
+        recA = dao.fetchRecord("A", 870970);
+        assertFalse(recA.isOriginal());
+        assertFalse(recA.isDeleted());
 
         // Purge Record
         dao.purgeRecord(recA.getId());
@@ -178,7 +193,7 @@ public class RawRepoDAOIT {
         // Record is newly created
         recA = dao.fetchRecord("A", 870970);
         assertTrue(recA.isOriginal());
-        assertFalse(recA.hasContent());
+        assertFalse(recA.isDeleted());
 
         connection.commit();
     }
@@ -432,6 +447,7 @@ public class RawRepoDAOIT {
     void resetDatabase() throws SQLException {
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();
+        connection.prepareStatement("DELETE FROM records_archive").execute();
         connection.prepareStatement("DELETE FROM queue").execute();
         connection.prepareStatement("DELETE FROM queuerules").execute();
         connection.prepareStatement("DELETE FROM queueworkers").execute();
@@ -491,6 +507,7 @@ public class RawRepoDAOIT {
             RecordId to = recordIdFromString(list[1]);
             if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId())
                 && dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
+                System.out.println("from = " + from + ", to = " + to);
                 Set<RecordId> relationsFrom = dao.getRelationsFrom(from);
                 relationsFrom.add(to);
                 dao.setRelationsFrom(from, relationsFrom);

@@ -43,12 +43,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final int SCHEMA_VERSION = 2;
 
     private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
-    private static final String SELECT_RECORD = "SELECT content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE bibliographicrecordid=? AND agencyid=? AND content IS NOT NULL";
+    private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String DELETE_RECORD = "UPDATE records SET content=NULL, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=? ";
-    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, content, created, modified) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_RECORD = "UPDATE records SET content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified) VALUES(?, ?, ?, ?, ?, ?, ?)";
+    private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -110,11 +110,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
+                        final boolean deleted = resultSet.getBoolean("DELETED");
+                        final String mimeType = resultSet.getString("MIMETYPE");
                         final String base64Content = resultSet.getString("CONTENT");
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         Timestamp created = resultSet.getTimestamp("CREATED");
                         Timestamp modified = resultSet.getTimestamp("MODIFIED");
-                        Record record = new RecordImpl(bibliographicRecordId, agencyId, content, created, modified, false);
+                        Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, false);
 
                         resultSet.close();
                         stmt.close();
@@ -207,10 +209,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void saveRecord(Record record) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
-            stmt.setString(1, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(2, new Timestamp(record.getModified().getTime()));
-            stmt.setString(3, record.getId().getBibliographicRecordId());
-            stmt.setInt(4, record.getId().getAgencyId());
+            System.out.println("record = " + record);
+            stmt.setBoolean(1, record.isDeleted());
+            stmt.setString(2, record.getMimeType());
+            stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(4, new Timestamp(record.getModified().getTime()));
+            stmt.setString(5, record.getId().getBibliographicRecordId());
+            stmt.setInt(6, record.getId().getAgencyId());
             if (stmt.executeUpdate() > 0) {
                 stmt.close();
                 return;
@@ -222,9 +227,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
             stmt.setString(1, record.getId().getBibliographicRecordId());
             stmt.setInt(2, record.getId().getAgencyId());
-            stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(4, new Timestamp(record.getCreated().getTime()));
-            stmt.setTimestamp(5, new Timestamp(record.getModified().getTime()));
+            stmt.setBoolean(3, record.isDeleted());
+            stmt.setString(4, record.getMimeType());
+            stmt.setString(5, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(6, new Timestamp(record.getCreated().getTime()));
+            stmt.setTimestamp(7, new Timestamp(record.getModified().getTime()));
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -319,6 +326,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(1, recordId.getBibliographicRecordId());
             stmt.setInt(2, recordId.getAgencyId());
             for (RecordId refer : refers) {
+                System.out.println("recordId = " + recordId + ", refer = " + refer);
                 stmt.setString(3, refer.getBibliographicRecordId());
                 stmt.setInt(4, refer.getAgencyId());
                 stmt.execute();
