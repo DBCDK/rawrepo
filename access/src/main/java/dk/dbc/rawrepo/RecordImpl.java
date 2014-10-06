@@ -28,8 +28,6 @@ import java.util.Date;
 public class RecordImpl implements Record {
 
     RecordId id;
-    boolean deleted;
-    String mimeType;
     byte[] content;
     Date created;
     Date modified;
@@ -37,19 +35,15 @@ public class RecordImpl implements Record {
 
     RecordImpl(RecordId id) {
         this.id = id;
-        this.deleted = false;
-        this.mimeType = "";
-        this.content = new byte[0];
+        this.content = null;
         this.created = new Date();
         this.modified = new Date();
         this.original = true;
     }
 
     /* for mocking */
-    RecordImpl(String id, int library, boolean deleted, String mimeType, byte[] content, Date created, Date modified, boolean original) {
+    RecordImpl(String id, int library, byte[] content, Date created, Date modified, boolean original) {
         this.id = new RecordId(id, library);
-        this.deleted = deleted;
-        this.mimeType = mimeType;
         this.content = content;
         this.created = created;
         this.modified = modified;
@@ -62,41 +56,19 @@ public class RecordImpl implements Record {
     }
 
     @Override
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    @Override
-    public void delete() {
-        this.modified = new Date();
-        deleted = true;
-    }
-
-    @Override
-    public void undelete() {
-        this.modified = new Date();
-        deleted = false;
-    }
-
-    @Override
     public byte[] getContent() {
         return Arrays.copyOf(content, content.length);
+    }
+
+    @Override
+    public boolean hasContent() {
+        return content != null;
     }
 
     @Override
     public void setContent(byte[] content) {
         this.modified = new Date();
         this.content = Arrays.copyOf(content, content.length);
-    }
-
-    @Override
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    @Override
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
     }
 
     @Override
@@ -129,7 +101,7 @@ public class RecordImpl implements Record {
 
     @Override
     public String toString() {
-        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content[?]=" + content.length + ", created=" + created + ", modified=" + modified + ", original=" + original + '}';
+        return "Record{" + "id=" + id + ", content.length=" + (content != null ? content.length : "null") + ", created=" + created + ", modified=" + modified + ", original=" + original + '}';
     }
 
 }

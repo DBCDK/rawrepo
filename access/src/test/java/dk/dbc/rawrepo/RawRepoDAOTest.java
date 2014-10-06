@@ -630,33 +630,13 @@ public class RawRepoDAOTest {
             }
 
             @Override
-            public boolean isDeleted() {
-                return false;
-            }
-
-            @Override
-            public void delete() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void undelete() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            public boolean hasContent() {
+                return true;
             }
 
             @Override
             public void setContent(byte[] content) {
                 c = content;
-            }
-
-            @Override
-            public String getMimeType() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setMimeType(String mimeType) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
 
             @Override
@@ -691,7 +671,6 @@ public class RawRepoDAOTest {
             public String toString() {
                 return "{" + content + '}';
             }
-
         };
 
     }
