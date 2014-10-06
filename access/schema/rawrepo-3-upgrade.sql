@@ -6,10 +6,10 @@ ALTER TABLE records_archive ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE records_archive ADD COLUMN mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange';
 
 UPDATE records SET content='', deleted=TRUE WHERE content IS NULL;
-ALTER TABLE records ALTER COLUMN content SET NOT NULL;
+-- ALTER TABLE records ALTER COLUMN content SET NOT NULL;
 
 UPDATE records_archive SET content='', deleted=TRUE WHERE content IS NULL;
-ALTER TABLE records_archive ALTER COLUMN content SET NOT NULL;
+-- ALTER TABLE records_archive ALTER COLUMN content SET NOT NULL;
 
 
 

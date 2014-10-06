@@ -13,7 +13,7 @@ CREATE TABLE records ( -- V2
        agencyid NUMERIC(6) NOT NULL,
        deleted BOOLEAN NOT NULL DEFAULT FALSE, -- V3
        mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange', -- V3
-       content TEXT NOT NULL, -- V3 base64 encoded
+       content TEXT, -- base64 encoded
        created TIMESTAMP NOT NULL,
        modified TIMESTAMP NOT NULL,
        CONSTRAINT records_pk PRIMARY KEY (bibliographicrecordid, agencyid)
@@ -24,7 +24,7 @@ CREATE TABLE records_archive ( -- V2
        agencyid NUMERIC(6) NOT NULL,
        deleted BOOLEAN NOT NULL DEFAULT FALSE, -- V3
        mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange', -- V3
-       content TEXT NOT NULL, -- V3 base64 encoded
+       content TEXT, -- base64 encoded
        created TIMESTAMP NOT NULL,
        modified TIMESTAMP NOT NULL
 );
