@@ -1,4 +1,10 @@
 
+UPDATE records SET content='' WHERE content IS NULL;
+ALTER TABLE records ALTER COLUMN content SET NOT NULL;
+
+UPDATE records_archive SET content='' WHERE content IS NULL;
+ALTER TABLE records_archive ALTER COLUMN content SET NOT NULL;
+
 ALTER TABLE records ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE records ADD COLUMN mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange';
 
