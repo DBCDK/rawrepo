@@ -191,6 +191,7 @@ CREATE TABLE queue ( -- V2
 CREATE TABLE queuerules ( -- V1
        provider VARCHAR(32) NOT NULL, -- name of worker adding data
        worker VARCHAR(32) NOT NULL,   -- name of designated worker
+       mimetype VARCHAR(128) NOT NULL DEFAULT '', -- V3 queue jobs is mimetype ('' = ignore)
        changed CHAR(1) NOT NULL,      -- queue jobs if changes Y(es), N(no), A(ll)
        leaf CHAR(1) NOT NULL,         -- queue jobs if leaf    Y(es), N(no), A(ll)
        -- changed AND leaf should be true to queue
@@ -205,6 +206,35 @@ CREATE INDEX queue_idx_queued ON queue(queued);
 
 
 
+
+CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), mimetype_ VARCHAR(128), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$ -- V3
+DECLARE
+    row queuerules;
+    exists queue;
+    rows int;
+BEGIN
+    FOR row IN SELECT * FROM queuerules WHERE provider=provider_ AND (mimetype='' OR mimetype=mimetype_) AND (changed='A' OR changed=changed_) AND (leaf='A' OR leaf=leaf_) LOOP
+    	-- RAISE NOTICE 'worker=%', row.worker;
+	SELECT COUNT(*) INTO rows FROM queue WHERE bibliographicrecordid=bibliographicrecordid_ AND agencyid=agencyid_ AND worker=row.worker AND blocked='';
+	-- RAISE NOTICE 'rows=%', rows;
+	CASE
+	    WHEN rows = 0 THEN -- none is queued
+	        INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES(bibliographicrecordid_, agencyid_, row.worker);
+	    WHEN rows = 1 THEN -- one is queued - but may be locked by a worker
+	    	BEGIN
+		    SELECT * INTO exists FROM queue WHERE bibliographicrecordid=bibliographicrecordid_ AND agencyid=agencyid_ AND worker=row.worker AND blocked='' FOR UPDATE NOWAIT;
+                    -- By locking the row, we ensure that no worker can take this row until we commit / rollback
+                    -- Ensuring that even if this job is next, it will not be processed until we're sure our data is used.
+		EXCEPTION
+	    	    WHEN lock_not_available THEN
+                        INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES(bibliographicrecordid_, agencyid_, row.worker);
+		END;
+	    ELSE
+	        -- nothing
+	END CASE;
+    END LOOP;
+END
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), provider_ VARCHAR(32), changed_ CHAR(1), leaf_ CHAR(1)) RETURNS SETOF VARCHAR(32) AS $$ -- V2
 DECLARE
