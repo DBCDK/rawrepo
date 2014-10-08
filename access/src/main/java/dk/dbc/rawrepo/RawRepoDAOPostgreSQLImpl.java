@@ -18,17 +18,13 @@
  */
 package dk.dbc.rawrepo;
 
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
 import org.slf4j.LoggerFactory;
@@ -58,7 +54,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_RELATIONS_CHILDREN = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
     private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
-    private static final String SELECT_ALL_LIBRARIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
+    private static final String SELECT_ALL_AGENCIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
@@ -455,7 +451,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException {
         Set<Integer> collection = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_LIBRARIES_FOR_ID)) {
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_AGENCIES_FOR_ID)) {
             stmt.setString(1, bibliographicRecordId);
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
@@ -481,6 +477,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @throws RawRepoException
      */
     @Override
+    @SuppressWarnings("deprecation")
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
         try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE)) {
             stmt.setString(1, job.getBibliographicRecordId());
