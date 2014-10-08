@@ -18,8 +18,11 @@
  */
 package dk.dbc.rawrepo.recordinspector;
 
+import dk.dbc.marcxmerge.MarcXMerger;
+import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import java.io.Closeable;
 import java.io.IOException;
@@ -68,10 +71,41 @@ public class RecordInspector implements Closeable {
         }
     }
 
-    public ArrayList<Timestamp> timestamps(int agencyId, String bibliographicRecordId) throws SQLException {
-        ArrayList<Timestamp> ret = new ArrayList<>();
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT modified FROM records WHERE agencyid=? AND bibliographicrecordid=?"
-                                                                  + " UNION SELECT modified FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
+    public class RecordDescription {
+
+        private final Timestamp timestamp;
+        private final boolean deleted;
+        private final String mimeType;
+
+        public RecordDescription(Timestamp timestamp, boolean deleted, String mimeType) {
+            this.timestamp = timestamp;
+            this.deleted = deleted;
+            this.mimeType = mimeType;
+        }
+
+        public Timestamp getTimestamp() {
+            return timestamp;
+        }
+
+        public boolean isDeleted() {
+            return deleted;
+        }
+
+        public String getMimeType() {
+            return mimeType;
+        }
+
+        @Override
+        public String toString() {
+            return timestamp + (deleted ? " deleted" : "") + " (" + mimeType + ')';
+        }
+
+    }
+
+    public ArrayList<RecordDescription> timestamps(int agencyId, String bibliographicRecordId) throws SQLException {
+        ArrayList<RecordDescription> ret = new ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT modified, deleted, mimetype FROM records WHERE agencyid=? AND bibliographicrecordid=?"
+                                                                  + " UNION SELECT modified, deleted, mimetype FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
                                                                   + " ORDER BY modified DESC");) {
             stmt.setInt(1, agencyId);
             stmt.setString(2, bibliographicRecordId);
@@ -80,11 +114,18 @@ public class RecordInspector implements Closeable {
             try (ResultSet resultSet = stmt.executeQuery();) {
                 while (resultSet.next()) {
                     Timestamp timestamp = resultSet.getTimestamp(1);
-                    ret.add(timestamp);
+                    boolean deleted = resultSet.getBoolean(2);
+                    String mimeType = resultSet.getString(3);
+                    ret.add(new RecordDescription(timestamp, deleted, mimeType));
                 }
             }
         }
         return ret;
+    }
+
+    public Record get(int agencyId, String bibliographicRecordId) throws RawRepoException, MarcXMergerException {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        return dao.fetchMergedRecord(bibliographicRecordId, agencyId, new MarcXMerger());
     }
 
     public byte[] get(int agencyId, String bibliographicRecordId, Timestamp timestamp) throws SQLException {

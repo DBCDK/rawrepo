@@ -22,6 +22,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -43,21 +44,27 @@ public class RecordLoadMain {
             commandLine.parse(args);
             List<String> arguments = commandLine.getExtraArguments();
             boolean delete = commandLine.hasOption("delete");
+            boolean purge = commandLine.hasOption("purge");
             boolean set = commandLine.hasOption("set");
             boolean add = commandLine.hasOption("add");
             boolean relation = set || add;
+            String mimeType = MarcXChangeMimeType.MARCXCHANGE;
+            if (commandLine.hasOption("mimetype")) {
+                mimeType = (String) commandLine.getOption("mimetype");
+            }
 
-            if (delete && relation
+            if (delete && purge
+                || (delete || purge) && relation
                 || set && add
-                || !(delete && arguments.size() == 2
+                || !((delete || purge) && arguments.size() == 2
                      || relation && arguments.size() >= 2
-                     || !delete && !relation && arguments.size() == 3)) {
+                     || !(delete || purge) && !relation && arguments.size() == 3)) {
                 throw new IllegalArgumentException("Commandline syntax error");
             }
             int agencyId = Integer.parseInt(arguments.get(0), 10);
             String bibliographicRecordId = arguments.get(1);
             byte[] content = null;
-            if (!delete && !relation) {
+            if (!delete && !purge && !relation) {
                 String fileName = arguments.get(2);
                 if (fileName.equals("-")) {
                     content = getBytesFromInputStream(System.in);
@@ -79,11 +86,13 @@ public class RecordLoadMain {
             try (RecordLoad recordLoad = new RecordLoad((String) commandLine.getOption("db"));) {
                 if (delete) {
                     recordLoad.delete(agencyId, bibliographicRecordId);
+                } else if (purge) {
+                    recordLoad.purge(agencyId, bibliographicRecordId);
                 } else if (relation) {
                     List<String> relations = arguments.subList(2, arguments.size());
                     recordLoad.relations(agencyId, bibliographicRecordId, add, relations);
                 } else {
-                    recordLoad.save(agencyId, bibliographicRecordId, content);
+                    recordLoad.save(agencyId, bibliographicRecordId, mimeType, content);
                     if (commandLine.hasOption("role")) {
                         String role = (String) commandLine.getOption("role");
                         if (role != null) {
@@ -129,6 +138,8 @@ public class RecordLoadMain {
             addOption("db", "connectstring for database", true, false, string, null);
             addOption("role", "name of enqueue software (provider)", false, false, string, null);
             addOption("delete", "delete record", false, false, null, yes);
+            addOption("purge", "remove record", false, false, null, yes);
+            addOption("mimetype", "record mimetype", false, false, string, null);
             addOption("set", "set relations", false, false, null, yes);
             addOption("add", "add relations", false, false, null, yes);
             addOption("debug", "turn on debug logging", false, false, null, yes);

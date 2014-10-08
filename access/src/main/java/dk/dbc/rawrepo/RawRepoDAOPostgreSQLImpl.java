@@ -18,14 +18,17 @@
  */
 package dk.dbc.rawrepo;
 
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
 import org.slf4j.LoggerFactory;
@@ -40,15 +43,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 2;
+    private static final int SCHEMA_VERSION = 3;
 
     private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
-    private static final String SELECT_RECORD = "SELECT content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String SELECT_RECORD_EXISTS = "SELECT COUNT(*) FROM records WHERE bibliographicrecordid=? AND agencyid=? AND content IS NOT NULL";
-    private static final String DELETE_RECORD = "UPDATE records SET content=NULL, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=? ";
-    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, content, created, modified) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_RECORD = "UPDATE records SET content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified) VALUES(?, ?, ?, ?, ?, ?, ?)";
+    private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -60,6 +63,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
     private static final String CALL_ENQUEUE = "{CALL enqueue(?, ?, ?, ?, ?)}";
+    private static final String CALL_ENQUEUE_MIMETYPE = "{CALL enqueue(?, ?, ?, ?, ?, ?)}";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
     private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
     private static final String QUEUE_SUCCESS = "DELETE FROM queue WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
@@ -110,11 +114,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
+                        final boolean deleted = resultSet.getBoolean("DELETED");
+                        final String mimeType = resultSet.getString("MIMETYPE");
                         final String base64Content = resultSet.getString("CONTENT");
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         Timestamp created = resultSet.getTimestamp("CREATED");
                         Timestamp modified = resultSet.getTimestamp("MODIFIED");
-                        Record record = new RecordImpl(bibliographicRecordId, agencyId, content, created, modified, false);
+                        Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, false);
 
                         resultSet.close();
                         stmt.close();
@@ -139,42 +145,28 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        boolean result = false;
-        try (PreparedStatement stmt = connection.prepareStatement(SELECT_RECORD_EXISTS)) {
-            stmt.setString(1, bibliographicRecordId);
-            stmt.setInt(2, agencyId);
-
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        result = resultSet.getInt(1) > 0;
-                    }
-                }
-            }
-        } catch (SQLException ex) {
-            log.error("Error accessing database", ex);
-            throw new RawRepoException("Error testing for record presence", ex);
+        Boolean recordDeleted = isRecordDeleted(bibliographicRecordId, agencyId);
+        if (recordDeleted != null && !recordDeleted) {
+            return true;
         }
-        return result;
+        return false;
     }
 
     /**
-     * Delete a record from the database
+     * Check for existence of a record (possibly deleted)
      *
-     * @param recordId complex key for record
+     * @param bibliographicRecordId String with record bibliographicRecordId
+     * @param agencyId agencyId number
+     * @return truth value for the existence of the record
      * @throws RawRepoException
      */
     @Override
-    public void deleteRecord(RecordId recordId) throws RawRepoException {
-        try (PreparedStatement stmt = connection.prepareStatement(DELETE_RECORD)) {
-            stmt.setTimestamp(1, new Timestamp(new Date().getTime()));
-            stmt.setString(2, recordId.getBibliographicRecordId());
-            stmt.setInt(3, recordId.getAgencyId());
-            stmt.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error deleting record", ex);
+    public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        Boolean recordDeleted = isRecordDeleted(bibliographicRecordId, agencyId);
+        if (recordDeleted != null) {
+            return true;
         }
+        return false;
     }
 
     /**
@@ -207,10 +199,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void saveRecord(Record record) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
-            stmt.setString(1, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(2, new Timestamp(record.getModified().getTime()));
-            stmt.setString(3, record.getId().getBibliographicRecordId());
-            stmt.setInt(4, record.getId().getAgencyId());
+            stmt.setBoolean(1, record.isDeleted());
+            stmt.setString(2, record.getMimeType());
+            stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(4, new Timestamp(record.getModified().getTime()));
+            stmt.setString(5, record.getId().getBibliographicRecordId());
+            stmt.setInt(6, record.getId().getAgencyId());
             if (stmt.executeUpdate() > 0) {
                 stmt.close();
                 return;
@@ -222,9 +216,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
             stmt.setString(1, record.getId().getBibliographicRecordId());
             stmt.setInt(2, record.getId().getAgencyId());
-            stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(4, new Timestamp(record.getCreated().getTime()));
-            stmt.setTimestamp(5, new Timestamp(record.getModified().getTime()));
+            stmt.setBoolean(3, record.isDeleted());
+            stmt.setString(4, record.getMimeType());
+            stmt.setString(5, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(6, new Timestamp(record.getCreated().getTime()));
+            stmt.setTimestamp(7, new Timestamp(record.getModified().getTime()));
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -232,6 +228,43 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
         if (record instanceof RecordImpl) {
             ((RecordImpl) record).original = false;
+        }
+    }
+
+    @Override
+    public String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_MIMETYPE)) {
+            stmt.setString(1, bibliographicRecordId);
+            stmt.setInt(2, agencyId);
+            if (stmt.execute()) {
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getString(1);
+                    }
+                }
+            }
+            throw new RawRepoExceptionRecordNotFound("Trying to find mimetype");
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error fetching mimetype", ex);
+        }
+    }
+
+    private Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_DELETED)) {
+            stmt.setString(1, bibliographicRecordId);
+            stmt.setInt(2, agencyId);
+            if (stmt.execute()) {
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getBoolean(1);
+                    }
+                }
+            }
+            return null;
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error fetching deleted state", ex);
         }
     }
 
@@ -289,31 +322,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public void setRelationsFrom(RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-        int siblings = 0;
-        int parents = 0;
-        for (RecordId refer : refers) {
-            if (refer.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                siblings++;
-            } else {
-                parents++;
-            }
-        }
+        ValidateRelations.validate(this, recordId, refers);
 
-        if (siblings > 0 && parents > 0) {
-            throw new RawRepoException("Record " + recordId + " has both sibling relations and parent relations");
-        } else if (siblings > 1) {
-            throw new RawRepoException("Record " + recordId + " has multiple sibling relations");
-        } else if (siblings == 1) {
-            if (!getRelationsChildren(recordId).isEmpty()) {
-                throw new RawRepoException("Record " + recordId + " cannot have sibling relations, then it is parent");
-            }
-        } else if (siblings == 0) {
-            for (RecordId refer : refers) {
-                if (!getRelationsSiblingsFromMe(refer).isEmpty()) {
-                    throw new RawRepoException("Record " + recordId + " points to parent " + recordId + " with sibling relations");
-                }
-            }
-        }
         deleteRelationsFrom(recordId);
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RELATION)) {
             stmt.setString(1, recordId.getBibliographicRecordId());
@@ -478,6 +488,32 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(3, provider);
             stmt.setString(4, changed ? "Y" : "N");
             stmt.setString(5, leaf ? "Y" : "N");
+            stmt.execute();
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error queueing job", ex);
+        }
+    }
+
+    /**
+     * Put job(s) on the queue (in the database)
+     *
+     * @param job job description
+     * @param provider change initiator
+     * @param mimeType
+     * @param changed is job for a record that has been changed
+     * @param leaf is this job for a tree leaf
+     * @throws RawRepoException
+     */
+    @Override
+    public void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException {
+        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
+            stmt.setString(1, job.getBibliographicRecordId());
+            stmt.setInt(2, job.getAgencyId());
+            stmt.setString(3, mimeType);
+            stmt.setString(4, provider);
+            stmt.setString(5, changed ? "Y" : "N");
+            stmt.setString(6, leaf ? "Y" : "N");
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);

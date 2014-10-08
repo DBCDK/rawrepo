@@ -96,6 +96,11 @@ public class MarcXMerger {
         this.fieldRules = fieldRules;
     }
 
+    public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
+        return originalMimeType.equals(MarcXChangeMimeType.MARCXCHANGE) && enrichmentMimeType.equals(MarcXChangeMimeType.ENRICHMENT)
+               || originalMimeType.equals(MarcXChangeMimeType.DECENTRAL) && enrichmentMimeType.equals(MarcXChangeMimeType.ENRICHMENT);
+    }
+
     /**
      * Create an xml document parser
      *

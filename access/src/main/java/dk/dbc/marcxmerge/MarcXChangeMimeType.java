@@ -16,42 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dk.dbc.rawrepo;
-
-import java.util.Date;
+package dk.dbc.marcxmerge;
 
 /**
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-public interface Record {
+public class MarcXChangeMimeType {
 
-    byte[] getContent();
-
-    boolean isDeleted();
-
-    void setDeleted(boolean deleted);
-
-    String getMimeType();
-
-    void setMimeType(String mimeType);
-
-    Date getCreated();
-
-    RecordId getId();
-
-    Date getModified();
-
-    boolean isOriginal();
-
-    boolean isEnriched();
-
-    void setEnriched(boolean enriched);
-
-    void setContent(byte[] content);
-
-    void setCreated(Date created);
-
-    void setModified(Date modified);
+    public static final String MARCXCHANGE = "text/marcxchange";
+    public static final String ENRICHMENT = "text/enrichment+marcxchange";
+    public static final String AUTHORITTY = "text/authority+marcxchange";
+    public static final String DECENTRAL = "text/decentral+marcxchange";
 
 }

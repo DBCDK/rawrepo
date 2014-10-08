@@ -46,8 +46,13 @@ public class IndexerTest {
         }
 
         @Override
-        public boolean hasContent() {
-            return true;
+        public boolean isDeleted() {
+            return false;
+        }
+
+        @Override
+        public void setDeleted(boolean deleted) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
@@ -82,6 +87,26 @@ public class IndexerTest {
 
         @Override
         public void setModified(Date modified) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public String getMimeType() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public void setMimeType(String mimeType) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public boolean isEnriched() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public void setEnriched(boolean enriched) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
@@ -231,7 +256,7 @@ public class IndexerTest {
 
         // check that Marcx record is indexed correctly
         String field002a = (String) doc.getField("marc.002a").getValue();
-        List<String> field021ae  = (List<String>) doc.getField("marc.021ae").getValue();
+        List<String> field021ae = (List<String>) doc.getField("marc.021ae").getValue();
         String field022a = (String) doc.getField("marc.022a").getValue();
 
         assertEquals("06605141", field002a);

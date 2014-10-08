@@ -28,26 +28,35 @@ import java.util.Date;
 public class RecordImpl implements Record {
 
     RecordId id;
+    boolean deleted;
+    String mimeType;
     byte[] content;
     Date created;
     Date modified;
     boolean original;
+    boolean enriched;
 
     RecordImpl(RecordId id) {
         this.id = id;
-        this.content = null;
+        this.deleted = false;
+        this.mimeType = "";
+        this.content = new byte[0];
         this.created = new Date();
         this.modified = new Date();
         this.original = true;
+        this.enriched = false;
     }
 
     /* for mocking */
-    RecordImpl(String id, int library, byte[] content, Date created, Date modified, boolean original) {
+    RecordImpl(String id, int library, boolean deleted, String mimeType, byte[] content, Date created, Date modified, boolean original) {
         this.id = new RecordId(id, library);
+        this.deleted = deleted;
+        this.mimeType = mimeType;
         this.content = content;
         this.created = created;
         this.modified = modified;
         this.original = original;
+        this.enriched = false;
     }
 
     @Override
@@ -56,19 +65,36 @@ public class RecordImpl implements Record {
     }
 
     @Override
-    public byte[] getContent() {
-        return Arrays.copyOf(content, content.length);
+    public boolean isDeleted() {
+        return deleted;
     }
 
     @Override
-    public boolean hasContent() {
-        return content != null;
+    public void setDeleted(boolean deleted) {
+        this.modified = new Date();
+        this.deleted = deleted;
+    }
+
+    @Override
+    public byte[] getContent() {
+        return Arrays.copyOf(content, content.length);
     }
 
     @Override
     public void setContent(byte[] content) {
         this.modified = new Date();
         this.content = Arrays.copyOf(content, content.length);
+    }
+
+    @Override
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    @Override
+    public void setMimeType(String mimeType) {
+        this.modified = new Date();
+        this.mimeType = mimeType;
     }
 
     @Override
@@ -100,8 +126,18 @@ public class RecordImpl implements Record {
     }
 
     @Override
+    public boolean isEnriched() {
+        return enriched;
+    }
+
+    @Override
+    public void setEnriched(boolean enriched) {
+        this.enriched = enriched;
+    }
+
+    @Override
     public String toString() {
-        return "Record{" + "id=" + id + ", content.length=" + (content != null ? content.length : "null") + ", created=" + created + ", modified=" + modified + ", original=" + original + '}';
+        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content[?]=" + content.length + ", created=" + created + ", modified=" + modified + ", original=" + original + '}';
     }
 
 }

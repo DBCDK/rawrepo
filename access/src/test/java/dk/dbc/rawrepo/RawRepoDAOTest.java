@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 
 import static org.mockito.Mockito.*;
 
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import java.util.Date;
@@ -61,7 +62,7 @@ public class RawRepoDAOTest {
                               "A:870970");
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("A:870970"));
-            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:870970:Y:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -77,7 +78,7 @@ public class RawRepoDAOTest {
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("A:870970"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:870970:Y:Y", "A:1:N:Y", "A:2:N:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -93,7 +94,7 @@ public class RawRepoDAOTest {
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("A:1"));
-            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:1:Y:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -115,7 +116,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("D:870970"));
-            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -137,7 +138,7 @@ public class RawRepoDAOTest {
                               "H:870970", "H:1", "H:2");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("D:870970"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -159,7 +160,7 @@ public class RawRepoDAOTest {
                               "H:870970", "H:1", "H:2");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("D:2"));
-            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:2:Y:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -181,7 +182,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("D:870970"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -203,7 +204,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("D:870970"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -225,7 +226,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("C:870970"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", //  SECTION
                          "D:870970:N:Y", //  BIND
@@ -250,7 +251,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("C:870970"));
-            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
                          "D:870970:N:Y", "D:1:N:Y", "D:2:N:Y", //  BIND
@@ -275,7 +276,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("C:1"));
-            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:1:Y:N", //  SECTION
                          "D:1:N:Y", //  BIND
@@ -300,7 +301,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("C:870970"));
-            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
                          "D:870970:N:Y", "D:1:N:Y", "D:2:N:Y", //  BIND
@@ -325,7 +326,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("C:870970"));
-            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
                          "D:870970:N:Y", "D:1:N:Y", "D:2:N:Y", //  BIND
@@ -350,7 +351,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:870970"));
-            verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
                          "C:870970:N:N", //  SECTION
@@ -379,7 +380,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:870970"));
-            verify(access, times(21)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(21)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", "B:1:N:N", "B:2:N:N", //  HEAD
                          "C:870970:N:N", "C:1:N:N", "C:2:N:N", //  SECTION
@@ -408,7 +409,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:1"));
-            verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:1:Y:N", //  HEAD
                          "C:1:N:N", //  SECTION
@@ -437,7 +438,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:870970"));
-            verify(access, times(11)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(11)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
                          "C:870970:N:N", //  SECTION
@@ -466,7 +467,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:870970"));
-            verify(access, times(16)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(16)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
                          "C:870970:N:N", "C:1:N:N", //  SECTION
@@ -495,7 +496,7 @@ public class RawRepoDAOTest {
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
             access.changedRecord("foo", recordIdFromString("B:870970"));
-            verify(access, times(15)).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+            verify(access, times(15)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
                          "C:870970:N:N", "C:1:N:N", //  SECTION
@@ -622,6 +623,9 @@ public class RawRepoDAOTest {
         final String id = split[0];
         final int library = Integer.parseInt(split[1]);
         return new Record() {
+            boolean deleted = false;
+            boolean enriched = false;
+            String mimeType = library == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
             byte[] c = content.getBytes();
 
             @Override
@@ -630,13 +634,29 @@ public class RawRepoDAOTest {
             }
 
             @Override
-            public boolean hasContent() {
-                return true;
+            public boolean isDeleted() {
+                return deleted;
+            }
+
+            @Override
+            public void setDeleted(boolean deleted) {
+                this.deleted = deleted;
             }
 
             @Override
             public void setContent(byte[] content) {
                 c = content;
+            }
+
+            @Override
+            public String getMimeType() {
+
+                return mimeType;
+            }
+
+            @Override
+            public void setMimeType(String mimeType) {
+                this.mimeType = mimeType;
             }
 
             @Override
@@ -671,6 +691,17 @@ public class RawRepoDAOTest {
             public String toString() {
                 return "{" + content + '}';
             }
+
+            @Override
+            public boolean isEnriched() {
+                return enriched;
+            }
+
+            @Override
+            public void setEnriched(boolean enriched) {
+                this.enriched = enriched;
+            }
+
         };
 
     }
@@ -699,11 +730,11 @@ public class RawRepoDAOTest {
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
                 collection.add(((RecordId) arguments[0]).getBibliographicRecordId() + ":" + ((RecordId) arguments[0]).getAgencyId()
-                               + (((Boolean) arguments[2]) ? ":Y" : ":N")
-                               + (((Boolean) arguments[3]) ? ":Y" : ":N"));
+                               + (((Boolean) arguments[3]) ? ":Y" : ":N")
+                               + (((Boolean) arguments[4]) ? ":Y" : ":N"));
                 return null;
             }
-        }).when(access).enqueue((RecordId) anyObject(), anyString(), anyBoolean(), anyBoolean());
+        }).when(access).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
         return collection;
     }
 

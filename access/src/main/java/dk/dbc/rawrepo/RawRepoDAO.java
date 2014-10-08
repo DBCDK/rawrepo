@@ -60,7 +60,7 @@ public abstract class RawRepoDAO {
             String className = daoName + databaseProductName + "Impl";
             Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
             if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
-                log.error("Claass found by not an instance of RawRepoDAO");
+                log.error("Class found by not an instance of RawRepoDAO");
                 throw new RawRepoException("Unable to load driver");
             }
             Constructor<?> constructor = clazz.getConstructor(Connection.class);
@@ -81,12 +81,24 @@ public abstract class RawRepoDAO {
      *
      * Create one if none exists in the database
      *
+     * Remember, a record could exist, that is tagged deleted, call undelete() If content is added.
+     *
      * @param bibliographicRecordId String with record id
      * @param agencyId library number
      * @return fetched / new Record
      * @throws RawRepoException
      */
     public abstract Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException;
+
+    /**
+     * Find the mimetype of a record
+     *
+     * @param bibliographicRecordId
+     * @param agencyId
+     * @return
+     * @throws RawRepoException
+     */
+    public abstract String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
      * Check for existence of a record
@@ -97,6 +109,16 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     public abstract boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException;
+
+    /**
+     * Check for existence of a record (possibly deleted)
+     *
+     * @param bibliographicRecordId String with record id
+     * @param agencyId library number
+     * @return truth value for the existence of the record
+     * @throws RawRepoException
+     */
+    public abstract boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
      * Get a collection of all the records, that are that are related to this
@@ -112,21 +134,6 @@ public abstract class RawRepoDAO {
         HashMap<String, Record> ret = new HashMap<>();
         fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger);
         return ret;
-    }
-
-    /**
-     * USE fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger)
-     *
-     * @param bibliographicRecordId
-     * @param agencyId
-     * @return
-     * @throws RawRepoException
-     * @throws MarcXMergerException
-     */
-    @Deprecated
-    public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId) throws RawRepoException, MarcXMergerException {
-        MarcXMerger merger = new MarcXMerger();
-        return fetchRecordCollection(bibliographicRecordId, agencyId, merger);
     }
 
     /**
@@ -166,7 +173,7 @@ public abstract class RawRepoDAO {
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         for (Integer agencyId : allCommonAgencies(originalAgencyId)) {
-            if (recordExists(bibliographicRecordId, agencyId) /* && not deleted */) { // Least common agency for this record
+            if (recordExists(bibliographicRecordId, agencyId)) { // Least common agency for this record
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
                     Record record = fetchRecord(bibliographicRecordId, agencyId);
@@ -182,7 +189,13 @@ public abstract class RawRepoDAO {
                 byte[] content = record.getContent();
                 while (iterator.hasNext()) {
                     Record next = iterator.next();
+                    if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
+                        log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
+                        throw new MarcXMergerException("Cannot merge enrichment");
+                    }
                     content = merger.merge(content, next.getContent());
+                    next.setEnriched(true);
+                    next.setMimeType(record.getMimeType());
                     next.setContent(content);
                     if (record.getModified().after(next.getModified())) {
                         next.setModified(record.getModified());
@@ -221,10 +234,18 @@ public abstract class RawRepoDAO {
      *
      * Set content to null, remember to delete relations
      *
+     * USE record.delete() & saveRecord()
+     *
      * @param recordId complex key for record
      * @throws RawRepoException
      */
-    public abstract void deleteRecord(RecordId recordId) throws RawRepoException;
+    @Deprecated
+    public void deleteRecord(RecordId recordId) throws RawRepoException {
+        Record record = fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+        record.setDeleted(true);
+        record.setContent(new byte[0]);
+        saveRecord(record);
+    }
 
     /**
      * Delete a record from the database
@@ -325,19 +346,6 @@ public abstract class RawRepoDAO {
     public abstract Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException;
 
     /**
-     * USE allAgenciesForBibliographicRecordId
-     *
-     * @param bibliographicRecordId
-     * @return
-     * @throws RawRepoException
-     * @deprecated
-     */
-    @Deprecated
-    public Set<Integer> allLibrariesForId(String bibliographicRecordId) throws RawRepoException {
-        return allAgenciesForBibliographicRecordId(bibliographicRecordId);
-    }
-
-    /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change
      *
      * @param provider parameter to pass to enqueue(...)
@@ -345,15 +353,18 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        int mostCommonLibrary = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
-        // The mostCommonLibrary, is the one that defines parent/child relationship
-        Set<Integer> libraries = allParentLibrariesAffectedByChange(recordId);
-        Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonLibrary));
-        for (Integer agencyId : libraries) {
-            enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, agencyId == recordId.getAgencyId(), children.isEmpty());
+        int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+        // The mostCommonAgency, is the one that defines parent/child relationship
+        Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
+        Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
+        if (!agencies.isEmpty()) {
+            String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
+            for (Integer agencyId : agencies) {
+                enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
+            }
         }
         for (RecordId child : children) {
-            touchChildRecords(libraries, provider, child);
+            touchChildRecords(agencies, provider, child);
         }
 
     }
@@ -384,7 +395,8 @@ public abstract class RawRepoDAO {
                 return agencyId;
             }
         }
-        return COMMON_LIBRARY;
+        log.error("Cannot locate agency for " + originalAgencyId + ":" + bibliographicRecordId);
+        throw new RawRepoExceptionRecordNotFound("Cannot find record");
     }
 
     /**
@@ -396,7 +408,20 @@ public abstract class RawRepoDAO {
      * @param leaf is this job for a tree leaf
      * @throws RawRepoException
      */
+    @Deprecated
     abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
+
+    /**
+     * Put job(s) on the queue (in the database)
+     *
+     * @param job job description
+     * @param provider change initiator
+     * @param mimeType mimetype of the current record
+     * @param changed is job for a record that has been changed
+     * @param leaf is this job for a tree leaf
+     * @throws RawRepoException
+     */
+    abstract void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException;
 
     /**
      * Pull a job from the queue
@@ -449,7 +474,7 @@ public abstract class RawRepoDAO {
      * @return collection of library numbers
      * @throws RawRepoException
      */
-    private Set<Integer> allSiblingLibrariesForRecord(RecordId record) throws RawRepoException {
+    private Set<Integer> allSiblingAgenciesForRecord(RecordId record) throws RawRepoException {
         HashSet<Integer> ret = new HashSet<>();
 
         HashSet<RecordId> tmp = new HashSet<>();
@@ -479,7 +504,7 @@ public abstract class RawRepoDAO {
             Iterator<Integer> iterator = tmp.iterator();
             int next = iterator.next();
             iterator.remove();
-            ret.addAll(allSiblingLibrariesForRecord(new RecordId(bibliographicRecordId, next)));
+            ret.addAll(allSiblingAgenciesForRecord(new RecordId(bibliographicRecordId, next)));
         }
         return ret;
     }
@@ -491,16 +516,16 @@ public abstract class RawRepoDAO {
      * @return
      * @throws RawRepoException
      */
-    private Set<Integer> allParentLibrariesAffectedByChange(RecordId recordId) throws RawRepoException {
+    private Set<Integer> allParentAgenciesAffectedByChange(RecordId recordId) throws RawRepoException {
         HashSet<Integer> ret = new HashSet<>();
-        ret.addAll(allSiblingLibrariesForRecord(recordId));
+        ret.addAll(allSiblingAgenciesForRecord(recordId));
         Set<RecordId> tmp = new HashSet<>();
         tmp.addAll(getRelationsParents(recordId));
         while (!tmp.isEmpty()) {
             Iterator<RecordId> iterator = tmp.iterator();
             RecordId next = iterator.next();
             iterator.remove();
-            ret.addAll(allSiblingLibrariesForRecord(next));
+            ret.addAll(allSiblingAgenciesForRecord(next));
             tmp.addAll(getRelationsParents(new RecordId(next.getBibliographicRecordId(), recordId.getAgencyId())));
         }
         return ret;
@@ -509,19 +534,23 @@ public abstract class RawRepoDAO {
     /**
      * Traverse down touching records for all affected libraries
      *
-     * @param libraries
+     * @param agencies
      * @param provider
      * @param recordId
      * @throws RawRepoException
      */
-    private void touchChildRecords(Set<Integer> libraries, String provider, RecordId recordId) throws RawRepoException {
-        Set<Integer> siblings = expandSiblingsForId(libraries, recordId.getBibliographicRecordId());
+    private void touchChildRecords(Set<Integer> agencies, String provider, RecordId recordId) throws RawRepoException {
+        Set<Integer> siblingAgencies = expandSiblingsForId(agencies, recordId.getBibliographicRecordId());
         Set<RecordId> children = getRelationsChildren(recordId);
-        for (Integer agencyId : siblings) {
-            enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, false, children.isEmpty());
+        if (!siblingAgencies.isEmpty()) {
+            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), siblingAgencies.iterator().next());
+            String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
+            for (Integer agencyId : siblingAgencies) {
+                enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, false, children.isEmpty());
+            }
         }
         for (RecordId child : children) {
-            touchChildRecords(siblings, provider, child);
+            touchChildRecords(siblingAgencies, provider, child);
         }
     }
 

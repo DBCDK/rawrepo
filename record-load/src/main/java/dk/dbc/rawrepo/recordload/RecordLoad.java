@@ -65,12 +65,14 @@ public class RecordLoad implements Closeable {
         }
     }
 
-    public void save(int agencyId, String bibliographicRecordId, byte[] content) throws RawRepoException {
+    public void save(int agencyId, String bibliographicRecordId, String mimeType, byte[] content) throws RawRepoException {
         Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
         boolean original = record.isOriginal();
         if (original) {
             log.info("Newly created record");
         }
+        record.setDeleted(false);
+        record.setMimeType(mimeType);
         record.setContent(content);
         dao.saveRecord(record);
     }
@@ -81,8 +83,15 @@ public class RecordLoad implements Closeable {
     }
 
     public void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
+        Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
+        record.setDeleted(true);
+        dao.deleteRelationsFrom(record.getId());
+        dao.saveRecord(record);
+    }
+
+    public void purge(int agencyId, String bibliographicRecordId) throws RawRepoException {
         RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        dao.deleteRecord(recordId);
+        dao.purgeRecord(recordId);
         Set<RecordId> relations = new HashSet<>();
         dao.setRelationsFrom(recordId, relations);
     }

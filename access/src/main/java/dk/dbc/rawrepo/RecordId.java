@@ -44,27 +44,7 @@ public class RecordId {
         return bibliographicRecordId;
     }
 
-    /**
-     * USE getBibliographicRecordId
-     *
-     * @return
-     */
-    @Deprecated
-    public String getId() {
-        return bibliographicRecordId;
-    }
-
     public int getAgencyId() {
-        return agencyId;
-    }
-
-    /**
-     * USE getAgencyId()
-     *
-     * @return
-     */
-    @Deprecated
-    public int getLibrary() {
         return agencyId;
     }
 

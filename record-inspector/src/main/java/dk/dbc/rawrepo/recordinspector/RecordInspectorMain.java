@@ -22,7 +22,9 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
 import dk.dbc.xmldiff.XmlDiff;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +34,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
@@ -63,9 +67,12 @@ public class RecordInspectorMain {
             if (output > 1) {
                 throw new IllegalArgumentException("only one of: --color --text --quiet");
             }
-            boolean hasRelationsAndRightArgumentCount = relations && arguments.size() == 2;
-            boolean hasNoRelationsAndRightArgumentCount = !relations && arguments.size() >= 2 && arguments.size() <= 4;
-            if (!hasRelationsAndRightArgumentCount
+            boolean merge = commandLine.hasOption("merge");
+            boolean hasMerge = merge && !relations && arguments.size() == 2;
+            boolean hasRelationsAndRightArgumentCount = !merge && relations && arguments.size() == 2;
+            boolean hasNoRelationsAndRightArgumentCount = !merge && !relations && arguments.size() >= 2 && arguments.size() <= 4;
+            if (!hasMerge
+                && !hasRelationsAndRightArgumentCount
                 && !hasNoRelationsAndRightArgumentCount) {
                 throw new IllegalArgumentException("Syntax error");
             }
@@ -91,15 +98,17 @@ public class RecordInspectorMain {
                     }
 
                 } else {
-                    ArrayList<Timestamp> timestamps = recordInspector.timestamps(agencyId, bibliographicRecordId);
-                    if (arguments.size() == 2) {
+                    ArrayList<RecordInspector.RecordDescription> timestamps = recordInspector.timestamps(agencyId, bibliographicRecordId);
+                    if (merge) {
+                        Record record = recordInspector.get(agencyId, bibliographicRecordId);
+                        System.out.write(record.getContent());
+                    } else if (arguments.size() == 2) {
                         System.out.println("VERSIONS:");
                         for (int i = 0; i < timestamps.size(); i++) {
-                            Timestamp ts = timestamps.get(i);
-                            System.out.printf("%2d: %s%n", i, ts.toString());
+                            System.out.printf("%2d: %s%n", i, timestamps.get(i).toString());
                         }
                     } else if (arguments.size() == 3) {
-                        byte[] content = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(Integer.parseInt(arguments.get(2), 10)));
+                        byte[] content = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(Integer.parseInt(arguments.get(2), 10)).getTimestamp());
                         if (content == null) {
                             System.out.println("Record is deleted");
                         } else {
@@ -107,9 +116,9 @@ public class RecordInspectorMain {
                         }
                     } else if (arguments.size() == 4) {
                         int leftIndex = Integer.parseInt(arguments.get(2), 10);
-                        byte[] left = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(leftIndex));
+                        byte[] left = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(leftIndex).getTimestamp());
                         int rightIndex = Integer.parseInt(arguments.get(3), 10);
-                        byte[] right = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(rightIndex));
+                        byte[] right = recordInspector.get(agencyId, bibliographicRecordId, timestamps.get(rightIndex).getTimestamp());
                         if (left == null) {
                             System.out.println("Left side (" + leftIndex + ") is deleted");
                         }
@@ -141,6 +150,8 @@ public class RecordInspectorMain {
                     }
                     recordInspector.commit();
                 }
+            } catch (MarcXMergerException ex) {
+                Logger.getLogger(RecordInspectorMain.class.getName()).log(Level.SEVERE, null, ex);
             }
             System.exit(exitOk ? 0 : 1);
         } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException | SAXException e) {
@@ -182,6 +193,7 @@ public class RecordInspectorMain {
             addOption("text", "text output", false, false, null, yes);
             addOption("color", "color output", false, false, null, yes);
             addOption("debug", "turn on debug logging", false, false, null, yes);
+            addOption("merge", "merge current record (no index)", false, false, null, yes);
         }
 
         @Override
