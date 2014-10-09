@@ -57,7 +57,6 @@ public class RawRepoDAOTest {
     public void testQueueEntityWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970");
@@ -74,7 +73,6 @@ public class RawRepoDAOTest {
     public void testQueueEntityWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
@@ -92,7 +90,6 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);

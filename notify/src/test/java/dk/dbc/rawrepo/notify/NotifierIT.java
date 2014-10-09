@@ -92,7 +92,7 @@ public class NotifierIT {
         record1.setContent("First edition".getBytes());
         dao.saveRecord(record1);
         assertTrue(dao.recordExists("A", 870970));
-        dao.changedRecord(PROVIDER, record1.getId());
+        dao.changedRecord(PROVIDER, record1.getId(), "text/plain");
         connection.commit();
         assertEquals(1, getQueueSize());
 

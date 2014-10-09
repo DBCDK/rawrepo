@@ -117,7 +117,7 @@ public class IndexerIT {
         record1.setContent("First edition".getBytes());
         dao.saveRecord(record1);
         assertTrue(dao.recordExists("A", 870970));
-        dao.changedRecord(PROVIDER, record1.getId());
+        dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
         connection.commit();
         Indexer indexer = createInstance();
         indexer.performWork();
@@ -139,7 +139,7 @@ public class IndexerIT {
         record1.setContent("First edition".getBytes());
         dao.saveRecord(record1);
         assertTrue(dao.recordExists("A", 870970));
-        dao.changedRecord(PROVIDER, record1.getId());
+        dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
         connection.commit();
 
         Indexer indexer = createInstance(solrServerUrl + "X");
