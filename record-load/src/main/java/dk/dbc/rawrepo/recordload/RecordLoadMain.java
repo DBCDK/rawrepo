@@ -96,7 +96,7 @@ public class RecordLoadMain {
                     if (commandLine.hasOption("role")) {
                         String role = (String) commandLine.getOption("role");
                         if (role != null) {
-                            recordLoad.enqueue(agencyId, bibliographicRecordId, role);
+                            recordLoad.enqueue(agencyId, bibliographicRecordId, role, mimeType);
                         }
                     }
                 }
