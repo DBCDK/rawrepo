@@ -348,25 +348,45 @@ public abstract class RawRepoDAO {
     /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change
      *
+     * USE: {@link #changedRecord(java.lang.String, dk.dbc.rawrepo.RecordId, java.lang.String) changedRecord}
+     *
+     *
      * @param provider parameter to pass to enqueue(...)
      * @param recordId the record that has been changed
      * @throws RawRepoException
      */
+    @Deprecated
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
-        // The mostCommonAgency, is the one that defines parent/child relationship
-        Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
-        Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
-        if (!agencies.isEmpty()) {
-            String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
-            for (Integer agencyId : agencies) {
-                enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
-            }
-        }
-        for (RecordId child : children) {
-            touchChildRecords(agencies, provider, child);
-        }
+        changedRecord(provider, recordId, "unknown/unknown");
+    }
 
+    /**
+     * Traverse relations calling enqueue(...) to trigger manipulation of change
+     *
+     * @param provider parameter to pass to enqueue(...)
+     * @param recordId the record that has been changed
+     * @param fallbackMimetype Which mimetype to use when no mimetype can be found (deleted)
+     * @throws RawRepoException
+     */
+    public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
+        try {
+
+            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+            // The mostCommonAgency, is the one that defines parent/child relationship
+            Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
+            Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
+            if (!agencies.isEmpty()) {
+                String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
+                for (Integer agencyId : agencies) {
+                    enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
+                }
+            }
+            for (RecordId child : children) {
+                touchChildRecords(agencies, provider, child);
+            }
+        } catch (RawRepoExceptionRecordNotFound rawRepoExceptionRecordNotFound) {
+            enqueue(recordId, provider, fallbackMimetype, true, true);
+        }
     }
 
     /**

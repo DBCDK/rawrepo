@@ -58,10 +58,11 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970");
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("A:870970"));
+            access.changedRecord("foo", recordIdFromString("A:870970"), "text/plain");
             verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:870970:Y:Y");
         } catch (SQLException ex) {
@@ -74,6 +75,7 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);
@@ -89,11 +91,12 @@ public class RawRepoDAOTest {
     public void testQueueEntityLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("A:1"));
+            access.changedRecord("foo", recordIdFromString("A:1"), "text/plain");
             verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:1:Y:Y");
         } catch (SQLException ex) {
@@ -105,7 +108,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", // SECTION
@@ -115,7 +118,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("D:870970"));
+            access.changedRecord("foo", recordIdFromString("D:870970"), "text/plain");
             verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y");
         } catch (SQLException ex) {
@@ -127,7 +130,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", // SECTION
@@ -137,7 +140,7 @@ public class RawRepoDAOTest {
                               "G:870970", "G:1", "G:2", // BIND
                               "H:870970", "H:1", "H:2");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("D:870970"));
+            access.changedRecord("foo", recordIdFromString("D:870970"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
@@ -149,7 +152,7 @@ public class RawRepoDAOTest {
     public void testQueueBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", // SECTION
@@ -159,7 +162,7 @@ public class RawRepoDAOTest {
                               "G:870970", "G:1", "G:2", // BIND
                               "H:870970", "H:1", "H:2");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("D:2"));
+            access.changedRecord("foo", recordIdFromString("D:2"), "text/plain");
             verify(access, times(1)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:2:Y:Y");
         } catch (SQLException ex) {
@@ -171,7 +174,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", "C:2", // SECTION
@@ -181,7 +184,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("D:870970"));
+            access.changedRecord("foo", recordIdFromString("D:870970"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
@@ -193,7 +196,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
                               "C:870970", // SECTION
@@ -203,7 +206,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("D:870970"));
+            access.changedRecord("foo", recordIdFromString("D:870970"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "D:870970:Y:Y", "D:1:N:Y", "D:2:N:Y");
         } catch (SQLException ex) {
@@ -215,7 +218,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970",// SECTION
@@ -225,7 +228,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("C:870970"));
+            access.changedRecord("foo", recordIdFromString("C:870970"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", //  SECTION
@@ -240,7 +243,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", "C:2",// SECTION
@@ -250,7 +253,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("C:870970"));
+            access.changedRecord("foo", recordIdFromString("C:870970"), "text/plain");
             verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
@@ -265,7 +268,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", "C:2",// SECTION
@@ -275,7 +278,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("C:1"));
+            access.changedRecord("foo", recordIdFromString("C:1"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:1:Y:N", //  SECTION
@@ -290,7 +293,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", "C:2",// SECTION
@@ -300,7 +303,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("C:870970"));
+            access.changedRecord("foo", recordIdFromString("C:870970"), "text/plain");
             verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
@@ -315,7 +318,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
                               "C:870970",// SECTION
@@ -325,7 +328,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("C:870970"));
+            access.changedRecord("foo", recordIdFromString("C:870970"), "text/plain");
             verify(access, times(9)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "C:870970:Y:N", "C:1:N:N", "C:2:N:N", //  SECTION
@@ -340,7 +343,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", // SECTION
@@ -350,7 +353,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:870970"));
+            access.changedRecord("foo", recordIdFromString("B:870970"), "text/plain");
             verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
@@ -369,7 +372,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
                               "C:870970", // SECTION
@@ -379,7 +382,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:870970"));
+            access.changedRecord("foo", recordIdFromString("B:870970"), "text/plain");
             verify(access, times(21)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", "B:1:N:N", "B:2:N:N", //  HEAD
@@ -398,7 +401,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
                               "C:870970", // SECTION
@@ -408,7 +411,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:1"));
+            access.changedRecord("foo", recordIdFromString("B:1"), "text/plain");
             verify(access, times(7)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:1:Y:N", //  HEAD
@@ -427,7 +430,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", // SECTION
@@ -437,7 +440,7 @@ public class RawRepoDAOTest {
                               "G:870970", "G:1", "G:2", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:870970"));
+            access.changedRecord("foo", recordIdFromString("B:870970"), "text/plain");
             verify(access, times(11)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
@@ -456,7 +459,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", // SECTION
@@ -466,7 +469,7 @@ public class RawRepoDAOTest {
                               "G:870970", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:870970"));
+            access.changedRecord("foo", recordIdFromString("B:870970"), "text/plain");
             verify(access, times(16)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
@@ -485,7 +488,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithComplexLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
                               "C:870970", "C:1", // SECTION
@@ -495,7 +498,7 @@ public class RawRepoDAOTest {
                               "G:870970", "G:1", // BIND
                               "H:870970");// BIND
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("B:870970"));
+            access.changedRecord("foo", recordIdFromString("B:870970"), "text/plain");
             verify(access, times(15)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol,
                          "B:870970:Y:N", //  HEAD
