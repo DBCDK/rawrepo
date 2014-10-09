@@ -477,7 +477,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @throws RawRepoException
      */
     @Override
-    @SuppressWarnings("deprecation")
+    @Deprecated
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
         try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE)) {
             stmt.setString(1, job.getBibliographicRecordId());
