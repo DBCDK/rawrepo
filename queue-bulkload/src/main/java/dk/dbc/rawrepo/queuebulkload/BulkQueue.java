@@ -52,7 +52,7 @@ public class BulkQueue {
         dao = openDatabase(db);
     }
 
-    public void run(Iterator<RecordId> iterator) {
+    public void run(Iterator<RecordId> iterator, String fallbackMimeType) {
         try {
             int row = 0;
             connection.setAutoCommit(false);
@@ -66,7 +66,7 @@ public class BulkQueue {
                 row++;
                 RecordId id = iterator.next();
                 log.debug("id = " + id);
-                dao.changedRecord(role, id);
+                dao.changedRecord(role, id, fallbackMimeType);
             }
             connection.commit();
         } catch (Exception ex) {

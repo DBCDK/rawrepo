@@ -21,6 +21,7 @@ package dk.dbc.rawrepo.queuebulkload;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import java.io.FileNotFoundException;
@@ -70,6 +71,7 @@ public class BulkQueueMain {
         String role;
         Integer commit;
         Integer library;
+        String fallbackMimeType;
         BulkQueue bulkQueue;
         try {
             commandLine.parse(args);
@@ -86,6 +88,10 @@ public class BulkQueueMain {
             library = 870970;
             if (commandLine.hasOption("library")) {
                 library = (Integer) commandLine.getOption("library");
+            }
+            fallbackMimeType = MarcXChangeMimeType.MARCXCHANGE;
+            if (commandLine.hasOption("mimetype")) {
+                fallbackMimeType = (String) commandLine.getOption("mimetype");
             }
             commit = 1000;
             if (commandLine.hasOption("commit")) {
@@ -142,7 +148,7 @@ public class BulkQueueMain {
         log.debug("DEBUG");
         log.info("INFO");
 
-        bulkQueue.run(iterator);
+        bulkQueue.run(iterator, fallbackMimeType);
     }
 
     private static void setLogLevel(String file) {
@@ -167,6 +173,7 @@ class CommandLineBulkQueue extends CommandLine {
     void setOptions() {
         addOption("role", "name of enqueue software (provider)", true, false, string, null);
         addOption("library", "which library to use (default=COMMON_LIBRARY)", false, false, integer, null);
+        addOption("mimetype", "Fallback mimetype, if type cannot be resolved", false, false, string, null);
         addOption("stdin", "read ids from stdin", false, false, null, yes);
         addOption("all", "select all ids from the records table in the database", false, false, null, yes);
         addOption("range", "select all ids from the records table in the database, "
