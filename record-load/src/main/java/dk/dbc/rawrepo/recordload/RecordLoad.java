@@ -77,9 +77,9 @@ public class RecordLoad implements Closeable {
         dao.saveRecord(record);
     }
 
-    public void enqueue(int agencyId, String bibliographicRecordId, String role) throws RawRepoException {
+    public void enqueue(int agencyId, String bibliographicRecordId, String role, String mimetype) throws RawRepoException {
         RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        dao.changedRecord(role, recordId);
+        dao.changedRecord(role, recordId, mimetype);
     }
 
     public void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
