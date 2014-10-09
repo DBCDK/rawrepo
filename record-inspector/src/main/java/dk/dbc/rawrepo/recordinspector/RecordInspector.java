@@ -78,13 +78,13 @@ public class RecordInspector implements Closeable {
         private final String mimeType;
 
         public RecordDescription(Timestamp timestamp, boolean deleted, String mimeType) {
-            this.timestamp = timestamp;
+            this.timestamp = (Timestamp) timestamp.clone();
             this.deleted = deleted;
             this.mimeType = mimeType;
         }
 
         public Timestamp getTimestamp() {
-            return timestamp;
+            return (Timestamp) timestamp.clone();
         }
 
         public boolean isDeleted() {

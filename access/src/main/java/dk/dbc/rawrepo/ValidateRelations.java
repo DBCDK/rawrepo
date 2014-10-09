@@ -41,7 +41,7 @@ public class ValidateRelations {
         }
     }
 
-    private static interface Validator {
+    private interface Validator {
 
         void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException;
     }
