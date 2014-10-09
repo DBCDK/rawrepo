@@ -77,7 +77,7 @@ public class RawRepoDAOTest {
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
             Collection<String> eCol = mockCollectEnqueue(access);
-            access.changedRecord("foo", recordIdFromString("A:870970"));
+            access.changedRecord("foo", recordIdFromString("A:870970"), "text/plain");
             verify(access, times(3)).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
             collectionIs(eCol, "A:870970:Y:Y", "A:1:N:Y", "A:2:N:Y");
         } catch (SQLException ex) {
