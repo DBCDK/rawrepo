@@ -71,7 +71,7 @@ public class RecordInspector implements Closeable {
         }
     }
 
-    public class RecordDescription {
+    public static class RecordDescription {
 
         private final Timestamp timestamp;
         private final boolean deleted;
