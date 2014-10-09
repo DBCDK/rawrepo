@@ -163,6 +163,25 @@ sammenskrivning foretages, fordi den post man har en
 søskenderelation til, kan have en anden generationsrelation.
 
 
+## Sletning af poster ##
+
+Man kan slette poster fra RR. Sletningen foregår ved hjælp
+af en markering, så RR indeholder de slettede poster. Det
+betyder at man kan hente slettede poster fra RR.
+
+På DAOen er følgende metoder implementeret til at undersøge
+eksistens af poster:
+
+* `recordExists`
+  Returnere true hvis posten eksisterer, og ikke er
+  slettemarkeret.
+
+
+* `recordExistsMaybeDeleted`
+  Returnere true hvis posten eksisterer, selvom den er
+  slettemarkeret.
+
+
 ## Versionering ##
 
 RR Implementere et versionering så det er muligt at udhente
