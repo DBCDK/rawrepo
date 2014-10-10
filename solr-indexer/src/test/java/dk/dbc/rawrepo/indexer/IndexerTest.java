@@ -5,7 +5,9 @@
  */
 package dk.dbc.rawrepo.indexer;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import java.io.IOException;
@@ -31,13 +33,15 @@ public class IndexerTest {
         private final Date created;
         private final Date modified;
         private final boolean original;
+        private String mimeType;
 
-        MockRecord(String id, int library, byte[] content, Date created, Date modified, boolean original) {
+        MockRecord(String id, int library, byte[] content, Date created, Date modified, boolean original, String mimeType) {
             this.id = new RecordId(id, library);
             this.content = content;
             this.created = created;
             this.modified = modified;
             this.original = original;
+            this.mimeType = mimeType;
         }
 
         @Override
@@ -92,12 +96,12 @@ public class IndexerTest {
 
         @Override
         public String getMimeType() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return mimeType;
         }
 
         @Override
         public void setMimeType(String mimeType) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            this.mimeType = mimeType;
         }
 
         @Override
@@ -110,6 +114,14 @@ public class IndexerTest {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
+    }
+
+    private static Indexer createInstance() {
+        @SuppressWarnings("UseInjectionInsteadOfInstantion")
+        Indexer indexer = new Indexer();
+        indexer.contentsIndexed = new Counter();
+        indexer.contentsSkipped = new Counter();
+        return indexer;
     }
 
     @Test
@@ -240,9 +252,9 @@ public class IndexerTest {
                          + "      </marcx:datafield>\n"
                          + "    </marcx:record>";
 
-        Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true);
+        Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true, MarcXChangeMimeType.MARCXCHANGE);
 
-        Indexer indexer = new Indexer();
+        Indexer indexer = createInstance();
         indexer.createIndexDocumentTimer = new Timer();
         indexer.parser = SAXParserFactory.newInstance().newSAXParser();
 
@@ -265,4 +277,57 @@ public class IndexerTest {
         assertEquals("0904-6054", field022a);
 
     }
+    @Test
+    public void testCreateIndexDocument_whenContentCanNotBeParsed() throws IOException, ParserConfigurationException, SAXException {
+
+        Date created = new Date(100);
+        Date modified = new Date(200);
+        String content = "";
+
+        Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true, MarcXChangeMimeType.MARCXCHANGE);
+
+        Indexer indexer = createInstance();
+        indexer.createIndexDocumentTimer = new Timer();
+        indexer.parser = SAXParserFactory.newInstance().newSAXParser();
+
+        SolrInputDocument doc = indexer.createIndexDocument(record);
+
+        assertEquals(created, doc.getField("created").getValue());
+        assertEquals(modified, doc.getField("modified").getValue());
+        assertEquals("id:123456", doc.getField("id").getValue());
+        assertEquals("id", doc.getField("marc.001a").getValue());
+        assertEquals(123456, doc.getField("marc.001b").getValue());
+
+        // check that Marcx record is not indexed
+        assertNull("marc.002a is not present", doc.getField("marc.002a"));
+        assertNull("marc.021ae is not present", doc.getField("marc.021ae"));
+        assertNull("marc.022a is not present", doc.getField("marc.022a"));
+    }
+
+    @Test
+    public void testCreateIndexDocument_whenDocumentIsNotMarc() throws IOException, ParserConfigurationException, SAXException {
+
+        Date created = new Date(100);
+        Date modified = new Date(200);
+        String content = "";
+
+        Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true, "DUMMY");
+
+        Indexer indexer = createInstance();
+        indexer.createIndexDocumentTimer = new Timer();
+        indexer.parser = SAXParserFactory.newInstance().newSAXParser();
+
+        SolrInputDocument doc = indexer.createIndexDocument(record);
+
+        assertEquals(created, doc.getField("created").getValue());
+        assertEquals(modified, doc.getField("modified").getValue());
+        assertEquals("id:123456", doc.getField("id").getValue());
+        assertNull("marc.001a is not present", doc.getField("marc.001a"));
+        assertNull("marc.001b is not present", doc.getField("marc.001b"));
+
+        assertNull("marc.002a is not present", doc.getField("marc.002a"));
+        assertNull("marc.021ae is not present", doc.getField("marc.021ae"));
+        assertNull("marc.022a is not present", doc.getField("marc.022a"));
+    }
+
 }

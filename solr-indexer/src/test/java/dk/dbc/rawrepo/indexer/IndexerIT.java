@@ -24,6 +24,7 @@
  */
 package dk.dbc.rawrepo.indexer;
 
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
 import java.sql.Connection;
@@ -34,6 +35,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrInputDocument;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -47,6 +49,9 @@ public class IndexerIT {
 
     private static final String PROVIDER = "test";
     private static final String WORKER = "changed";
+
+    private static final String BIBLIOGRAPHIC_RECORD_ID = "A";
+    private static final int AGENCY_ID = 870970;
 
     String jdbcUrl;
     private Connection connection;
@@ -87,7 +92,7 @@ public class IndexerIT {
         stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES('" + PROVIDER + "', ?, ?, ?)");
         stmt.setString(1, WORKER);
         stmt.setString(2, "Y");
-        stmt.setString(3, "A");
+        stmt.setString(3, BIBLIOGRAPHIC_RECORD_ID);
         stmt.execute();
     }
 
@@ -111,19 +116,20 @@ public class IndexerIT {
     @Test
     public void createRecord() throws Exception {
         RawRepoDAO dao = RawRepoDAO.newInstance(connection);
-        assertFalse(dao.recordExists("A", 870970));
+        assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
-        Record record1 = dao.fetchRecord("A", 870970);
+        Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
         record1.setContent("First edition".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
-        assertTrue(dao.recordExists("A", 870970));
+        assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
         dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
         connection.commit();
         Indexer indexer = createInstance();
         indexer.performWork();
         solrServer.commit(true, true);
 
-        QueryResponse response = solrServer.query(new SolrQuery("marc.001b:870970"));
+        QueryResponse response = solrServer.query(new SolrQuery("marc.001b:" + AGENCY_ID));
         assertEquals("Document can be found using library no.", 1, response.getResults().getNumFound());
 
         response = solrServer.query(new SolrQuery("marc.001b:870971"));
@@ -131,14 +137,43 @@ public class IndexerIT {
     }
 
     @Test
+    public void deleteRecord() throws Exception {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
+
+        // Put in a document that is going to be deleted
+        SolrInputDocument document = new SolrInputDocument();
+        document.addField("id", BIBLIOGRAPHIC_RECORD_ID + ":" + AGENCY_ID);
+        solrServer.add(document);
+
+        Record record = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
+        record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
+        record.setDeleted(true);
+        dao.saveRecord(record);
+        dao.changedRecord(PROVIDER, record.getId(), record.getMimeType());
+        assertTrue("Record exists", dao.recordExistsMabyDeleted(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
+        assertFalse("Record is deleted", dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
+
+        connection.commit();
+
+        Indexer indexer = createInstance();
+        indexer.performWork();
+        solrServer.commit(true, true);
+
+        QueryResponse response = solrServer.query(new SolrQuery("id:" + BIBLIOGRAPHIC_RECORD_ID + "\\:" + AGENCY_ID));
+        assertEquals("Document can not be found using id. Must have been deleted", 0, response.getResults().getNumFound());
+    }
+
+    @Test
     public void createRecordWhenIndexingFails() throws Exception {
         RawRepoDAO dao = RawRepoDAO.newInstance(connection);
-        assertFalse(dao.recordExists("A", 870970));
+        assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
-        Record record1 = dao.fetchRecord("A", 870970);
+        Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
         record1.setContent("First edition".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
-        assertTrue(dao.recordExists("A", 870970));
+        assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
         dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
         connection.commit();
 
@@ -147,8 +182,7 @@ public class IndexerIT {
         solrServer.commit(true, true);
 
         QueryResponse response;
-        response = solrServer.query(new SolrQuery("marc.001b:870970"));
+        response = solrServer.query(new SolrQuery("marc.001b:" + AGENCY_ID));
         assertEquals("Document can not be found using library no.", 0, response.getResults().getNumFound());
     }
-
 }

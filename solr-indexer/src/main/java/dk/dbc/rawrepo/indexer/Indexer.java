@@ -18,6 +18,7 @@
  */
 package dk.dbc.rawrepo.indexer;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import dk.dbc.rawrepo.QueueJob;
@@ -47,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import dk.dbc.marcx.sax.MarcxParser;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
 
 /**
@@ -76,9 +78,13 @@ public class Indexer {
     Timer fetchRecordTimer;
     Timer createIndexDocumentTimer;
     Timer updateSolrTimer;
+    Timer deleteSolrDocumentTimer;
     Timer queueSuccessTimer;
     Timer queueFailTimer;
     Timer commitTimer;
+
+    Counter contentsIndexed;
+    Counter contentsSkipped;
 
     SAXParser parser;
 
@@ -100,9 +106,12 @@ public class Indexer {
         fetchRecordTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "fetchRecord"));
         createIndexDocumentTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "createIndexDocument"));
         updateSolrTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "updateSolr"));
+        deleteSolrDocumentTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "deleteSolrDocument"));
         queueSuccessTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "queueSuccess"));
         queueFailTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "queueFail"));
         commitTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "commit"));
+        contentsIndexed = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsIndexed"));
+        contentsSkipped = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsSkipped"));
 
         try {
             parser = SAXParserFactory.newInstance().newSAXParser();
@@ -119,7 +128,7 @@ public class Indexer {
     }
 
     public void performWork() {
-        log.info("Indexing available jobs from {}", workerName);
+        log.info("Indexing available jobs from worker '{}'", workerName);
 
         boolean moreWork = true;
         int processedJobs = 0;
@@ -145,7 +154,7 @@ public class Indexer {
                 log.error("Error getting job from database", ex);
             }
         }
-        log.info("Done indexing {} jobs from {}", processedJobs, workerName);
+        log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
     }
 
     protected Connection getConnection() throws SQLException {
@@ -170,9 +179,12 @@ public class Indexer {
         int library = jobId.getAgencyId();
         try {
             Record record = fetchRecord(dao, id, library);
-
-            SolrInputDocument doc = createIndexDocument(record);
-            updateSolr(jobId, doc);
+            if (record.isDeleted()) {
+                deleteSolrDocument(jobId);
+            } else {
+                SolrInputDocument doc = createIndexDocument(record);
+                updateSolr(jobId, doc);
+            }
             queueSuccess(dao, job);
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
@@ -197,16 +209,42 @@ public class Indexer {
         return record;
     }
 
+    private String createSolrDocumentId(RecordId recordId) {
+        return recordId.getBibliographicRecordId()+ ":" + recordId.getAgencyId();
+    }
+
     SolrInputDocument createIndexDocument(Record record) {
         Timer.Context time = createIndexDocumentTimer.time();
         final SolrInputDocument doc = new SolrInputDocument();
         RecordId recordId = record.getId();
-        doc.addField("id", recordId.getBibliographicRecordId()+ ":" + recordId.getAgencyId());
-        doc.addField("marc.001a", recordId.getBibliographicRecordId());
-        doc.addField("marc.001b", recordId.getAgencyId());
+        doc.addField("id", createSolrDocumentId(recordId));
 
-        // Extract fields from content
-        byte[] content = record.getContent();
+        String mimeType = record.getMimeType();
+        switch (mimeType) {
+            case MarcXChangeMimeType.MARCXCHANGE:
+            case MarcXChangeMimeType.AUTHORITTY:
+            case MarcXChangeMimeType.DECENTRAL:
+            case MarcXChangeMimeType.ENRICHMENT:
+                log.debug("Indexing content of {} with mimetype {}", recordId, mimeType );
+                doc.addField("marc.001a", recordId.getBibliographicRecordId());
+                doc.addField("marc.001b", recordId.getAgencyId());
+                byte[] content = record.getContent();
+                extractFieldsFromContent(content, doc);
+                contentsIndexed.inc();
+                break;
+            default:
+                contentsSkipped.inc();
+                log.debug("Skipping indexing of {} with mimetype {}", recordId, mimeType );
+        }
+
+        doc.addField("created", record.getCreated());
+        doc.addField("modified", record.getModified());
+        log.trace("Created solr document {}", doc);
+        time.stop();
+        return doc;
+    }
+
+    private void extractFieldsFromContent(byte[] content, final SolrInputDocument doc) {
         try (InputStream input = new ByteArrayInputStream(content)) {
             parser.parse(input, new MarcxParser() {
                 @Override
@@ -223,12 +261,13 @@ public class Indexer {
         } catch (SAXException | IOException ex) {
             log.error("Failed to parse content. Content document fields will be skipped", ex);
         }
+    }
 
-        doc.addField("created", record.getCreated());
-        doc.addField("modified", record.getModified());
-        log.trace("Created solr document {}", doc);
+    private void deleteSolrDocument(RecordId jobId) throws IOException, SolrServerException {
+        Timer.Context time = deleteSolrDocumentTimer.time();
+        log.debug("Deleting document for {} to solr", jobId);
+        solrServer.deleteById(createSolrDocumentId(jobId));
         time.stop();
-        return doc;
     }
 
     private void updateSolr(RecordId jobId, SolrInputDocument doc) throws IOException, SolrServerException {
