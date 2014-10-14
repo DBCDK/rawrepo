@@ -33,16 +33,16 @@ function work(r) {
 
     db.begin();
 
-    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE id=:id AND library=:lib");
+    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:id AND agencyid=:lib");
     q['blob'] = blob;
     q['created'] = y + "-" + m + "-" + d;
-    q['id'] = id;
-    q['lib'] = lib;
+    q['bibliographicrecordid'] = id;
+    q['agencyid'] = lib;
     if (q.execute() === 0) {
         q.done();
-        q = db.prepare("INSERT INTO records(id, library, content, created, modified) VALUES(:id, :lib, encode(:blob, 'BASE64'), :created, TIMEOFDAY()::TIMESTAMP)");
-        q['id'] = id;
-        q['lib'] = lib;
+        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, created, modified) VALUES(:id, :lib, encode(:blob, 'BASE64'), :created, TIMEOFDAY()::TIMESTAMP)");
+        q['bibliographicrecordid'] = id;
+        q['agencyid'] = lib;
         q['blob'] = blob;
         q['created'] = y + "-" + m + "-" + d;
         q.execute();
