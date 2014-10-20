@@ -36,24 +36,18 @@ public class AllCollection implements Iterable<RecordId> {
     private final ResultSet resultSet;
 
     public AllCollection(Connection connection, int library) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement("SELECT id, library FROM records WHERE library=?");
-        try {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=?")) {
             stmt.setInt(1, library);
             resultSet = stmt.executeQuery();
-        } finally {
-            stmt.close();
         }
     }
 
     AllCollection(Connection connection, Integer library, Timestamp from, Timestamp to) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement("SELECT id, library FROM records WHERE library=? AND modified >=? AND modified <=?");
-        try {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE angecyid=? AND modified >=? AND modified <=?")) {
             stmt.setInt(1, library);
             stmt.setTimestamp(2, from);
             stmt.setTimestamp(3, to);
             resultSet = stmt.executeQuery();
-        } finally {
-            stmt.close();
         }
     }
 
