@@ -35,7 +35,7 @@
         <executions>
           <execution>
             <id>solr-config</id>
-            <phase>process-resources</phase>
+            <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
