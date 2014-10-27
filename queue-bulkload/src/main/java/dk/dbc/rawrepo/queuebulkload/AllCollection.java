@@ -43,7 +43,7 @@ public class AllCollection implements Iterable<RecordId> {
     }
 
     AllCollection(Connection connection, Integer library, Timestamp from, Timestamp to) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE angecyid=? AND modified >=? AND modified <=?")) {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=? AND modified >=? AND modified <=?")) {
             stmt.setInt(1, library);
             stmt.setTimestamp(2, from);
             stmt.setTimestamp(3, to);
