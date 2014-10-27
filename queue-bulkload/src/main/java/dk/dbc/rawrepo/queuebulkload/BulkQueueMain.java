@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,7 @@ public class BulkQueueMain {
     public static void main(String[] args) {
         CommandLine commandLine = new CommandLineBulkQueue();
         Iterator<RecordId> iterator;
+        AutoCloseable autoCloseable = null;
         String db;
         String role;
         Integer commit;
@@ -109,20 +111,26 @@ public class BulkQueueMain {
                     throw new IllegalStateException("Extra arguments with --all does not make sense");
                 }
                 String file = (String) commandLine.getOption("file");
-                iterator = new StreamCollection(library, file).iterator();
+                StreamCollection streamCollection = new StreamCollection(library, file);
+                autoCloseable = streamCollection;
+                iterator = streamCollection.iterator();
 
             } else if (commandLine.hasOption("all")) {
                 if (!commandLine.getExtraArguments().isEmpty()) {
                     throw new IllegalStateException("Extra arguments with --all does not make sense");
                 }
-                iterator = new AllCollection(bulkQueue.connection, library).iterator();
+                AllCollection allCollection = new AllCollection(bulkQueue.connection, library);
+                autoCloseable = allCollection;
+                iterator = allCollection.iterator();
             } else if (commandLine.hasOption("range")) {
                 if (commandLine.getExtraArguments().size() != 2) {
                     throw new IllegalStateException("--range takes 2 arguments");
                 }
                 List<String> extraArguments = commandLine.getExtraArguments();
-                iterator = new AllCollection(bulkQueue.connection, library,
-                                             parseDate(extraArguments.get(0)), parseDate(extraArguments.get(1))).iterator();
+                AllCollection allCollection = new AllCollection(bulkQueue.connection, library,
+                                                                parseDate(extraArguments.get(0)), parseDate(extraArguments.get(1)));
+                autoCloseable = allCollection;
+                iterator = allCollection.iterator();
 
             } else if (!commandLine.getExtraArguments().isEmpty()) {
                 if (!commandLine.hasOption("library")) {
@@ -136,8 +144,7 @@ public class BulkQueueMain {
             } else {
                 throw new IllegalStateException("No record id source has been defined");
             }
-
-        } catch (RawRepoException | FileNotFoundException | IllegalStateException | SQLException e) {
+        } catch (SQLException | RawRepoException | IllegalStateException | FileNotFoundException e) {
             String usage = commandLine.usage();
             System.out.println(usage);
             System.out.println(e.getLocalizedMessage());
@@ -149,6 +156,14 @@ public class BulkQueueMain {
         log.info("INFO");
 
         bulkQueue.run(iterator, fallbackMimeType);
+
+        try {
+            if (autoCloseable != null) {
+                autoCloseable.close();
+            }
+        } catch (Exception ex) {
+        }
+
     }
 
     private static void setLogLevel(String file) {

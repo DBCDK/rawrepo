@@ -30,7 +30,7 @@ import java.util.Scanner;
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-public class StreamCollection implements Iterable<RecordId> {
+public class StreamCollection implements Iterable<RecordId>, AutoCloseable {
 
     InputStream stream;
     private int library;
@@ -76,5 +76,10 @@ public class StreamCollection implements Iterable<RecordId> {
                 throw new IllegalStateException("Cannot remove things from stream");
             }
         };
+    }
+
+    @Override
+    public void close() throws Exception {
+        stream.close();
     }
 }

@@ -23,31 +23,44 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author bogeskov
  */
-public class AllCollection implements Iterable<RecordId> {
+public class AllCollection implements Iterable<RecordId>, AutoCloseable {
+
+    private static final Logger log = LoggerFactory.getLogger(AllCollection.class);
 
     private final ResultSet resultSet;
 
     public AllCollection(Connection connection, int library) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=?")) {
+        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=?");
+        try {
             stmt.setInt(1, library);
             resultSet = stmt.executeQuery();
+        } catch (Exception e) {
+            stmt.close();
+            throw e;
         }
     }
 
     AllCollection(Connection connection, Integer library, Timestamp from, Timestamp to) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=? AND modified >=? AND modified <=?")) {
+        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid=? AND modified >= ? AND modified <= ?");
+        try {
             stmt.setInt(1, library);
             stmt.setTimestamp(2, from);
             stmt.setTimestamp(3, to);
             resultSet = stmt.executeQuery();
+        } catch (Exception e) {
+            stmt.close();
+            throw e;
         }
     }
 
@@ -55,11 +68,17 @@ public class AllCollection implements Iterable<RecordId> {
     public Iterator<RecordId> iterator() {
         return new Iterator<RecordId>() {
             boolean hasNextCache = false;
+            boolean resultsetNext = true;
 
             @Override
             public boolean hasNext() {
                 try {
-                    hasNextCache = hasNextCache || resultSet.next();
+                    if (!hasNextCache) {
+                        if (resultsetNext) {
+                            log.debug("advance cursor");
+                            hasNextCache = resultsetNext = resultSet.next();
+                        }
+                    }
                 } catch (SQLException ex) {
                     hasNextCache = false;
                     throw new RuntimeException("Advance sql cursor: ", ex);
@@ -87,6 +106,14 @@ public class AllCollection implements Iterable<RecordId> {
                 throw new IllegalStateException("Cannot remove things from resultset");
             }
         };
+    }
+
+    @Override
+    public void close() throws Exception {
+        log.debug("Close all");
+        try (Statement stmt = resultSet.getStatement()) {
+            resultSet.close();
+        }
     }
 
 }
