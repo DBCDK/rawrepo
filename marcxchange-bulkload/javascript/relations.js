@@ -33,17 +33,17 @@ function work(r) {
         db.begin();
 
         try {
-            var q = db.prepare("DELETE FROM relations WHERE id = :id AND library = :lib");
-            q['id'] = id;
-            q['lib'] = lib;
+            var q = db.prepare("DELETE FROM relations WHERE bibliographicrecordid = :id AND agencyid = :lib");
+            q['bibliographicrecordid'] = id;
+            q['agencyid'] = lib;
             q.execute();
             q.done();
 
-            q = db.prepare("INSERT INTO relations(id, library, refer_id, refer_library) VALUES(:id, :lib, :ref_id, :ref_lib)");
-            q['id'] = id;
-            q['lib'] = lib;
-            q['ref_id'] = parent;
-            q['ref_lib'] = lib;
+            q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:id, :lib, :ref_id, :ref_lib)");
+            q['bibliographicrecordid'] = id;
+            q['agencyid'] = lib;
+            q['refer_bibliographicrecordid'] = parent;
+            q['refer_agencyid'] = lib;
             q.execute();
             q.done();
             print("+");
