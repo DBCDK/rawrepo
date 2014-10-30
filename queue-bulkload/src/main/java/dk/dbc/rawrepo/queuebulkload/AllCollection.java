@@ -75,7 +75,6 @@ public class AllCollection implements Iterable<RecordId>, AutoCloseable {
                 try {
                     if (!hasNextCache) {
                         if (resultsetNext) {
-                            log.debug("advance cursor");
                             hasNextCache = resultsetNext = resultSet.next();
                         }
                     }
