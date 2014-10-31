@@ -8,9 +8,8 @@ mkdir -p $tmp
 rm -f $tmp/log
 
 if [ $# = 0 ]; then 
-    version=`ls -f $name-*-upgrade.sql | sort -n | tail -n 1`
-    version=${version/$name-/}
-    version=${version/-*/}
+    version=`ls -f $name-*.sql | sort -n | tail -n 1`
+    version=${version//[^0-9]/}
 
     if ! cmp -s $name-$version.sql $name.sql; then
 	echo "updating latest stable ($version) from current"
@@ -25,6 +24,10 @@ V="`ls -f /usr/lib/postgresql/ | sort -n | tail -n 1`"
 export PGHOST=/tmp/$$
 
 trap '/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data >>$tmp/log 2>&1 ; rm -rf $PGHOST' EXIT
+
+if [ ! -e $name-$version.sql ]; then
+    cp $name.sql $name-$version.sql
+fi
 
 if [ ! -e $tmp/$name-$version.schema ] ||
    [ $tmp/$name-$version.schema -ot $name-$version.sql ]; then
@@ -51,6 +54,11 @@ EOT
 	exit 1
     fi
 fi
+
+if [ ! -e $name-$version-upgrade.sql ]; then
+    sed -e '1,/^__SQL__/d' -e 's/@VERSION@/'$version'/g' $0 > $name-$version-upgrade.sql
+fi
+
 
 if [ ! -e $tmp/$name-$version-upgrade.schema ] ||
    [ $tmp/$name-$version-upgrade.schema -ot $name-$(($version - 1)).sql ] ||
@@ -85,3 +93,43 @@ if ! cmp -s $tmp/$name-$version.content $tmp/$name-$version-upgrade.content; the
     echo "Content Mismatch"
     diff -y $tmp/$name-$version.content $tmp/$name-$version-upgrade.content
 fi
+
+
+
+exit 0
+
+
+__SQL__
+--
+-- ENSURE ONLY UPGRADING PREVIOUS VERSION
+--
+\set ON_ERROR_STOP
+
+BEGIN TRANSACTION;
+
+DO
+$$
+DECLARE
+  currentversion INTEGER = @VERSION@;
+  brokenversion INTEGER = 0;
+  oldversion INTEGER;
+BEGIN
+  SELECT MAX(version) INTO oldversion FROM version;
+  IF (oldversion <> (currentversion-1)) THEN
+    RAISE EXCEPTION 'Expected schema version % found %', (currentversion-1), oldversion;
+  END IF;
+  INSERT INTO version VALUES(currentversion);
+  DELETE FROM version WHERE version <= brokenversion;
+END
+$$;
+
+
+--
+--
+--
+
+
+--
+--
+--
+COMMIT;
