@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 cd "${0%/*}"
 
@@ -41,6 +41,7 @@ GRANT ALL PRIVILEGES ON DATABASE data TO duser;
 \\connect data
 EOT
 	pg_dump -s -f $tmp/$name-$version.schema data
+	pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version.content
 	/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data
 	rm -rf $PGHOST
     ) >>$tmp/log 2>&1
@@ -67,11 +68,12 @@ GRANT ALL PRIVILEGES ON DATABASE data TO duser;
 \\connect data
 EOT
 	pg_dump -s -f $tmp/$name-$version-upgrade.schema data
+	pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version-upgrade.content
 	/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data
 	rm -rf $PGHOST
     ) >>$tmp/log 2>&1
     if grep -q ^ERROR: $tmp/log; then
-	echo "SQL ERROR see $tmp/log"
+	echo "SQL ERROR see $tmp/log" >&2
 	rm -f $tmp/$name-$version-upgrade.schema
 	exit 1
     fi
@@ -79,3 +81,7 @@ fi
 
 java -jar tools/apgdiff-2.4.jar --ignore-start-with $tmp/$name-$version-upgrade.schema $tmp/$name-$version.schema
 
+if ! cmp -s $tmp/$name-$version.content $tmp/$name-$version-upgrade.content; then
+    echo "Content Mismatch"
+    diff -y $tmp/$name-$version.content $tmp/$name-$version-upgrade.content
+fi
