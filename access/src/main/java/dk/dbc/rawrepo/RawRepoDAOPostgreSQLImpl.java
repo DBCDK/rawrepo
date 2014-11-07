@@ -97,7 +97,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Create one if none exists in the database
      *
      * @param bibliographicRecordId String with record bibliographicRecordId
-     * @param agencyId agencyId number
+     * @param agencyId              agencyId number
      * @return fetched / new Record
      * @throws RawRepoException
      */
@@ -135,7 +135,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Check for existence of a record
      *
      * @param bibliographicRecordId String with record bibliographicRecordId
-     * @param agencyId agencyId number
+     * @param agencyId              agencyId number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
@@ -152,7 +152,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Check for existence of a record (possibly deleted)
      *
      * @param bibliographicRecordId String with record bibliographicRecordId
-     * @param agencyId agencyId number
+     * @param agencyId              agencyId number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
@@ -223,7 +223,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error saving record", ex);
         }
         if (record instanceof RecordImpl) {
-            ((RecordImpl) record).original = false;
+            ( (RecordImpl) record ).original = false;
         }
     }
 
@@ -265,7 +265,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get a collection of my "dependencies". All relations that bibliographicRecordId have
+     * Get a collection of my "dependencies". All relations that
+     * bibliographicRecordId have
      *
      * @param recordId complex key for a record
      * @return collection of recordids of whom bibliographicRecordId depends
@@ -313,7 +314,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Clear all existing relations and set the new ones
      *
      * @param recordId recordid to update
-     * @param refers collection of recordids bibliographicRecordId depends on
+     * @param refers   collection of recordids bibliographicRecordId depends on
      * @throws RawRepoException
      */
     @Override
@@ -336,10 +337,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get all records who has bibliographicRecordId as relation, but no siblings
+     * Get all records who has bibliographicRecordId as relation, but no
+     * siblings
      *
      * @param recordId recordid to find relations to
-     * @return collection of recordids that list bibliographicRecordId at relation
+     * @return collection of recordids that list bibliographicRecordId at
+     *         relation
      * @throws RawRepoException
      */
     @Override
@@ -363,7 +366,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Get a collection of my "dependencies". All relations that bibliographicRecordId have
+     * Get a collection of my "dependencies". All relations that
+     * bibliographicRecordId have
      *
      * @param recordId complex key for a record
      * @return collection of recordids of whom bibliographicRecordId depends
@@ -470,10 +474,10 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     /**
      * Put job(s) on the queue (in the database)
      *
-     * @param job job description
+     * @param job      job description
      * @param provider change initiator
-     * @param changed is job for a record that has been changed
-     * @param leaf is this job for a tree leaf
+     * @param changed  is job for a record that has been changed
+     * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
     @Override
@@ -495,11 +499,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     /**
      * Put job(s) on the queue (in the database)
      *
-     * @param job job description
+     * @param job      job description
      * @param provider change initiator
      * @param mimeType
-     * @param changed is job for a record that has been changed
-     * @param leaf is this job for a tree leaf
+     * @param changed  is job for a record that has been changed
+     * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
     @Override
@@ -555,14 +559,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         QueueJob result = null;
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE)) {
             stmt.setString(1, worker);
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        result = new QueueJob(resultSet.getString("bibliographicrecordid"),
-                                              resultSet.getInt("agencyid"),
-                                              resultSet.getString("worker"),
-                                              resultSet.getTimestamp("queued"));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    result = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                                          resultSet.getInt("agencyid"),
+                                          resultSet.getString("worker"),
+                                          resultSet.getTimestamp("queued"));
                 }
             }
         } catch (SQLException ex) {
@@ -596,7 +598,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * QueueJob has failed
      *
      * @param queueJob job that failed
-     * @param error what happened (empty string not allowed)
+     * @param error    what happened (empty string not allowed)
      * @throws RawRepoException
      */
     @Override
@@ -621,7 +623,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * QueueJob has failed
      *
      * @param queueJob job that failed
-     * @param error what happened (empty string not allowed)
+     * @param error    what happened (empty string not allowed)
      * @throws RawRepoException
      */
     @Override
