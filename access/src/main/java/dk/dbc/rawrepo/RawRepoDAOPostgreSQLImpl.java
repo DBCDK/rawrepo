@@ -39,7 +39,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 3;
+    private static final int SCHEMA_VERSION = 6;
 
     private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
