@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -69,7 +68,7 @@ public class Introspect {
     private static final String KEY_PARENTS = "parents";
     private static final String KEY_CHILDREN = "children";
 
-    @Resource(lookup = "jdbc/rawrepoinspect/rawrepo")
+    @Resource(lookup = "jdbc/rawrepointrospect/rawrepo")
     DataSource dataSource;
 
     @Inject
