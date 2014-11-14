@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jquery-format.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/d3.min.js"></script>
+        <script type="text/javascript" src="js/introspect.js"></script>
+        <script type="text/javascript" src="js/relations.js"></script>
+        <link href="css/jquery-ui.css" type="text/css" rel="stylesheet">
+        <link href="css/theme.css" type="text/css" rel="stylesheet">
+        <style type="text/css">
+            #errors {
+                position: absolute;
+                right: 0px;
+                top: 0px;
+                z-index: 100;
+            }
+            #errors DIV {
+                display: block;
+                margin: 10px;
+            }
+            #svg-container {
+                min-width: 300px;
+                min-height: 300px;
+                border: 1px;
+                border-style: solid;
+            }
+            svg {
+                position: absolute; top: 0px; left: 0px;
+                overflow: hidden;
+            }
+            .ui-widget {
+                min-width: 300px;
+            }
+            INPUT.ui-button {
+                padding: 0.4em 0em;
+            }
+            #content {
+                white-space: pre; background-color: lightgray;
+            }
+            #content SPAN.left {
+                color: green;
+            }
+            #content SPAN.right {
+                color: red;
+            }
+            #content SPAN.name {
+                color: purple;
+            }
+            #content SPAN.uri {
+                color: brown;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="errors"></div>
+
+        <input id="bibliographicrecordid" value="2 910 178 7"> 
+        <br>
+        <select id="agencyid"><option value="">Select Agency</option></select>
+
+        <div id="recordTabs">
+            <ul>
+                <li><a href="#recordTabs-content">Content</a></li>
+                <li><a href="#recordTabs-relations">Relations</a></li>
+            </ul>
+            <div id="recordTabs-content">
+                <select id="version"><option value="">Select Version</option></select>
+                <select id="other-version"><option value="">Select Old Version</option></select>
+                <hr>
+                <div id="content" style=""></div>
+            </div>
+            <div id="recordTabs-relations">
+                <div id="svg-container"></div>
+                <input readonly class="ui-button ui-widget ui-corner-all ui-state-default" id="record-select">
+                <input readonly class="ui-button ui-widget ui-corner-all ui-state-default" id="record-hover">
+                | <span style="color: red">current</span> <span style="color: green">expanded</span> <span style="color: blue">unexpanded</span> | <span style="color: orangered">parent</span> <span style="color: purple">sibling</span>
+            </div>
+        </div>
+    </body>
+</html>
