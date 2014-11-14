@@ -222,8 +222,6 @@ class IntrospectDeployScript extends GluScriptBase {
         version="3.2"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/ejb-jar_3_2.xsd">
-  <enterprise-beans>
-  </enterprise-beans>
 </ejb-jar>
 """
         shell.saveContent( ejbXmlFile, xmlString )
