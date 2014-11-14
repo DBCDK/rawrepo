@@ -24,12 +24,14 @@ import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.xmldiff.XmlDiff;
 import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -232,7 +234,11 @@ public class Introspect {
         record.put(KEY_MIMETYPE, recordObj.getMimeType());
         record.put(KEY_CREATED, recordObj.getCreated());
         record.put(KEY_MODIFIED, recordObj.getModified());
-        record.put(KEY_CONTENT, new String(recordObj.getContent()));
+        try {
+            record.put(KEY_CONTENT, new String(recordObj.getContent(), "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException(ex);
+        }
         record.put(KEY_ORIGINAL, recordObj.isOriginal());
         record.put(KEY_ENRICHED, recordObj.isEnriched());
         return record;

@@ -64,21 +64,21 @@ public class RecordMetaDataHistory implements RecordMetaData {
 
     @Override
     public Date getCreated() {
-        return created;
+        return (Date) created.clone();
     }
 
     @Override
-    public void setCreated(java.util.Date created) {
+    public void setCreated(Date created) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public Date getModified() {
-        return modified;
+        return (Date) modified.clone();
     }
 
     @Override
-    public void setModified(java.util.Date modified) {
+    public void setModified(Date modified) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

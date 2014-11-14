@@ -56,7 +56,7 @@ public class JSONStreamer {
     private void stream(OutputStream stream, Object data) throws IOException {
 
         if (data == null || data instanceof Boolean) {
-            stream.write(("" + data).getBytes());
+            stream.write(String.valueOf(data).getBytes("UTF-8"));
             stream.flush();
         } else {
             JsonGenerator generator = Json.createGenerator(stream);
