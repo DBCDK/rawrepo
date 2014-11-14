@@ -24,7 +24,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
 import org.slf4j.LoggerFactory;
@@ -39,7 +41,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 6;
+    private static final int SCHEMA_VERSION = 5;
 
     private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -48,6 +50,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+
+    private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype FROM records WHERE agencyid=? AND bibliographicrecordid=?"
+                                                    + " UNION SELECT created, modified, deleted, mimetype FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
+                                                    + " ORDER BY modified DESC";
+    private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?"
+                                                   + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -163,6 +171,62 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public List<RecordMetaDataHistory> getRecordHistory(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        try {
+            ArrayList<RecordMetaDataHistory> ret = new ArrayList<>();
+            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_METADATA);) {
+                RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
+                stmt.setInt(1, agencyId);
+                stmt.setString(2, bibliographicRecordId);
+                stmt.setInt(3, agencyId);
+                stmt.setString(4, bibliographicRecordId);
+                try (ResultSet resultSet = stmt.executeQuery();) {
+                    while (resultSet.next()) {
+                        Timestamp created = resultSet.getTimestamp(1);
+                        Timestamp modified = resultSet.getTimestamp(2);
+                        boolean deleted = resultSet.getBoolean(3);
+                        String mimeType = resultSet.getString(4);
+                        ret.add(new RecordMetaDataHistory(recordId, deleted, mimeType, created, modified));
+                    }
+                }
+            }
+            return ret;
+        } catch (Exception ex) {
+            throw new RawRepoException("Error getting record history", ex);
+        }
+    }
+
+    @Override
+    public Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException {
+        try {
+            int agencyId = recordMetaData.getId().getAgencyId();
+            String bibliographicRecordId = recordMetaData.getId().getBibliographicRecordId();
+            Timestamp timestamp = recordMetaData.getTimestamp();
+            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_CONTENT);) {
+                stmt.setInt(1, agencyId);
+                stmt.setString(2, bibliographicRecordId);
+                stmt.setTimestamp(3, timestamp);
+                stmt.setInt(4, agencyId);
+                stmt.setString(5, bibliographicRecordId);
+                stmt.setTimestamp(6, timestamp);
+                try (ResultSet resultSet = stmt.executeQuery();) {
+                    if (resultSet.next()) {
+                        final String base64Content = resultSet.getString(1);
+                        byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
+                        return new RecordImpl(bibliographicRecordId, agencyId, recordMetaData.isDeleted(),
+                                              recordMetaData.getMimeType(), content,
+                                              recordMetaData.getCreated(), recordMetaData.getModified(), false);
+                    }
+                }
+            }
+            throw new RawRepoExceptionRecordNotFound("Error getting record history");
+        } catch (SQLException | RawRepoExceptionRecordNotFound ex) {
+            throw new RawRepoException("Error getting record history", ex);
+        }
+
     }
 
     /**

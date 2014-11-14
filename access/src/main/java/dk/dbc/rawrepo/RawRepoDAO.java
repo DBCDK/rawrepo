@@ -212,6 +212,26 @@ public abstract class RawRepoDAO {
     }
 
     /**
+     *
+     * Create a list of all versions of a record
+     *
+     * @param bibliographicRecordId
+     * @param agencyId
+     * @return
+     * @throws RawRepoException
+     */
+    public abstract List<RecordMetaDataHistory> getRecordHistory(String bibliographicRecordId, int agencyId) throws RawRepoException;
+
+    /**
+     * Fetch a specific version of a record
+     *
+     * @param recordMetaData
+     * @return
+     * @throws RawRepoException
+     */
+    public abstract Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException;
+
+    /**
      * List of least to most common agency numbers for this agency
      *
      * When using a webservice, this needs to be cached. This is called repeatedly, for each record processed.

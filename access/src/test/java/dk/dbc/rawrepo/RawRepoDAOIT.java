@@ -38,10 +38,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -114,6 +117,47 @@ public class RawRepoDAOIT {
         assertFalse(recordTest2.getModified().equals(recordTest1.getModified()));
         assertTrue(recordTest2.getCreated().equals(recordTest1.getCreated()));
         assertFalse(new String(recordTest2.getContent()).equals(new String(recordTest1.getContent())));
+
+        connection.commit();
+    }
+
+    @Test
+    public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        connection.setAutoCommit(false);
+        Record record;
+        record = dao.fetchRecord("a bcd efg h", 100000);
+        record.setContent("Version 1".getBytes());
+        record.setMimeType("text/plain");
+        record.setDeleted(false);
+        dao.saveRecord(record);
+
+        record = dao.fetchRecord("a bcd efg h", 100000);
+        record.setContent("Version 2".getBytes());
+        record.setMimeType("text/not-so-plain");
+        record.setDeleted(true);
+        dao.saveRecord(record);
+
+        record = dao.fetchRecord("a bcd efg h", 100000);
+        record.setContent("Version 3".getBytes());
+        record.setMimeType("text/really-plain");
+        record.setDeleted(false);
+        dao.saveRecord(record);
+
+        List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory("a bcd efg h", 100000);
+        assertEquals(recordHistory.size(), 3);
+
+        assertEquals("newest deleted", false, recordHistory.get(0).isDeleted());
+        assertEquals("modified deleted", true, recordHistory.get(1).isDeleted());
+        assertEquals("oldest deleted", false, recordHistory.get(2).isDeleted());
+
+        assertEquals("newest mimetype", "text/really-plain", recordHistory.get(0).getMimeType());
+        assertEquals("modified mimetype", "text/not-so-plain", recordHistory.get(1).getMimeType());
+        assertEquals("oldest mimetype", "text/plain", recordHistory.get(2).getMimeType());
+
+        assertArrayEquals("newest content", "Version 3".getBytes(), dao.getHistoricRecord(recordHistory.get(0)).getContent());
+        assertArrayEquals("modified content", "Version 2".getBytes(), dao.getHistoricRecord(recordHistory.get(1)).getContent());
+        assertArrayEquals("oldest content", "Version 1".getBytes(), dao.getHistoricRecord(recordHistory.get(2)).getContent());
 
         connection.commit();
     }

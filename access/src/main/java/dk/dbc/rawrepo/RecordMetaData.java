@@ -18,20 +18,30 @@
  */
 package dk.dbc.rawrepo;
 
+import java.util.Date;
+
 /**
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-public interface Record extends RecordMetaData {
+public interface RecordMetaData {
 
-    byte[] getContent();
+    RecordId getId();
 
-    void setContent(byte[] content);
+    boolean isDeleted();
 
-    boolean isOriginal();
+    void setDeleted(boolean deleted);
 
-    boolean isEnriched();
+    String getMimeType();
 
-    void setEnriched(boolean enriched);
+    void setMimeType(String mimeType);
+
+    Date getCreated();
+
+    void setCreated(Date created);
+
+    Date getModified();
+
+    void setModified(Date modified);
 
 }
