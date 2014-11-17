@@ -789,7 +789,9 @@ $('document').ready(function () {
         PageOptions.prototype.bibliographicrecordidChanged = function () {
             var that = this;
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
-            if (this.oldBibliographicrecordid !== bibliographicrecordid) {
+            var agencyid = this.agencyidSelect.val();
+            if (this.oldBibliographicrecordid !== bibliographicrecordid ||
+                 (this.nextAgencyid !== null && this.nextAgencyid !== agencyid)) {
                 this.agencyidClear();
                 if (bibliographicrecordid !== '') {
                     $.ajax({
