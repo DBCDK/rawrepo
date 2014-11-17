@@ -909,7 +909,6 @@ $('document').ready(function () {
     relationPane.setOnClick(pageOptions.setId.bind(pageOptions));
     pageOptions.setOnIdSelected(function (key) {
         displayPane.setId(key);
-        relationPane.clear();
         relationPane.setId(key);
     });
 
