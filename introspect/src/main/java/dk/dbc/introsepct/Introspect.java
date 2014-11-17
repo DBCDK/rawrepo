@@ -60,9 +60,6 @@ public class Introspect {
     private static final String KEY_MIMETYPE = "mimetype";
     private static final String KEY_MODIFIED = "modified";
     private static final String KEY_CREATED = "created";
-    private static final String KEY_CONTENT = "content";
-    private static final String KEY_ENRICHED = "enriched";
-    private static final String KEY_ORIGINAL = "original";
     private static final String KEY_ME = "me";
     private static final String KEY_SIBLINGS_IN = "siblings-in";
     private static final String KEY_SIBLINGS_OUT = "siblings-out";
