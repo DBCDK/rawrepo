@@ -581,7 +581,6 @@ $('document').ready(function () {
         RelationPane.prototype.resize = function () {
             var container = document.getElementById('svg-container');
             var style = window.getComputedStyle(container);
-            LOG(style);
             var width = Math.max(parseInt(style.width), 500);
             var height = Math.max(parseInt(style.height), 300);
             var bodyHeight = parseInt(window.getComputedStyle(document.body).height);
@@ -590,7 +589,6 @@ $('document').ready(function () {
                 height = Math.max(height - (bodyHeight - windowHeight), 300);
             }
             height = height - 30;
-            LOG(height);
             container.style.height = height + "px";
             container.style.width = "100%";
             this.height = height;
@@ -919,7 +917,6 @@ $('document').ready(function () {
             }
         },
         activate: function (event, ui) {
-            LOG(ui.newTab.context.hash);
             if (ui.newTab.context.hash === '#recordTabs-relations') {
                 relationPane.resize();
                 relationPane.start();
