@@ -6,11 +6,12 @@ $('document').ready(function () {
      * @returns {undefined}
      */
     var LOG = function () {
-        try {
-            console.log.apply(console, arguments);
-        } catch (e) {
-        }
     };
+    try {
+        console.log("init log");
+        LOG = console.log.bind(console);
+    } catch (e) {
+    }
 
     /**
      * Show error for 3 sek on page
@@ -789,7 +790,7 @@ $('document').ready(function () {
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
             var agencyid = this.agencyidSelect.val();
             if (this.oldBibliographicrecordid !== bibliographicrecordid ||
-                 (this.nextAgencyid !== null && this.nextAgencyid !== agencyid)) {
+                    (this.nextAgencyid !== null && this.nextAgencyid !== agencyid)) {
                 this.agencyidClear();
                 if (bibliographicrecordid !== '') {
                     $.ajax({
@@ -819,15 +820,18 @@ $('document').ready(function () {
                 option.attr({value: e}).text(e);
                 that.agencyidSelect.append(option);
             });
+            var selected = false;
             if (this.nextAgencyid !== null) {
                 var i = $('#agencyid option[value="' + this.nextAgencyid + '"]').index();
                 if (i > 0) {
                     this.agencyidSelect.prop('selectedIndex', i);
-                    this.agencyidSelected();
+                    selected = true;
                 }
                 this.nextAgencyid = null;
             }
             this.agencyidSelect.selectmenu('refresh');
+            if (selected)
+                this.agencyidSelected();
         };
 
         /**
@@ -851,7 +855,7 @@ $('document').ready(function () {
         PageOptions.prototype.agencyidSelected = function () {
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
             var agencyid = this.agencyidSelect.val();
-            if (bibliographicrecordid !== '' && agencyid !== '' && this.oldAgencyid !== agencyid) {
+            if (bibliographicrecordid !== '' && agencyid !== '') {
                 this.oldAgencyid = agencyid;
                 if (this.onIdSelected !== null)
                     this.onIdSelected(agencyid + "," + bibliographicrecordid);
@@ -905,6 +909,7 @@ $('document').ready(function () {
     relationPane.setOnClick(pageOptions.setId.bind(pageOptions));
     pageOptions.setOnIdSelected(function (key) {
         displayPane.setId(key);
+        relationPane.clear();
         relationPane.setId(key);
     });
 
