@@ -24,7 +24,7 @@ import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.xmldiff.XmlDiff;
 import java.io.ByteArrayInputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +42,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -78,30 +79,13 @@ public class Introspect {
     JSONStreamer streamer;
 
     @GET
-    @Path("libraries-with/{id : .+}")
-    public Response getLibrariesWith(@PathParam("id") String bibliographicRecordId) {
+    @Path("agencies-with/{id : .+}")
+    public Response getAgenciesWith(@PathParam("id") String bibliographicRecordId) {
         try (Connection connection = dataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);
             ArrayList<Integer> response = new ArrayList<>(agencies);
             Collections.sort(response);
-
-            return ok(response);
-        } catch (Exception ex) {
-            log.error("Caught", ex);
-            return fail("Internal Error");
-        }
-    }
-
-    @GET
-    @Path("record/{agency : \\d+}/{id : .+}")
-    public Response getRecord(@PathParam("agency") Integer agencyId,
-                              @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = dataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
-            Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
-
-            HashMap<String, Object> response = recordObject(record);
 
             return ok(response);
         } catch (Exception ex) {
@@ -118,7 +102,7 @@ public class Introspect {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger());
 
-            HashMap<String, Object> response = recordObject(record);
+            ArrayList<Object> response = xmlDiff(record, record);
 
             return ok(response);
         } catch (Exception ex) {
@@ -137,7 +121,7 @@ public class Introspect {
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record record = dao.getHistoricRecord(recordHistory.get(version));
 
-            HashMap<String, Object> response = recordObject(record);
+            ArrayList<Object> response = xmlDiff(record, record);
 
             return ok(response);
         } catch (Exception ex) {
@@ -158,16 +142,7 @@ public class Introspect {
             Record leftRecord = dao.getHistoricRecord(recordHistory.get(left));
             Record rightRecord = dao.getHistoricRecord(recordHistory.get(right));
 
-            XmlDiff diff = new XmlDiff();
-            diff.indent("    ");
-            diff.strip(true);
-            diff.trim(true);
-            diff.unicodeNormalize(true);
-            ByteArrayInputStream leftStream = new ByteArrayInputStream(leftRecord.getContent());
-            ByteArrayInputStream rightStream = new ByteArrayInputStream(rightRecord.getContent());
-            DiffWriter writer = new DiffWriter();
-            diff.diff(leftStream, rightStream, writer);
-            ArrayList<Object> response = writer.getData();
+            ArrayList<Object> response = xmlDiff(leftRecord, rightRecord);
 
             return ok(response);
         } catch (Exception ex) {
@@ -225,22 +200,18 @@ public class Introspect {
     // |_| |_|\___|_| .__/ \___|_|  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
     //              |_|
     //
-    private HashMap<String, Object> recordObject(Record recordObj) {
-        HashMap<String, Object> record = new HashMap<>();
-        record.put(KEY_AGENCYID, recordObj.getId().getAgencyId());
-        record.put(KEY_BIBLIOGRAPHICRECORDID, recordObj.getId().getBibliographicRecordId());
-        record.put(KEY_DELETED, recordObj.isDeleted());
-        record.put(KEY_MIMETYPE, recordObj.getMimeType());
-        record.put(KEY_CREATED, recordObj.getCreated());
-        record.put(KEY_MODIFIED, recordObj.getModified());
-        try {
-            record.put(KEY_CONTENT, new String(recordObj.getContent(), "UTF-8"));
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException(ex);
-        }
-        record.put(KEY_ORIGINAL, recordObj.isOriginal());
-        record.put(KEY_ENRICHED, recordObj.isEnriched());
-        return record;
+    private ArrayList<Object> xmlDiff(Record leftRecord, Record rightRecord) throws SAXException, IOException {
+        XmlDiff diff = new XmlDiff();
+        diff.indent("    ");
+        diff.strip(true);
+        diff.trim(true);
+        diff.unicodeNormalize(true);
+        ByteArrayInputStream leftStream = new ByteArrayInputStream(leftRecord.getContent());
+        ByteArrayInputStream rightStream = new ByteArrayInputStream(rightRecord.getContent());
+        DiffWriter writer = new DiffWriter();
+        diff.diff(leftStream, rightStream, writer);
+        ArrayList<Object> response = writer.getData();
+        return response;
     }
 
     private HashMap<String, Object> recordMetaDataObject(RecordMetaDataHistory recordMetaData) {
@@ -279,6 +250,8 @@ public class Introspect {
 
     private static class DiffWriter extends XmlDiff.Writer {
 
+        private static final Logger log = LoggerFactory.getLogger(DiffWriter.class);
+
         private final ArrayList<Object> data;
         private StringBuilder sb;
 
@@ -291,6 +264,7 @@ public class Introspect {
         private void add(String type) {
             if (!sb.toString().isEmpty()) {
                 HashMap<String, String> obj = new HashMap<>();
+                log.debug(type + ":" + sb.toString());
                 obj.put("type", type);
                 obj.put("content", sb.toString());
                 sb = new StringBuilder();
@@ -305,7 +279,7 @@ public class Introspect {
 
         @Override
         public void openUri() {
-            add("");
+            add("both");
         }
 
         @Override
@@ -315,7 +289,7 @@ public class Introspect {
 
         @Override
         public void openName() {
-            add("");
+            add("both");
         }
 
         @Override
@@ -325,7 +299,7 @@ public class Introspect {
 
         @Override
         public void openRight() {
-            add("");
+            add("both");
         }
 
         @Override
@@ -335,7 +309,7 @@ public class Introspect {
 
         @Override
         public void openLeft() {
-            add("");
+            add("both");
         }
 
         @Override
@@ -344,7 +318,7 @@ public class Introspect {
         }
 
         public ArrayList<Object> getData() {
-            add("");
+            add("both");
             return data;
         }
 
