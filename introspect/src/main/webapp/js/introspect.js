@@ -333,23 +333,9 @@ $('document').ready(function () {
                     })
                     .friction(.3)
                     .gravity(0.00)
-                    .charge(-500)
+                    .charge(-250)
                     .on("tick", this.tick.bind(this));
-            this.canvas.append("svg:defs")
-                    .selectAll("marker")
-                    .data(["end"])                   // Different link/path types can be defined here
-                    .enter().append("svg:marker")    // This section adds in the arrows
-                    .style('stroke-width', 2)
-                    .attr("id", String)
-                    .attr("viewBox", "0 -5 10 10")
-                    .attr("refX", 10)
-                    .attr("refY", 0)
-                    .attr("markerWidth", 6)
-                    .attr("markerHeight", 6)
-                    .attr("orient", "auto")
-                    .append("svg:path")
-                    .attr("d", "M0,-5L10,0L0,5");
-
+            
             var resize = this.resize.bind(this);
             $(window).on('resize', resize);
             resize();
@@ -503,8 +489,11 @@ $('document').ready(function () {
                     .enter()
                     .append('path')
                     .attr('class', 'link')
-                    .attr("marker-end", "url(#end)")
-                    .style('fill', 'none')
+                    .style('fill', function (d) {
+                        return d.type === 'parent' ? COLOR.linkParent :
+                                d.type === 'sibling' ? COLOR.linkSibling :
+                                COLOR.unknown;
+                    }.bind(this))
                     .style('stroke', function (d) {
                         return d.type === 'parent' ? COLOR.linkParent :
                                 d.type === 'sibling' ? COLOR.linkSibling :
@@ -689,16 +678,30 @@ $('document').ready(function () {
          * @returns {String}
          */
         RelationPane.prototype.d = function (d) {
-            var dx = d.target.x - d.source.x,
-                    dy = d.target.y - d.source.y,
-                    dr = Math.sqrt(dx * dx + dy * dy),
+            var dxa = d.target.x - d.source.x,
+                    dya = d.target.y - d.source.y,
+                    dra = Math.sqrt(dxa * dxa + dya * dya),
                     sr = d.source.node.attr('r'),
                     tr = d.target.node.attr('r'),
-                    sx = d.source.x + (dx * sr / dr),
-                    sy = d.source.y + (dy * sr / dr),
-                    tx = d.target.x - (dx * tr / dr),
-                    ty = d.target.y - (dy * tr / dr);
-            return "M" + sx + "," + sy + "A" + dr + "," + dr + " 0 0,1 " + tx + "," + ty;
+                    sx = d.source.x + (dxa * sr / dra),
+                    sy = d.source.y + (dya * sr / dra),
+                    tx = d.target.x - (dxa * tr / dra),
+                    ty = d.target.y - (dya * tr / dra),
+                    dx = tx - sx,
+                    dy = ty - sy,
+                    theta = Math.atan2(dy, dx),
+                    d90 = Math.PI / 2,
+                    dtxs = tx - 3 * Math.cos(theta),
+                    dtys = ty - 3 * Math.sin(theta),
+                    l = 8;
+                    w = 2.5
+            ;
+            return "M" + sx + "," + sy +
+                    "L" + tx + "," + ty +
+                    "M" + dtxs + "," + dtys +
+                    "l" + (w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (-w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
+                    "L" + (dtxs - w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (dtys + w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
+                    "z";
         };
 
         /**
@@ -732,6 +735,7 @@ $('document').ready(function () {
          * @returns {PageOptions}
          */
         var PageOptions = function () {
+            var that = this;
             this.bibliographicrecordidInput = $('#bibliographicrecordid');
             this.oldBibliographicrecordid = null;
             this.agencyidSelect = $('#agencyid');
@@ -742,12 +746,9 @@ $('document').ready(function () {
 
             this.bibliographicrecordidInput.button();
 
-            var bibliographicrecordidChanged = this.bibliographicrecordidChanged.bind(this);
-            this.bibliographicrecordidInput.bind('focusout', bibliographicrecordidChanged);
-            var agencyidSelected = this.agencyidSelected.bind(this);
+            this.bibliographicrecordidInput.on('change', this.bibliographicrecordidChanged.bind(this));
             this.agencyidSelect.selectmenu({
-                select: agencyidSelected,
-                open: bibliographicrecordidChanged
+                select: this.agencyidSelected.bind(this)
             });
             $(window).on('hashchange', this.hashChanged.bind(this));
 
