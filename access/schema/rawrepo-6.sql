@@ -6,6 +6,7 @@ INSERT INTO version VALUES(2);
 INSERT INTO version VALUES(3);
 INSERT INTO version VALUES(4);
 INSERT INTO version VALUES(5);
+INSERT INTO version VALUES(6);
 
 
 -- records:
