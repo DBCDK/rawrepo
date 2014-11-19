@@ -33,8 +33,8 @@ import java.util.regex.Pattern;
 public class FieldRules {
 
     private static final String INVALID_DEFAULT = "";
-    private static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;239;240;243;247"
-                                                    + ";008 009 038 039 100 110 245 653"; // Opstillingsdata
+    private static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247"
+                                                    + ";008 009 038 039 100 110 239 245 652"; // Opstillingsdata
     private static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
     private static final String VALID_REGEX_DEFAULT = "\\d{3}";
 
@@ -71,7 +71,11 @@ public class FieldRules {
     /**
      * class for ruleset for an individual marcx merge
      *
-     * needs to have called {@link #registerLocalField(java.lang.String) registerLocalField} for every field to know if a {@link #removeField(java.lang.String) removeField} should retruen true or false
+     * needs to have called
+     * {@link #registerLocalField(java.lang.String) registerLocalField} for
+     * every field to know if a
+     * {@link #removeField(java.lang.String) removeField} should retruen true or
+     * false
      */
     public class RuleSet {
 
@@ -84,7 +88,8 @@ public class FieldRules {
         }
 
         /**
-         * Register the presence of a local field, and all the fields in it's collection
+         * Register the presence of a local field, and all the fields in it's
+         * collection
          *
          * @param field
          */
@@ -138,9 +143,10 @@ public class FieldRules {
 
     /**
      *
-     * @param immutable fields that can't be modified
-     * @param overwrite fields that are replacing (groups (of tags separated by space) separated by ;)
-     * @param invalid fields that should always be removed
+     * @param immutable  fields that can't be modified
+     * @param overwrite  fields that are replacing (groups (of tags separated by
+     *                   space) separated by ;)
+     * @param invalid    fields that should always be removed
      * @param validRegex regex that tag must match to be considered valid
      */
     public FieldRules(String immutable, String overwrite, String invalid, String validRegex) {
