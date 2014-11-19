@@ -26,6 +26,8 @@ $$;
 --
 --
 
+ALTER TABLE version ADD COLUMN warning text;
+
 CREATE TABLE jobdiag ( -- V7
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,

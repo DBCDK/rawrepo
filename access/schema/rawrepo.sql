@@ -1,5 +1,6 @@
 CREATE TABLE version ( -- V2
-       version NUMERIC(6) NOT NULL PRIMARY KEY
+       version NUMERIC(6) NOT NULL PRIMARY KEY,
+       warning TEXT DEFAULT NULL -- V7
 );
 -- Compatible versions
 INSERT INTO version VALUES(2);
