@@ -312,6 +312,7 @@ $('document').ready(function () {
             this.onClick = null;
             this.selectWidget = $('#record-select');
             this.hoverWidget = $('#record-hover');
+            this.centerWidget = $('#record-center');
             this.width = 500;
             this.height = 300;
             this.domParent = d3.select('#svg-container');
@@ -329,15 +330,16 @@ $('document').ready(function () {
                         if (d.target.content !== null)
                             weight = weight + d.target.content.weight;
                         var factor = Math.pow(1.025, weight) + 1;
-                        return (LINKDISTANCE[d.type]) * factor;
-                    })
+                        return Math.min(this.width * 0.3, this.height * 0.3, (LINKDISTANCE[d.type]) * factor);
+                    }.bind(this))
                     .friction(.3)
                     .gravity(0.00)
                     .charge(-250)
                     .on("tick", this.tick.bind(this));
-            
+
             var resize = this.resize.bind(this);
             $(window).on('resize', resize);
+            this.centerWidget.on('click', this.center.bind(this));
             resize();
             return this;
         };
@@ -499,7 +501,7 @@ $('document').ready(function () {
                                 d.type === 'sibling' ? COLOR.linkSibling :
                                 COLOR.unknown;
                     }.bind(this))
-                    .style('stroke-width', 2);
+                    .style('stroke-width', 1.25);
 
             this.canvas.selectAll('.node')
                     .data(this.force.nodes())
@@ -530,6 +532,9 @@ $('document').ready(function () {
                     .on('click', function (d) {
                         if (d3.event.defaultPrevented)
                             return; // ignore drag
+                        if (this.selected !== null) {
+                            this.selected.fixed = false;
+                        }
                         if (this.onSelect !== null)
                             this.onSelect(d.key);
                         if (d.content === null)
@@ -549,24 +554,35 @@ $('document').ready(function () {
 
         };
 
+        RelationPane.prototype.center = function () {
+
+            if (this.selected !== null) {
+                var obj = this.collection[this.selected];
+                var x = this.width / 2;
+                var y = this.height / 2;
+                LOG(obj);
+                this.force.stop();
+                this.canvas
+                        .selectAll('.node')
+                        .data(this.nodes)
+                        .each(function (d) {
+                            d.fixed = d === obj;
+                            if (d.fixed) {
+                                
+                                d.px = x;
+                                d.py = y;
+                            }
+                        });
+                this.force.start();
+            }
+        };
+
+
         /**
          * Resize canvas according to parent size
          * 
          * @returns {undefined}
          */
-        RelationPane.prototype.resize = function () {
-            var style = window.getComputedStyle(this.domParent[0][0]);
-            var width = Math.max(parseInt(style.width), 500);
-            var height = Math.max(parseInt(style.height), 300);
-            if (this.width !== width || this.height !== height) {
-                this.width = width;
-                this.height = height;
-                this.svg.attr("width", this.width)
-                        .attr("height", this.height);
-                this.force.size([this.width, this.height]);
-                this.force.start();
-            }
-        };
 
         RelationPane.prototype.resize = function () {
             var container = document.getElementById('svg-container');
@@ -694,8 +710,8 @@ $('document').ready(function () {
                     dtxs = tx - 3 * Math.cos(theta),
                     dtys = ty - 3 * Math.sin(theta),
                     l = 8;
-                    w = 2.5
-            ;
+            w = 2.5
+                    ;
             return "M" + sx + "," + sy +
                     "L" + tx + "," + ty +
                     "M" + dtxs + "," + dtys +
