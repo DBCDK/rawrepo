@@ -291,8 +291,10 @@ $('document').ready(function () {
             nodeSelected: 'white',
             nodeUnexpanded: 'blue',
             nodeDeselected: 'green',
-            linkParent: 'orangered',
-            linkSibling: 'purple',
+            linkParent: 'steelblue',
+            linkSibling: 'orchid',
+            linkParentOutbound: 'lightsteelblue',
+            linkSiblingOutbound: 'pink',
             unknown: 'white'
         };
 
@@ -492,16 +494,18 @@ $('document').ready(function () {
                     .append('path')
                     .attr('class', 'link')
                     .style('fill', function (d) {
-                        return d.type === 'parent' ? COLOR.linkParent :
-                                d.type === 'sibling' ? COLOR.linkSibling :
+                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                                d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
                                 COLOR.unknown;
                     }.bind(this))
                     .style('stroke', function (d) {
-                        return d.type === 'parent' ? COLOR.linkParent :
-                                d.type === 'sibling' ? COLOR.linkSibling :
+                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                                d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
                                 COLOR.unknown;
                     }.bind(this))
-                    .style('stroke-width', 1.25);
+                    .style('stroke-width', function (d) {
+                        return d.source.key === this.selected ? 2.0 : 1.25;
+                    }.bind(this));
 
             this.canvas.selectAll('.node')
                     .data(this.force.nodes())
@@ -568,7 +572,7 @@ $('document').ready(function () {
                         .each(function (d) {
                             d.fixed = d === obj;
                             if (d.fixed) {
-                                
+
                                 d.px = x;
                                 d.py = y;
                             }
@@ -634,6 +638,20 @@ $('document').ready(function () {
                         }.bind(this))
                         .attr('r', function (d) {
                             return d.key === this.selected ? 10 : 5;
+                        }.bind(this));
+                t.selectAll('.link')
+                        .style('fill', function (d) {
+                            return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                                    d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                                    COLOR.unknown;
+                        }.bind(this))
+                        .style('stroke', function (d) {
+                            return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                                    d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                                    COLOR.unknown;
+                        }.bind(this))
+                        .style('stroke-width', function (d) {
+                            return d.source.key === this.selected ? 2.0 : 1.25;
                         }.bind(this))
                         .call(this.force.start);
             }
@@ -927,6 +945,7 @@ $('document').ready(function () {
     pageOptions.setOnIdSelected(function (key) {
         displayPane.setId(key);
         relationPane.setId(key);
+        relationPane.center();
     });
 
     // Tabs logic
