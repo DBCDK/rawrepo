@@ -112,7 +112,7 @@ public class Introspect {
             NamingEnumeration<NameClassPair> list = context.list(jdbcResourceBase);
             while (list.hasMoreElements()) {
                 NameClassPair element = list.nextElement();
-                if (element.isRelative() && element.getName().matches("^[a-z0-9]+$")) {
+                if (element.isRelative() && element.getName().matches("^[-a-z0-9]+$")) {
                     Object obj = context.lookup(jdbcResourceBase + "/" + element.getName());
                     if (DataSource.class.isAssignableFrom(obj.getClass())) {
                         response.add(element.getName());
