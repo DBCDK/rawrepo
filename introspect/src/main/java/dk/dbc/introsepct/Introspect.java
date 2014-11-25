@@ -119,6 +119,7 @@ public class Introspect {
                     }
                 }
             }
+            Collections.sort(response);
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
