@@ -386,8 +386,8 @@ class IntrospectDeployScript extends GluScriptBase {
                     property: "\"driverClass=org.postgresql.Driver:url=$jdbc:User=$user:Password=$pass\"",
                 ])
             deployer.createJdbcResource([
-                    id: JDBC_BASE + resource + "/pool",
-                    poolName: JDBC_BASE + resource,
+                    id: JDBC_BASE + resource,
+                    poolName: JDBC_BASE + resource + "/pool",
                 ])
         }
     }
