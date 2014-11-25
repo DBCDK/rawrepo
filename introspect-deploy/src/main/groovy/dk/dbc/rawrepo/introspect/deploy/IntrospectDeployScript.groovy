@@ -378,7 +378,7 @@ class IntrospectDeployScript extends GluScriptBase {
             def pass = (m[3] == null ? "" : m[3]).replace(":", "\\:")
             
             deployer.createJdbcConnectionPool([
-                    name: JDBC_BASE + resource + "/pool",
+                    name: JDBC_BASE + "/" + resource + "/pool",
                     resType: "javax.sql.DataSource",
                     datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
                     //steadypoolsize: "8",
@@ -386,8 +386,8 @@ class IntrospectDeployScript extends GluScriptBase {
                     property: "\"driverClass=org.postgresql.Driver:url=$jdbc:User=$user:Password=$pass\"",
                 ])
             deployer.createJdbcResource([
-                    id: JDBC_BASE + resource,
-                    poolName: JDBC_BASE + resource + "/pool",
+                    id: JDBC_BASE + "/" + resource,
+                    poolName: JDBC_BASE + "/" + resource + "/pool",
                 ])
         }
     }
@@ -395,8 +395,8 @@ class IntrospectDeployScript extends GluScriptBase {
     def deleteJdbcResources() {
         for(jdbcEntry in jdbcResources) {
             def resource = jdbcEntry.key
-            deployer.deleteJdbcResource(JDBC_BASE + resource)
-            deployer.deleteJdbcConnectionPool(JDBC_BASE + resource + "/pool")
+            deployer.deleteJdbcResource(JDBC_BASE + "/" + resource)
+            deployer.deleteJdbcConnectionPool(JDBC_BASE + "/" + resource + "/pool")
         }
     }
 
