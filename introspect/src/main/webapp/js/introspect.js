@@ -29,42 +29,40 @@ $('document').ready(function () {
     };
 
     /**
-     * Ajax error function
+     * Caching ajax call with callback queue
      * 
-     * @param {type} jqXHR
-     * @param {type} textStatus
-     * @param {type} errorThrown
-     * @returns {undefined}
+     * @param {string} url
+     * @param {function} callback
+     * @type Function
      */
-    function ajaxError(jqXHR, textStatus, errorThrown) {
-        ERROR(errorThrown);
-    }
+    var ajax = (function () {
+        var cache = {};
+        var callbacks = {};
 
-    /**
-     * Create key(string) from composite
-     * 
-     * @param {type} id
-     * @returns {String}
-     */
-    function record2Key(id) {
-        return id.agencyid + "," + id.bibliographicrecordid;
-    }
-
-    /**
-     * 
-     * @param {type} s
-     * @returns {introspect_L2.keyRecord.introspectAnonym$0}
-     */
-    function key2Record(s) {
-        var a = s.match(/^(\d+),(.*)$/);
-        if (a !== null) {
-            return {
-                agencyid: a[1],
-                bibliographicrecordid: a[2]
-            };
-        }
-        return null;
-    }
+        return function (url, callback) {
+            if (url in cache) {
+                callback(cache[url]);
+            } else if (url in callbacks) {
+                callbacks[url].push(callback);
+            } else {
+                callbacks[url] = [callback];
+                $.ajax({
+                    type: "GET",
+                    dataType: "json",
+                    url: url,
+                    success: function (data, textStatus, jqXHR) {
+                        cache[url] = data;
+                        callbacks[url].forEach(function (func) {
+                            func(data);
+                        });
+                        delete callbacks[url];
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        ERROR(errorThrown);
+                    }});
+            }
+        };
+    })();
 
     /**
      * DisplayPane Class
@@ -79,13 +77,12 @@ $('document').ready(function () {
          * @returns {take2_L65.DisplayPane}
          */
         var DisplayPane = function () {
-            var that = this;
+            this.db = null;
             this.idInput = $('#record-key');
-            this.oldId = null;
             this.versionSelect = $('#version');
             this.otherVersionSelect = $('#other-version');
             this.content = $('#content');
-            var versionSelected = that.versionSelected.bind(that);
+            var versionSelected = this.versionSelected.bind(this);
             this.versionSelect.selectmenu({select: versionSelected});
             this.otherVersionSelect.selectmenu({select: versionSelected});
 
@@ -102,46 +99,28 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         DisplayPane.prototype.versionSelected = function (event, ui) {
-            var that = this;
             var key = this.idInput.val();
-            var record = key2Record(key);
+            var arg = key.split(",", 3);
+            if (arg.length !== 3)
+                return;
+            var agencyid = arg[1];
+            var bibliographicrecordid = arg[2];
             var thisVersion = this.versionSelect.val();
             var otherVersion = this.otherVersionSelect.val();
             if (thisVersion === '')
                 return;
             if (thisVersion === '-1') {
                 this.otherVersionSelect.selectmenu('disable');
-                $.ajax({
-                    type: "GET",
-                    dataType: "json",
-                    url: "resources/record-merged/" + record.agencyid + "/" + record.bibliographicrecordid,
-                    success: function (data, textStatus, jqXHR) {
-                        that.displayRecord(data);
-                    },
-                    error: ajaxError
-                });
+                ajax("resources/record-merged/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                        this.displayRecord.bind(this));
             } else {
                 this.otherVersionSelect.selectmenu('enable');
                 if (otherVersion === '') {
-                    $.ajax({
-                        type: "GET",
-                        dataType: "json",
-                        url: "resources/record-historic/" + record.agencyid + "/" + record.bibliographicrecordid + "/" + thisVersion,
-                        success: function (data, textStatus, jqXHR) {
-                            that.displayRecord(data);
-                        },
-                        error: ajaxError
-                    });
+                    ajax("resources/record-historic/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion,
+                            this.displayRecord.bind(this));
                 } else {
-                    $.ajax({
-                        type: "GET",
-                        dataType: "json",
-                        url: "resources/record-diff/" + record.agencyid + "/" + record.bibliographicrecordid + "/" + thisVersion + "/" + otherVersion,
-                        success: function (data, textStatus, jqXHR) {
-                            that.displayRecord(data);
-                        },
-                        error: ajaxError
-                    });
+                    ajax("resources/record-diff/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion + "/" + otherVersion,
+                            this.displayRecord.bind(this));
                 }
             }
         };
@@ -153,32 +132,19 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         DisplayPane.prototype.setId = function (val) {
-            var that = this;
-            if (this.oldId !== val) {
+            if (this.idInput.val() !== val) {
                 this.idInput.val(val);
-                var record = key2Record(val);
+                var arg = val.split(",", 3);
+                if (arg.length !== 3)
+                    return;
+                this.db = arg[0];
+                var agencyid = arg[1];
+                var bibliographicrecordid = arg[2];
                 this.clear();
-                if (record !== null) {
-                    $.ajax({
-                        type: "GET",
-                        dataType: "json",
-                        url: "resources/record-history/" + record.agencyid + "/" + record.bibliographicrecordid,
-                        success: function (data, textStatus, jqXHR) {
-                            that.historyRead(data);
-                            that.oldId = val;
-                        },
-                        error: ajaxError
-                    });
-                    $.ajax({
-                        type: "GET",
-                        dataType: "json",
-                        url: "resources/relations/" + record.agencyid + "/" + record.bibliographicrecordid,
-                        success: function (data, textStatus, jqXHR) {
-                            that.relationsRead(data);
-                        },
-                        error: ajaxError
-                    });
-                }
+                ajax("resources/record-history/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                        this.historyRead.bind(this));
+                ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                        this.relationsRead.bind(this));
             }
         };
 
@@ -304,6 +270,7 @@ $('document').ready(function () {
          * @returns {take2_L237.RelationPane}
          */
         var RelationPane = function () {
+            this.db = null;
             this.collection = {};
             this.nodes = [];
             this.links = [];
@@ -372,6 +339,10 @@ $('document').ready(function () {
             this.canvas.selectAll('.link').remove();
             this.clear();
             this.refresh();
+            var arg = key.split(",", 3);
+            if (arg.length !== 3)
+                return;
+            this.db = arg[0];
             this.fetchRelations(key);
         };
 
@@ -382,21 +353,15 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         RelationPane.prototype.fetchRelations = function (key) {
-            var that = this;
             if (key in this.collection && this.collection[key].content !== null)
                 return;
-            var record = key2Record(key);
-            if (record !== null) {
-                $.ajax({
-                    type: "GET",
-                    dataType: "json",
-                    url: "resources/relations/" + record.agencyid + "/" + record.bibliographicrecordid,
-                    success: function (data, textStatus, jqXHR) {
-                        that.relationsFetched(data);
-                    },
-                    error: ajaxError
-                });
-            }
+            var arg = key.split(",", 3);
+            if (arg.length !== 3)
+                return;
+            var agencyid = arg[1];
+            var bibliographicrecordid = arg[2];
+            ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                    this.relationsFetched.bind(this));
         };
 
         /**
@@ -406,7 +371,7 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         RelationPane.prototype.relationsFetched = function (record) {
-            var key = record2Key(record['me']);
+            var key = this.db + "," + record['me'].agencyid + "," + record['me'].bibliographicrecordid;
             record.key = key;
             record.weight = (
                     Object.keys(record['parents']).length +
@@ -448,7 +413,7 @@ $('document').ready(function () {
          */
         RelationPane.prototype.ensureNodes = function (rels) {
             rels.forEach(function (e) {
-                var key = record2Key(e);
+                var key = this.db + "," + e.agencyid + "," + e.bibliographicrecordid;
                 e.key = key;
                 if (!(key in this.collection)) {
                     var d = {key: key, content: null, relations: {}};
@@ -539,8 +504,6 @@ $('document').ready(function () {
                         if (this.selected !== null) {
                             this.selected.fixed = false;
                         }
-                        if (this.onSelect !== null)
-                            this.onSelect(d.key);
                         if (d.content === null)
                             this.fetchRelations(d.key);
                         this.setHighlight(d.key);
@@ -564,7 +527,6 @@ $('document').ready(function () {
                 var obj = this.collection[this.selected];
                 var x = this.width / 2;
                 var y = this.height / 2;
-                LOG(obj);
                 this.force.stop();
                 this.canvas
                         .selectAll('.node')
@@ -769,24 +731,27 @@ $('document').ready(function () {
          * @returns {PageOptions}
          */
         var PageOptions = function () {
-            var that = this;
+            this.dbSelect = $("#db");
+            this.db = null;
             this.bibliographicrecordidInput = $('#bibliographicrecordid');
-            this.oldBibliographicrecordid = null;
+            this.nextBibliographicrecordid = null;
             this.agencyidSelect = $('#agencyid');
-            this.oldAgencyid = null;
             this.nextAgencyid = null;
 
             this.onIdSelected = null;
 
+            this.dbSelect.selectmenu({
+                select: this.dbSelected.bind(this)
+            });
+
             this.bibliographicrecordidInput.button();
 
-            this.bibliographicrecordidInput.on('change', this.bibliographicrecordidChanged.bind(this));
+            this.bibliographicrecordidInput.on('change', this.bibliographicRecordIdChanged.bind(this));
             this.agencyidSelect.selectmenu({
                 select: this.agencyidSelected.bind(this)
             });
             $(window).on('hashchange', this.hashChanged.bind(this));
-
-            return this;
+            this.dbFetch();
         };
 
         /**
@@ -795,9 +760,9 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         PageOptions.prototype.clear = function () {
-            this.oldBibliographicrecordid = null;
-            this.oldAgencyid = null;
             this.nextAgencyid = null;
+            this.nextBibliographicrecordid = null;
+            this.dbClear();
             this.bibliographicrecordidInput.val('');
             this.agencyidClear();
         };
@@ -809,36 +774,111 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         PageOptions.prototype.setId = function (key) {
-            var record = key2Record(key);
-            this.nextAgencyid = record.agencyid;
-            this.bibliographicrecordidInput.val(record.bibliographicrecordid);
-            this.bibliographicrecordidChanged();
+            var arg = key.split(",", 3);
+            if (this.dbSelect.val() !== arg[0] ||
+                    this.bibliographicrecordidInput.val() !== arg[2] ||
+                    this.agencyidSelect.val() !== arg[1]) {
+                this.nextDb = arg[0];
+                this.nextBibliographicRecordId = arg[2];
+                this.nextAgencyid = arg[1];
+
+                this.dbAutoSelect();
+            }
         };
 
+
+        PageOptions.prototype.dbClear = function () {
+            this.dbSelect.children().each(function (i) {
+                if (i > 0)
+                    $(this).remove();
+            });
+            this.dbSelect.selectmenu('refresh');
+        };
+
+        PageOptions.prototype.dbFetch = function () {
+            ajax("resources/dbs", this.dbFetched.bind(this));
+            return this;
+        };
+
+        PageOptions.prototype.dbFetched = function (data) {
+            var that = this;
+            data.forEach(function (e) {
+                var option = $('<option/>');
+                option.attr({value: e}).text(e);
+                that.dbSelect.append(option);
+            });
+            this.dbSelect.selectmenu('refresh');
+            if (data.length === 1) {
+                this.dbSelect.prop('selectedIndex', 1);
+                this.dbSelect.hide();
+                this.dbSelect.selectmenu('refresh');
+                this.dbSelected();
+            } else {
+                this.dbAutoSelect();
+            }
+        };
+
+        PageOptions.prototype.dbAutoSelect = function () {
+            var selected = false;
+            if (this.nextDb !== null) {
+                var i = $('#db option[value="' + this.nextDb + '"]').index();
+                if (i > 0) {
+                    this.dbSelect.prop('selectedIndex', i);
+                    selected = true;
+                    this.nextDb = null;
+                }
+            }
+            this.dbSelect.selectmenu('refresh');
+            if (selected)
+                this.dbSelected();
+            this.bibliographicRecordIdAutoChange();
+        };
+
+        PageOptions.prototype.dbSelected = function () {
+            var newDb = this.dbSelect.val();
+            if (this.db !== newDb) {
+                this.db = newDb;
+                if (this.nextBibliographicrecordid === null)
+                    this.nextBibliographicrecordid = this.bibliographicrecordidInput.val();
+                this.bibliographicRecordIdClear();
+                if (this.nextAgencyid === null && this.agencyidSelect.val() !== '')
+                    this.nextAgencyid = this.agencyidSelect.val();
+                this.agencyidClear();
+            }
+            this.bibliographicRecordIdAutoChange();
+        };
         /**
          * Internal: Callback, for changed record
          * 
          * @returns {undefined}
          */
-        PageOptions.prototype.bibliographicrecordidChanged = function () {
-            var that = this;
+        PageOptions.prototype.bibliographicRecordIdClear = function () {
+            this.bibliographicrecordidInput.val();
+        };
+        /**
+         * Internal: Callback, for changed record
+         * 
+         * @returns {undefined}
+         */
+        PageOptions.prototype.bibliographicRecordIdAutoChange = function () {
+            if (this.nextBibliographicRecordId !== null) {
+                this.bibliographicrecordidInput.val(this.nextBibliographicRecordId);
+                this.bibliographicRecordIdChanged();
+            }
+        };
+        /**
+         * Internal: Callback, for changed record
+         * 
+         * @returns {undefined}
+         */
+        PageOptions.prototype.bibliographicRecordIdChanged = function () {
+            if (this.db === null)
+                return;
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
-            var agencyid = this.agencyidSelect.val();
-            if (this.oldBibliographicrecordid !== bibliographicrecordid ||
-                    (this.nextAgencyid !== null && this.nextAgencyid !== agencyid)) {
-                this.agencyidClear();
-                if (bibliographicrecordid !== '') {
-                    $.ajax({
-                        type: "GET",
-                        dataType: "json",
-                        url: "resources/agencies-with/" + bibliographicrecordid,
-                        success: function (data, textStatus, jqXHR) {
-                            that.oldBibliographicrecordid = bibliographicrecordid;
-                            that.agencyidFetched(data);
-                        },
-                        error: ajaxError
-                    });
-                }
+            this.agencyidClear();
+            if (bibliographicrecordid !== '') {
+                ajax("resources/agencies-with/" + this.db + "/" + bibliographicrecordid,
+                        this.agencyidFetched.bind(this));
             }
         };
 
@@ -850,6 +890,9 @@ $('document').ready(function () {
          */
         PageOptions.prototype.agencyidFetched = function (data) {
             var that = this;
+            if (this.nextAgencyid === null && this.agencyidSelect.val() !== '')
+                this.nextAgencyid = this.agencyidSelect.val();
+            this.agencyidClear();
             data.forEach(function (e) {
                 var option = $('<option/>');
                 option.attr({value: e}).text(e);
@@ -862,11 +905,12 @@ $('document').ready(function () {
                     this.agencyidSelect.prop('selectedIndex', i);
                     selected = true;
                 }
-                this.nextAgencyid = null;
             }
+            this.nextAgencyid = null;
             this.agencyidSelect.selectmenu('refresh');
-            if (selected)
+            if (selected) {
                 this.agencyidSelected();
+            }
         };
 
         /**
@@ -888,13 +932,13 @@ $('document').ready(function () {
          * @returns {undefined}
          */
         PageOptions.prototype.agencyidSelected = function () {
+            var db = this.dbSelect.val();
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
             var agencyid = this.agencyidSelect.val();
             if (bibliographicrecordid !== '' && agencyid !== '') {
-                this.oldAgencyid = agencyid;
                 if (this.onIdSelected !== null)
-                    this.onIdSelected(agencyid + "," + bibliographicrecordid);
-                document.location.hash = agencyid + "," + bibliographicrecordid;
+                    this.onIdSelected(this.db + "," + agencyid + "," + bibliographicrecordid);
+                document.location.hash = db + "," + agencyid + "," + bibliographicrecordid;
             }
         };
 
@@ -916,8 +960,7 @@ $('document').ready(function () {
         PageOptions.prototype.hashChanged = function () {
             var hash = document.location.hash;
             if (hash !== '') {
-                hash = hash.substr(1);
-                this.setId(hash);
+                this.setId(hash.substr(1));
             }
         };
 

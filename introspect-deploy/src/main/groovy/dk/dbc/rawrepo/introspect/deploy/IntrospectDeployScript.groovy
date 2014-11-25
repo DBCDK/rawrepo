@@ -37,15 +37,9 @@ class IntrospectDeployScript extends GluScriptBase {
      * contextPath         : String  : The context path to deploy to
      *                                 (OPTIONAL). Defaults to '/rawrepointrospect'.
      *
-     * dbUrl               : String  : Base url of the raw repo database
+     * jdbcResources       : Map     : Map of "resource-name" to connect-uri
+     *                                 (user:pass@host[:port]/base)
      *                                 (REQUIRED).
-     *
-     * dbUser              : String  : Username for the raw repo database
-     *                                 (REQUIRED).
-     *
-     * dbPassword          : String  : Password url of the raw repo database
-     *                                 (REQUIRED).
-     *
      *
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
@@ -66,8 +60,7 @@ class IntrospectDeployScript extends GluScriptBase {
     // automatically thus will be available in the console or any other program 'listening' to
     // ZooKeeper
 
-    static String JDBC_RESOURCE = "jdbc/rawrepointrospect/rawrepo"
-    static String JDBC_POOL = "jdbc/rawrepointrospect/rawrepo/pool"
+    static String JDBC_BASE = "jdbc/rawrepointrospect/"
 
     /** Webapp .war file assembly area
      */
@@ -81,6 +74,8 @@ class IntrospectDeployScript extends GluScriptBase {
 
     Resource warFile
 
+    Map jdbcResources = [:]
+    
     /** GlassFish information
      */
     Map glassfishProperties = [
@@ -114,13 +109,13 @@ class IntrospectDeployScript extends GluScriptBase {
         artifact = fetchResourceIntoFolder( params.artifact, webappsFolder )
         log.info "Using artifact ${artifact.file}"
 
+        
+        if (!params.jdbcResources) {
+            shell.fail("Required parameter 'jdbcResources' is missing")
+        }
+        jdbcResources = [:] + params.jdbcResources
 
-        ["dbUrl", "dbUser", "dbPassword" ].each({
-            if (!params."$it") {
-                shell.fail("Required parameter '$it' is missing")
-            }
-        })
-
+        
         // Sets up .war file staging area
         stagingArea = shell.mkdirs( rootFolder."staging" )
         shell.unzip( artifact, stagingArea )
@@ -162,12 +157,12 @@ class IntrospectDeployScript extends GluScriptBase {
         log.info "Re-packaging webapp to ${warFile.file} "
         jar( stagingArea, warFile )
         deployer.deploy([
-            name: appName,
-            id: warFile.file.getPath(),
-            contextroot: contextPath,
-            enabled: 'false',
-            force: 'true'
-        ])
+                name: appName,
+                id: warFile.file.getPath(),
+                contextroot: contextPath,
+                enabled: 'false',
+                force: 'true'
+            ])
     }
 
     /*******************************************************
@@ -222,6 +217,16 @@ class IntrospectDeployScript extends GluScriptBase {
         version="3.2"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/ejb-jar_3_2.xsd">
+  <enterprise-beans>
+    <session>
+      <ejb-name>Introspect</ejb-name>
+      <env-entry>
+        <env-entry-name>jdbcResourceBase</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>$JDBC_BASE</env-entry-value>
+      </env-entry>
+    </session>
+  </enterprise-beans>
 </ejb-jar>
 """
         shell.saveContent( ejbXmlFile, xmlString )
@@ -357,25 +362,42 @@ class IntrospectDeployScript extends GluScriptBase {
     }
     def configureJdbcResources() {
 
-        def dbUrl = params.dbUrl.replace(":", "\\:");
-
-        deployer.createJdbcConnectionPool([
-                name: JDBC_POOL,
-                resType: "javax.sql.DataSource",
-                datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-                //steadypoolsize: "8",
-                //maxpoolsize: "32",
-                property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
-        ])
-        deployer.createJdbcResource([
-                id: JDBC_RESOURCE,
-                poolName: JDBC_POOL,
-        ])
+        for(jdbcEntry in jdbcResources) {
+            def resource = jdbcEntry.key
+            if(! (resource =~ "^[-a-z0-9]+\$")) {
+                shell.fail("Required parameter 'jdbcResources' has invalid resource name $resource")
+            }
+            def url = jdbcEntry.value
+            def matcher = url =~ "^(jdbc:[^:]*://)?(?:([^:@]*)(?::([^@]*))?@)?((?:([^:/]*)(?::(\\d+))?)/(.*)?)\$"
+            if(! matcher) {
+                shell.fail("Required parameter 'jdbcResources' has invalid value for '$resource' : " + url)
+            }
+            def m = matcher[0]
+            def jdbc = ((m[1] == null ? "jdbc:postgresql://" : m[1]) + m[4]).replace(":", "\\:");
+            def user = (m[2] == null ? "" : m[2]).replace(":", "\\:")
+            def pass = (m[3] == null ? "" : m[3]).replace(":", "\\:")
+            
+            deployer.createJdbcConnectionPool([
+                    name: JDBC_BASE + resource + "/pool",
+                    resType: "javax.sql.DataSource",
+                    datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
+                    //steadypoolsize: "8",
+                    //maxpoolsize: "32",
+                    property: "\"driverClass=org.postgresql.Driver:url=$jdbc:User=$user:Password=$pass\"",
+                ])
+            deployer.createJdbcResource([
+                    id: JDBC_BASE + resource + "/pool",
+                    poolName: JDBC_BASE + resource,
+                ])
+        }
     }
 
     def deleteJdbcResources() {
-        deployer.deleteJdbcResource( JDBC_RESOURCE )
-        deployer.deleteJdbcConnectionPool( JDBC_POOL )
+        for(jdbcEntry in jdbcResources) {
+            def resource = jdbcEntry.key
+            deployer.deleteJdbcResource(JDBC_BASE + resource)
+            deployer.deleteJdbcConnectionPool(JDBC_BASE + resource + "/pool")
+        }
     }
 
 }

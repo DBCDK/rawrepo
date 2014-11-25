@@ -46,9 +46,7 @@ public class IndexerDeployScriptTest {
     private final static ARTIFACT_NAME = "rawrepo-introspect.war"
     private final static ARTIFACT = IndexerDeployScriptTest.getResource( "/" + ARTIFACT_NAME )
     private final static CONTEXT = "/rawrepointrospect"
-    private final static DB_URL = "jdbc:postgresql://localhost:12345/db"
-    private final static DB_USER = "user"
-    private final static DB_PASSWORD = "password"
+    private final static JDBC_RESOURCES = [ "rawrepo": "user:password@localhost:12345/db" ]
     private static LOG_FOLDER = "log-files"
 
 
@@ -96,7 +94,7 @@ public class IndexerDeployScriptTest {
     @Test
     void install_mountPointIsSet_createsMountPointFolderRelativeToFileSystemRoot() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
         assertThat( "Mount point is created", tmpFileSystem.root."$MOUNT_POINT_NAME".file.exists(), is( true ) )
@@ -109,75 +107,53 @@ public class IndexerDeployScriptTest {
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNotSet_throwsNullPointerException() {
         def instance = new GluScript( shellImpl, [ 
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNull_throwsNullPointerException() {
         def instance = new GluScript( shellImpl, [ artifact: null,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=IllegalArgumentException )
     void install_artifactInitParameterIsEmpty_throwsIllegalArgumentException() {
         def instance = new GluScript( shellImpl, [ artifact: "", 
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=FileNotFoundException )
     void install_artifactInitParameterPointsToNonExistingResource_throwsFileNotFoundException() {
         def instance = new GluScript( shellImpl, [ artifact: "no-such-file",
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
 
 
     @Test( expected=ScriptFailedException )
-    void install_dbUrlInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+    void install_jdbcResourcesInitParameterIsNotSet_throwsScriptFailedException() {
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT
+            ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
-    void install_dbUrlInitParameterIsNull_throwsScriptFailedException() {
+    void install_jdbcResourcesInitParameterIsNull_throwsScriptFailedException() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: null, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: null ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
-    void install_dbUserInitParameterIsNotSet_throwsScriptFailedException() {
+    void install_jdbcDefaultInitParameterIsNotSet_throwsScriptFailedException() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbPassword: DB_PASSWORD ] )
+                jdbcResources: null ] )
         instance.install()
     }
-
-    @Test( expected=ScriptFailedException )
-    void install_dbUserInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: null, dbPassword: DB_PASSWORD ] )
-        instance.install()
-    }
-
-    @Test( expected=ScriptFailedException )
-    void install_dbPasswordInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER ] )
-        instance.install()
-    }
-
-    @Test( expected=ScriptFailedException )
-    void install_dbPasswordInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: null ] )
-        instance.install()
-    }
-
 
     @Test
     void install_glassfishPropertiesInitParameterNotSet_usesDefaultGlassFishProperties() {
@@ -188,12 +164,12 @@ public class IndexerDeployScriptTest {
         ]
 
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
         ['port', 'username', 'password'].each() {
-          assertThat( instance.glassfishProperties[it], notNullValue() )
-          assertThat( instance.glassfishProperties[it], is( defaultProperties[it] ) )
+            assertThat( instance.glassfishProperties[it], notNullValue() )
+            assertThat( instance.glassfishProperties[it], is( defaultProperties[it] ) )
         }
 
         assertThat(instance.glassfishProperties.baseUrl as String, is("https://localhost:8080"))
@@ -209,22 +185,64 @@ public class IndexerDeployScriptTest {
         ]
 
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD,
-            glassfishProperties: customProperties] )
+                jdbcResources: JDBC_RESOURCES,
+                glassfishProperties: customProperties] )
         instance.install()
 
         ['port', 'username', 'password'].each() {
-          assertThat( instance.glassfishProperties[it], notNullValue() )
-          assertThat( instance.glassfishProperties[it], is( customProperties[it] ) )
+            assertThat( instance.glassfishProperties[it], notNullValue() )
+            assertThat( instance.glassfishProperties[it], is( customProperties[it] ) )
         }
 
         assertThat(instance.glassfishProperties.baseUrl as String, is("http://localhost:4242"))
     }
 
+    @Test( expected=ScriptFailedException )
+    void configure_jdbcResouresInitParameterInvalidName_throwsScriptFailedException() {
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+                jdbcResources: ["bl+ob": "a:b@c/d"] ] )
+        instance.install()
+
+        instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
+            Object deploy(Map<String, String> appProperties) {
+                assertThat(appProperties.name, is(instance.appName))
+                return new Object()
+            }
+            Object createJdbcConnectionPool(Map<String, String> args) {
+                return new Object()
+            }
+            Object createJdbcResource(Map<String, String> args) {
+                return new Object()
+            }
+        }
+        instance.configure()
+    }
+
+    @Test( expected=ScriptFailedException )
+    void configure_jdbcResouresInitParameterInvalidUri_throwsScriptFailedException() {
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+                jdbcResources: ["blob": "invalid"] ] )
+        instance.install()
+
+        instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
+            Object deploy(Map<String, String> appProperties) {
+                assertThat(appProperties.name, is(instance.appName))
+                return new Object()
+            }
+            Object createJdbcConnectionPool(Map<String, String> args) {
+                return new Object()
+            }
+            Object createJdbcResource(Map<String, String> args) {
+                return new Object()
+            }
+        }
+        instance.configure()
+    }
+
     @Test
     void configure_contextPathInitIsNotSet_usesDefaultContextPath() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -248,8 +266,8 @@ public class IndexerDeployScriptTest {
     void configure_contextPathInitIsSet_usesContextPath() {
         String customPath = "context"
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD,
-            contextPath: customPath] )
+                jdbcResources: JDBC_RESOURCES,
+                contextPath: customPath] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
             Object deploy(Map<String, String> appProperties) {
@@ -271,7 +289,7 @@ public class IndexerDeployScriptTest {
     @Test
     void configure_addsLoggingProperties() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
             Object deploy(Map<String, String> appProperties) {
@@ -293,7 +311,7 @@ public class IndexerDeployScriptTest {
     @Test
     void configure_whenInstalled_exposesLogFiles() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
             Object deploy(Map<String, String> appProperties) {
@@ -321,7 +339,7 @@ public class IndexerDeployScriptTest {
     @Test
     void configure_whenInstalled_configuresConnectionPool() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, 
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
             boolean createJdbcConnectionPoolCalled = false
@@ -349,9 +367,9 @@ public class IndexerDeployScriptTest {
 
         def instance = new GluScript( shellImpl, [:] )
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
-          Object start(String appName) {
-            assertThat( instance.appName, is( appName ) )
-          }
+            Object start(String appName) {
+                assertThat( instance.appName, is( appName ) )
+            }
         }
         instance.start()
     }
@@ -361,9 +379,9 @@ public class IndexerDeployScriptTest {
 
         def instance = new GluScript( shellImpl, [:] )
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
-          Object stop(String appName) {
-            assertThat( instance.appName, is( appName ) )
-          }
+            Object stop(String appName) {
+                assertThat( instance.appName, is( appName ) )
+            }
         }
         instance.stop()
     }
@@ -387,6 +405,7 @@ public class IndexerDeployScriptTest {
                 return new Object()
             }
         }
+        instance.jdbcResources = ["rawrepo": ""]
         instance.unconfigure()
         assertThat( "deleteJdbcResource was called", instance.deployer.deleteJdbcResourceCalled, is( true ) )
         assertThat( "deleteJdbcConnectionPool was called", instance.deployer.deleteJdbcConnectionPoolCalled, is( true ) )
@@ -397,7 +416,7 @@ public class IndexerDeployScriptTest {
     @Test
     void uninstall_deletesMountPointFolder() {
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD ] )
+                jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.uninstall()
 
@@ -409,8 +428,8 @@ public class IndexerDeployScriptTest {
         def logDir = tmpFileSystem.root."custom-log-files";
         def logDirPath = logDir.file.getPath();
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD,
-            logDir: logDirPath ] )
+                jdbcResources: JDBC_RESOURCES,
+                logDir: logDirPath ] )
         instance.install()
         instance.deployer = mockGlassFishAppDeployer();
         instance.configure()
@@ -423,8 +442,8 @@ public class IndexerDeployScriptTest {
         def logDir = tmpFileSystem.root."custom-log-files";
         def logDirPath = logDir.file.getPath();
         def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD,
-            logDir: logDirPath ] )
+                jdbcResources: JDBC_RESOURCES,
+                logDir: logDirPath ] )
         instance.install()
         instance.deployer = mockGlassFishAppDeployer();
         instance.configure()

@@ -31,9 +31,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -66,8 +72,10 @@ public class Introspect {
     private static final String KEY_PARENTS = "parents";
     private static final String KEY_CHILDREN = "children";
 
-    @Resource(lookup = "jdbc/rawrepointrospect/rawrepo")
-    DataSource dataSource;
+    Context context;
+
+    @Resource(name = "jdbcResourceBase")
+    String jdbcResourceBase;
 
     @Inject
     Merger merger;
@@ -75,10 +83,54 @@ public class Introspect {
     @Inject
     JSONStreamer streamer;
 
+    /**
+     * @param resource
+     * @return the dataSource
+     */
+    DataSource getDataSource(String resource) {
+        try {
+            return (DataSource) context.lookup(jdbcResourceBase + "/" + resource);
+        } catch (NamingException ex) {
+            throw new RuntimeException("Cannot get container resource", ex);
+        }
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        try {
+            context = new InitialContext();
+        } catch (NamingException ex) {
+            throw new RuntimeException("Cannot get container resources", ex);
+        }
+    }
+
     @GET
-    @Path("agencies-with/{id : .+}")
-    public Response getAgenciesWith(@PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = dataSource.getConnection()) {
+    @Path("dbs")
+    public Response getDBs() {
+        try {
+            ArrayList<String> response = new ArrayList<>();
+            NamingEnumeration<NameClassPair> list = context.list(jdbcResourceBase);
+            while (list.hasMoreElements()) {
+                NameClassPair element = list.nextElement();
+                if (element.isRelative() && element.getName().matches("^[a-z0-9]+$")) {
+                    Object obj = context.lookup(jdbcResourceBase + "/" + element.getName());
+                    if (DataSource.class.isAssignableFrom(obj.getClass())) {
+                        response.add(element.getName());
+                    }
+                }
+            }
+            return ok(response);
+        } catch (Exception ex) {
+            log.error("Caught", ex);
+            return fail("Internal Error " + ex);
+        }
+    }
+
+    @GET
+    @Path("agencies-with/{db : [^/]+}/{id : .+}")
+    public Response getAgenciesWith(@PathParam("db") String resource,
+                                    @PathParam("id") String bibliographicRecordId) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);
             ArrayList<Integer> response = new ArrayList<>(agencies);
@@ -87,15 +139,16 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
     @GET
-    @Path("record-merged/{agency : \\d+}/{id : .+}")
-    public Response getRecordMerged(@PathParam("agency") Integer agencyId,
+    @Path("record-merged/{db : [^/]+}/{agency : \\d+}/{id : .+}")
+    public Response getRecordMerged(@PathParam("db") String resource,
+                                    @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger());
 
@@ -104,16 +157,17 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
     @GET
-    @Path("record-historic/{agency : \\d+}/{id : .+}/{version : \\d+}")
-    public Response getRecordHistoric(@PathParam("agency") Integer agencyId,
+    @Path("record-historic/{db : [^/]+}/{agency : \\d+}/{id : .+}/{version : \\d+}")
+    public Response getRecordHistoric(@PathParam("db") String resource,
+                                      @PathParam("agency") Integer agencyId,
                                       @PathParam("id") String bibliographicRecordId,
                                       @PathParam("version") Integer version) {
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record record = dao.getHistoricRecord(recordHistory.get(version));
@@ -123,17 +177,18 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
     @GET
-    @Path("record-diff/{agency : \\d+}/{id : .+}/{left : \\d+}/{right : \\d+}")
-    public Response getRecordDiff(@PathParam("agency") Integer agencyId,
+    @Path("record-diff/{db : [^/]+}/{agency : \\d+}/{id : .+}/{left : \\d+}/{right : \\d+}")
+    public Response getRecordDiff(@PathParam("db") String resource,
+                                  @PathParam("agency") Integer agencyId,
                                   @PathParam("id") String bibliographicRecordId,
                                   @PathParam("left") Integer left,
                                   @PathParam("right") Integer right) {
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record leftRecord = dao.getHistoricRecord(recordHistory.get(left));
@@ -144,15 +199,16 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
     @GET
-    @Path("record-history/{agency : \\d+}/{id : .+}")
-    public Response getRecordHistory(@PathParam("agency") Integer agencyId,
+    @Path("record-history/{db : [^/]+}/{agency : \\d+}/{id : .+}")
+    public Response getRecordHistory(@PathParam("db") String resource,
+                                     @PathParam("agency") Integer agencyId,
                                      @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             ArrayList<Object> response = new ArrayList<>();
@@ -164,15 +220,16 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
     @GET
-    @Path("relations/{agency : \\d+}/{id : .+}")
-    public Response getRelations(@PathParam("agency") Integer agencyId,
+    @Path("relations/{db : [^/]+}/{agency : \\d+}/{id : .+}")
+    public Response getRelations(@PathParam("db") String resource,
+                                 @PathParam("agency") Integer agencyId,
                                  @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
             RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
             HashMap<String, Object> response = new HashMap();
@@ -186,7 +243,7 @@ public class Introspect {
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
-            return fail("Internal Error");
+            return fail("Internal Error " + ex);
         }
     }
 
