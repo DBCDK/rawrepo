@@ -60,7 +60,7 @@ class IntrospectDeployScript extends GluScriptBase {
     // automatically thus will be available in the console or any other program 'listening' to
     // ZooKeeper
 
-    static String JDBC_BASE = "jdbc/rawrepointrospect/"
+    static String JDBC_BASE = "jdbc/rawrepointrospect"
 
     /** Webapp .war file assembly area
      */
