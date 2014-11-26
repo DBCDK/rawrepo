@@ -303,7 +303,7 @@ $('document').ready(function () {
                     }.bind(this))
                     .friction(.3)
                     .gravity(0.00)
-                    .charge(-250)
+                    .charge(-500)
                     .on("tick", this.tick.bind(this));
 
             var resize = this.resize.bind(this);
@@ -498,14 +498,18 @@ $('document').ready(function () {
                         if (this.onHover !== null)
                             this.onHover(null);
                     }.bind(this))
+                    .on('mousedown', function (d) {
+                        if (this.selected !== null && this.selected !== d.key) {
+                            this.collection[this.selected].fixed = false;
+                        }
+                    }.bind(this))
                     .on('click', function (d) {
                         if (d3.event.defaultPrevented)
                             return; // ignore drag
-                        if (this.selected !== null) {
-                            this.selected.fixed = false;
-                        }
-                        if (d.content === null)
+                        if (d.content === null) {
                             this.fetchRelations(d.key);
+                            d.fixed = true;
+                        }
                         this.setHighlight(d.key);
                     }.bind(this))
                     .on('dblclick', function (d) {
@@ -534,7 +538,6 @@ $('document').ready(function () {
                         .each(function (d) {
                             d.fixed = d === obj;
                             if (d.fixed) {
-
                                 d.px = x;
                                 d.py = y;
                             }
@@ -689,8 +692,8 @@ $('document').ready(function () {
                     d90 = Math.PI / 2,
                     dtxs = tx - 3 * Math.cos(theta),
                     dtys = ty - 3 * Math.sin(theta),
-                    l = 8;
-            w = 2.5
+                    l = 8,
+                    w = 2.5
                     ;
             return "M" + sx + "," + sy +
                     "L" + tx + "," + ty +
@@ -988,7 +991,6 @@ $('document').ready(function () {
     pageOptions.setOnIdSelected(function (key) {
         displayPane.setId(key);
         relationPane.setId(key);
-        relationPane.center();
     });
 
     // Tabs logic
