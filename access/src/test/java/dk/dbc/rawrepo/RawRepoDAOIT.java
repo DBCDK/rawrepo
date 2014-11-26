@@ -44,8 +44,10 @@ import static org.junit.Assert.assertArrayEquals;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Properties;
+import org.junit.Assert;
 
 /**
  *
@@ -425,7 +427,8 @@ public class RawRepoDAOIT {
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     "A:1:changed:failure:1", "A:1:changed::1", "A:1:leaf::1",
+                     //                     "A:1:changed:failure:1",
+                     "A:1:changed::1", "A:1:leaf::1",
                      "B:2:leaf::1");
 
         System.out.println("TAKE A:1#2");
@@ -438,7 +441,8 @@ public class RawRepoDAOIT {
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     "A:1:changed:failure:2", "A:1:leaf::1",
+                     //"A:1:changed:failure:2",
+                     "A:1:leaf::1",
                      "B:2:leaf::1");
 
         connection1.close();
@@ -460,6 +464,31 @@ public class RawRepoDAOIT {
 
         QueueJob job = dao.dequeue("changed");
         assertNotNull(job);
+    }
+
+    @Test
+    public void testQueueFail() throws SQLException, RawRepoException {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        connection.setAutoCommit(false);
+
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (!resultSet.next() || resultSet.getInt(1) != 0) {
+                    Assert.fail("jobdiag is not empty before test");
+                }
+            }
+        }
+
+        QueueJob queueJob = new QueueJob("abcdefgh", 123456, "node", new Timestamp(0));
+        dao.queueFail(queueJob, "What!");
+
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (!resultSet.next() || resultSet.getInt(1) != 1) {
+                    Assert.fail("jobdiag is not set after test");
+                }
+            }
+        }
     }
 
     @Test
@@ -495,6 +524,7 @@ public class RawRepoDAOIT {
         connection.prepareStatement("DELETE FROM queue").execute();
         connection.prepareStatement("DELETE FROM queuerules").execute();
         connection.prepareStatement("DELETE FROM queueworkers").execute();
+        connection.prepareStatement("DELETE FROM jobdiag").execute();
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
         stmt.setString(1, "changed");
@@ -598,9 +628,10 @@ public class RawRepoDAOIT {
     }
 
     /**
-     * Raise an (descriptive) exception if a collection of strings doesn't match supplied list
+     * Raise an (descriptive) exception if a collection of strings doesn't match
+     * supplied list
      *
-     * @param col collection
+     * @param col   collection
      * @param elems string elements collection should consist of
      */
     private static void collectionIs(Collection<String> col, String... elems) {

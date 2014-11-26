@@ -41,9 +41,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 5;
+    private static final int SCHEMA_VERSION = 7;
 
-    private static final String VALIDATE_SCHEMA = "SELECT COUNT(*) FROM version WHERE version=?";
+    private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified) VALUES(?, ?, ?, ?, ?, ?, ?)";
@@ -69,7 +69,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String CALL_ENQUEUE = "{CALL enqueue(?, ?, ?, ?, ?)}";
     private static final String CALL_ENQUEUE_MIMETYPE = "{CALL enqueue(?, ?, ?, ?, ?, ?)}";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
-    private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
+//    private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
+    private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
     private static final String QUEUE_SUCCESS = "DELETE FROM queue WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
 
     /**
@@ -87,7 +88,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
                 stmt.setInt(1, SCHEMA_VERSION);
                 try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next() && resultSet.getInt(1) == 1) {
+                    if (resultSet.next()) {
+                        String warning = resultSet.getString(1);
+                        if (warning != null) {
+                            log.warn(warning);
+                        }
                         return;
                     }
                 }
@@ -670,11 +675,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         if (error == null || error.equals("")) {
             throw new RawRepoException("Error cannot be empty in queueFail");
         }
+        queueSuccess(queueJob); // Remove in V8
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
-            stmt.setString(1, error);
-            stmt.setString(2, queueJob.job.bibliographicRecordId);
-            stmt.setInt(3, queueJob.job.agencyId);
-            stmt.setString(4, queueJob.worker);
+            stmt.setString(1, queueJob.job.bibliographicRecordId);
+            stmt.setInt(2, queueJob.job.agencyId);
+            stmt.setString(3, queueJob.worker);
+            stmt.setString(4, error);
             stmt.setTimestamp(5, queueJob.queued);
             stmt.executeUpdate();
         } catch (SQLException ex) {
