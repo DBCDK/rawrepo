@@ -319,7 +319,7 @@ public class Introspect {
         private void add(String type) {
             if (!sb.toString().isEmpty()) {
                 HashMap<String, String> obj = new HashMap<>();
-                log.debug(type + ":" + sb.toString());
+                //log.debug(type + ":" + sb.toString());
                 obj.put("type", type);
                 obj.put("content", sb.toString());
                 sb = new StringBuilder();
