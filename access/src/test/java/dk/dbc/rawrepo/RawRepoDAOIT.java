@@ -387,7 +387,7 @@ public class RawRepoDAOIT {
         dao.enqueue(new RecordId("A", 1), "test", "", true, true);
         connection.commit();
         collectionIs(getQueueState(),
-                     "A:1:changed::1", "A:1:leaf::1");
+                     "A:1:changed:1", "A:1:leaf:1");
 
         System.out.println("TAKE A:1");
         QueueJob job1 = dao1.dequeueWithSavepoint("changed");
@@ -398,7 +398,7 @@ public class RawRepoDAOIT {
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     "A:1:changed::2", "A:1:leaf::1"); // one processing and one in queue
+                     "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
 
         System.out.println("TAKE NULL");
         QueueJob job2 = dao2.dequeueWithSavepoint("changed");
@@ -410,8 +410,8 @@ public class RawRepoDAOIT {
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     "A:1:changed::2", "A:1:leaf::1",
-                     "B:2:changed::1", "B:2:leaf::1");
+                     "A:1:changed:2", "A:1:leaf:1",
+                     "B:2:changed:1", "B:2:leaf:1");
 
         System.out.println("TAKE B:2");
         job2 = dao2.dequeueWithSavepoint("changed");
@@ -422,14 +422,13 @@ public class RawRepoDAOIT {
         connection1.commit(); // Commit 1st changed;
 
         System.out.println("DONE B:2");
-        dao2.queueSuccess(job2);
         connection2.commit(); // Commit 1st changed;
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     //                     "A:1:changed:failure:1",
-                     "A:1:changed::1", "A:1:leaf::1",
-                     "B:2:leaf::1");
+                     "A:1:changed:1",
+                     "A:1:leaf:1",
+                     "B:2:leaf:1");
 
         System.out.println("TAKE A:1#2");
         job1 = dao1.dequeueWithSavepoint("changed");
@@ -441,9 +440,8 @@ public class RawRepoDAOIT {
 
         System.out.println("TEST");
         collectionIs(getQueueState(),
-                     //"A:1:changed:failure:2",
-                     "A:1:leaf::1",
-                     "B:2:leaf::1");
+                     "A:1:leaf:1",
+                     "B:2:leaf:1");
 
         connection1.close();
         connection2.close();
@@ -460,7 +458,7 @@ public class RawRepoDAOIT {
         dao.enqueue(new RecordId("A", 1), "test", "", true, true);
         connection.commit();
         collectionIs(getQueueState(),
-                     "A:1:changed::1", "A:1:leaf::1");
+                     "A:1:changed:1", "A:1:leaf:1");
 
         QueueJob job = dao.dequeue("changed");
         assertNotNull(job);
@@ -489,6 +487,70 @@ public class RawRepoDAOIT {
                 }
             }
         }
+    }
+
+    @Test
+    public void testDequeueBulk() throws SQLException, RawRepoException {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        connection.setAutoCommit(false);
+        for (int i = 0 ; i < 10 ; i++) {
+            dao.enqueue(new RecordId("rec" + i, 123456), "test", "text/plain", false, false);
+        }
+        connection.commit();
+        connection.setAutoCommit(false);
+
+        collectionIs(getQueueState(),
+                     "rec0:123456:node:1",
+                     "rec1:123456:node:1",
+                     "rec2:123456:node:1",
+                     "rec3:123456:node:1",
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+
+        dao.dequeue("node", 4);
+
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.rollback();
+        collectionIs(getQueueState(),
+                     "rec0:123456:node:1",
+                     "rec1:123456:node:1",
+                     "rec2:123456:node:1",
+                     "rec3:123456:node:1",
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.setAutoCommit(false);
+
+        dao.dequeue("node", 4);
+
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.commit();
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
     }
 
     @Test
@@ -609,11 +671,11 @@ public class RawRepoDAOIT {
 
     Collection<String> getQueueState() throws SQLException {
         Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, blocked, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker, blocked");
+        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker");
         if (stmt.execute()) {
             ResultSet resultSet = stmt.executeQuery();
             while (resultSet.next()) {
-                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3) + ":" + resultSet.getString(4) + ":" + resultSet.getInt(5));
+                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3) + ":" + resultSet.getInt(4));
             }
         }
         return result;
