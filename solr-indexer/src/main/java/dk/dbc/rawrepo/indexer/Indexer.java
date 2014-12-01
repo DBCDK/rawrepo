@@ -144,6 +144,9 @@ public class Indexer {
                     processJob(job, dao);
                     commit(connection);
                     processedJobs++;
+                    if (processedJobs % 1000 == 0) {
+                        log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
+                    }
                     time.stop();
                 } else {
                     moreWork = false;
@@ -210,7 +213,7 @@ public class Indexer {
     }
 
     private String createSolrDocumentId(RecordId recordId) {
-        return recordId.getBibliographicRecordId()+ ":" + recordId.getAgencyId();
+        return recordId.getBibliographicRecordId() + ":" + recordId.getAgencyId();
     }
 
     SolrInputDocument createIndexDocument(Record record) {
@@ -225,7 +228,7 @@ public class Indexer {
             case MarcXChangeMimeType.AUTHORITTY:
             case MarcXChangeMimeType.DECENTRAL:
             case MarcXChangeMimeType.ENRICHMENT:
-                log.debug("Indexing content of {} with mimetype {}", recordId, mimeType );
+                log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);
                 doc.addField("marc.001a", recordId.getBibliographicRecordId());
                 doc.addField("marc.001b", recordId.getAgencyId());
                 byte[] content = record.getContent();
@@ -234,7 +237,7 @@ public class Indexer {
                 break;
             default:
                 contentsSkipped.inc();
-                log.debug("Skipping indexing of {} with mimetype {}", recordId, mimeType );
+                log.debug("Skipping indexing of {} with mimetype {}", recordId, mimeType);
         }
 
         doc.addField("created", record.getCreated());
@@ -249,7 +252,7 @@ public class Indexer {
             parser.parse(input, new MarcxParser() {
                 @Override
                 public void content(String dataField, String subField, String value) {
-                    if (dataField.equals("021") && (subField.equals("a") || subField.equals("e"))) {
+                    if (dataField.equals("021") && ( subField.equals("a") || subField.equals("e") )) {
                         doc.addField("marc.021ae", value);
                     } else if (dataField.equals("022") && subField.equals("a")) {
                         doc.addField("marc.022a", value);
