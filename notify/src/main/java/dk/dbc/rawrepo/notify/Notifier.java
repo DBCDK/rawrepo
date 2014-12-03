@@ -58,7 +58,6 @@ public class Notifier {
     Timer createDAOTimer;
     Timer dequeueJobTimer;
     Timer fetchRecordTimer;
-    Timer queueSuccessTimer;
     Timer queueFailTimer;
     Timer commitTimer;
 
@@ -76,7 +75,6 @@ public class Notifier {
         createDAOTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "createDAO"));
         dequeueJobTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "dequeueJob"));
         fetchRecordTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "fetchRecord"));
-        queueSuccessTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "queueSuccess"));
         queueFailTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "queueFail"));
         commitTimer = registry.getRegistry().timer(MetricRegistry.name(Notifier.class, "commit"));
 
@@ -136,7 +134,6 @@ public class Notifier {
         log.debug("Processing {}", job);
 
         // notify someone about something
-        queueSuccess(dao, job);
     }
 
     private QueueJob dequeueJob(final RawRepoDAO dao) throws RawRepoException {
@@ -155,12 +152,6 @@ public class Notifier {
         time.stop();
         //log.trace("{} '{}', '{}'", record, record.getContent(), new String(record.getContent()));
         return record;
-    }
-
-    private void queueSuccess(RawRepoDAO dao, QueueJob job) throws RawRepoException {
-        Timer.Context time = queueSuccessTimer.time();
-        dao.queueSuccess(job);
-        time.stop();
     }
 
     @SuppressWarnings("PMD.UnusedPrivateMethod")

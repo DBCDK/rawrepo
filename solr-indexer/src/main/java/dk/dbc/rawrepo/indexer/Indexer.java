@@ -79,7 +79,6 @@ public class Indexer {
     Timer createIndexDocumentTimer;
     Timer updateSolrTimer;
     Timer deleteSolrDocumentTimer;
-    Timer queueSuccessTimer;
     Timer queueFailTimer;
     Timer commitTimer;
 
@@ -107,7 +106,6 @@ public class Indexer {
         createIndexDocumentTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "createIndexDocument"));
         updateSolrTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "updateSolr"));
         deleteSolrDocumentTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "deleteSolrDocument"));
-        queueSuccessTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "queueSuccess"));
         queueFailTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "queueFail"));
         commitTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "commit"));
         contentsIndexed = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsIndexed"));
@@ -188,7 +186,6 @@ public class Indexer {
                 SolrInputDocument doc = createIndexDocument(record);
                 updateSolr(jobId, doc);
             }
-            queueSuccess(dao, job);
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
             queueFail(dao, job, id);
@@ -277,12 +274,6 @@ public class Indexer {
         Timer.Context time = updateSolrTimer.time();
         log.debug("Adding document for {} to solr", jobId);
         solrServer.add(doc);
-        time.stop();
-    }
-
-    private void queueSuccess(RawRepoDAO dao, QueueJob job) throws RawRepoException {
-        Timer.Context time = queueSuccessTimer.time();
-        dao.queueSuccess(job);
         time.stop();
     }
 
