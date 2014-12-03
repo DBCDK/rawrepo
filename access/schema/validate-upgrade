@@ -11,7 +11,7 @@ if [ $# = 0 ]; then
     version=`ls -f $name-*.sql | sort -n | tail -n 1`
     version=${version//[^0-9]/}
 
-    if ! cmp -s $name-$version.sql $name.sql; then
+    if [ $name-$version.sql -ot $name.sql ]; then
 	echo "updating latest stable ($version) from current"
 	(echo '\set ON_ERROR_STOP' ; cat $name.sql) > $name-$version.sql
     fi
