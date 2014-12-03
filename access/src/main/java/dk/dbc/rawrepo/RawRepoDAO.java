@@ -465,6 +465,8 @@ public abstract class RawRepoDAO {
     /**
      * QueueJob has successfully been processed
      *
+     * This is now the default when dequeuing
+     *
      * @param queueJob job that has been processed
      * @throws RawRepoException
      */
