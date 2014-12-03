@@ -121,6 +121,17 @@ public class RawRepoDAOIT {
         assertFalse(new String(recordTest2.getContent()).equals(new String(recordTest1.getContent())));
 
         connection.commit();
+        connection.setAutoCommit(false);
+        Record record12 = dao.fetchRecord("C", 12);
+        record12.setDeleted(false);
+        record12.setContent("HELLO".getBytes());
+        dao.saveRecord(record12);
+        connection.commit();
+        connection.setAutoCommit(false);
+
+        boolean recordExists = dao.recordExists("C", 12);
+        System.out.println("recordExists = " + recordExists);
+        assertTrue("Record agencyid=12 exists", recordExists);
     }
 
     @Test
@@ -487,6 +498,70 @@ public class RawRepoDAOIT {
                 }
             }
         }
+    }
+
+    @Test
+    public void testDequeueBulk() throws SQLException, RawRepoException {
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        connection.setAutoCommit(false);
+        for (int i = 0 ; i < 10 ; i++) {
+            dao.enqueue(new RecordId("rec" + i, 123456), "test", "text/plain", false, false);
+        }
+        connection.commit();
+        connection.setAutoCommit(false);
+
+        collectionIs(getQueueState(),
+                     "rec0:123456:node:1",
+                     "rec1:123456:node:1",
+                     "rec2:123456:node:1",
+                     "rec3:123456:node:1",
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+
+        dao.dequeue("node", 4);
+
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.rollback();
+        collectionIs(getQueueState(),
+                     "rec0:123456:node:1",
+                     "rec1:123456:node:1",
+                     "rec2:123456:node:1",
+                     "rec3:123456:node:1",
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.setAutoCommit(false);
+
+        dao.dequeue("node", 4);
+
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
+        connection.commit();
+        collectionIs(getQueueState(),
+                     "rec4:123456:node:1",
+                     "rec5:123456:node:1",
+                     "rec6:123456:node:1",
+                     "rec7:123456:node:1",
+                     "rec8:123456:node:1",
+                     "rec9:123456:node:1");
     }
 
     @Test

@@ -46,7 +46,8 @@ public abstract class RawRepoDAO {
     public static final int COMMON_LIBRARY = 870970;
 
     /**
-     * Load a class and instantiate it based on the driver name from the supplied connection
+     * Load a class and instantiate it based on the driver name from the
+     * supplied connection
      *
      * @param connection database connection
      * @return a RawRepoDAO for the connection
@@ -81,10 +82,11 @@ public abstract class RawRepoDAO {
      *
      * Create one if none exists in the database
      *
-     * Remember, a record could exist, that is tagged deleted, call undelete() If content is added.
+     * Remember, a record could exist, that is tagged deleted, call undelete()
+     * If content is added.
      *
      * @param bibliographicRecordId String with record id
-     * @param agencyId library number
+     * @param agencyId              library number
      * @return fetched / new Record
      * @throws RawRepoException
      */
@@ -104,7 +106,7 @@ public abstract class RawRepoDAO {
      * Check for existence of a record
      *
      * @param bibliographicRecordId String with record id
-     * @param agencyId library number
+     * @param agencyId              library number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
@@ -114,7 +116,7 @@ public abstract class RawRepoDAO {
      * Check for existence of a record (possibly deleted)
      *
      * @param bibliographicRecordId String with record id
-     * @param agencyId library number
+     * @param agencyId              library number
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
@@ -124,7 +126,7 @@ public abstract class RawRepoDAO {
      * Get a collection of all the records, that are that are related to this
      *
      * @param bibliographicRecordId String with record id
-     * @param agencyId library number
+     * @param agencyId              library number
      * @param merger
      * @return a collection of Record
      * @throws RawRepoException
@@ -165,10 +167,11 @@ public abstract class RawRepoDAO {
      * Fetch record for id, merging more common records with this
      *
      * @param bibliographicRecordId local id
-     * @param originalAgencyId least to most common
+     * @param originalAgencyId      least to most common
      * @param merger
      * @return Record merged
-     * @throws RawRepoException if there's a data error or record isn't found
+     * @throws RawRepoException     if there's a data error or record isn't
+     *                              found
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
@@ -234,7 +237,8 @@ public abstract class RawRepoDAO {
     /**
      * List of least to most common agency numbers for this agency
      *
-     * When using a webservice, this needs to be cached. This is called repeatedly, for each record processed.
+     * When using a webservice, this needs to be cached. This is called
+     * repeatedly, for each record processed.
      *
      * @param recordId
      * @return
@@ -247,24 +251,6 @@ public abstract class RawRepoDAO {
         }
         agencyIds.add(COMMON_LIBRARY);
         return agencyIds;
-    }
-
-    /**
-     * Delete a record from the database
-     *
-     * Set content to null, remember to delete relations
-     *
-     * USE record.delete() & saveRecord()
-     *
-     * @param recordId complex key for record
-     * @throws RawRepoException
-     */
-    @Deprecated
-    public void deleteRecord(RecordId recordId) throws RawRepoException {
-        Record record = fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
-        record.setDeleted(true);
-        record.setContent(new byte[0]);
-        saveRecord(record);
     }
 
     /**
@@ -306,7 +292,7 @@ public abstract class RawRepoDAO {
      * Clear all existing relations and set the new ones
      *
      * @param recordId recordid to update
-     * @param refers collection of recordids id depends on
+     * @param refers   collection of recordids id depends on
      * @throws RawRepoException
      */
     public abstract void setRelationsFrom(RecordId recordId, Set<RecordId> refers) throws RawRepoException;
@@ -334,7 +320,8 @@ public abstract class RawRepoDAO {
     public abstract Set<RecordId> getRelationsChildren(RecordId recordId) throws RawRepoException;
 
     /**
-     * Get all records that points to me with same localid (less common siblings)
+     * Get all records that points to me with same localid (less common
+     * siblings)
      *
      * What "points sideways" to me
      *
@@ -345,7 +332,8 @@ public abstract class RawRepoDAO {
     public abstract Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException;
 
     /**
-     * Get all records that points from me with same localid (more common siblings)
+     * Get all records that points from me with same localid (more common
+     * siblings)
      *
      * What "points sideways" from me
      *
@@ -368,24 +356,10 @@ public abstract class RawRepoDAO {
     /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change
      *
-     * USE: {@link #changedRecord(java.lang.String, dk.dbc.rawrepo.RecordId, java.lang.String) changedRecord}
-     *
-     *
-     * @param provider parameter to pass to enqueue(...)
-     * @param recordId the record that has been changed
-     * @throws RawRepoException
-     */
-    @Deprecated
-    public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        changedRecord(provider, recordId, "unknown/unknown");
-    }
-
-    /**
-     * Traverse relations calling enqueue(...) to trigger manipulation of change
-     *
-     * @param provider parameter to pass to enqueue(...)
-     * @param recordId the record that has been changed
-     * @param fallbackMimetype Which mimetype to use when no mimetype can be found (deleted)
+     * @param provider         parameter to pass to enqueue(...)
+     * @param recordId         the record that has been changed
+     * @param fallbackMimetype Which mimetype to use when no mimetype can be
+     *                         found (deleted)
      * @throws RawRepoException
      */
     public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
@@ -412,7 +386,8 @@ public abstract class RawRepoDAO {
     /**
      * Traverse list of common libraries, to find least common version of record
      *
-     * Then traverse siblings to find most common version of record, which is either the COMMON_LIBRARY version or a LOCALRECORD
+     * Then traverse siblings to find most common version of record, which is
+     * either the COMMON_LIBRARY version or a LOCALRECORD
      *
      * @param bibliographicRecordId
      * @return
@@ -425,7 +400,7 @@ public abstract class RawRepoDAO {
                 Set<RecordId> siblings;
                 // find most common through sibling relations
                 // stops at localrecord or commonrecord
-                while (!(siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId))).isEmpty()) {
+                while (!( siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId)) ).isEmpty()) {
                     if (siblings.size() != 1) {
                         throw new RawRepoException("record " + new RecordId(bibliographicRecordId, agencyId) + " points to multiple siblings");
                     }
@@ -442,23 +417,11 @@ public abstract class RawRepoDAO {
     /**
      * Put job(s) on the queue (in the database)
      *
-     * @param job job description
+     * @param job      job description
      * @param provider change initiator
-     * @param changed is job for a record that has been changed
-     * @param leaf is this job for a tree leaf
-     * @throws RawRepoException
-     */
-    @Deprecated
-    abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
-
-    /**
-     * Put job(s) on the queue (in the database)
-     *
-     * @param job job description
-     * @param provider change initiator
-     * @param mimeType mimetype of the current record
-     * @param changed is job for a record that has been changed
-     * @param leaf is this job for a tree leaf
+     * @param mimeType mimeType of the current record
+     * @param changed  is job for a record that has been changed
+     * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
     abstract void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException;
@@ -466,11 +429,29 @@ public abstract class RawRepoDAO {
     /**
      * Pull a job from the queue
      *
+     * Note: a queue should be dequeued either with this or
+     * {@link #dequeue(java.lang.String, int) dequeue}, but not both. It could
+     * break for long queues.
+     *
      * @param worker name of worker that want's to take a job
      * @return job description
      * @throws RawRepoException
      */
     public abstract QueueJob dequeue(String worker) throws RawRepoException;
+
+    /**
+     * Pull jobs from the queue
+     *
+     * Note: a queue should be dequeued either with this or
+     * {@link #dequeue(java.lang.String) dequeue}, but not both. It could break
+     * for long queues.
+     *
+     * @param worker name of worker that want's to take a job
+     * @param wanted number of jobs to dequeue
+     * @return job description list
+     * @throws RawRepoException
+     */
+    public abstract List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException;
 
     /**
      * Pull a job from the queue with rollback to savepoint capability
@@ -487,13 +468,14 @@ public abstract class RawRepoDAO {
      * @param queueJob job that has been processed
      * @throws RawRepoException
      */
+    @Deprecated
     public abstract void queueSuccess(QueueJob queueJob) throws RawRepoException;
 
     /**
      * QueueJob has failed
      *
      * @param queueJob job that failed
-     * @param error what happened (empty string not allowed)
+     * @param error    what happened (empty string not allowed)
      * @throws RawRepoException
      */
     public abstract void queueFail(QueueJob queueJob, String error) throws RawRepoException;
@@ -502,7 +484,7 @@ public abstract class RawRepoDAO {
      * QueueJob has failed
      *
      * @param queueJob job that failed
-     * @param error what happened (empty string not allowed)
+     * @param error    what happened (empty string not allowed)
      * @throws RawRepoException
      */
     public abstract void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException;
@@ -530,7 +512,9 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     * When having a list of libraries and an id then return a new list (copy) of all libraries, and all libraries that points towards something in this collection
+     * When having a list of libraries and an id then return a new list (copy)
+     * of all libraries, and all libraries that points towards something in this
+     * collection
      *
      * @param agencyIds
      * @param bibliographicRecordId

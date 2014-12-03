@@ -41,7 +41,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 7;
+    private static final int SCHEMA_VERSION = 8;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -66,12 +66,10 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
-    private static final String CALL_ENQUEUE = "{CALL enqueue(?, ?, ?, ?, ?)}";
     private static final String CALL_ENQUEUE_MIMETYPE = "{CALL enqueue(?, ?, ?, ?, ?, ?)}";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
-//    private static final String QUEUE_ERROR = "UPDATE queue SET blocked=? WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
+    private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
-    private static final String QUEUE_SUCCESS = "DELETE FROM queue WHERE bibliographicrecordid=? AND agencyid=? AND worker=? AND queued=?";
 
     /**
      * Constructor
@@ -155,10 +153,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException {
         Boolean recordDeleted = isRecordDeleted(bibliographicRecordId, agencyId);
-        if (recordDeleted != null && !recordDeleted) {
-            return true;
-        }
-        return false;
+        return recordDeleted != null && !recordDeleted;
     }
 
     /**
@@ -172,10 +167,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
         Boolean recordDeleted = isRecordDeleted(bibliographicRecordId, agencyId);
-        if (recordDeleted != null) {
-            return true;
-        }
-        return false;
+        return recordDeleted != null;
     }
 
     @Override
@@ -545,31 +537,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param job      job description
      * @param provider change initiator
-     * @param changed  is job for a record that has been changed
-     * @param leaf     is this job for a tree leaf
-     * @throws RawRepoException
-     */
-    @Override
-    @Deprecated
-    public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
-        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE)) {
-            stmt.setString(1, job.getBibliographicRecordId());
-            stmt.setInt(2, job.getAgencyId());
-            stmt.setString(3, provider);
-            stmt.setString(4, changed ? "Y" : "N");
-            stmt.setString(5, leaf ? "Y" : "N");
-            stmt.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error queueing job", ex);
-        }
-    }
-
-    /**
-     * Put job(s) on the queue (in the database)
-     *
-     * @param job      job description
-     * @param provider change initiator
      * @param mimeType
      * @param changed  is job for a record that has been changed
      * @param leaf     is this job for a tree leaf
@@ -624,47 +591,68 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @throws RawRepoException
      */
     @Override
+    public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
+        List<QueueJob> result = new ArrayList<>();
+        try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
+            stmt.setString(1, worker);
+            stmt.setInt(2, wanted);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                                                resultSet.getInt("agencyid"),
+                                                resultSet.getString("worker"),
+                                                resultSet.getTimestamp("queued"));
+                    result.add(job);
+                }
+                return result;
+            }
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error dequeueing jobs", ex);
+        }
+    }
+
+    /**
+     * Pull a job from the queue
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
+    @Override
     public QueueJob dequeue(String worker) throws RawRepoException {
-        QueueJob result = null;
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE)) {
             stmt.setString(1, worker);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
-                    result = new QueueJob(resultSet.getString("bibliographicrecordid"),
-                                          resultSet.getInt("agencyid"),
-                                          resultSet.getString("worker"),
-                                          resultSet.getTimestamp("queued"));
+                    return new QueueJob(resultSet.getString("bibliographicrecordid"),
+                                        resultSet.getInt("agencyid"),
+                                        resultSet.getString("worker"),
+                                        resultSet.getTimestamp("queued"));
                 }
+                return null;
             }
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         }
-        return result;
     }
 
     /**
      * QueueJob has successfully been processed
      *
+     * This is now the default when dequeuing
+     *
      * @param queueJob job that has been processed
      * @throws RawRepoException
      */
     @Override
+    @Deprecated
     public void queueSuccess(QueueJob queueJob) throws RawRepoException {
-        try (PreparedStatement stmt = connection.prepareStatement(QUEUE_SUCCESS)) {
-            stmt.setString(1, queueJob.job.bibliographicRecordId);
-            stmt.setInt(2, queueJob.job.agencyId);
-            stmt.setString(3, queueJob.worker);
-            stmt.setTimestamp(4, queueJob.queued);
-            stmt.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error reporting job status", ex);
-        }
     }
 
     /**
-     * QueueJob has failed
+     * QueueJob has failed, log to database
      *
      * @param queueJob job that failed
      * @param error    what happened (empty string not allowed)
@@ -675,7 +663,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         if (error == null || error.equals("")) {
             throw new RawRepoException("Error cannot be empty in queueFail");
         }
-        queueSuccess(queueJob); // Remove in V8
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
             stmt.setString(1, queueJob.job.bibliographicRecordId);
             stmt.setInt(2, queueJob.job.agencyId);
