@@ -305,8 +305,6 @@ public class Introspect {
 
     private static class DiffWriter extends XmlDiff.Writer {
 
-        private static final Logger log = LoggerFactory.getLogger(DiffWriter.class);
-
         private final ArrayList<Object> data;
         private StringBuilder sb;
 
