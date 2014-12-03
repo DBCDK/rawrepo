@@ -13,7 +13,7 @@ if [ $# = 0 ]; then
 
     if ! cmp -s $name-$version.sql $name.sql; then
 	echo "updating latest stable ($version) from current"
-	cp $name.sql $name-$version.sql
+	(echo '\set ON_ERROR_STOP' ; cat $name.sql) > $name-$version.sql
     fi
 else
     version=$(($1))
@@ -26,7 +26,7 @@ export PGHOST=/tmp/$$
 trap '/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data >>$tmp/log 2>&1 ; rm -rf $PGHOST' EXIT
 
 if [ ! -e $name-$version.sql ]; then
-    cp $name.sql $name-$version.sql
+    (echo '\set ON_ERROR_STOP' ; cat $name.sql) > $name-$version.sql
 fi
 
 if [ ! -e $tmp/$name-$version.schema ] ||

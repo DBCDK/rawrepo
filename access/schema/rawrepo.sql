@@ -1,4 +1,3 @@
-\set ON_ERROR_STOP
 
 CREATE TABLE version ( -- V2
        version NUMERIC(6) NOT NULL PRIMARY KEY,
