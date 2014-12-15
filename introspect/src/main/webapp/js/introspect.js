@@ -29,13 +29,10 @@ $('document').ready(function () {
     };
 
     /**
-     * Caching ajax call with callback queue
      * 
-     * @param {string} url
-     * @param {function} callback
-     * @type Function
+     * @returns {Function}
      */
-    var ajax = (function () {
+    var ajaxBuilder = function () {
         var cache = {};
         var callbacks = {};
 
@@ -62,7 +59,20 @@ $('document').ready(function () {
                     }});
             }
         };
-    })();
+    };
+    /**
+     * Caching ajax call with callback queue
+     * 
+     * @param {string} url
+     * @param {function} callback
+     * @type Function
+     */
+    var ajax = ajaxBuilder();
+
+    var clearCache = function() {
+        ajax = ajaxBuilder();
+    };
+
 
     /**
      * DisplayPane Class
@@ -736,6 +746,7 @@ $('document').ready(function () {
         var PageOptions = function () {
             this.dbSelect = $("#db");
             this.db = null;
+            this.clearcacheInput = $('#clearcache');
             this.bibliographicrecordidInput = $('#bibliographicrecordid');
             this.nextBibliographicrecordid = null;
             this.agencyidSelect = $('#agencyid');
@@ -747,8 +758,10 @@ $('document').ready(function () {
                 select: this.dbSelected.bind(this)
             });
 
+            this.clearcacheInput.button();
             this.bibliographicrecordidInput.button();
 
+            this.clearcacheInput.on('click', clearCache);
             this.bibliographicrecordidInput.on('change', this.bibliographicRecordIdChanged.bind(this));
             this.agencyidSelect.selectmenu({
                 select: this.agencyidSelected.bind(this)
