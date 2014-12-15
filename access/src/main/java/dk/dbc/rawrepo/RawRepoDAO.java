@@ -197,7 +197,11 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
+            if (!allAgenciesWithRecord.contains(agencyId)) {
+                continue;
+            }
             if (recordExists(bibliographicRecordId, agencyId)) { // Least common agency for this record
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
