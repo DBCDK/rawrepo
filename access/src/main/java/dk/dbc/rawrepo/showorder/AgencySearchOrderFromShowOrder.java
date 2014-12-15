@@ -23,6 +23,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.namespace.QName;
+import javax.xml.ws.Service;
 import javax.xml.ws.soap.SOAPBinding;
 
 /**
@@ -51,7 +53,9 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     @SuppressWarnings("ResultOfObjectAllocationIgnored")
     public AgencySearchOrderFromShowOrder(String url) throws MalformedURLException {
         new URL(url); // validate url syntax
-        this.service = new OpenAgencyService();
+        URL resource = getClass().getResource("/openagency.wsdl");
+        Service create = OpenAgencyService.create(resource, new QName("openagency"));
+        this.service = create.getPort(OpenAgencyService.class);
         this.service.addPort(null, SOAPBinding.SOAP12HTTP_BINDING, url);
     }
 
