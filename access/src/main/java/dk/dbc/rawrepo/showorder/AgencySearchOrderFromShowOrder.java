@@ -52,7 +52,6 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     public AgencySearchOrderFromShowOrder(String url) throws MalformedURLException {
         new URL(url); // validate url syntax
         URL resource = getClass().getResource("/openagency.wsdl");
-        System.out.println("resource = " + resource);
         this.service = new OpenAgencyService(resource);
         this.service.addPort(null, SOAPBinding.SOAP12HTTP_BINDING, url);
     }
