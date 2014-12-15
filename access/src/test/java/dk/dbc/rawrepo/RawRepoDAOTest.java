@@ -621,6 +621,7 @@ public class RawRepoDAOTest {
                     children.add(rec);
                 }
             }
+
             when(access.getRelationsParents(recordId)).thenReturn(parents);
             when(access.getRelationsFrom(recordId)).thenReturn(all);
             when(access.getRelationsChildren(recordId)).thenReturn(children);
@@ -628,6 +629,18 @@ public class RawRepoDAOTest {
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
             when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
         }
+        HashMap<String, HashSet<Integer>> allAgenciesFor = new HashMap<>();
+        for (String record : filter) {
+            RecordId rec = recordIdFromString(record);
+            if (!allAgenciesFor.containsKey(rec.getBibliographicRecordId())) {
+                allAgenciesFor.put(rec.getBibliographicRecordId(), new HashSet<Integer>());
+            }
+            allAgenciesFor.get(rec.getBibliographicRecordId()).add(rec.getAgencyId());
+        }
+        for (String key : allAgenciesFor.keySet()) {
+            when(access.allAgenciesForBibliographicRecordId(key)).thenReturn(allAgenciesFor.get(key));
+        }
+
         doAnswer(new Answer<Record>() {
 
             @Override
