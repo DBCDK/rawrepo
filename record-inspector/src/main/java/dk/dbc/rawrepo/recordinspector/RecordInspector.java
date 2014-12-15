@@ -20,6 +20,7 @@ package dk.dbc.rawrepo.recordinspector;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -52,8 +53,8 @@ public class RecordInspector implements Closeable {
     private final RawRepoDAO dao;
     private Connection connection;
 
-    public RecordInspector(String url) throws SQLException, RawRepoException {
-        dao = openDatabase(url);
+    public RecordInspector(String url, AgencySearchOrder aso) throws SQLException, RawRepoException {
+        dao = openDatabase(url, aso);
         connection.setAutoCommit(false);
     }
 
@@ -97,7 +98,7 @@ public class RecordInspector implements Closeable {
 
         @Override
         public String toString() {
-            return timestamp + (deleted ? " deleted" : "") + " (" + mimeType + ')';
+            return timestamp + ( deleted ? " deleted" : "" ) + " (" + mimeType + ')';
         }
 
     }
@@ -124,7 +125,6 @@ public class RecordInspector implements Closeable {
     }
 
     public Record get(int agencyId, String bibliographicRecordId) throws RawRepoException, MarcXMergerException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
         return dao.fetchMergedRecord(bibliographicRecordId, agencyId, new MarcXMerger());
     }
 
@@ -175,7 +175,7 @@ public class RecordInspector implements Closeable {
     private static final int urlPatternPassword = 3;
     private static final int urlPatternHostPortDb = 4;
 
-    private RawRepoDAO openDatabase(String url) throws SQLException, RawRepoException {
+    private RawRepoDAO openDatabase(String url, AgencySearchOrder aso) throws SQLException, RawRepoException {
         Matcher matcher = urlPattern.matcher(url);
         if (!matcher.find()) {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
@@ -195,7 +195,7 @@ public class RecordInspector implements Closeable {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.newInstance(connection);
+        return RawRepoDAO.newInstance(connection, aso);
     }
 
 }

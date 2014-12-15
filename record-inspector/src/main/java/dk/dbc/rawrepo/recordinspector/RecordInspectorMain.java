@@ -23,13 +23,17 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.rawrepo.AgencySearchOrder;
+import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import dk.dbc.xmldiff.XmlDiff;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +80,18 @@ public class RecordInspectorMain {
                 throw new IllegalArgumentException("Syntax error");
             }
 
+            AgencySearchOrder aso;
+            if (commandLine.hasOption("show-order")) {
+                String showOrder = (String) commandLine.getOption("show-order");
+                try {
+                    aso = new AgencySearchOrderFromShowOrder(showOrder);
+                } catch (MalformedURLException malformedURLException) {
+                    aso = new AgencySearchOrderFallback(showOrder);
+                }
+            } else {
+                aso = new AgencySearchOrderFallback();
+            }
+
             int agencyId = Integer.parseInt(arguments.get(0), 10);
             String bibliographicRecordId = arguments.get(1);
 
@@ -85,7 +101,7 @@ public class RecordInspectorMain {
                 setLogLevel("logback-info.xml");
             }
 
-            try (RecordInspector recordInspector = new RecordInspector((String) commandLine.getOption("db"));) {
+            try (RecordInspector recordInspector = new RecordInspector((String) commandLine.getOption("db"), aso)) {
                 if (relations) {
                     System.out.println("RELATIONS from me to:");
                     for (String relation : recordInspector.outboundRelations(agencyId, bibliographicRecordId)) {
@@ -103,7 +119,7 @@ public class RecordInspectorMain {
                         System.out.write(record.getContent());
                     } else if (arguments.size() == 2) {
                         System.out.println("VERSIONS:");
-                        for (int i = 0; i < timestamps.size(); i++) {
+                        for (int i = 0 ; i < timestamps.size() ; i++) {
                             System.out.printf("%2d: %s%n", i, timestamps.get(i).toString());
                         }
                     } else if (arguments.size() == 3) {
@@ -175,7 +191,7 @@ public class RecordInspectorMain {
     public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] buffer = new byte[0xFFFF];
-        for (int len; (len = is.read(buffer)) != -1;) {
+        for (int len ; ( len = is.read(buffer) ) != -1 ;) {
             os.write(buffer, 0, len);
         }
         os.flush();
@@ -187,6 +203,7 @@ public class RecordInspectorMain {
         @Override
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
+            addOption("show-order", "openagency url, or int list", false, false, string, null);
             addOption("relations", "show relations", false, false, null, yes);
             addOption("quiet", "text output", false, false, null, yes);
             addOption("text", "text output", false, false, null, yes);
