@@ -93,6 +93,7 @@
                                 <wsdlFile>openagency.wsdl</wsdlFile>
                             </wsdlFiles>
                             <packageName>dk.dbc.rawrepo.showorder</packageName>
+                            <wsdlLocation>/openagency.wsdl</wsdlLocation>
                             <wsdlDirectory>${basedir}/src/main/resources</wsdlDirectory>
                             <wsdlFiles>
                                 <wsdlFile>openagency.wsdl</wsdlFile>
