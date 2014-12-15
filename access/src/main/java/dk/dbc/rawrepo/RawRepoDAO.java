@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,16 +43,38 @@ public abstract class RawRepoDAO {
 
     private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
     public static final int COMMON_LIBRARY = 870970;
+    AgencySearchOrder agencySearchOrder;
 
     /**
      * Load a class and instantiate it based on the driver name from the
      * supplied connection
+     * <p>
+     * USE:
+     * {@link #newInstance(java.sql.Connection, dk.dbc.rawrepo.AgencySearchOrder)}
+     *
      *
      * @param connection database connection
      * @return a RawRepoDAO for the connection
      * @throws RawRepoException
      */
     public static RawRepoDAO newInstance(Connection connection) throws RawRepoException {
+        return newInstance(connection, new AgencySearchOrderFallback());
+    }
+
+    /**
+     * Load a class and instantiate it based on the driver name from the
+     * supplied connection
+     *
+     * @param connection        database connection
+     * @param agencySearchOrder search order provider for an agency, only used
+     *                          by {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger)},
+     *                          {@link #changedRecord(java.lang.String, dk.dbc.rawrepo.RecordId, java.lang.String)}
+     *                          and
+     *                          {@link #fetchRecordCollection(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger)}
+     * @return a RawRepoDAO for the connection
+     * @throws RawRepoException
+     */
+    public static RawRepoDAO newInstance(Connection connection, AgencySearchOrder agencySearchOrder) throws RawRepoException {
         try {
             DatabaseMetaData metaData = connection.getMetaData();
             String databaseProductName = metaData.getDatabaseProductName();
@@ -67,6 +88,7 @@ public abstract class RawRepoDAO {
             Constructor<?> constructor = clazz.getConstructor(Connection.class);
             RawRepoDAO dao = (RawRepoDAO) constructor.newInstance(connection);
             dao.validateConnection();
+            dao.agencySearchOrder = agencySearchOrder;
             return dao;
         } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             log.error("Caught exception tryini to instantiate dao", ex);
@@ -81,7 +103,7 @@ public abstract class RawRepoDAO {
      * Fetch a record from the database
      *
      * Create one if none exists in the database
-     *
+     * <p>
      * Remember, a record could exist, that is tagged deleted, call undelete()
      * If content is added.
      *
@@ -175,7 +197,7 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
-        for (Integer agencyId : allCommonAgencies(originalAgencyId)) {
+        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) { // Least common agency for this record
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
@@ -233,25 +255,6 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     public abstract Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException;
-
-    /**
-     * List of least to most common agency numbers for this agency
-     *
-     * When using a webservice, this needs to be cached. This is called
-     * repeatedly, for each record processed.
-     *
-     * @param recordId
-     * @return
-     * @throws RawRepoException
-     */
-    private List<Integer> allCommonAgencies(int agencyId) throws RawRepoException {
-        List<Integer> agencyIds = new ArrayList<>();
-        if (agencyId != COMMON_LIBRARY) {
-            agencyIds.add(agencyId);
-        }
-        agencyIds.add(COMMON_LIBRARY);
-        return agencyIds;
-    }
 
     /**
      * Delete a record from the database
@@ -395,7 +398,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
-        for (Integer agencyId : allCommonAgencies(originalAgencyId)) {
+        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
                 // find most common through sibling relations

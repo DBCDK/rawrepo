@@ -57,6 +57,7 @@ public class RawRepoDAOTest {
     public void testQueueEntityWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970");
@@ -73,6 +74,7 @@ public class RawRepoDAOTest {
     public void testQueueEntityWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
@@ -89,6 +91,7 @@ public class RawRepoDAOTest {
     public void testQueueEntityLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2");
@@ -105,6 +108,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -127,6 +131,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -149,6 +154,7 @@ public class RawRepoDAOTest {
     public void testQueueBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -171,6 +177,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -193,6 +200,7 @@ public class RawRepoDAOTest {
     public void testQueueBindWithHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
@@ -215,6 +223,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -240,6 +249,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -265,6 +275,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -290,6 +301,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -315,6 +327,7 @@ public class RawRepoDAOTest {
     public void testQueueSectionWithHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
@@ -340,6 +353,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithout() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -369,6 +383,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWith() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
@@ -398,6 +413,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", "B:1", "B:2", // HEAD
@@ -427,6 +443,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithBindLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -456,6 +473,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithSectionLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -485,6 +503,7 @@ public class RawRepoDAOTest {
     public void testQueueHeadWithComplexLocal() throws RawRepoException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -514,6 +533,7 @@ public class RawRepoDAOTest {
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject());
             fillMockRelations(access,
@@ -555,7 +575,8 @@ public class RawRepoDAOTest {
      * Fill a mocked dao with relations
      *
      * @param access mocked object
-     * @param ids list of RECORD:LIBRARY ids that relations should be refering to
+     * @param ids    list of RECORD:LIBRARY ids that relations should be
+     *               refering to
      * @throws SQLException
      */
     private static void fillMockRelations(RawRepoDAO access, String... ids) throws SQLException, RawRepoException {
@@ -612,7 +633,7 @@ public class RawRepoDAOTest {
             @Override
             public Record answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                String content = ((String) arguments[0]) + ":" + ((int) arguments[1]);
+                String content = ( (String) arguments[0] ) + ":" + ( (int) arguments[1] );
                 return recordFromContent(content);
             }
         }).when(access).fetchRecord(anyString(), anyInt());
@@ -729,9 +750,9 @@ public class RawRepoDAOTest {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                collection.add(((RecordId) arguments[0]).getBibliographicRecordId() + ":" + ((RecordId) arguments[0]).getAgencyId()
-                               + (((Boolean) arguments[3]) ? ":Y" : ":N")
-                               + (((Boolean) arguments[4]) ? ":Y" : ":N"));
+                collection.add(( (RecordId) arguments[0] ).getBibliographicRecordId() + ":" + ( (RecordId) arguments[0] ).getAgencyId()
+                               + ( ( (Boolean) arguments[3] ) ? ":Y" : ":N" )
+                               + ( ( (Boolean) arguments[4] ) ? ":Y" : ":N" ));
                 return null;
             }
         }).when(access).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
@@ -754,9 +775,10 @@ public class RawRepoDAOTest {
     }
 
     /**
-     * Raise an (descriptive) exception if a collection of strings doesn't match supplied list
+     * Raise an (descriptive) exception if a collection of strings doesn't match
+     * supplied list
      *
-     * @param col collection
+     * @param col   collection
      * @param elems string elements collection should consist of
      */
     private static void collectionIs(Collection<String> col, String... elems) {

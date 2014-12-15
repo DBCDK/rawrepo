@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:oa="http://oss.dbc.dk/ns/openagency" xmlns:oaw="http://oss.dbc.dk/ns/openagency_wsdl" targetNamespace="http://oss.dbc.dk/ns/openagency_wsdl">
+  <wsdl:documentation>This file is part of OpenAgency.
+Copyright (c) 2010, Dansk Bibliotekscenter a/s,  Tempovej 7-11, DK-2750 Ballerup, Denmark. CVR: 15149043
+
+OpenAgency is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+OpenAgency is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with OpenAgency.  If not, see http://www.gnu.org/licenses</wsdl:documentation>
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+      <xs:import namespace="http://oss.dbc.dk/ns/openagency" schemaLocation="openagency.xsd"/>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="automationRequest">
+    <wsdl:part name="parameters" element="oa:automationRequest"/>
+  </wsdl:message>
+  <wsdl:message name="automationResponse">
+    <wsdl:part name="parameters" element="oa:automationResponse"/>
+  </wsdl:message>
+  <wsdl:message name="encryptionRequest">
+    <wsdl:part name="parameters" element="oa:encryptionRequest"/>
+  </wsdl:message>
+  <wsdl:message name="encryptionResponse">
+    <wsdl:part name="parameters" element="oa:encryptionResponse"/>
+  </wsdl:message>
+  <wsdl:message name="endUserOrderPolicyRequest">
+    <wsdl:part name="parameters" element="oa:endUserOrderPolicyRequest"/>
+  </wsdl:message>
+  <wsdl:message name="endUserOrderPolicyResponse">
+    <wsdl:part name="parameters" element="oa:endUserOrderPolicyResponse"/>
+  </wsdl:message>
+  <wsdl:message name="findLibraryRequest">
+    <wsdl:part name="parameters" element="oa:findLibraryRequest"/>
+  </wsdl:message>
+  <wsdl:message name="findLibraryResponse">
+    <wsdl:part name="parameters" element="oa:findLibraryResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getCulrProfileRequest">
+    <wsdl:part name="parameters" element="oa:getCulrProfileRequest"/>
+  </wsdl:message>
+  <wsdl:message name="getCulrProfileResponse">
+    <wsdl:part name="parameters" element="oa:getCulrProfileResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getRegistryInfoRequest">
+    <wsdl:part name="parameters" element="oa:getRegistryInfoRequest"/>
+  </wsdl:message>
+  <wsdl:message name="getRegistryInfoResponse">
+    <wsdl:part name="parameters" element="oa:getRegistryInfoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSaouLicenseInfoRequest">
+    <wsdl:part name="parameters" element="oa:getSaouLicenseInfoRequest"/>
+  </wsdl:message>
+  <wsdl:message name="getSaouLicenseInfoResponse">
+    <wsdl:part name="parameters" element="oa:getSaouLicenseInfoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="nameListRequest">
+    <wsdl:part name="parameters" element="oa:nameListRequest"/>
+  </wsdl:message>
+  <wsdl:message name="nameListResponse">
+    <wsdl:part name="parameters" element="oa:nameListResponse"/>
+  </wsdl:message>
+  <wsdl:message name="pickupAgencyListRequest">
+    <wsdl:part name="parameters" element="oa:pickupAgencyListRequest"/>
+  </wsdl:message>
+  <wsdl:message name="pickupAgencyListResponse">
+    <wsdl:part name="parameters" element="oa:pickupAgencyListResponse"/>
+  </wsdl:message>
+  <wsdl:message name="openSearchProfileRequest">
+    <wsdl:part name="parameters" element="oa:openSearchProfileRequest"/>
+  </wsdl:message>
+  <wsdl:message name="openSearchProfileResponse">
+    <wsdl:part name="parameters" element="oa:openSearchProfileResponse"/>
+  </wsdl:message>
+  <wsdl:message name="remoteAccessRequest">
+    <wsdl:part name="parameters" element="oa:remoteAccessRequest"/>
+  </wsdl:message>
+  <wsdl:message name="remoteAccessResponse">
+    <wsdl:part name="parameters" element="oa:remoteAccessResponse"/>
+  </wsdl:message>
+  <wsdl:message name="requestOrderRequest">
+    <wsdl:part name="parameters" element="oa:requestOrderRequest"/>
+  </wsdl:message>
+  <wsdl:message name="requestOrderResponse">
+    <wsdl:part name="parameters" element="oa:requestOrderResponse"/>
+  </wsdl:message>
+  <wsdl:message name="serviceRequest">
+    <wsdl:part name="parameters" element="oa:serviceRequest"/>
+  </wsdl:message>
+  <wsdl:message name="serviceResponse">
+    <wsdl:part name="parameters" element="oa:serviceResponse"/>
+  </wsdl:message>
+  <wsdl:message name="showOrderRequest">
+    <wsdl:part name="parameters" element="oa:showOrderRequest"/>
+  </wsdl:message>
+  <wsdl:message name="showOrderResponse">
+    <wsdl:part name="parameters" element="oa:showOrderResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="OpenAgencyPortType">
+    <wsdl:operation name="automation">
+      <wsdl:input message="oaw:automationRequest"/>
+      <wsdl:output message="oaw:automationResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="encryption">
+      <wsdl:input message="oaw:encryptionRequest"/>
+      <wsdl:output message="oaw:encryptionResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="endUserOrderPolicy">
+      <wsdl:input message="oaw:endUserOrderPolicyRequest"/>
+      <wsdl:output message="oaw:endUserOrderPolicyResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="findLibrary">
+      <wsdl:input message="oaw:findLibraryRequest"/>
+      <wsdl:output message="oaw:findLibraryResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getCulrProfile">
+      <wsdl:input message="oaw:getCulrProfileRequest"/>
+      <wsdl:output message="oaw:getCulrProfileResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getRegistryInfo">
+      <wsdl:input message="oaw:getRegistryInfoRequest"/>
+      <wsdl:output message="oaw:getRegistryInfoResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSaouLicenseInfo">
+      <wsdl:input message="oaw:getSaouLicenseInfoRequest"/>
+      <wsdl:output message="oaw:getSaouLicenseInfoResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="nameList">
+      <wsdl:input message="oaw:nameListRequest"/>
+      <wsdl:output message="oaw:nameListResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="pickupAgencyList">
+      <wsdl:input message="oaw:pickupAgencyListRequest"/>
+      <wsdl:output message="oaw:pickupAgencyListResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="openSearchProfile">
+      <wsdl:input message="oaw:openSearchProfileRequest"/>
+      <wsdl:output message="oaw:openSearchProfileResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="remoteAccess">
+      <wsdl:input message="oaw:remoteAccessRequest"/>
+      <wsdl:output message="oaw:remoteAccessResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="requestOrder">
+      <wsdl:input message="oaw:requestOrderRequest"/>
+      <wsdl:output message="oaw:requestOrderResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="service">
+      <wsdl:input message="oaw:serviceRequest"/>
+      <wsdl:output message="oaw:serviceResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="showOrder">
+      <wsdl:input message="oaw:showOrderRequest"/>
+      <wsdl:output message="oaw:showOrderResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="OpenAgencyBinding" type="oaw:OpenAgencyPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="automation">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/Automation" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="encryption">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/Encryption" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="endUserOrderPolicy">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/EndUserOrderPolicy" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="findLibrary">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/FindLibrary" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getCulrProfile">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/GetCurlProfile" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getRegistryInfo">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/GetRegistryInfo" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSaouLicenseInfo">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/GetSaouLicenseInfo" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="nameList">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/NameList" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="pickupAgencyList">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/PickupAgencyList" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="openSearchProfile">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/OpenSearchProfile" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="remoteAccess">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/RemoteAccess" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="requestOrder">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/RequestOrder" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="service">
+      <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/Service" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  <wsdl:operation name="showOrder">
+    <soap:operation soapAction="http://oss.dbc.dk/ns/openAgency/ShowOrder" style="document"/>
+    <wsdl:input>
+      <soap:body use="literal"/>
+    </wsdl:input>
+    <wsdl:output>
+      <soap:body use="literal"/>
+    </wsdl:output>
+  </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="OpenAgencyService">
+    <wsdl:port name="OpenAgencyPortType" binding="oaw:OpenAgencyBinding">
+      <soap:address location="http://openagency.addi.dk/2.17/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

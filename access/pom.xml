@@ -29,6 +29,15 @@
                 <directory>${basedir}/src/main/resources</directory>
             </resource>
             <resource>
+                <targetPath>META-INF</targetPath>
+                <directory>src</directory>
+                <includes>
+                    <include>jax-ws-catalog.xml</include>
+                    <include>wsdl/**</include>
+                </includes>
+            </resource>
+
+            <resource>
                 <directory>${basedir}/schema</directory>
                 <includes>
                     <include>*.sql</include>
@@ -68,6 +77,46 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.jvnet.jax-ws-commons</groupId>
+                <artifactId>jaxws-maven-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>wsimport</goal>
+                        </goals>
+                        <configuration>
+                            <wsdlFiles>
+                                <wsdlFile>openagency.wsdl</wsdlFile>
+                            </wsdlFiles>
+                            <packageName>dk.dbc.rawrepo.showorder</packageName>
+                            <wsdlDirectory>${basedir}/src/main/resources</wsdlDirectory>
+                            <wsdlFiles>
+                                <wsdlFile>openagency.wsdl</wsdlFile>
+                            </wsdlFiles>
+                            <staleFile>${project.build.directory}/jaxws/stale/openagency.stale</staleFile>
+                        </configuration>
+                        <id>wsimport-generate-openagency</id>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.xml</groupId>
+                        <artifactId>webservices-api</artifactId>
+                        <version>2.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDestDir>${project.build.directory}/generated-sources/jaxws-wsimport</sourceDestDir>
+                    <xnocompile>true</xnocompile>
+                    <verbose>true</verbose>
+                    <extension>true</extension>
+                    <catalog>${basedir}/src/jax-ws-catalog.xml</catalog>
+                </configuration>
             </plugin>
 
             <plugin>
