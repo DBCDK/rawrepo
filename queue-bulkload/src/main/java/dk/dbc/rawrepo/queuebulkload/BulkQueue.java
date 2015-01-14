@@ -23,6 +23,7 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
@@ -70,6 +71,37 @@ public class BulkQueue {
             }
             connection.commit();
         } catch (Exception ex) {
+            log.error("Caught exception:", ex);
+            try {
+                connection.rollback();
+            } catch (SQLException ex1) {
+                log.error("Rolling back - Caught exception:", ex1);
+            }
+        }
+    }
+
+    public void run(Iterator<RecordId> iterator) {
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queue (bibliographicrecordid, agencyid, worker) VALUES(?, ?, ?)")) {
+                stmt.setString(3, role);
+                int row = 0;
+                while (iterator.hasNext()) {
+                    if (row == commit) {
+                        log.debug("commit");
+                        connection.commit();
+                        connection.setAutoCommit(false);
+                        row = 0;
+                    }
+                    row++;
+                    RecordId next = iterator.next();
+                    stmt.setString(1, next.getBibliographicRecordId());
+                    stmt.setInt(2, next.getAgencyId());
+                    stmt.execute();
+                }
+                connection.commit();
+            }
+        } catch (SQLException ex) {
             log.error("Caught exception:", ex);
             try {
                 connection.rollback();

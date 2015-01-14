@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,37 +90,73 @@ public class BulkQueueMain {
             if (commandLine.hasOption("library")) {
                 library = (Integer) commandLine.getOption("library");
             }
+            log.debug("library = " + library);
             fallbackMimeType = MarcXChangeMimeType.MARCXCHANGE;
             if (commandLine.hasOption("mimetype")) {
                 fallbackMimeType = (String) commandLine.getOption("mimetype");
             }
+            log.debug("fallbackMimeType = " + fallbackMimeType);
             commit = 1000;
             if (commandLine.hasOption("commit")) {
                 commit = (Integer) commandLine.getOption("commit");
             }
+            log.debug("commit = " + commit);
             bulkQueue = new BulkQueue(db, commit, role);
 
             if (commandLine.hasOption("stdin")) {
                 if (!commandLine.getExtraArguments().isEmpty()) {
                     throw new IllegalStateException("Extra arguments with --stdin does not make sense");
                 }
+                log.debug("stdin");
                 iterator = new StreamCollection(library).iterator();
             } else if (commandLine.hasOption("file")) {
                 if (!commandLine.getExtraArguments().isEmpty()) {
                     throw new IllegalStateException("Extra arguments with --all does not make sense");
                 }
+                log.debug("file");
                 String file = (String) commandLine.getOption("file");
                 StreamCollection streamCollection = new StreamCollection(library, file);
                 autoCloseable = streamCollection;
                 iterator = streamCollection.iterator();
 
-            } else if (commandLine.hasOption("all")) {
+            } else if (commandLine.hasOption("all") || commandLine.hasOption("leafs") || commandLine.hasOption("nodes")) {
                 if (!commandLine.getExtraArguments().isEmpty()) {
-                    throw new IllegalStateException("Extra arguments with --all does not make sense");
+                    throw new IllegalStateException("Extra arguments with --all/leafs/nodes does not make sense");
                 }
-                AllCollection allCollection = new AllCollection(bulkQueue.connection, library);
-                autoCloseable = allCollection;
-                iterator = allCollection.iterator();
+                int cnt = 0;
+                if (commandLine.hasOption("all")) {
+                    cnt++;
+                }
+                if (commandLine.hasOption("leafs")) {
+                    cnt++;
+                }
+                if (commandLine.hasOption("nodes")) {
+                    cnt++;
+                }
+                if (cnt != 1) {
+                    throw new IllegalStateException("Only one of --all/leafs/nodes makes sense");
+                } else if (commandLine.hasOption("all")) {
+                    log.debug("all");
+                    AllCollection allCollection = new AllCollection(bulkQueue.connection, library);
+                    autoCloseable = allCollection;
+                    iterator = allCollection.iterator();
+                    log.debug("AllCollection");
+                } else if (commandLine.hasOption("leafs")) {
+                    log.debug("leafs");
+                    LeafsCollection leafsCollection = new LeafsCollection(bulkQueue.connection, library);
+                    autoCloseable = leafsCollection;
+                    iterator = leafsCollection.iterator();
+                    log.debug("LeafsCollection");
+                } else if (commandLine.hasOption("nodes")) {
+                    log.debug("nodes");
+                    NodesCollection nodesCollection = new NodesCollection(bulkQueue.connection, library);
+                    autoCloseable = nodesCollection;
+                    iterator = nodesCollection.iterator();
+                    log.debug("nodesCollection");
+                } else {
+                    throw new IllegalStateException("arg");
+                }
+
             } else if (commandLine.hasOption("range")) {
                 if (commandLine.getExtraArguments().size() != 2) {
                     throw new IllegalStateException("--range takes 2 arguments");
@@ -154,8 +189,11 @@ public class BulkQueueMain {
 
         log.debug("DEBUG");
         log.info("INFO");
-
-        bulkQueue.run(iterator, fallbackMimeType);
+        if (commandLine.hasOption("skip-queue-rules")) {
+            bulkQueue.run(iterator);
+        } else {
+            bulkQueue.run(iterator, fallbackMimeType);
+        }
 
         try {
             if (autoCloseable != null) {
@@ -191,12 +229,15 @@ class CommandLineBulkQueue extends CommandLine {
         addOption("mimetype", "Fallback mimetype, if type cannot be resolved", false, false, string, null);
         addOption("stdin", "read ids from stdin", false, false, null, yes);
         addOption("all", "select all ids from the records table in the database", false, false, null, yes);
+        addOption("leafs", "select all leaf-ids from the records table in the database", false, false, null, yes);
+        addOption("nodes", "select all node-ids from the records table in the database", false, false, null, yes);
         addOption("range", "select all ids from the records table in the database, "
                            + "modified between argument 1 & 2 (yyyy-MM-dd hh:mm:ss.SSS)", false, false, null, yes);
         addOption("file", "read ids from file", false, false, string, null);
         addOption("db", "connectstring for database", true, false, string, null);
         addOption("commit", "how often to commit (default=1000)", false, false, integer, null);
         addOption("debug", "turn on debug logging", false, false, null, yes);
+        addOption("skip-queue-rules", "provider is worker, and no dao action is taken (dangerous: can produce duplicates on queue)", false, false, null, yes);
     }
 
     @Override
