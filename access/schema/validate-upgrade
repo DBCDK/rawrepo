@@ -8,7 +8,7 @@ mkdir -p $tmp
 rm -f $tmp/log
 
 if [ $# = 0 ]; then 
-    version=`ls -f $name-*.sql | sort -n | tail -n 1`
+    version=`ls -f $name-*.sql | sed 's/[^0-9]//g' | sort -n | tail -n 1`
     version=${version//[^0-9]/}
 
     if [ $name-$version.sql -ot $name.sql ]; then
