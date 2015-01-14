@@ -90,6 +90,11 @@ public class LeafsCollection implements Iterable<RecordId>, AutoCloseable {
                 next = null;
                 return recordId;
             }
+
+            @Override
+            public void remove() {
+            }
+
         };
     }
 
