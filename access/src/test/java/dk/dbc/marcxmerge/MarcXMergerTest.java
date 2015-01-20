@@ -71,7 +71,9 @@ public class MarcXMergerTest {
     public MarcXResource resource = new MarcXResource();
 
     MarcXCompare marcXCompare;
-    FieldRules fieldRules;
+    FieldRules fieldRulesIntermediate;
+    FieldRules fieldRulesFinal;
+    boolean isFinal;
 
     @BeforeClass
     public static void setUpClass() {
@@ -81,11 +83,13 @@ public class MarcXMergerTest {
     public static void tearDownClass() {
     }
 
-    public MarcXMergerTest(String base, String immutable, String overwrite, String invalid, String valid_regex)
+    public MarcXMergerTest(String base, String immutable, String overwrite, String invalid, String valid_regex, String isFinal)
             throws ParserConfigurationException, TransformerConfigurationException {
         this.marcXCompare = new MarcXCompare();
         this.base = base;
-        this.fieldRules = new FieldRules(immutable, overwrite, invalid, valid_regex);
+        this.fieldRulesIntermediate = new FieldRules(immutable, overwrite, invalid, valid_regex);
+        this.fieldRulesFinal = new FieldRules(immutable, overwrite, invalid, ".{3}");
+        this.isFinal = Boolean.valueOf(isFinal);
     }
 
     @Before
@@ -96,28 +100,30 @@ public class MarcXMergerTest {
     public void tearDown() {
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{0}")
     public static Collection filenames() {
         return Arrays.asList(new String[][]{ // Constructor arguments
-            {"append", "", "", "", ".*"}, // Append
-            {"immutable", "245", "", "", ".*"}, // Don't overwrite procted field
-            {"overwrite", "", "245", "", ".*"}, // Overwrite of single fields
-            {"overwrite_multi", "", "245", "", ".*"}, // Overwrite of repeated field
-            {"overwrite_group", "", "245 239", "", ".*"}, // Overwrite of repeated field
-            {"remove", "", "", "245", ".*"}, // Remove field
-            {"invalid", "", "", "", "\\d{3}"} // Pattern validation
+            {"append", "", "", "", ".*", "false"}, // Append
+            {"immutable", "245", "", "", ".*", "false"}, // Don't overwrite procted field
+            {"overwrite", "", "245", "", ".*", "false"}, // Overwrite of single fields
+            {"overwrite_multi", "", "245", "", ".*", "false"}, // Overwrite of repeated field
+            {"overwrite_group", "", "245 239", "", ".*", "false"}, // Overwrite of repeated field
+            {"remove", "", "", "245", ".*", "false"}, // Remove field
+            {"invalid", "", "", "", "\\d{3}", "false"}, // Pattern validation
+            {"isfinal", "", "", "", "\\d{3}", "true"} // Pattern validation
         });
     }
 
     @Test
     public void testMerge() throws SAXException, MarcXMergerException, IOException, UnsupportedEncodingException, TransformerException {
+
         System.out.println("base = " + base);
         byte[] common = resource.get(base + "/common");
         byte[] local = resource.get(base + "/local");
         byte[] result = resource.get(base + "/result");
 
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRules);
-        byte[] merge = marcxMerger.merge(common, local);
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+        byte[] merge = marcxMerger.merge(common, local, isFinal);
         marcXCompare.compare(result, merge);
     }
 
@@ -235,7 +241,7 @@ public class MarcXMergerTest {
 
         private ArrayList<String> attributesInSet(NamedNodeMap attributes) {
             ArrayList<String> names = new ArrayList<>();
-            for (int i = 0; i < attributes.getLength(); i++) {
+            for (int i = 0 ; i < attributes.getLength() ; i++) {
                 names.add(attributes.item(i).getNodeName());
             }
             Collections.sort(names);

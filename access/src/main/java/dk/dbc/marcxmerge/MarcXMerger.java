@@ -71,7 +71,7 @@ public class MarcXMerger {
 
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
-    private final FieldRules fieldRules;
+    private final FieldRules fieldRulesIntermediate;
 
     /**
      * Default constructor, sets up FieldRules according to std rules
@@ -81,19 +81,20 @@ public class MarcXMerger {
     public MarcXMerger() throws MarcXMergerException {
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
-        this.fieldRules = new FieldRules();
+        this.fieldRulesIntermediate = new FieldRules();
+
     }
 
     /**
      * Constructor for custom FieldRules
      *
-     * @param fieldRules ruleset for merging records
+     * @param fieldRulesIntermediate ruleset for merging records
      * @throws MarcXMergerException
      */
-    public MarcXMerger(FieldRules fieldRules) throws MarcXMergerException {
+    public MarcXMerger(FieldRules fieldRulesIntermediate) throws MarcXMergerException {
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
-        this.fieldRules = fieldRules;
+        this.fieldRulesIntermediate = fieldRulesIntermediate;
     }
 
     public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
@@ -148,14 +149,16 @@ public class MarcXMerger {
     }
 
     /**
-     * Merge two marcxchange records according to the rules defined in the constructor
+     * Merge two marcxchange records according to the rules defined in the
+     * constructor
      *
-     * @param common the base of the result
-     * @param local the additional data
+     * @param common           the base of the result
+     * @param local            the additional data
+     * @param includeAllFields
      * @return a merged record
      * @throws MarcXMergerException
      */
-    public byte[] merge(byte[] common, byte[] local) throws MarcXMergerException {
+    public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
         try {
             Document commonDom = documentBuilder.parse(new ByteArrayInputStream(common));
             Document localDom = documentBuilder.parse(new ByteArrayInputStream(local));
@@ -179,7 +182,7 @@ public class MarcXMerger {
             Document targetDom = commonDom; // reuse common dom's leader
             Element targetRootElement = commonRootElement;
 
-            FieldRules.RuleSet ruleSet = fieldRules.newRuleSet();
+            FieldRules.RuleSet ruleSet = fieldRulesIntermediate.newRuleSet();
 
             removeEmptyText(commonDom.getDocumentElement()); // cleanup nodes
             removeEmptyText(localDom.getDocumentElement()); // cleanup nodes
@@ -187,7 +190,7 @@ public class MarcXMerger {
             ArrayList<Node> localFields = getDatafields(localDom.getDocumentElement());
             ArrayList<Node> commonFields = getDatafields(commonDom.getDocumentElement());
 
-            removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom); // sets up which common fields, that should be removed
+            removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom, includeAllFields); // sets up which common fields, that should be removed
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
 
             mergeCommonAndLocalIntoTarget(localFields, commonFields, targetRootElement);
@@ -237,12 +240,12 @@ public class MarcXMerger {
      * @param targetDom
      * @throws DOMException
      */
-    private static void removeRegisterAndImportLocalFields(ArrayList<Node> localFields, FieldRules.RuleSet ruleSet, Document targetDom) throws DOMException {
-        for (ListIterator<Node> it = localFields.listIterator(); it.hasNext();) {
+    private static void removeRegisterAndImportLocalFields(ArrayList<Node> localFields, FieldRules.RuleSet ruleSet, Document targetDom, boolean includeAllFields) throws DOMException {
+        for (ListIterator<Node> it = localFields.listIterator() ; it.hasNext() ;) {
             Element element = (Element) it.next();
             String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
-            if (ruleSet.immutableField(tag) || ruleSet.invalidField(tag)) {
+            if (ruleSet.immutableField(tag) || ruleSet.invalidField(tag, includeAllFields)) {
                 it.remove();
             } else {
                 it.set(targetDom.importNode(element, true));
@@ -264,11 +267,11 @@ public class MarcXMerger {
      * @throws DOMException
      */
     private static void removeAndImportCommonFields(ArrayList<Node> commonFields, FieldRules.RuleSet ruleSet, Document targetDom) throws DOMException {
-        for (ListIterator<Node> it = commonFields.listIterator(); it.hasNext();) {
+        for (ListIterator<Node> it = commonFields.listIterator() ; it.hasNext() ;) {
             Element element = (Element) it.next();
             String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
-            if (ruleSet.invalidField(tag) || ruleSet.removeField(tag)) {
+            if (ruleSet.invalidField(tag, false) || ruleSet.removeField(tag)) {
                 it.remove();
             } else {
                 it.set(targetDom.importNode(element, true));
@@ -318,10 +321,10 @@ public class MarcXMerger {
         public int compare(Node o1, Node o2) {
             if (o1.getNodeType() == Node.ELEMENT_NODE
                 && o2.getNodeType() == Node.ELEMENT_NODE
-                && ((Element) o1).hasAttribute(ATTRIBUTE_TAG)
-                && ((Element) o2).hasAttribute(ATTRIBUTE_TAG)) {
-                String o1Tag = ((Element) o1).getAttribute(ATTRIBUTE_TAG);
-                String o2Tag = ((Element) o2).getAttribute(ATTRIBUTE_TAG);
+                && ( (Element) o1 ).hasAttribute(ATTRIBUTE_TAG)
+                && ( (Element) o2 ).hasAttribute(ATTRIBUTE_TAG)) {
+                String o1Tag = ( (Element) o1 ).getAttribute(ATTRIBUTE_TAG);
+                String o2Tag = ( (Element) o2 ).getAttribute(ATTRIBUTE_TAG);
                 return o1Tag.compareTo(o2Tag);
             } else {
                 return o2.hashCode() - o1.hashCode();
@@ -338,7 +341,7 @@ public class MarcXMerger {
     private static ArrayList<Node> getDatafields(Element element) {
         NodeList nodeList = element.getElementsByTagNameNS(MARCX_NS, ELEMENT_DATAFIELD);
         ArrayList<Node> ret = new ArrayList<>(nodeList.getLength());
-        for (int i = 0; i < nodeList.getLength(); i++) {
+        for (int i = 0 ; i < nodeList.getLength() ; i++) {
             ret.add(nodeList.item(i));
         }
         Collections.sort(ret, NODE_TAG_COMPARE);

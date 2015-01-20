@@ -222,7 +222,7 @@ public abstract class RawRepoDAO {
                         log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                         throw new MarcXMergerException("Cannot merge enrichment");
                     }
-                    content = merger.merge(content, next.getContent());
+                    content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
                     next.setEnriched(true);
                     next.setMimeType(record.getMimeType());
                     next.setContent(content);

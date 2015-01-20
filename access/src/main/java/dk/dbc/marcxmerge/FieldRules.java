@@ -32,11 +32,11 @@ import java.util.regex.Pattern;
  */
 public class FieldRules {
 
-    private static final String INVALID_DEFAULT = "";
-    private static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247"
-                                                    + ";008 009 038 039 100 110 239 245 652"; // Opstillingsdata
-    private static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
-    private static final String VALID_REGEX_DEFAULT = "\\d{3}";
+    public static final String INVALID_DEFAULT = "";
+    public static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247"
+                                                   + ";008 009 038 039 100 110 239 245 652"; // Opstillingsdata
+    public static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
+    public static final String VALID_REGEX_DANMARC2 = "\\d{3}";
 
     private final Pattern validRegex;
     private final Set<String> invalid;
@@ -103,10 +103,11 @@ public class FieldRules {
          * The presence of this field is not wanted
          *
          * @param field
+         * @param includeAllFields Do not restrict to validRegex
          * @return boolean
          */
-        public boolean invalidField(String field) {
-            return !validRegex.matcher(field).matches() || invalid.contains(field);
+        public boolean invalidField(String field, boolean includeAllFields) {
+            return !includeAllFields && !validRegex.matcher(field).matches() || invalid.contains(field);
         }
 
         /**
@@ -138,7 +139,7 @@ public class FieldRules {
         this.immutable = collectionInit(IMMUTABLE_DEFAULT);
         this.remove = new HashSet<>();
         this.overwriteCollections = overwriteCollectionsInit(OVERWRITE_DEFAULT);
-        this.validRegex = Pattern.compile(VALID_REGEX_DEFAULT, Pattern.MULTILINE);
+        this.validRegex = Pattern.compile(VALID_REGEX_DANMARC2, Pattern.MULTILINE);
     }
 
     /**

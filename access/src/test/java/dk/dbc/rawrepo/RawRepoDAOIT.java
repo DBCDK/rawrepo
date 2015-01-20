@@ -184,7 +184,7 @@ public class RawRepoDAOIT {
         MarcXMerger merger = new MarcXMerger() {
 
             @Override
-            public byte[] merge(byte[] common, byte[] local) throws MarcXMergerException {
+            public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
                 return local;
             }
 
