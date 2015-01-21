@@ -54,10 +54,13 @@ public class LeafsCollection implements Iterable<RecordId>, AutoCloseable {
         }
 
         PreparedStatement stmt = connection.prepareStatement("select bibliographicrecordid from records where agencyid = ?");
-        stmt.setInt(1, agencyId);
-
-        query = stmt.executeQuery();
-
+        try {
+            stmt.setInt(1, agencyId);
+            query = stmt.executeQuery();
+        } catch (SQLException ex) {
+            stmt.close();
+            throw ex;
+        }
     }
 
     @Override
