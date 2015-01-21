@@ -222,17 +222,14 @@ public abstract class RawRepoDAO {
                         log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                         throw new MarcXMergerException("Cannot merge enrichment");
                     }
+
                     content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
-                    next.setEnriched(true);
-                    next.setMimeType(record.getMimeType());
-                    next.setContent(content);
-                    if (record.getModified().after(next.getModified())) {
-                        next.setModified(record.getModified());
-                    }
-                    if (record.getCreated().after(next.getCreated())) {
-                        next.setCreated(record.getCreated());
-                    }
-                    record = next;
+                    record = new RecordImpl(bibliographicRecordId, next.getId().getAgencyId(), false,
+                                            record.getMimeType(), content,
+                                            record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                            record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                            true);
+                    record.setEnriched(true);
                 }
                 return record;
             }
