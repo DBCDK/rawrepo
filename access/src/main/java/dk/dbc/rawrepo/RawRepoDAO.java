@@ -42,6 +42,10 @@ import org.slf4j.LoggerFactory;
 public abstract class RawRepoDAO {
 
     private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
+    @Deprecated
+    /**
+     * There's no long any library with special meaning
+     */
     public static final int COMMON_LIBRARY = 870970;
     AgencySearchOrder agencySearchOrder;
 
@@ -391,7 +395,7 @@ public abstract class RawRepoDAO {
      * Traverse list of common libraries, to find least common version of record
      *
      * Then traverse siblings to find most common version of record, which is
-     * either the COMMON_LIBRARY version or a LOCALRECORD
+     * provided by agencySearchOrder
      *
      * @param bibliographicRecordId
      * @return

@@ -43,6 +43,8 @@ import org.slf4j.LoggerFactory;
  */
 public class BulkQueueMain {
 
+    public static final int DEFAULT_LIBRARY = 870970;
+
     private static final Logger log = LoggerFactory.getLogger(BulkQueueMain.class);
 
     private static final SimpleDateFormat dateFormats[] = {
@@ -86,7 +88,7 @@ public class BulkQueueMain {
             db = (String) commandLine.getOption("db");
             role = (String) commandLine.getOption("role");
 
-            library = 870970;
+            library = DEFAULT_LIBRARY;
             if (commandLine.hasOption("library")) {
                 library = (Integer) commandLine.getOption("library");
             }
@@ -225,7 +227,7 @@ class CommandLineBulkQueue extends CommandLine {
     @Override
     void setOptions() {
         addOption("role", "name of enqueue software (provider)", true, false, string, null);
-        addOption("library", "which library to use (default=COMMON_LIBRARY)", false, false, integer, null);
+        addOption("library", "which library to use (default=" + BulkQueueMain.DEFAULT_LIBRARY + ")", false, false, integer, null);
         addOption("mimetype", "Fallback mimetype, if type cannot be resolved", false, false, string, null);
         addOption("stdin", "read ids from stdin", false, false, null, yes);
         addOption("all", "select all ids from the records table in the database", false, false, null, yes);
