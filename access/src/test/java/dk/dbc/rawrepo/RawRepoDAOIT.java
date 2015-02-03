@@ -95,6 +95,7 @@ public class RawRepoDAOIT {
         Record record1 = dao.fetchRecord("B", 870970);
         assertTrue(record1.isOriginal());
         record1.setContent("First edition".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertFalse(record1.isOriginal());
 
@@ -125,6 +126,7 @@ public class RawRepoDAOIT {
         Record record12 = dao.fetchRecord("C", 12);
         record12.setDeleted(false);
         record12.setContent("HELLO".getBytes());
+        record12.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record12);
         connection.commit();
         connection.setAutoCommit(false);
@@ -572,11 +574,13 @@ public class RawRepoDAOIT {
 
         Record record1 = dao.fetchRecord("1 234 567 8", 123456);
         record1.setContent("HELLO".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         connection.commit();
         connection.setAutoCommit(false);
         Record record2 = dao.fetchRecord("1 234 567 8", 123456);
         record2.setContent("HELLO AGAIN".getBytes());
+        record2.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record2);
 
         ResultSet resultSet = connection.prepareStatement("SELECT COUNT(*) FROM records_archive").executeQuery();

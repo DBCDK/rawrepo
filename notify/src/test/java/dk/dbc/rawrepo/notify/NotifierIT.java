@@ -5,6 +5,7 @@
  */
 package dk.dbc.rawrepo.notify;
 
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
 import java.sql.Connection;
@@ -14,7 +15,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.postgresql.ds.PGSimpleDataSource;
 
@@ -90,6 +93,7 @@ public class NotifierIT {
         // Store a record
         Record record1 = dao.fetchRecord("A", 870970);
         record1.setContent("First edition".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertTrue(dao.recordExists("A", 870970));
         dao.changedRecord(PROVIDER, record1.getId(), "text/plain");

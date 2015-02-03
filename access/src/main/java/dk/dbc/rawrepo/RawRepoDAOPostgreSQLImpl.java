@@ -255,6 +255,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public void saveRecord(Record record) throws RawRepoException {
+        if (record.getMimeType().isEmpty()) {
+            throw new RawRepoException("Record has unset mimetype, cannot save");
+        }
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
             stmt.setBoolean(1, record.isDeleted());
             stmt.setString(2, record.getMimeType());
