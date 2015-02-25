@@ -125,7 +125,7 @@ public class RecordInspector implements Closeable {
     }
 
     public Record get(int agencyId, String bibliographicRecordId) throws RawRepoException, MarcXMergerException {
-        return dao.fetchMergedRecord(bibliographicRecordId, agencyId, new MarcXMerger());
+        return dao.fetchMergedRecord(bibliographicRecordId, agencyId, new MarcXMerger(), true);
     }
 
     public byte[] get(int agencyId, String bibliographicRecordId, Timestamp timestamp) throws SQLException {

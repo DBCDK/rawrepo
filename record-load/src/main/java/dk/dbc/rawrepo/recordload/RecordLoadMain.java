@@ -44,7 +44,6 @@ public class RecordLoadMain {
             commandLine.parse(args);
             List<String> arguments = commandLine.getExtraArguments();
             boolean delete = commandLine.hasOption("delete");
-            boolean purge = commandLine.hasOption("purge");
             boolean set = commandLine.hasOption("set");
             boolean add = commandLine.hasOption("add");
             boolean relation = set || add;
@@ -53,18 +52,17 @@ public class RecordLoadMain {
                 mimeType = (String) commandLine.getOption("mimetype");
             }
 
-            if (delete && purge
-                || (delete || purge) && relation
+            if (delete && relation
                 || set && add
-                || !((delete || purge) && arguments.size() == 2
-                     || relation && arguments.size() >= 2
-                     || !(delete || purge) && !relation && arguments.size() == 3)) {
+                || !( delete && arguments.size() == 2
+                      || relation && arguments.size() >= 2
+                      || !delete && !relation && arguments.size() == 3 )) {
                 throw new IllegalArgumentException("Commandline syntax error");
             }
             int agencyId = Integer.parseInt(arguments.get(0), 10);
             String bibliographicRecordId = arguments.get(1);
             byte[] content = null;
-            if (!delete && !purge && !relation) {
+            if (!delete && !relation) {
                 String fileName = arguments.get(2);
                 if (fileName.equals("-")) {
                     content = getBytesFromInputStream(System.in);
@@ -86,8 +84,6 @@ public class RecordLoadMain {
             try (RecordLoad recordLoad = new RecordLoad((String) commandLine.getOption("db"));) {
                 if (delete) {
                     recordLoad.delete(agencyId, bibliographicRecordId);
-                } else if (purge) {
-                    recordLoad.purge(agencyId, bibliographicRecordId);
                 } else if (relation) {
                     List<String> relations = arguments.subList(2, arguments.size());
                     recordLoad.relations(agencyId, bibliographicRecordId, add, relations);
@@ -124,7 +120,7 @@ public class RecordLoadMain {
     public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] buffer = new byte[0xFFFF];
-        for (int len; (len = is.read(buffer)) != -1;) {
+        for (int len ; ( len = is.read(buffer) ) != -1 ;) {
             os.write(buffer, 0, len);
         }
         os.flush();
@@ -138,7 +134,6 @@ public class RecordLoadMain {
             addOption("db", "connectstring for database", true, false, string, null);
             addOption("role", "name of enqueue software (provider)", false, false, string, null);
             addOption("delete", "delete record", false, false, null, yes);
-            addOption("purge", "remove record", false, false, null, yes);
             addOption("mimetype", "record mimetype", false, false, string, null);
             addOption("set", "set relations", false, false, null, yes);
             addOption("add", "add relations", false, false, null, yes);

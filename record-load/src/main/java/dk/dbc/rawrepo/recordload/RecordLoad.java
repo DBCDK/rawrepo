@@ -89,13 +89,6 @@ public class RecordLoad implements Closeable {
         dao.saveRecord(record);
     }
 
-    public void purge(int agencyId, String bibliographicRecordId) throws RawRepoException {
-        RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        dao.purgeRecord(recordId);
-        Set<RecordId> relations = new HashSet<>();
-        dao.setRelationsFrom(recordId, relations);
-    }
-
     private static final Pattern RELATION = Pattern.compile("^(\\d+):(.+)$");
 
     public void relations(int agencyId, String bibliographicRecordId, boolean add, List<String> relations) throws RawRepoException {

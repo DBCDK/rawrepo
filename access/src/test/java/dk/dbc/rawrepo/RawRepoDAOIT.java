@@ -228,14 +228,12 @@ public class RawRepoDAOIT {
         assertFalse(recA.isDeleted());
         dao.saveRecord(recA);
 
-        // Delete Record
-//        dao.deleteRecord(recA.getId());
-        // Record Doesn't exist
-//        assertFalse(dao.recordExists("A", 870970));
-        // Record is deleted
         recA = dao.fetchRecord("A", 870970);
         recA.setDeleted(true);
         dao.saveRecord(recA);
+
+        assertTrue(dao.recordExistsMabyDeleted("A", 870970));
+        assertFalse(dao.recordExists("A", 870970));
 
         recA = dao.fetchRecord("A", 870970);
         assertFalse(recA.isOriginal());
@@ -245,14 +243,6 @@ public class RawRepoDAOIT {
 
         recA = dao.fetchRecord("A", 870970);
         assertFalse(recA.isOriginal());
-        assertFalse(recA.isDeleted());
-
-        // Purge Record
-        dao.purgeRecord(recA.getId());
-
-        // Record is newly created
-        recA = dao.fetchRecord("A", 870970);
-        assertTrue(recA.isOriginal());
         assertFalse(recA.isDeleted());
 
         connection.commit();

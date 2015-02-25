@@ -42,11 +42,7 @@ import org.slf4j.LoggerFactory;
 public abstract class RawRepoDAO {
 
     private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
-    @Deprecated
-    /**
-     * There's no long any library with special meaning
-     */
-    public static final int COMMON_LIBRARY = 870970;
+
     AgencySearchOrder agencySearchOrder;
 
     /**
@@ -178,7 +174,7 @@ public abstract class RawRepoDAO {
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         if (!collection.containsKey(bibliographicRecordId)) {
-            Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger);
+            Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
             collection.put(bibliographicRecordId, record);
 
             int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, agencyId);
@@ -199,14 +195,37 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     if there's a data error or record isn't
      *                              found
      * @throws MarcXMergerException if we can't merge record
+     *
+     * USE:
+     * {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger, boolean)}
+     *
      */
+    @Deprecated
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, false);
+    }
+
+    /**
+     * Fetch record for id, merging more common records with this
+     *
+     * @param bibliographicRecordId local id
+     * @param originalAgencyId      least to most common
+     * @param merger
+     * @param fetchDeleted          allow fetching of deleted records
+     * @return Record merged
+     * @throws RawRepoException     if there's a data error or record isn't
+     *                              found
+     * @throws MarcXMergerException if we can't merge record
+     */
+    public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws RawRepoException, MarcXMergerException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
             if (!allAgenciesWithRecord.contains(agencyId)) {
                 continue;
             }
-            if (recordExists(bibliographicRecordId, agencyId)) { // Least common agency for this record
+            if (fetchDeleted
+                ? recordExistsMabyDeleted(bibliographicRecordId, agencyId)
+                : recordExists(bibliographicRecordId, agencyId)) {
                 LinkedList<Record> records = new LinkedList<>();
                 for (;;) {
                     Record record = fetchRecord(bibliographicRecordId, agencyId);
@@ -261,6 +280,7 @@ public abstract class RawRepoDAO {
      */
     public abstract Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException;
 
+    @Deprecated
     /**
      * Delete a record from the database
      *

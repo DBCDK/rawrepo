@@ -226,6 +226,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     }
 
+    @Deprecated
     /**
      * Purge a record from the database
      *

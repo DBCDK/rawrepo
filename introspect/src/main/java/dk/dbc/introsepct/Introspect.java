@@ -151,7 +151,7 @@ public class Introspect {
                                     @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
             RawRepoDAO dao = RawRepoDAO.newInstance(connection);
-            Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger());
+            Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
 
             ArrayList<Object> response = xmlDiff(record, record);
 
