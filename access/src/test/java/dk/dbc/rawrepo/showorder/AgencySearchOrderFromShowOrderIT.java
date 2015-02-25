@@ -35,30 +35,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.NoSuchFileException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
-import org.junit.Assert;
-import sun.misc.IOUtils;
-import sun.nio.ch.IOUtil;
 
 /**
  *
@@ -74,9 +60,6 @@ public class AgencySearchOrderFromShowOrderIT {
         String port = System.getProperty("postgresql.port");
         jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
         Properties properties = new Properties();
-        jdbc = "jdbc:postgresql://localhost/data";
-        properties.put("user", "duser");
-        properties.put("password", "dpass");
 
         connection = DriverManager.getConnection(jdbc, properties);
         connection.prepareStatement("SET log_statement = 'all';").execute();
