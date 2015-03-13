@@ -10,7 +10,7 @@ mkdir -p logs
 
 for file in "$@"; do
     echo "${file/*\//}"
-    (time jsinputtool -p plugin:/home/bogeskov/jssql/src -f xml -F "$SCRIPT_BASE"/records.js "$DB" <"$file") 2>&1 | tee logs/"${file/*\//}".records-log
+    (time jsinputtool -f xml -F "$SCRIPT_BASE"/records.js "$DB" <"$file") 2>&1 | tee logs/"${file/*\//}".records-log
 done
 
 for file in "$@"; do
