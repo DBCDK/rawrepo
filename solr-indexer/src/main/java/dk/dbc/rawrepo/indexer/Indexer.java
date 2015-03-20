@@ -49,6 +49,10 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import dk.dbc.marcx.sax.MarcxParser;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.marcxmerge.MarcXMerger;
+import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.rawrepo.AgencySearchOrder;
+import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
 
 /**
@@ -70,6 +74,11 @@ public class Indexer {
 
     @Inject
     MetricsRegistry registry;
+
+    @Inject
+    MergerPool mergerPool;
+
+    AgencySearchOrder searchOrder;
 
     Timer processJobTimer;
     Timer getConnectionTimer;
@@ -113,6 +122,7 @@ public class Indexer {
 
         try {
             parser = SAXParserFactory.newInstance().newSAXParser();
+            searchOrder = new AgencySearchOrderFallback();
         } catch (ParserConfigurationException | SAXException ex) {
             log.error("Unable to initialize saxparser", ex);
             throw new ExceptionInInitializerError(ex);
@@ -150,7 +160,7 @@ public class Indexer {
                     moreWork = false;
                     log.trace("Queue is empty. Nothing to index");
                 }
-            } catch (RawRepoException | SQLException ex) {
+            } catch (MarcXMergerException | RawRepoException | SQLException ex) {
                 moreWork = false;
                 log.error("Error getting job from database", ex);
             }
@@ -168,12 +178,12 @@ public class Indexer {
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
         Timer.Context time = createDAOTimer.time();
-        final RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        final RawRepoDAO dao = RawRepoDAO.newInstance(connection, searchOrder);
         time.stop();
         return dao;
     }
 
-    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException {
+    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
         log.debug("Indexing {}", job);
         RecordId jobId = job.getJob();
         String id = jobId.getBibliographicRecordId();
@@ -201,12 +211,16 @@ public class Indexer {
         return job;
     }
 
-    private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException {
-        Timer.Context time = fetchRecordTimer.time();
-        Record record = dao.fetchRecord(id, library);
-        time.stop();
-        //log.trace("{} '{}', '{}'", record, record.getContent(), new String(record.getContent()));
-        return record;
+    private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException, MarcXMergerException {
+        MarcXMerger merger = null;
+        try (Timer.Context time = fetchRecordTimer.time()) {
+            merger = mergerPool.getMerger();
+            return dao.fetchMergedRecord(id, library, merger, true);
+        } finally {
+            if (merger != null) {
+                mergerPool.putMerger(merger);
+            }
+        }
     }
 
     private String createSolrDocumentId(RecordId recordId) {

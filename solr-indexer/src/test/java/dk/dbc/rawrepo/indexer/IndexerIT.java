@@ -97,11 +97,14 @@ public class IndexerIT {
     }
 
     private Indexer createInstance() throws SQLException {
-        return createInstance(solrServerUrl);
+        Indexer indexer = createInstance(solrServerUrl);
+        indexer.mergerPool = new MergerPool();
+        return indexer;
     }
 
     private Indexer createInstance(String solrUrl) throws SQLException {
         Indexer indexer = new Indexer();
+        indexer.mergerPool = new MergerPool();
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(jdbcUrl);
         indexer.dataSource = dataSource;
