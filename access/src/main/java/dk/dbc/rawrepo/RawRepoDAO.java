@@ -205,6 +205,19 @@ public abstract class RawRepoDAO {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, false);
     }
 
+    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
+        Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
+        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
+            if (allAgenciesWithRecord.contains(agencyId)
+                && ( fetchDeleted
+                     ? recordExistsMabyDeleted(bibliographicRecordId, agencyId)
+                     : recordExists(bibliographicRecordId, agencyId) )) {
+                return agencyId;
+            }
+        }
+        throw new RawRepoExceptionRecordNotFound("Cound not find base agency");
+    }
+
     /**
      * Fetch record for id, merging more common records with this
      *
@@ -218,46 +231,36 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws RawRepoException, MarcXMergerException {
-        Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
-        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
-            if (!allAgenciesWithRecord.contains(agencyId)) {
-                continue;
+        int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted);
+        LinkedList<Record> records = new LinkedList<>();
+        for (;;) {
+            Record record = fetchRecord(bibliographicRecordId, agencyId);
+            records.addFirst(record);
+            Set<RecordId> siblings = getRelationsSiblingsFromMe(record.getId());
+            if (siblings.isEmpty()) {
+                break;
             }
-            if (fetchDeleted
-                ? recordExistsMabyDeleted(bibliographicRecordId, agencyId)
-                : recordExists(bibliographicRecordId, agencyId)) {
-                LinkedList<Record> records = new LinkedList<>();
-                for (;;) {
-                    Record record = fetchRecord(bibliographicRecordId, agencyId);
-                    records.addFirst(record);
-                    Set<RecordId> siblings = getRelationsSiblingsFromMe(record.getId());
-                    if (siblings.isEmpty()) {
-                        break;
-                    }
-                    agencyId = siblings.iterator().next().getAgencyId();
-                }
-                Iterator<Record> iterator = records.iterator();
-                Record record = iterator.next();
-                byte[] content = record.getContent();
-                while (iterator.hasNext()) {
-                    Record next = iterator.next();
-                    if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
-                        log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
-                        throw new MarcXMergerException("Cannot merge enrichment");
-                    }
-
-                    content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
-                    record = new RecordImpl(bibliographicRecordId, next.getId().getAgencyId(), false,
-                                            record.getMimeType(), content,
-                                            record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                            record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                            true);
-                    record.setEnriched(true);
-                }
-                return record;
-            }
+            agencyId = siblings.iterator().next().getAgencyId();
         }
-        throw new RawRepoExceptionRecordNotFound("Unable to find record");
+        Iterator<Record> iterator = records.iterator();
+        Record record = iterator.next();
+        byte[] content = record.getContent();
+        while (iterator.hasNext()) {
+            Record next = iterator.next();
+            if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
+                log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
+                throw new MarcXMergerException("Cannot merge enrichment");
+            }
+
+            content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
+            record = new RecordImpl(bibliographicRecordId, next.getId().getAgencyId(), false,
+                                    record.getMimeType(), content,
+                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                    true);
+            record.setEnriched(true);
+        }
+        return record;
     }
 
     /**

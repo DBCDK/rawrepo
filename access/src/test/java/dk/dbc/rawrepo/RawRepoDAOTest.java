@@ -535,6 +535,7 @@ public class RawRepoDAOTest {
             RawRepoDAO access = mock(RawRepoDAO.class);
             access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
+            doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject(), anyBoolean());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2",
