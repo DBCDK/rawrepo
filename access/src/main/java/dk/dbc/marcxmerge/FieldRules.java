@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public class FieldRules {
 
     public static final String INVALID_DEFAULT = "";
-    public static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247"
+    public static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247;300"
                                                    + ";008 009 038 039 100 110 239 245 652"; // Opstillingsdata
     public static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
     public static final String VALID_REGEX_DANMARC2 = "\\d{3}";
