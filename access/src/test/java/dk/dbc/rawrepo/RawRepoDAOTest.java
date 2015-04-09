@@ -36,6 +36,7 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import java.util.Date;
 import java.util.Map;
+import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -52,6 +53,48 @@ public class RawRepoDAOTest {
 
     public RawRepoDAOTest() {
     }
+
+
+
+    @Test
+    public void testEnrichmentTrail() throws RawRepoException, MarcXMergerException {
+        try {
+            RawRepoDAO access = mock(RawRepoDAO.class);
+            access.agencySearchOrder = new AgencySearchOrderFallback();
+            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class), anyString());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject(), anyBoolean());
+            doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
+            fillMockRelations(access,
+                              "B:870970", // HEAD
+                              "C:870970", // SECTION
+                              "D:870970", "D:1", "D:2", // BIND
+                              "E:870970", "E:1", "E:2", // BIND
+                              "F:870970", // SECTION
+                              "G:870970", "G:1", "G:2", // BIND
+                              "H:870970", "H:1", "H:2");// BIND
+            Record r;
+            MarcXMerger marcXMerger = new MarcXMerger() {
+
+                @Override
+                public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
+                    return common;
+                }
+
+                @Override
+                public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
+                    return true;
+                }
+
+            };
+            Assert.assertEquals("870970", access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail());
+            Assert.assertEquals("870970,1", access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail());
+
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+
+    }
+
 
     @Test
     public void testQueueEntityWithout() throws RawRepoException {
@@ -629,6 +672,7 @@ public class RawRepoDAOTest {
             when(access.getRelationsSiblingsToMe(recordId)).thenReturn(siblingsToMe);
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
             when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
+            when(access.recordExistsMabyDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
         }
         HashMap<String, HashSet<Integer>> allAgenciesFor = new HashMap<>();
         for (String record : filter) {
@@ -648,7 +692,10 @@ public class RawRepoDAOTest {
             public Record answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
                 String content = ( (String) arguments[0] ) + ":" + ( (int) arguments[1] );
-                return recordFromContent(content);
+                System.out.println("content = " + content);
+                Record recordFromContent = recordFromContent(content);
+                System.out.println("recordFromContent = " + recordFromContent);
+                return recordFromContent;
             }
         }).when(access).fetchRecord(anyString(), anyInt());
     }
@@ -656,11 +703,12 @@ public class RawRepoDAOTest {
     private static Record recordFromContent(final String content) {
         String[] split = content.split(":", 2);
         final String id = split[0];
-        final int library = Integer.parseInt(split[1]);
+        final int agencyId = Integer.parseInt(split[1]);
+        System.out.println("agencyId = " + agencyId);
         return new Record() {
             boolean deleted = false;
             boolean enriched = false;
-            String mimeType = library == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
+            String mimeType = agencyId == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
             byte[] c = content.getBytes();
 
             @Override
@@ -705,7 +753,7 @@ public class RawRepoDAOTest {
 
             @Override
             public RecordId getId() {
-                return new RecordId(id, library);
+                return new RecordId(id, agencyId);
             }
 
             @Override
@@ -735,6 +783,11 @@ public class RawRepoDAOTest {
             @Override
             public void setEnriched(boolean enriched) {
                 this.enriched = enriched;
+            }
+
+            @Override
+            public String getEnrichmentTrail() {
+                return String.valueOf(agencyId);
             }
 
         };

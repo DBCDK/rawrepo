@@ -245,6 +245,7 @@ public abstract class RawRepoDAO {
         Iterator<Record> iterator = records.iterator();
         Record record = iterator.next();
         byte[] content = record.getContent();
+        String enrichmentTrail = record.getEnrichmentTrail();
         while (iterator.hasNext()) {
             Record next = iterator.next();
             if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
@@ -253,12 +254,13 @@ public abstract class RawRepoDAO {
             }
 
             content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
-            record = new RecordImpl(bibliographicRecordId, next.getId().getAgencyId(), false,
-                                    record.getMimeType(), content,
-                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                    true);
-            record.setEnriched(true);
+            enrichmentTrail = enrichmentTrail + "," + next.getId().getAgencyId();
+
+            record = RecordImpl.Enriched(bibliographicRecordId, next.getId().getAgencyId(),
+                                         record.getMimeType(), content,
+                                         record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                         record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                         enrichmentTrail);
         }
         return record;
     }

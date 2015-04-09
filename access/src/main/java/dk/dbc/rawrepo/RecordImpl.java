@@ -25,7 +25,7 @@ import java.util.Date;
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-public class RecordImpl implements Record {
+class RecordImpl implements Record {
 
     RecordId id;
     boolean deleted;
@@ -35,6 +35,7 @@ public class RecordImpl implements Record {
     Date modified;
     boolean original;
     boolean enriched;
+    String enrichmentTrail;
 
     RecordImpl(RecordId id) {
         this.id = id;
@@ -45,11 +46,12 @@ public class RecordImpl implements Record {
         this.modified = new Date();
         this.original = true;
         this.enriched = false;
+        this.enrichmentTrail = String.valueOf(id.getAgencyId());
     }
 
     /* for mocking */
-    RecordImpl(String id, int library, boolean deleted, String mimeType, byte[] content, Date created, Date modified, boolean original) {
-        this.id = new RecordId(id, library);
+    RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Date created, Date modified, boolean original) {
+        this.id = new RecordId(id, agencyId);
         this.deleted = deleted;
         this.mimeType = mimeType;
         this.content = content;
@@ -57,6 +59,23 @@ public class RecordImpl implements Record {
         this.modified = modified;
         this.original = original;
         this.enriched = false;
+        this.enrichmentTrail = String.valueOf(agencyId);
+    }
+
+    private RecordImpl(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String enrichmentTrail) {
+        this.id = new RecordId(id, agencyId);
+        this.deleted = false;
+        this.mimeType = mimeType;
+        this.content = content;
+        this.created = created;
+        this.modified = modified;
+        this.original = false;
+        this.enriched = true;
+        this.enrichmentTrail = enrichmentTrail;
+    }
+
+    static RecordImpl Enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String enrichmentTrail) {
+        return new RecordImpl(id, agencyId, mimeType, content, created, modified, enrichmentTrail);
     }
 
     @Override
@@ -136,8 +155,13 @@ public class RecordImpl implements Record {
     }
 
     @Override
+    public String getEnrichmentTrail() {
+        return enrichmentTrail;
+    }
+
+    @Override
     public String toString() {
-        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content[?]=" + content.length + ", created=" + created + ", modified=" + modified + ", original=" + original + '}';
+        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content[?]=" + content.length + ", created=" + created + ", modified=" + modified + ", original=" + original + ", enrichmentTrail=" + enrichmentTrail + '}';
     }
 
 }

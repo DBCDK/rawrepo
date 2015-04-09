@@ -34,4 +34,6 @@ public interface Record extends RecordMetaData {
 
     void setEnriched(boolean enriched);
 
+    String getEnrichmentTrail();
+
 }
