@@ -114,6 +114,11 @@ public class IndexerTest {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
+        @Override
+        public String getEnrichmentTrail() {
+            return String.valueOf(id.getAgencyId());
+        }
+
     }
 
     private static Indexer createInstance() {
