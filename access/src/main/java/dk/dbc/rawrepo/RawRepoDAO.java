@@ -244,23 +244,26 @@ public abstract class RawRepoDAO {
         }
         Iterator<Record> iterator = records.iterator();
         Record record = iterator.next();
-        byte[] content = record.getContent();
-        String enrichmentTrail = record.getEnrichmentTrail();
-        while (iterator.hasNext()) {
-            Record next = iterator.next();
-            if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
-                log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
-                throw new MarcXMergerException("Cannot merge enrichment");
+        if (iterator.hasNext()) { // Record will be merged
+            byte[] content = record.getContent();
+            StringBuilder enrichmentTrail = new StringBuilder(record.getEnrichmentTrail());
+
+            while (iterator.hasNext()) {
+                Record next = iterator.next();
+                if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
+                    log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
+                    throw new MarcXMergerException("Cannot merge enrichment");
+                }
+
+                content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
+                enrichmentTrail.append(',').append(next.getId().getAgencyId());
+
+                record = RecordImpl.Enriched(bibliographicRecordId, next.getId().getAgencyId(),
+                                             record.getMimeType(), content,
+                                             record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                             record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                             enrichmentTrail.toString());
             }
-
-            content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
-            enrichmentTrail = enrichmentTrail + "," + next.getId().getAgencyId();
-
-            record = RecordImpl.Enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                         record.getMimeType(), content,
-                                         record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                         record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                         enrichmentTrail);
         }
         return record;
     }
