@@ -18,12 +18,15 @@
  */
 package dk.dbc.rawrepo.showorder;
 
+import dk.dbc.openagency.client.OpenAgencyException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.ws.soap.SOAPBinding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements {@link AgencySearchOrder}, using openagency webservicecall
@@ -34,7 +37,9 @@ import javax.xml.ws.soap.SOAPBinding;
  */
 public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
 
-    private final OpenAgencyService service;
+    private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderFromShowOrder.class);
+
+    private final OpenAgencyServiceFromURL service;
 
     /**
      *
@@ -46,41 +51,41 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
      *
      * @param url URL of openagencyservice (at least version 2.17)
      *            http://openagency.addi.dk/2.17/
-     * @throws MalformedURLException if url isn't valid
      */
-    @SuppressWarnings("ResultOfObjectAllocationIgnored")
-    public AgencySearchOrderFromShowOrder(String url) throws MalformedURLException {
-        new URL(url); // validate url syntax
-        URL resource = getClass().getResource("/openagency.wsdl");
-        this.service = new OpenAgencyService(resource);
-        this.service.addPort(null, SOAPBinding.SOAP12HTTP_BINDING, url);
+    public AgencySearchOrderFromShowOrder(String url) {
+        service = new OpenAgencyServiceFromURL(url);
+    }
+
+    public AgencySearchOrderFromShowOrder(String url, String user, String group, String password) throws MalformedURLException {
+        service = new OpenAgencyServiceFromURL(new URL(url), user, group, password);
+    }
+
+    public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service) {
+        this.service = service;
     }
 
     @Override
     public List<Integer> provideAgenciesFor(int agencyId) {
         ArrayList<Integer> agencies = new ArrayList<>();
         boolean seen = false;
-        for (String agencyAsString : fetchAgencies(agencyId)) {
-            int agency = Integer.parseInt(agencyAsString, 10);
-            seen = seen || agency == agencyId;
-            agencies.add(agency);
+        try {
+            for (String agencyAsString : fetchAgencies(agencyId)) {
+                int agency = Integer.parseInt(agencyAsString, 10);
+                seen = seen || agency == agencyId;
+                agencies.add(agency);
+            }
+            if (!seen) {
+                agencies.add(0, agencyId);
+            }
+            return agencies;
+        } catch (OpenAgencyException ex) {
+            log.error("Caught: OpenAgencyException: " + ex.getMessage());
+            throw new RuntimeException(ex);
         }
-        if (!seen) {
-            agencies.add(0, agencyId);
-        }
-        return agencies;
     }
 
-    List<String> fetchAgencies(int agencyId) throws RuntimeException {
-        OpenAgencyPortType portType = service.getOpenAgencyPortType();
-        ShowOrderRequest showOrderRequest = new ShowOrderRequest();
-        showOrderRequest.setAgencyId(String.valueOf(agencyId));
-        ShowOrderResponse showOrder = portType.showOrder(showOrderRequest);
-        ErrorType error = showOrder.getError();
-        if (error != null) {
-            throw new RuntimeException(error.toString());
-        }
-        return showOrder.getAgencyId();
+    List<String> fetchAgencies(int agencyId) throws OpenAgencyException {
+        return service.showOrder().getOrder(agencyId);
     }
 
 }
