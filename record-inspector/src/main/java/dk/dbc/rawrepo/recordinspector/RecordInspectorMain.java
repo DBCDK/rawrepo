@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,8 @@ public class RecordInspectorMain {
             if (commandLine.hasOption("show-order")) {
                 String showOrder = (String) commandLine.getOption("show-order");
                 try {
-                    aso = new AgencySearchOrderFromShowOrder(showOrder);
+                    URL url = new URL(showOrder);
+                    aso = new AgencySearchOrderFromShowOrder(url.toExternalForm());
                 } catch (MalformedURLException malformedURLException) {
                     aso = new AgencySearchOrderFallback(showOrder);
                 }
