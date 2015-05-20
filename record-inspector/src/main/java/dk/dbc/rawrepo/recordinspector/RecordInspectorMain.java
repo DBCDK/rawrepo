@@ -29,6 +29,8 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import dk.dbc.xmldiff.XmlDiff;
+import dk.dbc.xmldiff.XmlDiffTextWriter;
+import dk.dbc.xmldiff.XmlDiffWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -143,24 +145,22 @@ public class RecordInspectorMain {
                             System.out.println("Right side (" + rightIndex + ") is deleted");
                         }
                         if (left != null && right != null) {
-                            XmlDiff.Writer writer;
+                            XmlDiffWriter writer;
                             if (commandLine.hasOption("color")) {
-                                writer = new XmlDiff.TextWriter("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m", "\u001B[44m", "\u001B[49m");
+                                writer = new XmlDiffTextWriter("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m", "\u001B[44m", "\u001B[49m");
                             } else if (commandLine.hasOption("text")) {
-                                writer = new XmlDiff.TextWriter("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]", "{", "}");
+                                writer = new XmlDiffTextWriter("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]", "{", "}");
                             } else if (commandLine.hasOption("quiet")) {
-                                writer = new XmlDiff.Writer();
+                                writer = new XmlDiffWriter();
                             } else {
-                                writer = new XmlDiff.TextWriter("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m", "\u001B[7m", "\u001B[27m");
+                                writer = new XmlDiffTextWriter("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m", "\u001B[7m", "\u001B[27m");
                             }
-                            XmlDiff xmlDiff = new XmlDiff();
-                            xmlDiff.indent("    ").strip(true).trim(false).unicodeNormalize(true);
-                            boolean same = xmlDiff.diff(new ByteArrayInputStream(left), new ByteArrayInputStream(right), writer);
+                            XmlDiff.Result compare = XmlDiff.compare(new ByteArrayInputStream(left), new ByteArrayInputStream(right), writer, "    ", true, true, true);
                             String content = writer.toString();
                             if (!content.isEmpty()) {
                                 System.out.println(content);
                             }
-                            if (!same) {
+                            if (compare == XmlDiff.Result.DIFFERENT) {
                                 exitOk = false;
                             }
                         }

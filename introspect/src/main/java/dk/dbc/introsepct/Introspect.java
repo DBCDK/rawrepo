@@ -23,6 +23,7 @@ import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.xmldiff.XmlDiff;
+import dk.dbc.xmldiff.XmlDiffWriter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
@@ -256,15 +257,10 @@ public class Introspect {
     //              |_|
     //
     private ArrayList<Object> xmlDiff(Record leftRecord, Record rightRecord) throws SAXException, IOException {
-        XmlDiff diff = new XmlDiff();
-        diff.indent("    ");
-        diff.strip(true);
-        diff.trim(true);
-        diff.unicodeNormalize(true);
         ByteArrayInputStream leftStream = new ByteArrayInputStream(leftRecord.getContent());
         ByteArrayInputStream rightStream = new ByteArrayInputStream(rightRecord.getContent());
         DiffWriter writer = new DiffWriter();
-        diff.diff(leftStream, rightStream, writer);
+        XmlDiff.compare(leftStream, rightStream, writer, "    ", true, true, true);
         ArrayList<Object> response = writer.getData();
         return response;
     }
@@ -303,7 +299,7 @@ public class Introspect {
         return Response.serverError().entity(message).build();
     }
 
-    private static class DiffWriter extends XmlDiff.Writer {
+    private static class DiffWriter extends XmlDiffWriter {
 
         private final ArrayList<Object> data;
         private StringBuilder sb;
