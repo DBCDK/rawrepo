@@ -30,6 +30,11 @@ function work(r) {
     Log.debug("agencyid=" + agencyid);
     Log.debug("date=" + date);
 
+    if(!date) {
+        var today = new Date();
+        date = ("0" + today.getDate()).substr(-2) + ("0" + (1 + today.getMonth())).substr(-2) + today.getFullYear();
+    }
+
     var y = date.substr(0, 4);
     var m = date.substr(4, 2);
     var d = date.substr(6, 2);
@@ -53,7 +58,7 @@ function work(r) {
 
     var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:id AND agencyid=:agencyid");
     q['blob'] = blob;
-    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange"
+    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
     q['created'] = y + "-" + m + "-" + d;
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
@@ -63,7 +68,7 @@ function work(r) {
         q['bibliographicrecordid'] = bibliographicrecordid;
         q['agencyid'] = agencyid;
         q['blob'] = blob;
-	q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange"
+	q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
         q['created'] = y + "-" + m + "-" + d;
         q.execute();
     }
