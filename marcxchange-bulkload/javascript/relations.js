@@ -1,6 +1,8 @@
 use("Print");
 use("Log");
 use("XmlUtil");
+use("XPath");
+use("XmlNamespaces");
 use("Binary");
 use("PostgreSQL");
 use("Log");
@@ -19,12 +21,14 @@ function end() {
 }
 
 function work(r) {
+    Log.trace(r);
     var xml = XmlUtil.fromString(r);
 
-    var id       = String(xml.marcx::datafield.(@tag == "001").marcx::subfield.(@code == "a"));
-    var agencyid = String(xml.marcx::datafield.(@tag == "001").marcx::subfield.(@code == "b"));
-    var parent   = String(xml.marcx::datafield.(@tag == "014").marcx::subfield.(@code == "a"));
-    Log.debug("id=" + id);
+    var bibliographicrecordid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="a"]', xml);
+    var agencyid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="b"]', xml);
+    var parent = XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="a"]', xml);
+
+    Log.debug("bibliographicrecordid=" + bibliographicrecordid);
     Log.debug("agencyid=" + agencyid);
     Log.debug("parent=" + parent);
 
@@ -32,12 +36,12 @@ function work(r) {
     try {
 	try {
 	    var q = db.prepare("DELETE FROM relations WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
-	    q['bibliographicrecordid'] = id;
+	    q['bibliographicrecordid'] = bibliographicrecordid;
 	    q['agencyid'] = agencyid;
 	    q.execute();
 	    q.done();
         } catch (e) {
-            Log.error("Delete relations for: " + id);
+            Log.error("Delete relations for: " + bibliographicrecordid);
             Log.error(e);
 	    throw e;
 	}
@@ -48,7 +52,7 @@ function work(r) {
 	    Log.debug("Might have sibling");
 	    try {
 		var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
-		q['bibliographicrecordid'] = id;
+		q['bibliographicrecordid'] = bibliographicrecordid;
 		q['agencyid'] = parent_agencyid;
 		q.execute();
 		var r = q.fetch(); 
@@ -58,7 +62,7 @@ function work(r) {
 		    sibling = true;
 		}
             } catch (e) {
-		Log.error("Find sibling for: " + id);
+		Log.error("Find sibling for: " + bibliographicrecordid);
 		Log.error(e);
 		throw e;
 	    }
@@ -67,22 +71,22 @@ function work(r) {
 	if (sibling) {
 	    try {
 		q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:bibliographicrecordid, :agencyid, :refer_bibliographicrecordid, :ref_agencyid)");
-		q['bibliographicrecordid'] = id;
+		q['bibliographicrecordid'] = bibliographicrecordid;
 		q['agencyid'] = agencyid;
-		q['refer_bibliographicrecordid'] = id;
+		q['refer_bibliographicrecordid'] = bibliographicrecordid;
 		q['refer_agencyid'] = parent_agencyid;
 		q.execute();
 		q.done();
-		s = '+';
+		s = '«';
 	    } catch (e) {
-		Log.error("ERROR: Sibling for " + id + " from " + agencyid + " to " + parent_agencyid);
+		Log.error("ERROR: Sibling for " + bibliographicrecordid + " from " + agencyid + " to " + parent_agencyid);
 		Log.warn(e);
 		throw e;
 	    }
 	} else if (parent !== "") {
 	    try {
 		q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:id, :agencyid, :ref_id, :ref_agencyid)");
-		q['bibliographicrecordid'] = id;
+		q['bibliographicrecordid'] = bibliographicrecordid;
 		q['agencyid'] = agencyid;
 		q['refer_bibliographicrecordid'] = parent;
 		q['refer_agencyid'] = agencyid;
@@ -90,7 +94,7 @@ function work(r) {
 		q.done();
 		s = "^";
 	    } catch (e) {
-		Log.error("ERROR: Parent " + parent + " for " + id + " from " + agencyid);
+		Log.error("ERROR: Parent " + parent + " for " + bibliographicrecordid + " from " + agencyid);
 		Log.warn(e);
 		throw e;
             }
@@ -102,5 +106,6 @@ function work(r) {
 	print("*");
         db.rollback();
 	db.begin();
+        throw e;
     }
 }

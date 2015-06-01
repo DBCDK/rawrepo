@@ -1,6 +1,8 @@
 use("Print");
 use("Log");
 use("XmlUtil");
+use("XPath");
+use("XmlNamespaces");
 use("Binary");
 use("PostgreSQL");
 
@@ -16,15 +18,15 @@ function end() {
 }
 
 function work(r) {
-    Log.debug(r);
+    Log.trace(r);
     var xml = XmlUtil.fromString(r);
 
-    var id   = String(xml.marcx::datafield.(@tag == "001").marcx::subfield.(@code == "a"));
-    var agencyid  = String(xml.marcx::datafield.(@tag == "001").marcx::subfield.(@code == "b"));
-    var date = String(xml.marcx::datafield.(@tag == "n55").marcx::subfield.(@code == "a"));
-    delete xml.marcx::datafield.(@tag == "n55")[0];
+    var bibliographicrecordid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="a"]', xml);
+    var agencyid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="b"]', xml);
+    var date = XPath.selectText('/marcx:record/marcx:datafield[@tag="n55"]/marcx:subfield[@code="a"]', xml);
+    XPath.delete('/marcx:record/marcx:datafield[@tag="n55"]', xml);
 
-    Log.debug("id=" + id);
+    Log.debug("bibliographicrecordid=" + bibliographicrecordid);
     Log.debug("agencyid=" + agencyid);
     Log.debug("date=" + date);
 
@@ -39,7 +41,7 @@ function work(r) {
     var sibling = false;
     if (agencyid !== parent_agencyid) {
 	var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
-	q['bibliographicrecordid'] = id;
+	q['bibliographicrecordid'] = bibliographicrecordid;
 	q['agencyid'] = parent_agencyid;
 	q.execute();
 	var r = q.fetch(); 
@@ -53,12 +55,12 @@ function work(r) {
     q['blob'] = blob;
     q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange"
     q['created'] = y + "-" + m + "-" + d;
-    q['bibliographicrecordid'] = id;
+    q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     if (q.execute() === 0) {
         q.done();
         q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, created, modified) VALUES(:id, :agencyid, encode(:blob, 'BASE64'), :mimetype, :created, TIMEOFDAY()::TIMESTAMP)");
-        q['bibliographicrecordid'] = id;
+        q['bibliographicrecordid'] = bibliographicrecordid;
         q['agencyid'] = agencyid;
         q['blob'] = blob;
 	q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange"
