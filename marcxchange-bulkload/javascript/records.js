@@ -56,7 +56,7 @@ function work(r) {
     }
 
 
-    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:id AND agencyid=:agencyid");
+    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:id AND agencyid=:agencyid");
     q['blob'] = blob;
     q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
     q['created'] = y + "-" + m + "-" + d;
@@ -64,7 +64,7 @@ function work(r) {
     q['agencyid'] = agencyid;
     if (q.execute() === 0) {
         q.done();
-        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, created, modified) VALUES(:id, :agencyid, encode(:blob, 'BASE64'), :mimetype, :created, TIMEOFDAY()::TIMESTAMP)");
+        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified) VALUES(:id, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created, TIMEOFDAY()::TIMESTAMP)");
         q['bibliographicrecordid'] = bibliographicrecordid;
         q['agencyid'] = agencyid;
         q['blob'] = blob;
