@@ -57,7 +57,7 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     }
 
     public AgencySearchOrderFromShowOrder(String url, String user, String group, String password) throws MalformedURLException {
-        service = new OpenAgencyServiceFromURL(new URL(url), user, group, password);
+        service = new OpenAgencyServiceFromURL(url, user, group, password);
     }
 
     public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service) {
