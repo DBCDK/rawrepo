@@ -187,7 +187,7 @@ $('document').ready(function () {
                 });
                 data.forEach(function (e, i) {
                     var option = $('<option/>');
-                    option.attr({value: i}).text(e['modified']);
+                    option.attr({value: i}).text(e['modified'] + " (" + e['mimetype'] + ")");
                     $('#version').append(option);
                     tag.append(option);
                 });
