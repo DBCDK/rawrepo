@@ -398,14 +398,28 @@ class IndexerDeployScript extends GluScriptBase {
 
         def dbUrl = params.dbUrl.replace(":", "\\:");
 
-        deployer.createJdbcConnectionPool([
+        def poolOptions = [
                 name: JDBC_POOL,
                 resType: "javax.sql.DataSource",
                 datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
                 //steadypoolsize: "8",
                 //maxpoolsize: "32",
                 property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
-        ])
+                isConnectionValidationRequired: "true",
+                validateAtmostOncePeriodInSeconds: (int)Integer.parseInt(params.pollInterval)/2,
+                connectionValidationMethod: "custom-validation",
+                validationClassname: "org.glassfish.api.jdbc.validation.PostgresConnectionValidation",
+                failAllConnections: "true"
+        ]
+        
+        log.info "Validation properties for JDBC connection pool:\n\
+                    validateAtmostOncePeriodInSeconds: $poolOptions.validateAtmostOncePeriodInSeconds (has to be less than pollInterval: $params.pollInterval)\n\
+                    connectionValidateMethod: $poolOptions.connectionValidationMethod \n\
+                    validationClassname: $poolOptions.validationClassname \n\
+                    isConnectionValidationRequired: $poolOptions.isConnectionValidationRequired \n\
+                    failAllConnections: $poolOptions.failAllConnections";
+        
+        deployer.createJdbcConnectionPool(poolOptions)
         deployer.createJdbcResource([
                 id: JDBC_RESOURCE,
                 poolName: JDBC_POOL,
