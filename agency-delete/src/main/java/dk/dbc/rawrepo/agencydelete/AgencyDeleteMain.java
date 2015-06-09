@@ -50,7 +50,9 @@ public class AgencyDeleteMain {
             if (agencies.size() != 1) {
                 throw new IllegalStateException("Only One Agency");
             }
-            agencyid = Integer.parseUnsignedInt(agencies.get(0), 10);
+            agencyid = Integer.parseInt(agencies.get(0), 10);
+            if(agencyid < 0)
+                throw new NumberFormatException("Positive integer expected");
             if (commandLine.hasOption("debug")) {
                 setLogLevel("logback-debug.xml");
             } else {
