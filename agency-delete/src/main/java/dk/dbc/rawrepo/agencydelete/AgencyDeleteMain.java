@@ -72,7 +72,11 @@ public class AgencyDeleteMain {
         try {
             AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid);
             Set<String> ids = agencyDelete.getIds();
-            Set<String> referedIds = agencyDelete.getReferedIds();
+            Set<String> siblingRelations = agencyDelete.getSiblingRelations();
+            if(! siblingRelations.isEmpty()) {
+                throw new RuntimeException("Cannot remove agency, there's sibling relations to agency");
+            }
+            Set<String> parentRelations = agencyDelete.getParentRelations();
 
             System.out.print("Are you sure you want to remove all(" + ids.size() + ") records for agency " + agencyid + " [y/N]? ");
             String line = new Scanner(System.in).nextLine();
@@ -86,7 +90,7 @@ public class AgencyDeleteMain {
             if (commandLine.hasOption("role")) {
                 role = (String) commandLine.getOption("role");
             }
-            agencyDelete.deleteRecords(ids, referedIds, role);
+            agencyDelete.deleteRecords(ids, parentRelations, role);
 
             agencyDelete.commit();
         } catch (RuntimeException | SQLException | RawRepoException | IOException ex) {

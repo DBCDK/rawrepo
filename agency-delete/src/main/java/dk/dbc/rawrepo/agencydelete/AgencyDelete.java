@@ -71,9 +71,21 @@ class AgencyDelete {
         return set;
     }
 
-    public Set<String> getReferedIds() throws SQLException {
+    public Set<String> getParentRelations() throws SQLException {
         Set<String> set = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM relations WHERE refer_agencyid = ?")) {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid")) {
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    set.add(resultSet.getString(1));
+                }
+            }
+        }
+        return set;
+    }
+
+    public Set<String> getSiblingRelations() throws SQLException {
+        Set<String> set = new HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM relations WHERE refer_agencyid = ? AND agencyid <> refer_agencyid")) {
             stmt.setInt(1, agencyid);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
@@ -103,7 +115,7 @@ class AgencyDelete {
         }
     }
 
-    void deleteRecords(Set<String> ids, Set<String> referedIds, String role) throws RawRepoException, IOException, SQLException {
+    void deleteRecords(Set<String> ids, Set<String> parentRelations, String role) throws RawRepoException, IOException, SQLException {
         DataTemplate template = new DataTemplate("content.xml");
         Properties props = new Properties();
         props.put(AGENCYID, String.valueOf(agencyid));
@@ -132,21 +144,7 @@ class AgencyDelete {
 
                 stmt.setString(1, id);
                 stmt.setString(3, mimeType);
-                stmt.setString(6, referedIds.contains(id) ? "N" : "Y");
-                stmt.execute();
-            }
-        }
-    }
-
-    void queueRecords(Set<String> ids, Set<String> referedIds, String role) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT FROM enqueue(?, ?, ?, ?, ?, ?)")) {
-            stmt.setInt(2, agencyid);
-            stmt.setString(3, MarcXChangeMimeType.MARCXCHANGE);
-            stmt.setString(4, role);
-            stmt.setString(5, "Y");
-            for (String id : ids) {
-                stmt.setString(1, id);
-                stmt.setString(6, referedIds.contains(id) ? "N" : "Y");
+                stmt.setString(6, parentRelations.contains(id) ? "N" : "Y");
                 stmt.execute();
             }
         }
