@@ -46,7 +46,7 @@ function work(r) {
     var mimetype = r['count'] === 0 ? "text/marcxchange" : "text/enrichment+marcxchange";
     q.done();
 
-    q = db.prepare("SELECT FROM enqueue(:bibliographicrecordid, :agency, :mimetype, :provider, 'Y', :leaf)");
+    q = db.prepare("{CALL enqueue(:bibliographicrecordid, :agency, :mimetype, :provider, 'Y', :leaf)}");
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     q['mimetype'] = mimetype;
