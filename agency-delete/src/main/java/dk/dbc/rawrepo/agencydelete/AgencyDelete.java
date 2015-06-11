@@ -119,7 +119,7 @@ class AgencyDelete {
         DataTemplate template = new DataTemplate("content.xml");
         Properties props = new Properties();
         props.put(AGENCYID, String.valueOf(agencyid));
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT FROM enqueue(?, ?, ?, ?, ?, ?)")) {
+        try (PreparedStatement stmt = connection.prepareStatement("{CALL enqueue(?, ?, ?, ?, ?, ?)}")) {
             stmt.setInt(2, agencyid);
             stmt.setString(4, role);
             stmt.setString(5, "Y");
