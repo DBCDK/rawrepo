@@ -79,7 +79,7 @@ public class AgencyDeleteMain {
             Set<String> parentRelations = agencyDelete.getParentRelations();
 
             System.out.print("Are you sure you want to remove all(" + ids.size() + ") records for agency " + agencyid + " [y/N]? ");
-            String line = new Scanner(System.in).nextLine();
+            String line = new Scanner(System.in, "UTF-8").nextLine();
             if (line == null || !line.toLowerCase(Locale.ROOT).startsWith("y")) {
                 return;
             }
