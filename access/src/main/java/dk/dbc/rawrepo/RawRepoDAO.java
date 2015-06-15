@@ -407,15 +407,21 @@ public abstract class RawRepoDAO {
             Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
             Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
             if (!agencies.isEmpty()) {
-                String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
+                String mimeType;
+                mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
                 for (Integer agencyId : agencies) {
-                    enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
+                    String currentMimeType = mimeType;
+                    if (recordExistsMabyDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())) {
+                        currentMimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+                    }
+                    enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, currentMimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
                 }
             }
             for (RecordId child : children) {
                 touchChildRecords(agencies, provider, child);
             }
-        } catch (RawRepoExceptionRecordNotFound rawRepoExceptionRecordNotFound) {
+        } catch (RawRepoExceptionRecordNotFound ex) {
+            log.debug("Using fallback enqueue for " + recordId);
             enqueue(recordId, provider, fallbackMimetype, true, true);
         }
     }
