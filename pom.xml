@@ -36,6 +36,8 @@
     <module>notify-deploy</module>
     <module>introspect</module>
     <module>introspect-deploy</module>
+    <module>content-service</module>
+    <module>content-service-deploy</module>
     <module>debian</module>
   </modules>
 
