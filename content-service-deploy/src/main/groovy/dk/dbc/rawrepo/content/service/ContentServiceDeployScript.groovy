@@ -82,7 +82,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     static String FORS_DISABLE = "forsRightsDisable"
     static String SEARCHORDER_URL = "searchOrderUrl"
 
-    static String JDBC_RESOURCE = "jdbc/rawrepocontentservice/rawrepo"
+    static String JDBC_RESOURCE = "jdbc/rawrepocontentservice/rewrepo"
     static String JDBC_POOL = "jdbc/rawrepocontentservice/rawrepo/pool"
 
     
@@ -113,6 +113,9 @@ class ContentServiceDeployScript extends GluScriptBase {
 
         appName = NAME
         appVersion = '1.0-SNAPSHOT'
+
+        contextPath = params.contextPath ?: "/" + appName
+        appName = contextPath.substring(1);
 
         [ "dbUrl", "dbUser", "dbPassword", "dbValidateInterval", "config" ].each({
                 if (!params."$it") {
@@ -172,9 +175,6 @@ class ContentServiceDeployScript extends GluScriptBase {
     def configure = {
         log.info "Configuring..."
         
-        contextPath = params.contextPath ?: "/" + appName
-        appName = contextPath.substring(1);
-
         configureLogging()
         configureCustomResources()
         configureJdbcResources()

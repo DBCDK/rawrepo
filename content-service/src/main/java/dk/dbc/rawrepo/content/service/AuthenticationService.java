@@ -50,7 +50,7 @@ public class AuthenticationService {
     @PostConstruct
     public void init() {
         log.debug("init()");
-        disabled = Boolean.parseBoolean(props.getProperty(C.FORS.DISABLE, C.FORS.DISABLE_DEFAULT));
+        disabled = Boolean.parseBoolean(props.getProperty(C.FORS.DISABLED, C.FORS.DISABLED_DEFAULT));
         if (disabled) {
             log.debug("validation disabled");
             return;

@@ -43,8 +43,8 @@ public class C {
         public static final String CACHE = "forsRightsCache";
         public static final String CACHE_DEFAULT = "7200";
 
-        public static final String DISABLE = "forsRightsDisable";
-        public static final String DISABLE_DEFAULT = "false";
+        public static final String DISABLED = "forsRightsDisabled";
+        public static final String DISABLED_DEFAULT = "false";
 
         public static final String RIGHTS_NAME = "forsRightsName";
         public static final String RIGHTS_NAME_DEFAULT = "*";
