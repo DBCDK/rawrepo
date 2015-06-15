@@ -238,7 +238,6 @@ public abstract class Service {
                 && dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                 Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                 time.stop();
-                FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                 byte[] content = rawRecord.getContent();
                 if (isMarcXChange(rawRecord.getMimeType())
                     && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
@@ -246,7 +245,6 @@ public abstract class Service {
                 }
                 return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
             }
-            FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
             Map<String, Record> collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMerger.getMarcXMerger());
             XmlTools.MarcXCollection combined = xmlTools.buildCollection();
 
