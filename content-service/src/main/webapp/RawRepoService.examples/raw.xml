@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+    <S:Body>
+        <fetchRequest xmlns="http://oss.dbc.dk/ns/rawreposervice">
+            <!-- Optional -->
+            <authentication>
+                <user></user>
+                <group></group>
+                <password></password>
+            </authentication>
+            <records>
+                <!-- 1 or more -->
+                <record>
+                    <bibliographicRecordId>2 910 178 7</bibliographicRecordId>
+                    <agencyId>777777</agencyId>
+                    <mode>RAW</mode>
+                    <allowDeleted>true</allowDeleted>
+                    <includeAgencyPrivate>true</includeAgencyPrivate>
+                </record>
+            </records>
+        </fetchRequest>
+    </S:Body>
+</S:Envelope>

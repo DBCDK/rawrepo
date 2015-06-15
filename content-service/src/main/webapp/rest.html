@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Json Interface</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h2>Copyright (C) 2015 DBC A/S (http://dbc.dk/)</h2>
+        <p>Json service information</p>
+        <hr>
+        Post content: 
+        <pre style="background-color: graytext;">
+{
+  --optional--
+  "authentication": {
+    "user": "",
+    "group": "",
+    "password": ""
+  },
+  "records": {
+    "record": [
+      {
+        "bibliographicRecordId": "",
+        "agencyId": 0,
+        "mode": "RAW|MERGED|COLLECTION",
+        "allowDeleted":false,
+        "includeAgencyPrivate":false
+      },...
+    ]
+  }
+}        </pre> to .../RawRepoService/fetch, and your "Accept" header should be one of
+        <ul>
+            <li><code>application/json</code></li>
+            <li><code>application/xml</code></li>
+            <li><code>text/xml</code></li>
+        </ul>
+        And your result should given. Remember to base64 decode the data element.
+    </body>
+</html>

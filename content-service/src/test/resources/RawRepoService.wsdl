@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="RawRepoService" targetNamespace="http://oss.dbc.dk/ns/rawreposervice" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://oss.dbc.dk/ns/rawreposervice" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata">
+  <wsdl:types>
+<xs:schema xmlns:tns="http://oss.dbc.dk/ns/rawreposervice" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://oss.dbc.dk/ns/rawreposervice" version="1.0">
+
+  <xs:element name="fetchRequest" type="tns:fetchRequest"/>
+
+  <xs:element name="fetchResponse" type="tns:fetchResponse"/>
+
+  <xs:complexType name="fetchRequest">
+    <xs:sequence>
+      <xs:element form="qualified" minOccurs="0" name="authentication" type="tns:fetchRequestAuthentication"/>
+      <xs:element form="qualified" name="records">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element form="qualified" maxOccurs="unbounded" name="record" type="tns:fetchRequestRecord"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="fetchRequestAuthentication">
+    <xs:all>
+      <xs:element form="qualified" name="user" type="xs:string"/>
+      <xs:element form="qualified" name="group" type="xs:string"/>
+      <xs:element form="qualified" name="password" type="xs:string"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="fetchRequestRecord">
+    <xs:all>
+      <xs:element form="qualified" name="bibliographicRecordId" type="xs:string"/>
+      <xs:element form="qualified" name="agencyId" type="xs:int"/>
+      <xs:element form="qualified" name="mode" type="tns:fetchRequestRecordMode"/>
+      <xs:element default="false" form="qualified" minOccurs="0" name="allowDeleted" type="xs:boolean"/>
+      <xs:element default="false" form="qualified" minOccurs="0" name="includeAgencyPrivate" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="fetchResponse">
+    <xs:choice>
+      <xs:element form="qualified" name="records" type="tns:fetchResponseRecords"/>
+      <xs:element form="qualified" name="error" type="tns:fetchResponseError"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="fetchResponseRecords">
+    <xs:sequence>
+      <xs:element form="qualified" maxOccurs="unbounded" name="record" type="tns:fetchResponseRecord"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="fetchResponseRecord">
+    <xs:sequence>
+      <xs:element form="qualified" name="bibliographicRecordId" type="xs:string"/>
+      <xs:element form="qualified" name="agencyId" type="xs:int"/>
+      <xs:choice>
+        <xs:element form="qualified" name="content" type="tns:fetchResponseRecordContent"/>
+        <xs:element form="qualified" name="diagnostics" type="xs:string"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="fetchResponseRecordContent">
+    <xs:all>
+      <xs:element form="qualified" minOccurs="0" name="mimeType" type="xs:string"/>
+      <xs:element form="qualified" name="data" type="xs:base64Binary"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="fetchResponseError">
+    <xs:all>
+      <xs:element form="qualified" name="message" type="xs:string"/>
+      <xs:element form="qualified" name="type" type="tns:fetchResponseErrorType"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="fetchRequestRecordMode">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="RAW"/>
+      <xs:enumeration value="MERGED"/>
+      <xs:enumeration value="COLLECTION"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="fetchResponseErrorType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="UNKNOWN"/>
+      <xs:enumeration value="REQUEST_CONTENT_ERROR"/>
+      <xs:enumeration value="AUTHENTICATION_DENIED"/>
+      <xs:enumeration value="INTERNAL_SERVER_ERROR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="fetchResponse">
+    <wsdl:part name="parameters" element="tns:fetchResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="fetch">
+    <wsdl:part name="parameters" element="tns:fetchRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="SoapService">
+    <wsdl:operation name="fetch">
+      <wsdl:input name="fetch" message="tns:fetch" wsam:Action="fetchRequest" wsaw:Action="fetchRequest">
+    </wsdl:input>
+      <wsdl:output name="fetchResponse" message="tns:fetchResponse" wsam:Action="fetchResponse" wsaw:Action="fetchResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="RawRepoServiceSoapBinding" type="tns:SoapService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="fetch">
+      <soap:operation soapAction="fetchRequest" style="document"/>
+      <wsdl:input name="fetch">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="fetchResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="RawRepoService">
+    <wsdl:port name="RawRepoService/1.0" binding="tns:RawRepoServiceSoapBinding">
+      <soap:address location="http://localhost:9090/RawRepoService/1.0"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

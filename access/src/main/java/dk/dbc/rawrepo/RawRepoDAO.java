@@ -250,6 +250,7 @@ public abstract class RawRepoDAO {
 
             while (iterator.hasNext()) {
                 Record next = iterator.next();
+                log.debug("next = " + next.getId());
                 if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
                     log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                     throw new MarcXMergerException("Cannot merge enrichment");
