@@ -20,7 +20,15 @@ package dk.dbc.rawrepo.content.service
 
 import dk.dbc.glu.scripts.GluScriptBase
 import dk.dbc.glu.utils.glassfish.GlassFishAppDeployer
+import dk.dbc.glu.utils.logback.Appender
+import dk.dbc.glu.utils.logback.Configuration
+import dk.dbc.glu.utils.logback.Format
+import dk.dbc.glu.utils.logback.Level
+import dk.dbc.glu.utils.logback.Logger
 import org.linkedin.util.io.resource.Resource
+
+
+
 
 /**
  *
@@ -70,6 +78,27 @@ class ContentServiceDeployScript extends GluScriptBase {
      * 
      *  .forsRightsRight   : String  : Name of  rights right
      *                                 (REQUIRED)
+     *                                 
+     * logDir              : String  : Location of logging
+     *                                 (OPTIONAL)
+     * 
+     * logging             : List>Map: List of logger maps
+     *                                 (OPTIONAL)
+     * 
+     *  ..name             : String  : name of logger
+     *                                 (OPTIONAL)
+     * 
+     *  ..file             : String  : prefix of filename (appended $type.log)
+     *                                 (REQUIRED) 
+     *                                 
+     *  ..level            : String  : ERROR|WARN|INFO|DEBUG|TRACE
+     *                                 (OPTIONAL)
+     * 
+     *  ..format           : String  : PLAIN|LOGSTASH
+     *                                 (OPTIONAL)
+     *  
+     *  ..rotate           : Boolean : Logrotate
+     *                                 (OPTIONAL)
      * 
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
@@ -85,8 +114,6 @@ class ContentServiceDeployScript extends GluScriptBase {
     static String JDBC_RESOURCE = "jdbc/rawrepocontentservice/rewrepo"
     static String JDBC_POOL = "jdbc/rawrepocontentservice/rawrepo/pool"
 
-    
-    Resource artifact
     Resource logFolder
     Resource stagingFolder
     Resource warFile
@@ -136,6 +163,13 @@ class ContentServiceDeployScript extends GluScriptBase {
                     }
                 })
         }
+        if (params.logging) {
+            params.logging.each({
+                    if(!it."file") {
+                        shell.fail("Required parameter 'logging..file' is missing")
+                    }
+            })
+        }
         
         rootFolder = shell.mkdirs( shell.toResource( mountPoint.getPath() ) )
         log.info "rootFolder: ${rootFolder}"
@@ -145,7 +179,7 @@ class ContentServiceDeployScript extends GluScriptBase {
         log.info "Created log files folder: ${logFolder.file}"
 
         def webappsFolder = shell.mkdirs( rootFolder."webapps" )
-        artifact = fetchResourceIntoFolder( params.artifact, webappsFolder )
+        def artifact = fetchResourceIntoFolder( params.artifact, webappsFolder )
         log.info "Using artifact ${artifact.file}"
 
         stagingFolder = shell.mkdirs( rootFolder."staging" )
@@ -167,6 +201,7 @@ class ContentServiceDeployScript extends GluScriptBase {
         }
 
         deployer = new GlassFishAppDeployer( glassfishProperties )
+
     }
     
     /*******************************************************
@@ -179,7 +214,7 @@ class ContentServiceDeployScript extends GluScriptBase {
         configureCustomResources()
         configureJdbcResources()
 
-        log.info "Re-packaging webapp to ${warFile.file} "
+        log.info "Re-packaging webapp to ${warFile.file}"
         jar( stagingFolder, warFile )
         deployer.deploy([
                 name: appName,
@@ -190,14 +225,34 @@ class ContentServiceDeployScript extends GluScriptBase {
             ])
     }
 
-    def configureLogging = {
-        def logConfigFile = stagingFolder."logback.xml"
-        def logbackConfiguration = basicLogbackConfiguration()
+    void configureLogging() {
+        def logConfigFile = stagingFolder."WEB-INF/classes/logback.xml"
+        Configuration logbackConfiguration = basicLogbackConfiguration()
+        if(params.logging) {
+            params.logging.each({
+                    log.info "Adding custom logger $it"
+                    addLogger(logbackConfiguration, it);
+                })
+        }
         logbackConfiguration.save(logConfigFile.file)
         registerLogFiles(logbackConfiguration)
     }
     
-    def configureCustomResources = {
+    Integer unnamedLoggerNo = 1;
+    
+    void addLogger(Configuration logback, Map cfg) {
+        String name = cfg.name ?: ("unnamedLoggerNo" + unnamedLoggerNo++)
+        String filePrefix = cfg.file
+        Level level = (cfg.level ?: "info").toUpperCase()
+        Format format = (cfg.format ?: "plain").toUpperCase()
+        Boolean rotate = cfg.rotate ?: false
+        Appender appender = new Appender(name: name, variant: "out", file: logFolder."${filePrefix}".file, rotate: rotate, format: format)
+        Logger logger = new Logger(name: name, level: level, appender: appender)
+        logback.addAppender(appender)
+        logback.addLogger(logger)
+    }
+    
+    void configureCustomResources() {
         // try { deployer.deleteCustomResource( NAME ) } catch (all) {}
         
         deployer.createCustomResource( [
@@ -208,7 +263,7 @@ class ContentServiceDeployScript extends GluScriptBase {
         deployer.setCustomResourceProperties( "rawrepo-content-service", customProperties )
     }
 
-    def configureJdbcResources = {
+    void configureJdbcResources() {
         // try { deployer.deleteJdbcResource( JDBC_RESOURCE ) } catch (all) {}
         // try { deployer.deleteJdbcConnectionPool( JDBC_POOL ) } catch (all) {}
 

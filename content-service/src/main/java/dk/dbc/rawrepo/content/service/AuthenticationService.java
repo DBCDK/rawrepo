@@ -52,7 +52,7 @@ public class AuthenticationService {
         log.debug("init()");
         disabled = Boolean.parseBoolean(props.getProperty(C.FORS.DISABLED, C.FORS.DISABLED_DEFAULT));
         if (disabled) {
-            log.debug("validation disabled");
+            log.info("Validation disabled");
             return;
         }
 

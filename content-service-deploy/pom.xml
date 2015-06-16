@@ -90,6 +90,11 @@
         </dependency>
         <dependency>
             <groupId>dk.dbc</groupId>
+            <artifactId>glu-commons-utils-logback-configurator</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc</groupId>
             <artifactId>glu-commons-utils-glassfish-deployer</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>

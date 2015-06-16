@@ -144,6 +144,7 @@ public abstract class Service {
                         : !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                         FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId,
                                                                              requestRecord.agencyId);
+                        log.warn("No such record: " + requestRecord.bibliographicRecordId + ";" + requestRecord.agencyId);
                         record.content = "No such record";
                         fetchResponseRecords.records.add(record);
                     } else {
