@@ -246,10 +246,8 @@ class ContentServiceDeployScript extends GluScriptBase {
         Level level = (cfg.level ?: "info").toUpperCase()
         Format format = (cfg.format ?: "plain").toUpperCase()
         Boolean rotate = cfg.rotate ?: false
-        Appender appender = new Appender(name: name, variant: "out", file: logFolder."${filePrefix}".file, rotate: rotate, format: format)
-        Logger logger = new Logger(name: name, level: level, appender: appender)
+        Appender appender = new Appender(name: name, variant: "out", file: logFolder."${filePrefix}".file, rotate: rotate, format: format, threshold: level)
         logback.addAppender(appender)
-        logback.addLogger(logger)
     }
     
     void configureCustomResources() {
