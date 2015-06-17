@@ -18,7 +18,7 @@ INSERT INTO queuerules (provider, worker, mimetype, changed, leaf) VALUES('openc
 --
 --
 INSERT INTO queueworkers (worker) VALUES('basis-decentral');
-INSERT INTO queuerules (provider, worker, mimetype, changed, leaf) VALUES('opencataloging-update', 'basis-decentral', 'text/decentral+marcxchange', 'Y', 'A');
+INSERT INTO queuerules (provider, worker, mimetype, changed, leaf) VALUES('opencataloging-update', 'basis-decentral', '', 'Y', 'A');
 
 ---
 --- rules for bulk loader

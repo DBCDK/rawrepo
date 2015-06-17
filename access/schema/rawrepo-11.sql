@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP
 
 CREATE TABLE version ( -- V2
        version NUMERIC(6) NOT NULL PRIMARY KEY,
@@ -8,7 +9,6 @@ INSERT INTO version VALUES(7);
 INSERT INTO version VALUES(8);
 INSERT INTO version VALUES(9);
 INSERT INTO version VALUES(10);
-INSERT INTO version VALUES(11);
 
 
 -- records:
