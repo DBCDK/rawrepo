@@ -27,9 +27,6 @@ import dk.dbc.glu.utils.logback.Level
 import dk.dbc.glu.utils.logback.Logger
 import org.linkedin.util.io.resource.Resource
 
-
-
-
 /**
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
@@ -47,18 +44,6 @@ class ContentServiceDeployScript extends GluScriptBase {
      * contextPath         : String  : The context path to deploy to
      *                                 (OPTIONAL). Defaults to '/rawrepo-content-service'.
      *
-     * dbUrl               : String  : Base url of the raw repo database
-     *                                 (REQUIRED).
-     *
-     * dbUser              : String  : Username for the raw repo database
-     *                                 (REQUIRED).
-     *
-     * dbPassword          : String  : Password url of the raw repo database
-     *                                 (REQUIRED).
-     *                                 
-     * dbValidateInterval  : Integer : How often (sec) to validate the connection
-     *                                 (REQUIRED).
-     *                                 
      * config              : Map     : Configuration
      *                                 (REQUIRED)
      * 
@@ -79,10 +64,28 @@ class ContentServiceDeployScript extends GluScriptBase {
      *  .forsRightsRight   : String  : Name of  rights right
      *                                 (REQUIRED)
      *                                 
+     * db                  : List>Map: List of database descriptors
+     *                                 Config named 'rawrepo' REQUIRED
+     * 
+     * ..name              : String  : Name of the database descriptor
+     *                                 (REQUIRED).
+     * 
+     * ..url               : String  : Base url of the raw repo database
+     *                                 (REQUIRED).
+     *
+     * ..user              : String  : Username for the raw repo database
+     *                                 (REQUIRED).
+     *
+     * ..password          : String  : Password url of the raw repo database
+     *                                 (REQUIRED).
+     *                                 
+     * ..validateInterval  : Integer : How often (sec) to validate the connection
+     *                                 (REQUIRED).
+     *                                 
      * logDir              : String  : Location of logging
      *                                 (OPTIONAL)
      * 
-     * logging             : List>Map: List of logger maps
+     * loggers             : List>Map: List of logger maps
      *                                 (OPTIONAL)
      * 
      *  ..name             : String  : name of logger
@@ -106,13 +109,15 @@ class ContentServiceDeployScript extends GluScriptBase {
      */
 
     static String NAME = "rawrepo-content-service"
+    static String CUSTOM_RESOURCE_NAME = "rawrepo-content-service"
     static String FORS_URL = "forsRightsUrl"
     static String FORS_CACHE = "forsRightsCache"
     static String FORS_DISABLE = "forsRightsDisable"
     static String SEARCHORDER_URL = "searchOrderUrl"
 
-    static String JDBC_RESOURCE = "jdbc/rawrepocontentservice/rewrepo"
-    static String JDBC_POOL = "jdbc/rawrepocontentservice/rawrepo/pool"
+    static String RAWREPO_NAME = "rawrepo"
+    static String RAWREPO_RESOURCE = "jdbc/rawrepocontentservice/rewrepo"
+    static String RAWREPO_POOL = "jdbc/rawrepocontentservice/rawrepo/pool"
 
     Resource logFolder
     Resource stagingFolder
@@ -120,6 +125,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     String contextPath
 
     Map customProperties = [:]
+
     /*
      * * GlassFish information
      */
@@ -144,32 +150,29 @@ class ContentServiceDeployScript extends GluScriptBase {
         contextPath = params.contextPath ?: "/" + appName
         appName = contextPath.substring(1);
 
-        [ "dbUrl", "dbUser", "dbPassword", "dbValidateInterval", "config" ].each({
+        [ 'config' ].each({
                 if (!params."$it") {
                     shell.fail("Required parameter '$it' is missing")
                 }
             })
         
-        customProperties  += params.config
-        [ "searchOrderUrl" ].each({
+        customProperties += params.config
+        [ 'searchOrderUrl' ].each({
                 if (!customProperties."$it") {
                     shell.fail("Required parameter 'config.$it' is missing")
                 }
             })
         if (!customProperties.forsRightsDisabled) {
-            [ "forsRightsUrl", "forsRightsName", "forsRightsRight" ].each({
+            [ 'forsRightsUrl', 'forsRightsName', 'forsRightsRight' ].each({
                     if (!customProperties."$it") {
                         shell.fail("Required parameter 'config.$it' is missing")
                     }
                 })
         }
-        if (params.logging) {
-            params.logging.each({
-                    if(!it."file") {
-                        shell.fail("Required parameter 'logging..file' is missing")
-                    }
-            })
-        }
+
+        validateDatabases( RAWREPO_NAME );
+        
+        validateLoggers()
         
         rootFolder = shell.mkdirs( shell.toResource( mountPoint.getPath() ) )
         log.info "rootFolder: ${rootFolder}"
@@ -201,9 +204,40 @@ class ContentServiceDeployScript extends GluScriptBase {
         }
 
         deployer = new GlassFishAppDeployer( glassfishProperties )
-
     }
     
+    void validateLoggers() {
+        if(params.loggers) {
+            params.loggers.each({
+                    Map map = it;
+                    [ 'file' ].each({
+                            if(!map."$it") 
+                            shell.fail("Required parameter 'loggers..${it}' is missing")
+                        })
+                })
+        }
+    }
+    
+    void validateDatabases(String... requiredDbNames) {
+        if(!params.db && requiredDbNames) {
+            shell.fail("Required parameter 'db' is missing")
+        }
+        params.db.each({
+                Map db = it;
+                [ 'name', 'url', 'user', 'password', 'validateInterval' ].each({
+                        if(!db."$it") {
+                            shell.fail("Required parameter 'db.[@name=${it.name}].${it}' is missing")
+                        }
+                    })
+            })
+        requiredDbNames.each({
+                def name = it;
+                if(params.db.count({ it.'name' == name }) == 0) {
+                    shell.fail("Required parameter 'db..[name=$name] is missing")
+                }
+            })
+    }
+
     /*******************************************************
      * configure phase
      *******************************************************/
@@ -211,8 +245,8 @@ class ContentServiceDeployScript extends GluScriptBase {
         log.info "Configuring..."
         
         configureLogging()
-        configureCustomResources()
-        configureJdbcResources()
+        configureJdbcResource( RAWREPO_NAME, RAWREPO_POOL, RAWREPO_RESOURCE )
+        configureCustomResource( CUSTOM_RESOURCE_NAME, customProperties )
 
         log.info "Re-packaging webapp to ${warFile.file}"
         jar( stagingFolder, warFile )
@@ -225,76 +259,71 @@ class ContentServiceDeployScript extends GluScriptBase {
             ])
     }
 
+    Integer unnamedLoggerNo = 1;
     void configureLogging() {
         def logConfigFile = stagingFolder."WEB-INF/classes/logback.xml"
         Configuration logbackConfiguration = basicLogbackConfiguration()
         if(params.logging) {
             params.logging.each({
                     log.info "Adding custom logger $it"
-                    addLogger(logbackConfiguration, it);
+                    String name = it.name ?: ( "unnamedLoggerNo" + unnamedLoggerNo++ )
+                    String filePrefix = it.file
+                    Level level = ( it.level ?: "info" ).toUpperCase()
+                    Format format = ( it.format ?: "plain" ).toUpperCase()
+                    Boolean rotate = it.rotate ?: false
+                    Appender appender = new Appender(
+                        name: name, variant: "out",
+                        file: logFolder."${filePrefix}".file,
+                        rotate: rotate,
+                        format: format,
+                        threshold: level )
+                    logbackConfiguration.addAppender(appender)
                 })
         }
+        logbackConfiguration.level = Level.TRACE
         logbackConfiguration.save(logConfigFile.file)
         registerLogFiles(logbackConfiguration)
     }
-    
-    Integer unnamedLoggerNo = 1;
-    
-    void addLogger(Configuration logback, Map cfg) {
-        String name = cfg.name ?: ("unnamedLoggerNo" + unnamedLoggerNo++)
-        String filePrefix = cfg.file
-        Level level = (cfg.level ?: "info").toUpperCase()
-        Format format = (cfg.format ?: "plain").toUpperCase()
-        Boolean rotate = cfg.rotate ?: false
-        Appender appender = new Appender(name: name, variant: "out", file: logFolder."${filePrefix}".file, rotate: rotate, format: format, threshold: level)
-        logback.addAppender(appender)
-    }
-    
-    void configureCustomResources() {
-        // try { deployer.deleteCustomResource( NAME ) } catch (all) {}
         
+    void configureCustomResource( String name, Map properties ) {
         deployer.createCustomResource( [
-                'id': NAME,
+                'id': name,
                 'restype': 'java.util.Properties',
                 'factoryclass': 'org.glassfish.resources.custom.factory.PropertiesFactory'
             ])
-        deployer.setCustomResourceProperties( "rawrepo-content-service", customProperties )
+        deployer.setCustomResourceProperties( name, properties )
     }
 
-    void configureJdbcResources() {
-        // try { deployer.deleteJdbcResource( JDBC_RESOURCE ) } catch (all) {}
-        // try { deployer.deleteJdbcConnectionPool( JDBC_POOL ) } catch (all) {}
-
-        def dbUrl = params.dbUrl.replace(":", "\\:");
-
+    void configureJdbcResource(String name, String pool, String resource) {
+        def db = params.db.find({ it.'name' == name })
+        def url = db.url.replace(":", "\\:");
         def poolOptions = [
-            name: JDBC_POOL,
+            name: pool,
             resType: "javax.sql.DataSource",
             datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-            //steadypoolsize: "8",
-            //maxpoolsize: "32",
-            property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
+            //steadypoolsize: "8", maxpoolsize: "32",
+            property: "\"driverClass=org.postgresql.Driver:url=$url:User=$db.user:Password=$db.password\"",
             isConnectionValidationRequired: "true",
-            validateAtmostOncePeriodInSeconds: params.dbValidateInterval,
+            validateAtmostOncePeriodInSeconds: db.validateInterval,
             connectionValidationMethod: "custom-validation",
             validationClassname: "org.glassfish.api.jdbc.validation.PostgresConnectionValidation",
             failAllConnections: "true"
         ]
         
-        deployer.createJdbcConnectionPool(poolOptions)
-        deployer.createJdbcResource([
-                id: JDBC_RESOURCE,
-                poolName: JDBC_POOL,
-            ])
+        def extraPoolOptions = [ 'steadypoolsize', 'maxpoolsize' ]
+        poolOptions += db.findAll({ extraPoolOptions.contains( it.key ) })
+        
+        deployer.createJdbcConnectionPool( poolOptions )
+        deployer.createJdbcResource([ id: resource, poolName: pool ])
     }
 
     /*******************************************************
-     * stop phase
+     * start phase
      *******************************************************/
     def start = {
         log.info "Starting..."
         
-        deployer.start(appName)
+        deployer.start( appName )
     }
 
     /*******************************************************
@@ -304,7 +333,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     def stop = {
         log.info "Stopping..."
         
-        deployer.stop(appName)
+        deployer.stop( appName )
     }
 
     /*******************************************************
@@ -314,10 +343,10 @@ class ContentServiceDeployScript extends GluScriptBase {
     def unconfigure = {
         log.info "Unconfiguring..."
         
-        deployer.undeploy(appName)
-        deployer.deleteCustomResource( NAME )
-        deployer.deleteJdbcResource( JDBC_RESOURCE )
-        deployer.deleteJdbcConnectionPool( JDBC_POOL )
+        deployer.undeploy( appName )
+        deployer.deleteCustomResource( CUSTOM_RESOURCE_NAME )
+        deployer.deleteJdbcResource( RAWREPO_RESOURCE )
+        deployer.deleteJdbcConnectionPool( RAWREPO_POOL )
     }
 
     /*******************************************************
