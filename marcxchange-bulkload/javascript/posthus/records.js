@@ -32,7 +32,7 @@ function work(r) {
 
     if(!date) {
         var today = new Date();
-        date = ("0" + today.getDate()).substr(-2) + ("0" + (1 + today.getMonth())).substr(-2) + today.getFullYear();
+        date = today.getFullYear() + ("0" + (1 + today.getMonth())).substr(-2) + ("0" + today.getDate()).substr(-2);
     }
 
     var y = date.substr(0, 4);
