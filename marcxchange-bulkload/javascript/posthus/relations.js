@@ -11,7 +11,6 @@ use("Log");
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "191919";
-var relation_agencies = System.arguments.slice(2);
 
 function begin() {
 }
@@ -84,7 +83,7 @@ function work(r) {
                 throw e;
             }
         } else if (parent !== "") {
-            var foreign = [agencyid].concat(relation_agencies);
+            var foreign = [agencyid, parent_agencyid];
             var refer_agencyid = null;
             q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {
