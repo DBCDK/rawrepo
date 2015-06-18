@@ -87,7 +87,6 @@ function work(r) {
             var refer_agencyid = null;
             q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {
-                Log.warn("i=" + i);
                 q['bibliographicrecordid'] = parent;
                 q['agencyid'] = foreign[i];
                 q.execute();
