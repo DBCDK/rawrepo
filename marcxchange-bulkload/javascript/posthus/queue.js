@@ -58,3 +58,6 @@ function work(r) {
     print('·');
 }
 
+function error(r) {
+    print(r);
+}

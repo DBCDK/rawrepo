@@ -78,3 +78,6 @@ function work(r) {
     print(sibling ? '+' : '·');
 }
 
+function error(r) {
+    print(r);
+}

@@ -126,3 +126,7 @@ function work(r) {
         throw e;
     }
 }
+
+function error(r) {
+    print(r);
+}
