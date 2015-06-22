@@ -97,9 +97,6 @@ public abstract class Service {
     @Inject
     Timer fetchCollection;
 
-    @Inject
-    Timer buildCollection;
-
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
     @WebMethod(operationName = C.OPERATION_FETCH)

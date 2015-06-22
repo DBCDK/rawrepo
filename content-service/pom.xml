@@ -174,7 +174,7 @@
                         <reorderElement>{http://www.w3.org/2001/XMLSchema}restriction</reorderElement>
                         <reorderElement>{http://www.w3.org/2001/XMLSchema}schema</reorderElement>
                     </reorderElements>
-                    <leftPath>${basedir}/src/test/resources/RawRepoService.wsdl</leftPath>
+                    <leftPath>${basedir}/src/test/resources/RawRepoContentService.wsdl</leftPath>
                     <rightPath>${project.build.directory}/wsdl.xml</rightPath>
                 </configuration>
             </plugin>

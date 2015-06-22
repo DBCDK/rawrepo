@@ -38,7 +38,7 @@ public class MarcXMergerEJB {
 
     @PostConstruct
     public void init() {
-        log.debug("init()");
+        log.warn("init()");
         try {
             marcXMerger = new MarcXMerger();
         } catch (MarcXMergerException ex) {

@@ -225,8 +225,8 @@ class ContentServiceDeployScript extends GluScriptBase {
         params.db.each({
                 Map db = it;
                 [ 'name', 'url', 'user', 'password', 'validateInterval' ].each({
-                        if(!db."$it") {
-                            shell.fail("Required parameter 'db.[@name=${it.name}].${it}' is missing")
+                        if(db."$it" == null) {
+                            shell.fail("Required parameter 'db.[@name=${db.name}].${it}' is missing")
                         }
                     })
             })
@@ -296,7 +296,7 @@ class ContentServiceDeployScript extends GluScriptBase {
 
     void configureJdbcResource(String name, String pool, String resource) {
         def db = params.db.find({ it.'name' == name })
-        def url = db.url.replace(":", "\\:");
+        def url = db.url.replace(":", "\\:");        
         def poolOptions = [
             name: pool,
             resType: "javax.sql.DataSource",

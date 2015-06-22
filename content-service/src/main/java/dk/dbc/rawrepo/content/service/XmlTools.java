@@ -104,7 +104,7 @@ public class XmlTools {
                 if (PRIVATE_TAG.matcher(fieldname).matches()) {
                     log.debug("removing datafield: {}", fieldname);
                     Node next = item.getNextSibling();
-                    if (next.getNodeType() == Node.TEXT_NODE) {
+                    if (next != null && next.getNodeType() == Node.TEXT_NODE) {
                         item.getParentNode().removeChild(next);
                     }
                     item.getParentNode().removeChild(item);
