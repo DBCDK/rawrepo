@@ -177,7 +177,7 @@ public abstract class RawRepoDAO {
             Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
             collection.put(bibliographicRecordId, record);
 
-            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, agencyId);
+            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, agencyId, false);
             Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
                 fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
@@ -260,7 +260,7 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.Enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                             record.getMimeType(), content,
+                                             merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
                                              record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
                                              record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
                                              enrichmentTrail.toString());
@@ -402,7 +402,7 @@ public abstract class RawRepoDAO {
     public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
         try {
 
-            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId(), true);
             // The mostCommonAgency, is the one that defines parent/child relationship
             Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
             Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
@@ -437,9 +437,10 @@ public abstract class RawRepoDAO {
      * @throws IllegalStateException
      * @throws RawRepoException
      */
-    private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
+    private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId, boolean allowDeleted) throws RawRepoException {
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
-            if (recordExists(bibliographicRecordId, agencyId)) { // first available record
+            if (allowDeleted && agencyId == originalAgencyId && recordExistsMabyDeleted(bibliographicRecordId, agencyId)
+                || recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
                 // find most common through sibling relations
                 // stops at localrecord or commonrecord
@@ -612,7 +613,7 @@ public abstract class RawRepoDAO {
         Set<Integer> siblingAgencies = expandSiblingsForId(agencies, recordId.getBibliographicRecordId());
         Set<RecordId> children = getRelationsChildren(recordId);
         if (!siblingAgencies.isEmpty()) {
-            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), siblingAgencies.iterator().next());
+            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), siblingAgencies.iterator().next(), false);
             String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
             for (Integer agencyId : siblingAgencies) {
                 enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, false, children.isEmpty());
