@@ -61,7 +61,6 @@ import org.xml.sax.SAXException;
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-@Stateless
 public class XmlTools {
 
     private static final Logger log = LoggerFactory.getLogger(XmlTools.class);
@@ -71,16 +70,11 @@ public class XmlTools {
 
     private static final Pattern PRIVATE_TAG = Pattern.compile(".*[^0-9].*");
 
-    @Inject
-    Timer filterPrivate;
-
-
     private DocumentBuilder documentBuilder;
     private Transformer transformer;
     private XPathFactory xpathFactory;
 
-    @PostConstruct
-    public void init() {
+    public XmlTools() {
         log.debug("init");
         try {
             this.documentBuilder = newDocumentBuilder();
@@ -92,7 +86,7 @@ public class XmlTools {
     }
 
     public byte[] filterPrivateOut(byte[] src) {
-        try (Timer.Context time = filterPrivate.time()) {
+        try {
             Document dom = documentBuilder.parse(new ByteArrayInputStream(src));
             XPath xPath = xpathFactory.newXPath();
             xPath.setNamespaceContext(MARCX_NAMESPACE_CONTEXT);
