@@ -192,6 +192,10 @@ public abstract class Service {
         } catch (ErrorException e) {
             requestErrors.inc();
             out.value = e.getError();
+        } catch (RuntimeException ex) {
+            requestErrors.inc();
+            log.error("Runtime Exception: " + ex.getMessage());
+            out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         }
     }
 
