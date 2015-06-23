@@ -22,6 +22,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import dk.dbc.forsrights.client.ForsRightsException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
@@ -36,6 +37,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.jws.WebMethod;
@@ -68,7 +70,7 @@ public abstract class Service {
     MarcXMergerEJB marcXMerger;
 
     @Inject
-    XmlTools xmlTools;
+    XmlToolsEJB xmlTools;
 
     @Inject
     Timer requests;
@@ -98,6 +100,11 @@ public abstract class Service {
     Timer fetchCollection;
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
+
+    @PostConstruct
+    public void init() {
+        log.warn("init()");
+    }
 
     @WebMethod(operationName = C.OPERATION_FETCH)
     @RequestWrapper(targetNamespace = C.NS, localName = C.OPERATION_FETCH + "Request", className = "dk.dbc.rawrepo.content.service.transport.FetchRequest")
@@ -209,28 +216,39 @@ public abstract class Service {
             byte[] content = rawRecord.getContent();
             if (isMarcXChange(rawRecord.getMimeType())
                 && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                content = xmlTools.filterPrivateOut(content);
+                content = filterContent(content);
             }
             return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
+        } catch (RawRepoException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
     private FetchResponseRecordContent fetchMerged(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
-        try (Timer.Context time = fetchMerged.time()) {
+        try (Timer.Context time = fetchMerged.time() ;
+             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
-            Record rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMerger.getMarcXMerger(), allowDeleted);
+            Record rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
             time.stop();
             byte[] content = rawRecord.getContent();
             if (isMarcXChange(rawRecord.getMimeType())
                 && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                content = xmlTools.filterPrivateOut(content);
+                content = filterContent(content);
             }
             return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
+        } catch (RawRepoException | MarcXMergerException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
     private Object fetchCollection(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
-        try (Timer.Context time = fetchCollection.time()) {
+        try (Timer.Context time = fetchCollection.time() ;
+             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take() ;
+             Pool.Element<XmlTools> xmlToolsElement = xmlTools.take()) {
             if (requestRecord.allowDeleted
                 && !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)
                 && dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
@@ -239,28 +257,40 @@ public abstract class Service {
                 byte[] content = rawRecord.getContent();
                 if (isMarcXChange(rawRecord.getMimeType())
                     && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                    content = xmlTools.filterPrivateOut(content);
+                    content = filterContent(content);
                 }
                 return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
             }
-            Map<String, Record> collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMerger.getMarcXMerger());
-            XmlTools.MarcXCollection combined = xmlTools.buildCollection();
+            Map<String, Record> collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
+            XmlTools.MarcXCollection combined = xmlToolsElement.getElement().buildCollection();
 
             for (Map.Entry<String, Record> entry : collection.entrySet()) {
                 Record rawRecord = entry.getValue();
 
                 if (!isMarcXChange(rawRecord.getMimeType())) {
-                    return  "Cannot make marcx:collection from mimetype: " + rawRecord.getMimeType();
+                    return "Cannot make marcx:collection from mimetype: " + rawRecord.getMimeType();
                 }
                 byte[] content = rawRecord.getContent();
                 if (isMarcXChange(rawRecord.getMimeType())
                     && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                    content = xmlTools.filterPrivateOut(content);
+                    content = filterContent(content);
                 }
                 combined.add(content);
             }
             byte[] combinedData = combined.build();
             return new FetchResponseRecordContent(MarcXChangeMimeType.MARCXCHANGE, combinedData);
+        } catch (RawRepoException | MarcXMergerException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private byte[] filterContent(byte[] content) {
+        try (Pool.Element<XmlTools> toolsElement = xmlTools.take()) {
+            return toolsElement.getElement().filterPrivateOut(content);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
