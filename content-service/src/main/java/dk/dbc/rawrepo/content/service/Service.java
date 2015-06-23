@@ -35,6 +35,7 @@ import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -158,7 +159,9 @@ public abstract class Service {
                                 record.content = fetchRaw(dao, requestRecord);
                                 break;
                             case MERGED:
+                                log.debug("fetchMerged.getCount() = " + fetchMerged.getCount());
                                 record.content = fetchMerged(dao, requestRecord);
+                                log.debug("fetchMerged.getCount() = " + fetchMerged.getCount());
                                 break;
                             case COLLECTION:
                                 record.content = fetchCollection(dao, requestRecord);
@@ -195,6 +198,8 @@ public abstract class Service {
         } catch (RuntimeException ex) {
             requestErrors.inc();
             log.error("Runtime Exception: " + ex.getMessage());
+            log.debug("Runtime Exception", ex);
+            log.debug("Runtime Exception", ex.getCause());
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         }
     }
@@ -214,58 +219,56 @@ public abstract class Service {
      *
      */
     private FetchResponseRecordContent fetchRaw(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException {
+        Record rawRecord;
         try (Timer.Context time = fetchRaw.time()) {
-            Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
-            time.stop();
-            byte[] content = rawRecord.getContent();
-            if (isMarcXChange(rawRecord.getMimeType())
-                && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                content = filterContent(content);
-            }
-            return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
-        } catch (RawRepoException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
         }
+        byte[] content = rawRecord.getContent();
+        if (isMarcXChange(rawRecord.getMimeType())
+            && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+            content = filterContent(content);
+        }
+        return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
     }
 
     private FetchResponseRecordContent fetchMerged(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
+        Record rawRecord;
         try (Timer.Context time = fetchMerged.time() ;
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
-            Record rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
-            time.stop();
-            byte[] content = rawRecord.getContent();
-            if (isMarcXChange(rawRecord.getMimeType())
-                && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                content = filterContent(content);
-            }
-            return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
+            rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        byte[] content = rawRecord.getContent();
+        if (isMarcXChange(rawRecord.getMimeType())
+            && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+            content = filterContent(content);
+        }
+        return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
     }
 
     private Object fetchCollection(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
+        Map<String, Record> collection;
         try (Timer.Context time = fetchCollection.time() ;
-             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take() ;
-             Pool.Element<XmlTools> xmlToolsElement = xmlTools.take()) {
+             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             if (requestRecord.allowDeleted
                 && !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)
                 && dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                 Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
-                time.stop();
-                byte[] content = rawRecord.getContent();
-                if (isMarcXChange(rawRecord.getMimeType())
-                    && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
-                    content = filterContent(content);
-                }
-                return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
+                collection = new HashMap<>();
+                collection.put(requestRecord.bibliographicRecordId, rawRecord);
+            } else {
+                collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
             }
-            Map<String, Record> collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
+        } catch (RawRepoException | MarcXMergerException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        try (Pool.Element<XmlTools> xmlToolsElement = xmlTools.take()) {
             XmlTools.MarcXCollection combined = xmlToolsElement.getElement().buildCollection();
 
             for (Map.Entry<String, Record> entry : collection.entrySet()) {
