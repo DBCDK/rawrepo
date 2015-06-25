@@ -108,7 +108,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>dk.dbc.rawrepo.recordload.RecordLoadMain</mainClass>
+                            <mainClass>dk.dbc.rawrepo.agencydelete.AgencyDeleteMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

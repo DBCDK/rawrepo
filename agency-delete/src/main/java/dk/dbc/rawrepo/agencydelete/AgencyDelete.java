@@ -116,6 +116,8 @@ class AgencyDelete {
     }
 
     void deleteRecords(Set<String> ids, Set<String> parentRelations, String role) throws RawRepoException, IOException, SQLException {
+        int no = 0;
+
         DataTemplate template = new DataTemplate("content.xml");
         Properties props = new Properties();
         props.put(AGENCYID, String.valueOf(agencyid));
@@ -146,6 +148,9 @@ class AgencyDelete {
                 stmt.setString(3, mimeType);
                 stmt.setString(6, parentRelations.contains(id) ? "N" : "Y");
                 stmt.execute();
+                if (++no % 1000 == 0) {
+                    System.err.print('·');
+                }
             }
         }
     }
