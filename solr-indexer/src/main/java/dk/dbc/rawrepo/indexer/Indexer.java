@@ -237,7 +237,6 @@ public class Indexer {
         switch (mimeType) {
             case MarcXChangeMimeType.MARCXCHANGE:
             case MarcXChangeMimeType.AUTHORITTY:
-            case MarcXChangeMimeType.DECENTRAL:
             case MarcXChangeMimeType.ENRICHMENT:
                 log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);
                 doc.addField("marc.001a", recordId.getBibliographicRecordId());

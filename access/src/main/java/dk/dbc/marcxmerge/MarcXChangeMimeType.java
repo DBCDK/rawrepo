@@ -27,6 +27,23 @@ public class MarcXChangeMimeType {
     public static final String MARCXCHANGE = "text/marcxchange";
     public static final String ENRICHMENT = "text/enrichment+marcxchange";
     public static final String AUTHORITTY = "text/authority+marcxchange";
-    public static final String DECENTRAL = "text/decentral+marcxchange";
 
+    public static boolean isMarcXChange(String mimetype) {
+        switch (mimetype) {
+            case MARCXCHANGE:
+            case AUTHORITTY:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isEnrichment(String mimetype) {
+        switch (mimetype) {
+            case ENRICHMENT:
+                return true;
+            default:
+                return false;
+        }
+    }
 }

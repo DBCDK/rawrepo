@@ -51,7 +51,6 @@ public class ValidateRelations {
     private static Map<String, Validator> initializeValidators() {
         HashMap<String, Validator> tmp = new HashMap<>();
         tmp.put(MarcXChangeMimeType.MARCXCHANGE, makeValidatorMarcXchange());
-        tmp.put(MarcXChangeMimeType.DECENTRAL, tmp.get(MarcXChangeMimeType.MARCXCHANGE));
         tmp.put(MarcXChangeMimeType.AUTHORITTY, makeValidatorAuthority());
         tmp.put(MarcXChangeMimeType.ENRICHMENT, makeValidatorEnrichment());
         return tmp;
@@ -74,7 +73,6 @@ public class ValidateRelations {
                 if (parentMimeTypes.size() > 0) {
                     int marcxCount = parentMimeTypes.size();
                     parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    parentMimeTypes.remove(MarcXChangeMimeType.DECENTRAL);
                     marcxCount -= parentMimeTypes.size();
                     if (marcxCount > 1) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
@@ -122,7 +120,6 @@ public class ValidateRelations {
                 } else if (siblingMimeTypes.size() > 0) {
                     siblingMimeTypes.remove(MarcXChangeMimeType.ENRICHMENT);
                     siblingMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.DECENTRAL);
                     if (!siblingMimeTypes.isEmpty()) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");

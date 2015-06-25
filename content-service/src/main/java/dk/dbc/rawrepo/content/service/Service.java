@@ -301,10 +301,9 @@ public abstract class Service {
         }
     }
 
-    private boolean isMarcXChange(String mimeType) {
+    private static  boolean isMarcXChange(String mimeType) {
         switch (mimeType) {
             case MarcXChangeMimeType.AUTHORITTY:
-            case MarcXChangeMimeType.DECENTRAL:
             case MarcXChangeMimeType.ENRICHMENT:
             case MarcXChangeMimeType.MARCXCHANGE:
                 return true;

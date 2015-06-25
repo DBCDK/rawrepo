@@ -100,7 +100,6 @@ public class MarcXMerger {
     public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
         switch (originalMimeType) {
             case MarcXChangeMimeType.MARCXCHANGE:
-            case MarcXChangeMimeType.DECENTRAL:
                 switch (enrichmentMimeType) {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return true;
@@ -115,11 +114,6 @@ public class MarcXMerger {
                 switch (enrichmentMimeType) {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return MarcXChangeMimeType.MARCXCHANGE;
-                }
-            case MarcXChangeMimeType.DECENTRAL:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                         return MarcXChangeMimeType.DECENTRAL;
                 }
         }
         throw new IllegalStateException("Cannot figure out mimetype of: " + originalMimeType + "&" + enrichmentMimeType);

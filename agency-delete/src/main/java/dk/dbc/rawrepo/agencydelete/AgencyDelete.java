@@ -132,7 +132,6 @@ class AgencyDelete {
                 Record record = dao.fetchRecord(id, agencyid);
                 String mimeType = record.getMimeType();
                 switch (mimeType) {
-                    case MarcXChangeMimeType.DECENTRAL:
                     case MarcXChangeMimeType.AUTHORITTY:
                         break;
                     default:
