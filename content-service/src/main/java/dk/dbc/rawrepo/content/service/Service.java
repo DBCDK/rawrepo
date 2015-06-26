@@ -26,6 +26,7 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestRecord;
@@ -144,31 +145,29 @@ public abstract class Service {
                 for (FetchRequestRecord requestRecord : requestRecords) {
                     boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
 
-                    if (allowDeleted
-                        ? !dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)
-                        : !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
-                        FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId,
-                                                                             requestRecord.agencyId);
-                        log.warn("No such record: " + requestRecord.bibliographicRecordId + ";" + requestRecord.agencyId);
-                        record.content = "No such record";
-                        fetchResponseRecords.records.add(record);
-                    } else {
-                        FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
+                    FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
+                    try {
                         switch (requestRecord.mode) {
                             case RAW:
+                                if (allowDeleted
+                                    ? !dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)
+                                    : !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                                    throw new RawRepoExceptionRecordNotFound();
+                                }
                                 record.content = fetchRaw(dao, requestRecord);
                                 break;
                             case MERGED:
-                                log.debug("fetchMerged.getCount() = " + fetchMerged.getCount());
                                 record.content = fetchMerged(dao, requestRecord);
-                                log.debug("fetchMerged.getCount() = " + fetchMerged.getCount());
                                 break;
                             case COLLECTION:
                                 record.content = fetchCollection(dao, requestRecord);
                                 break;
                         }
-                        fetchResponseRecords.records.add(record);
+                    } catch (RawRepoExceptionRecordNotFound ex) {
+                        log.warn("No such record: " + requestRecord.bibliographicRecordId + ";" + requestRecord.agencyId + ";" + requestRecord.mode);
+                        record.content = "No such record";
                     }
+                    fetchResponseRecords.records.add(record);
                 }
                 out.value = fetchResponseRecords;
             }
@@ -301,7 +300,7 @@ public abstract class Service {
         }
     }
 
-    private static  boolean isMarcXChange(String mimeType) {
+    private static boolean isMarcXChange(String mimeType) {
         switch (mimeType) {
             case MarcXChangeMimeType.AUTHORITTY:
             case MarcXChangeMimeType.ENRICHMENT:
