@@ -20,6 +20,7 @@ package dk.dbc.rawrepo.showorder;
 
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.openagency.client.ShowOrder;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +41,7 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderFromShowOrder.class);
 
     private final OpenAgencyServiceFromURL service;
+    private final ShowOrder showOrder;
 
     /**
      *
@@ -55,16 +57,19 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     public AgencySearchOrderFromShowOrder(String url) {
         service = OpenAgencyServiceFromURL.builder()
                 .build(url);
+        this.showOrder = service.showOrder();
     }
 
     public AgencySearchOrderFromShowOrder(String url, String user, String group, String password) throws MalformedURLException {
         service = OpenAgencyServiceFromURL.builder()
                 .authentication(user, group, password)
                 .build(url);
+        this.showOrder = service.showOrder();
     }
 
     public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service) {
         this.service = service;
+        this.showOrder = service.showOrder();
     }
 
     @Override
@@ -88,7 +93,7 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     }
 
     List<String> fetchAgencies(int agencyId) throws OpenAgencyException {
-        return service.showOrder().getOrder(agencyId);
+        return showOrder.getOrder(agencyId);
     }
 
 }
