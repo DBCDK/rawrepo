@@ -50,6 +50,12 @@ class ContentServiceDeployScript extends GluScriptBase {
      *  .searchOrderUrl    : String  : Url of openagency >= 1.19 (remember trailing /)
      *                                 (REQUIRED)
      * 
+     *  .searchOrderConnectTimeout: Int: Network Option
+     *                                 (OPTIONAL)
+     *  
+     *  .searchOrderRequestTimeout: Int: Network Option
+     *                                 (OPTIONAL)
+     *                                 
      *  .forsRightsDisabled: Boolean : If set to true other config.forsRights* are 
      *                                 not required
      *                                 (OPTIONAL)
@@ -57,6 +63,12 @@ class ContentServiceDeployScript extends GluScriptBase {
      *  .forsRightsUrl     : String  : Where forsright service is installed
      *                                 (Remember trailing /).
      *                                 (REQUIRED)
+     *  
+     *  .forsRightsConnectTimeout: Int: Network Option
+     *                                 (OPTIONAL)
+     *  
+     *  .forsRightsRequestTimeout: Int: Network Option
+     *                                 (OPTIONAL)
      *                                 
      *  .forsRightsName    : String  : Name of rights name
      *                                 (REQUIRED)
