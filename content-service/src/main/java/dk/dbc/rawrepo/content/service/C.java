@@ -40,6 +40,11 @@ public class C {
         public static final String URL = "forsRightsUrl";
         public static final String URL_DEFAULT = "http://forsrights.addi.dk/1.2/";
 
+        public static final String CONNECT_TIMEOUT = "forsRightsConnectTimeout";
+        public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
+        public static final String REQUEST_TIMEOUT = "forsRightsRequestTimeout";
+        public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
+
         public static final String CACHE = "forsRightsCache";
         public static final String CACHE_DEFAULT = "7200";
 
@@ -60,6 +65,12 @@ public class C {
     public static class SEARCHORDER {
         public static final String URL = "searchOrderUrl";
         public static final String URL_DEFAULT = "http://openagency.addi.dk/2.20/";
+
+        public static final String CONNECT_TIMEOUT = "searchOrderConnectTimeout";
+        public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
+        public static final String REQUEST_TIMEOUT = "searchOrderRequestTimeout";
+        public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
+
     }
 
 }

@@ -53,11 +53,14 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
      *            http://openagency.addi.dk/2.17/
      */
     public AgencySearchOrderFromShowOrder(String url) {
-        service = new OpenAgencyServiceFromURL(url);
+        service = OpenAgencyServiceFromURL.builder()
+                .build(url);
     }
 
     public AgencySearchOrderFromShowOrder(String url, String user, String group, String password) throws MalformedURLException {
-        service = new OpenAgencyServiceFromURL(url, user, group, password);
+        service = OpenAgencyServiceFromURL.builder()
+                .authentication(user, group, password)
+                .build(url);
     }
 
     public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service) {

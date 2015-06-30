@@ -46,11 +46,25 @@ public class AgencySearchOrderEJB {
     public void init() {
         log.debug("init()");
         String url = props.getProperty(C.SEARCHORDER.URL, C.SEARCHORDER.URL_DEFAULT);
-        openAgencyService = new OpenAgencyServiceFromURL(url);
+        openAgencyService = OpenAgencyServiceFromURL.builder()
+                .connectTimeout(getInteget(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
+                .requestTimeout(getInteget(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
+                .build(url);
         agencySearchOrder = new AgencySearchOrderFromShowOrder(openAgencyService);
     }
 
     public AgencySearchOrderFromShowOrder getAgencySearchOrder() {
         return agencySearchOrder;
     }
+
+    private int getInteget(String key, String defaultValue) {
+        String value = props.getProperty(key, defaultValue);
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            log.warn("NumberFormatException in: " + value + " from " + key);
+            return Integer.parseInt(value);
+        }
+    }
+
 }

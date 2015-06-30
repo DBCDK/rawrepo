@@ -57,7 +57,10 @@ public class AuthenticationService {
         }
 
         String url = props.getProperty(C.FORS.URL, C.FORS.URL_DEFAULT);
-        service = new ForsRightsServiceFromURL(url);
+        service = ForsRightsServiceFromURL.builder()
+                .connectTimeout(getInteget(C.FORS.CONNECT_TIMEOUT, C.FORS.CONNECT_TIMEOUT_DEFAULT))
+                .requestTimeout(getInteget(C.FORS.REQUEST_TIMEOUT, C.FORS.REQUEST_TIMEOUT_DEFAULT))
+                .build(url);
         log.debug("forsrights url = " + url);
 
         String cache = props.getProperty(C.FORS.CACHE, C.FORS.CACHE_DEFAULT);
@@ -69,6 +72,16 @@ public class AuthenticationService {
         rightsRight = props.getProperty(C.FORS.RIGHTS_RIGHT, C.FORS.RIGHTS_RIGHT_DEFAULT);
 
         forsRights = service.forsRights(rightsCache);
+    }
+
+    private int getInteget(String key, String defaultValue) {
+        String value = props.getProperty(key, defaultValue);
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            log.warn("NumberFormatException in: " + value + " from " + key);
+            return Integer.parseInt(value);
+        }
     }
 
     public boolean validate(String ip) throws ForsRightsException {
