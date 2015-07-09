@@ -44,7 +44,11 @@ class IntrospectDeployScript extends GluScriptBase {
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
      *                                 (OPTIONAL).
-     *
+     *                                 
+     * jdbcPoolProperties  : Map     : Properties for the connection pool.
+     *                                 See full list of properties in GlassFishAppDeployer
+     *                                 (OPTIONAL)   
+     *                                 
      * debugFlag           : Boolean : Flag toggling debug configuration.
      *                                 Configuring for debug mode will for
      *                                 example influence the amount of logging
@@ -377,18 +381,7 @@ class IntrospectDeployScript extends GluScriptBase {
             def user = (m[2] == null ? "" : m[2]).replace(":", "\\:")
             def pass = (m[3] == null ? "" : m[3]).replace(":", "\\:")
             
-            deployer.createJdbcConnectionPool([
-                    name: JDBC_BASE + "/" + resource + "/pool",
-                    resType: "javax.sql.DataSource",
-                    datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-                    //steadypoolsize: "8",
-                    //maxpoolsize: "32",
-                    property: "\"driverClass=org.postgresql.Driver:url=$jdbc:User=$user:Password=$pass\"",
-                ])
-            deployer.createJdbcResource([
-                    id: JDBC_BASE + "/" + resource,
-                    poolName: JDBC_BASE + "/" + resource + "/pool",
-                ])
+            deployer.createPGConnectionPool(JDBC_BASE + "/" + resource + "/pool", JDBC_BASE + "/" + resource, user, pass, jdbc, params.jdbcPoolProperties)
         }
     }
 

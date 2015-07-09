@@ -61,7 +61,11 @@ class IndexerDeployScript extends GluScriptBase {
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
      *                                 (OPTIONAL).
-     *
+     *                                 
+     * jdbcPoolProperties  : Map     : Properties for the connection pool.
+     *                                 See full list of properties in GlassFishAppDeployer
+     *                                 (OPTIONAL)   
+     *                                 
      * debugFlag           : Boolean : Flag toggling debug configuration.
      *                                 Configuring for debug mode will for
      *                                 example influence the amount of logging
@@ -399,31 +403,11 @@ class IndexerDeployScript extends GluScriptBase {
         def dbUrl = params.dbUrl.replace(":", "\\:");
 
         def poolOptions = [
-                name: JDBC_POOL,
-                resType: "javax.sql.DataSource",
-                datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-                //steadypoolsize: "8",
-                //maxpoolsize: "32",
-                property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
-                isConnectionValidationRequired: "true",
-                validateAtmostOncePeriodInSeconds: (int)Integer.parseInt(params.pollInterval)/2,
-                connectionValidationMethod: "custom-validation",
-                validationClassname: "org.glassfish.api.jdbc.validation.PostgresConnectionValidation",
-                failAllConnections: "true"
+            validateAtmostOncePeriodInSeconds: (int)Integer.parseInt(params.pollInterval)/2,
         ]
-        
-        log.info "Validation properties for JDBC connection pool:\n\
-                    validateAtmostOncePeriodInSeconds: $poolOptions.validateAtmostOncePeriodInSeconds (has to be less than pollInterval: $params.pollInterval)\n\
-                    connectionValidateMethod: $poolOptions.connectionValidationMethod \n\
-                    validationClassname: $poolOptions.validationClassname \n\
-                    isConnectionValidationRequired: $poolOptions.isConnectionValidationRequired \n\
-                    failAllConnections: $poolOptions.failAllConnections";
-        
-        deployer.createJdbcConnectionPool(poolOptions)
-        deployer.createJdbcResource([
-                id: JDBC_RESOURCE,
-                poolName: JDBC_POOL,
-        ])
+        poolOptions += params.jdbcPoolProperties ?: [:]
+
+        deployer.createPGConnectionPool(JDBC_POOL, JDBC_RESOURCE, params.dbUser, params.dbPassword, dbUrl, poolOptions)
     }
 
     def deleteJdbcResources() {
