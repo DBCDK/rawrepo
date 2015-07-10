@@ -36,9 +36,13 @@ import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
@@ -61,6 +65,9 @@ public abstract class Service {
 
     @Resource(lookup = C.RAWREPO.DATASOURCE)
     DataSource rawrepo;
+
+    @Resource(lookup = C.PROPERTIES_LOOKUP)
+    Properties props;
 
     @Inject
     AuthenticationService forsRights;
@@ -103,9 +110,22 @@ public abstract class Service {
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
+    List<IPRange> ipRanges;
+
     @PostConstruct
     public void init() {
-        log.warn("init()");
+        ipRanges = new ArrayList<>();
+        String ranges = props.getProperty(C.X_FORWARDED_FOR, "");
+        if (!ranges.isEmpty()) {
+            for (String range : ranges.split("[,;:\\s]+")) {
+                try {
+                    ipRanges.add(new IPRange(range));
+                } catch (RuntimeException ex) {
+                    log.warn("ipRange init - " + ex.getMessage());
+                    log.debug(ex.getMessage(), ex);
+                }
+            }
+        }
     }
 
     @WebMethod(operationName = C.OPERATION_FETCH)
@@ -116,7 +136,6 @@ public abstract class Service {
                       @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.IN, name = "records") List<FetchRequestRecord> requestRecords,
                       @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "error") Holder<Object> out) {
         try (Timer.Context time1 = requests.time()) {
-
             log.debug("fetch()");
             Exception exception = getException();
             if (exception != null) {
@@ -127,7 +146,7 @@ public abstract class Service {
             boolean authenticated;
             try (Timer.Context time2 = authenticationRequest.time()) {
                 if (authentication == null) {
-                    authenticated = forsRights.validate(getIp());
+                    authenticated = forsRights.validate(getClientIP());
                 } else {
                     authenticated = forsRights.validate(authentication);
                 }
@@ -203,11 +222,36 @@ public abstract class Service {
         }
     }
 
+    private static final String NUM = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])";
+    private static final String IP = NUM + "\\." + NUM + "\\." + NUM + "\\." + NUM;
+    private static final Pattern LAST_IP_PATTERN = Pattern.compile("\\b" + IP + "$", Pattern.DOTALL);
+
+    @WebMethod(exclude = true)
+    private String getClientIP() {
+        String ip = getIp();
+        String xForwardedFor = getXForwardedFor();
+        if (xForwardedFor != null) {
+            Matcher matcher = LAST_IP_PATTERN.matcher(xForwardedFor);
+            if (matcher.find()) {
+                xForwardedFor = matcher.group();
+                for (IPRange ipRange : ipRanges) {
+                    if (ipRange.inRange(ip)) {
+                        return xForwardedFor;
+                    }
+                }
+            }
+        }
+        return ip;
+    }
+
     @WebMethod(exclude = true)
     public abstract SAXParseException getException();
 
     @WebMethod(exclude = true)
     public abstract String getIp();
+
+    @WebMethod(exclude = true)
+    public abstract String getXForwardedFor();
 
     /*
      *      ______     __       __
@@ -336,5 +380,60 @@ public abstract class Service {
         public FetchResponseError getError() {
             return error;
         }
+    }
+}
+
+class IPRange {
+
+    private static final String N255 = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])";
+    private static final String IPV4 = N255 + "\\." + N255 + "\\." + N255 + "\\." + N255;
+    private static final Pattern IPV4_PATTERN = Pattern.compile("^" + IPV4 + "$", Pattern.DOTALL);
+    private static final Pattern IPV4_RANGE_PATTERN = Pattern.compile("^" + IPV4 + "(?:/(3[0-2]|[12]?[0-9])|-" + IPV4 + ")?$", Pattern.DOTALL);
+
+    private final long min, max;
+
+    IPRange(String range) {
+        Matcher matcher = IPV4_RANGE_PATTERN.matcher(range);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Not a valid ip range: " + range);
+        }
+        long num1 = ( Long.parseLong(matcher.group(1)) << 24 )
+                    + ( Long.parseLong(matcher.group(2)) << 16 )
+                    + ( Long.parseLong(matcher.group(3)) << 8 )
+                    + ( Long.parseLong(matcher.group(4)) );
+        long minCalc = num1;
+        long maxCalc = num1;
+        if (matcher.group(5) != null) {
+            long prefix = Long.parseLong(matcher.group(5));
+            long mask = -1 << ( 32 - prefix );
+            maxCalc = minCalc = num1 & mask;
+            maxCalc |= ~mask;
+        }
+        if (matcher.group(6) != null) {
+            long num2 = ( Long.parseLong(matcher.group(6)) << 24 )
+                        + ( Long.parseLong(matcher.group(7)) << 16 )
+                        + ( Long.parseLong(matcher.group(8)) << 8 )
+                        + ( Long.parseLong(matcher.group(9)) );
+            maxCalc = Math.max(num1, num2);
+            minCalc = Math.min(num1, num2);
+        }
+
+        this.min = minCalc;
+        this.max = maxCalc;
+    }
+
+    boolean inRange(long ip) {
+        return ip >= min && ip <= max;
+    }
+
+    boolean inRange(String ip) {
+        Matcher matcher = IPV4_PATTERN.matcher(ip);
+        if (matcher.matches()) {
+            return inRange(( Long.parseLong(matcher.group(1)) << 24 )
+                           + ( Long.parseLong(matcher.group(2)) << 16 )
+                           + ( Long.parseLong(matcher.group(3)) << 8 )
+                           + ( Long.parseLong(matcher.group(4)) ));
+        }
+        return false;
     }
 }

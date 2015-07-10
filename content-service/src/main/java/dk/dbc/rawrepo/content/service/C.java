@@ -35,6 +35,8 @@ public class C {
 
     public static final String PROPERTIES_LOOKUP = "rawrepo-content-service";
 
+    public static final String X_FORWARDED_FOR = "x-forwarded-for";
+
     public static class FORS {
 
         public static final String URL = "forsRightsUrl";
@@ -59,10 +61,12 @@ public class C {
     }
 
     public static class RAWREPO {
+
         public static final String DATASOURCE = "jdbc/rawrepocontentservice/rewrepo";
     }
 
     public static class SEARCHORDER {
+
         public static final String URL = "searchOrderUrl";
         public static final String URL_DEFAULT = "http://openagency.addi.dk/2.20/";
 

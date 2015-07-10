@@ -26,6 +26,8 @@ import javax.jws.WebService;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXParseException;
 
 /**
@@ -35,6 +37,7 @@ import org.xml.sax.SAXParseException;
 @WebService(serviceName = C.SERVICE, targetNamespace = C.NS, portName = C.PORT)
 @SchemaValidation(handler = WsdlValidationErrorHandler.class)
 public class SoapService extends Service {
+    private static final Logger log = LoggerFactory.getLogger(SoapService.class);
 
     @Resource
     private WebServiceContext webServiceContext;
@@ -54,4 +57,11 @@ public class SoapService extends Service {
         return httpServletRequest.getRemoteAddr();
     }
 
+    @WebMethod(exclude = true)
+    @Override
+    public String getXForwardedFor() {
+        MessageContext messageContext = webServiceContext.getMessageContext();
+        HttpServletRequest httpServletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
+        return httpServletRequest.getHeader("x-forwarded-for");
+    }
 }

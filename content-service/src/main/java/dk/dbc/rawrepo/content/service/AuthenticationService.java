@@ -58,8 +58,8 @@ public class AuthenticationService {
 
         String url = props.getProperty(C.FORS.URL, C.FORS.URL_DEFAULT);
         service = ForsRightsServiceFromURL.builder()
-                .connectTimeout(getInteget(C.FORS.CONNECT_TIMEOUT, C.FORS.CONNECT_TIMEOUT_DEFAULT))
-                .requestTimeout(getInteget(C.FORS.REQUEST_TIMEOUT, C.FORS.REQUEST_TIMEOUT_DEFAULT))
+                .connectTimeout(getInteger(C.FORS.CONNECT_TIMEOUT, C.FORS.CONNECT_TIMEOUT_DEFAULT))
+                .requestTimeout(getInteger(C.FORS.REQUEST_TIMEOUT, C.FORS.REQUEST_TIMEOUT_DEFAULT))
                 .build(url);
         log.debug("forsrights url = " + url);
 
@@ -74,7 +74,7 @@ public class AuthenticationService {
         forsRights = service.forsRights(rightsCache);
     }
 
-    private int getInteget(String key, String defaultValue) {
+    private int getInteger(String key, String defaultValue) {
         String value = props.getProperty(key, defaultValue);
         try {
             return Integer.parseInt(value);

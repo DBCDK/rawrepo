@@ -61,7 +61,6 @@ public class JsonService extends Service {
     public FetchResponse fetch(FetchRequest req) {
         FetchResponse resp = new FetchResponse();
         try {
-            resp.out = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
             webMethodAdaptor.invoke(this, C.OPERATION_FETCH, req, resp);
         } catch (WebMethodCallException ex) {
             log.error("Caught WebMethodCallException: " + ex.getMessage());
@@ -89,4 +88,9 @@ public class JsonService extends Service {
         return httpServletRequest.getRemoteAddr();
     }
 
+    @Override
+    public String getXForwardedFor() {
+        String header = httpServletRequest.getHeader("x-forwarded-for");
+        return header;
+    }
 }

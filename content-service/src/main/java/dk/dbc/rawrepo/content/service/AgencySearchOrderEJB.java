@@ -47,8 +47,8 @@ public class AgencySearchOrderEJB {
         log.debug("init()");
         String url = props.getProperty(C.SEARCHORDER.URL, C.SEARCHORDER.URL_DEFAULT);
         openAgencyService = OpenAgencyServiceFromURL.builder()
-                .connectTimeout(getInteget(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
-                .requestTimeout(getInteget(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
+                .connectTimeout(getInteger(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
+                .requestTimeout(getInteger(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
                 .build(url);
         agencySearchOrder = new AgencySearchOrderFromShowOrder(openAgencyService);
     }
@@ -57,7 +57,7 @@ public class AgencySearchOrderEJB {
         return agencySearchOrder;
     }
 
-    private int getInteget(String key, String defaultValue) {
+    private int getInteger(String key, String defaultValue) {
         String value = props.getProperty(key, defaultValue);
         try {
             return Integer.parseInt(value);
