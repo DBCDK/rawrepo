@@ -26,10 +26,9 @@ function work(r) {
     var bibliographicrecordid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="a"]', xml);
     var agencyid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="b"]', xml);
     var parent = XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="a"]', xml);
+    var id = "(" + bibliographicrecordid + ":" + agencyid + ")";
 
-    Log.debug("bibliographicrecordid=" + bibliographicrecordid);
-    Log.debug("agencyid=" + agencyid);
-    Log.debug("parent=" + parent);
+    Log.info(id + " parent=" + parent);
 
     db.begin();
     try {
@@ -40,7 +39,7 @@ function work(r) {
             q.execute();
             q.done();
         } catch (e) {
-            Log.error("Delete relations for: " + bibliographicrecordid);
+            Log.error(id + " delete relations");
             Log.error(e);
             throw e;
         }
@@ -48,7 +47,7 @@ function work(r) {
         var s = "·"
         var sibling = false;
         if (agencyid !== parent_agencyid) {
-            Log.debug("Might have sibling");
+            Log.debug(id + " might have sibling");
             try {
                 var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
                 q['bibliographicrecordid'] = bibliographicrecordid;
@@ -57,11 +56,11 @@ function work(r) {
                 var r = q.fetch();
                 var c = r['count'];
                 if (c === 1) {
-                    Log.debug("Has sibling");
+                    Log.debug(id + " is sibling");
                     sibling = true;
                 }
             } catch (e) {
-                Log.error("Find sibling for: " + bibliographicrecordid);
+                Log.error(id + " find sibling");
                 Log.error(e);
                 throw e;
             }
@@ -69,6 +68,7 @@ function work(r) {
 
         if (sibling) {
             try {
+                Log.info(id + " is sibling")
                 q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:bibliographicrecordid, :agencyid, :refer_bibliographicrecordid, :ref_agencyid)");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
@@ -98,11 +98,12 @@ function work(r) {
             }
             q.done();
             if(refer_agencyid === null) {
-                Log.error("Parent (" + parent + ") for " + bibliographicrecordid + " from " + agencyid + " cannot be found!");
-                throw new Error("Parent (" + parent + ") for " + bibliographicrecordid + " from " + agencyid + " cannot be found!");
+                Log.error("Parent (" + parent + ") for " + id + " cannot be found!");
+                throw new Error("Parent (" + parent + ") for " + id + " cannot be found!");
             }
 
             try {
+                Log.info(id + " has parent")
                 q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:id, :agencyid, :ref_id, :ref_agencyid)");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
@@ -112,7 +113,7 @@ function work(r) {
                 q.done();
                 s = "^";
             } catch (e) {
-                Log.error("Parent " + parent + " for " + bibliographicrecordid + " from " + agencyid);
+                Log.error("Parent " + parent + " for " + id);
                 Log.warn(e);
                 throw e;
             }

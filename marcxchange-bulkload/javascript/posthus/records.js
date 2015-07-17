@@ -25,6 +25,7 @@ function work(r) {
     var agencyid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="b"]', xml);
     var date = XPath.selectText('/marcx:record/marcx:datafield[@tag="n55"]/marcx:subfield[@code="a"]', xml);
     XPath.delete('/marcx:record/marcx:datafield[@tag="n55"]', xml);
+    var id = "(" + bibliographicrecordid + ":" + agencyid + ")";
 
     Log.debug("bibliographicrecordid=" + bibliographicrecordid);
     Log.debug("agencyid=" + agencyid);
@@ -41,6 +42,8 @@ function work(r) {
 
     var blob = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + xml.toString();
 
+    Log.info(id + " date=" + date);
+
     db.begin();
 
     var sibling = false;
@@ -54,8 +57,9 @@ function work(r) {
 	if(c === 1)
 	    sibling = true;
     }
+    Log.info(id + " is sibling");
 
-
+    Log.info(id + " update if exists");
     var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:id AND agencyid=:agencyid");
     q['blob'] = blob;
     q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
@@ -63,6 +67,7 @@ function work(r) {
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     if (q.execute() === 0) {
+        Log.info(id + " create");
         q.done();
         q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified) VALUES(:id, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created, TIMEOFDAY()::TIMESTAMP)");
         q['bibliographicrecordid'] = bibliographicrecordid;
