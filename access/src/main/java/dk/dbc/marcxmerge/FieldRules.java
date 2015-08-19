@@ -18,13 +18,18 @@
  */
 package dk.dbc.marcxmerge;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  *
@@ -42,6 +47,7 @@ public class FieldRules {
     private final Set<String> invalid;
     private final Set<String> immutable;
     private final Set<String> remove;
+    private final MarcXFixup[] fixups;
 
     private final Map<String, Set<String>> overwriteCollections;
 
@@ -140,6 +146,7 @@ public class FieldRules {
         this.remove = new HashSet<>();
         this.overwriteCollections = overwriteCollectionsInit(OVERWRITE_DEFAULT);
         this.validRegex = Pattern.compile(VALID_REGEX_DANMARC2, Pattern.MULTILINE);
+        this.fixups = DEFAULT_FIXUPS;
     }
 
     /**
@@ -156,6 +163,25 @@ public class FieldRules {
         this.remove = new HashSet<>();
         this.overwriteCollections = overwriteCollectionsInit(overwrite);
         this.validRegex = Pattern.compile(validRegex, Pattern.MULTILINE);
+        this.fixups = DEFAULT_FIXUPS;
+    }
+
+    /**
+     *
+     * @param immutable  fields that can't be modified
+     * @param overwrite  fields that are replacing (groups (of tags separated by
+     *                   space) separated by ;)
+     * @param invalid    fields that should always be removed
+     * @param validRegex regex that tag must match to be considered valid
+     * @param fixups     list of fixes that needs to be run post merge
+     */
+    public FieldRules(String immutable, String overwrite, String invalid, String validRegex, MarcXFixup[] fixups) {
+        this.invalid = collectionInit(invalid);
+        this.immutable = collectionInit(immutable);
+        this.remove = new HashSet<>();
+        this.overwriteCollections = overwriteCollectionsInit(overwrite);
+        this.validRegex = Pattern.compile(validRegex, Pattern.MULTILINE);
+        this.fixups = fixups;
     }
 
     /**
@@ -166,4 +192,64 @@ public class FieldRules {
         return new RuleSet(immutable, remove);
     }
 
+    /**
+     *
+     * @return
+     */
+    public List<MarcXFixup> getFixups() {
+        return Arrays.asList(fixups);
+    }
+
+    static Element findFirstSubField(Document doc, String field, String subField) {
+        Element root = doc.getDocumentElement();
+        for (Node datafield = root.getFirstChild() ; datafield != null ; datafield = datafield.getNextSibling()) {
+            if (datafield.getNodeType() == Node.ELEMENT_NODE
+                && "datafield".equals(datafield.getLocalName())
+                && field.equals(( (Element) datafield ).getAttribute("tag"))) {
+                for (Node subfield = datafield.getFirstChild() ; subfield != null ; subfield = subfield.getNextSibling()) {
+                    if (subfield.getNodeType() == Node.ELEMENT_NODE
+                        && "subfield".equals(subfield.getLocalName())
+                        && subField.equals(( (Element) subfield ).getAttribute("code"))) {
+                        return (Element) subfield;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static interface MarcXFixup {
+
+        /**
+         *
+         * @param target
+         * @param common
+         * @param enrich
+         */
+        void fix(Document target, Document common, Document enrich);
+    }
+
+    private static final MarcXFixup DEFAULT_FIXUPS[] = {
+        // danMARC2: 001 *c
+        new MarcXFixup() {
+            @Override
+            public void fix(Document target, Document common, Document enrich) {
+                if ("danMARC2".equals(target.getDocumentElement().getAttribute("format"))) {
+                    Element target001cNode = findFirstSubField(target, "001", "c");
+                    Element common001cNode = findFirstSubField(common, "001", "c");
+                    Element enrich001cNode = findFirstSubField(enrich, "001", "c");
+                    if (target001cNode != null && common001cNode != null && enrich001cNode != null) {
+                        String common001c = common001cNode.getTextContent();
+                        String enrich001c = enrich001cNode.getTextContent();
+                        if (Long.parseLong(common001c, 10) > Long.parseLong(enrich001c, 10)) {
+                            target001cNode.setTextContent(common001c);
+                        } else {
+                            target001cNode.setTextContent(enrich001c);
+                        }
+                    }
+                }
+            }
+        },
+
+    };
 }

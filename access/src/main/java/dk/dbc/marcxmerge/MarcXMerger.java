@@ -18,6 +18,7 @@
  */
 package dk.dbc.marcxmerge;
 
+import dk.dbc.marcxmerge.FieldRules.MarcXFixup;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -211,6 +212,10 @@ public class MarcXMerger {
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
 
             mergeCommonAndLocalIntoTarget(localFields, commonFields, targetRootElement);
+
+            for (MarcXFixup fixup : fieldRulesIntermediate.getFixups()) {
+                fixup.fix(targetDom, commonDom, localDom);
+            }
 
             return documentToBytes(targetDom);
         } catch (SAXException | IOException | TransformerException ex) {
