@@ -10,6 +10,7 @@ INSERT INTO version VALUES(8);
 INSERT INTO version VALUES(9);
 INSERT INTO version VALUES(10);
 INSERT INTO version VALUES(11);
+INSERT INTO version VALUES(12);
 
 
 -- records:
@@ -22,6 +23,7 @@ CREATE TABLE records ( -- V2
        content TEXT, -- base64 encoded
        created TIMESTAMP NOT NULL,
        modified TIMESTAMP NOT NULL,
+       trackingId VARCHAR(256) NOT NULL DEFAULT '',
        CONSTRAINT records_pk PRIMARY KEY (bibliographicrecordid, agencyid)
 );
 
@@ -34,7 +36,8 @@ CREATE TABLE records_archive ( -- V2
        mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange', -- V3
        content TEXT, -- base64 encoded
        created TIMESTAMP NOT NULL,
-       modified TIMESTAMP NOT NULL
+       modified TIMESTAMP NOT NULL,
+       trackingId VARCHAR(256) NOT NULL DEFAULT ''
 );
 
 
@@ -45,12 +48,12 @@ CREATE INDEX records_archive_pk ON records_archive (bibliographicrecordid, agenc
 CREATE INDEX records_archive_id ON records_archive (bibliographicrecordid, agencyid);
 CREATE INDEX records_archive_modified ON records_archive (modified);
 
-CREATE OR REPLACE FUNCTION archive_record() RETURNS TRIGGER AS $$ -- V2
+CREATE OR REPLACE FUNCTION archive_record() RETURNS TRIGGER AS $$ -- V12
 DECLARE
     ts TIMESTAMP;
 BEGIN
-    INSERT INTO records_archive(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified)
-        VALUES(OLD.bibliographicrecordid, OLD.agencyid, OLD.deleted, OLD.mimetype, OLD.content, OLD.created, OLD.modified);
+    INSERT INTO records_archive(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified, trackingId)
+        VALUES(OLD.bibliographicrecordid, OLD.agencyid, OLD.deleted, OLD.mimetype, OLD.content, OLD.created, OLD.modified, OLD.trackingId);
     FOR ts IN
         SELECT modified FROM records_archive WHERE bibliographicrecordid=OLD.bibliographicrecordid AND agencyid=OLD.agencyid AND
                                                    modified <=  NOW() - INTERVAL '42 DAYS' ORDER BY modified DESC OFFSET 1 LIMIT 1
