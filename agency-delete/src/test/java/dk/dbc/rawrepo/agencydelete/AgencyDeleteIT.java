@@ -20,6 +20,7 @@ package dk.dbc.rawrepo.agencydelete;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
+import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -30,6 +31,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.After;
@@ -74,6 +76,7 @@ public class AgencyDeleteIT {
 
     @Test
     public void testGetIds() throws Exception {
+        System.out.println("testGetIds()");
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 870970);
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
@@ -81,11 +84,13 @@ public class AgencyDeleteIT {
 
         Set<String> siblingRelations = agencyDelete.getSiblingRelations();
         testArray(siblingRelations, "SiblingRelations", "H", "S", "B");
+        Set<String> parentRelations = agencyDelete.getParentRelations();
+        testArray(parentRelations, "parentRelations", "H", "S");
         agencyDelete.commit();
     }
 
     @Test
-    public void test() throws Exception {
+    public void testBasics() throws Exception {
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777);
 
         agencyDelete.begin();
@@ -93,18 +98,34 @@ public class AgencyDeleteIT {
         testArray(ids, "Ids", "H", "S", "B", "E");
 
         Set<String> parentRelations = agencyDelete.getParentRelations();
-        System.out.println("parentRelations = " + parentRelations);
 
         agencyDelete.removeRelations();
 
         agencyDelete.deleteRecords(ids, parentRelations, "provider");
         agencyDelete.commit();
+
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970"));
+
+        HashSet<String> leafs = new HashSet<>();
         countQueued("leaf", 2);
+        for (QueueJob dequeue = dao.dequeue("leaf") ; dequeue != null ; dequeue = dao.dequeue("leaf")) {
+            leafs.add(dequeue.getJob().getBibliographicRecordId());
+        }
+        testArray(leafs, "leafs", "B", "E");
+
+        HashSet<String> nodes = new HashSet<>();
         countQueued("node", 2);
+        System.out.println("nodes = " + nodes);
+        for (QueueJob dequeue = dao.dequeue("node") ; dequeue != null ; dequeue = dao.dequeue("node")) {
+            nodes.add(dequeue.getJob().getBibliographicRecordId());
+        }
+        testArray(nodes, "nodes", "H", "S");
+        System.out.println("Done!");
+        connection.commit();
     }
 
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970,77777"));
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970"));
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();

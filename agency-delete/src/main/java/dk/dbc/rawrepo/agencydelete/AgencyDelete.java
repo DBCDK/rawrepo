@@ -73,7 +73,7 @@ class AgencyDelete {
 
     public Set<String> getParentRelations() throws SQLException {
         Set<String> set = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid")) {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT refer_bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid")) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     set.add(resultSet.getString(1));
