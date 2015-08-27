@@ -85,6 +85,7 @@ function work(r) {
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['common'] = parent_agency;
     q['agencyid'] = agencyid;
+    q.execute();
     var r = q.fetch();
     var leaf = r['count'] === 0;
     q.done();
@@ -93,11 +94,12 @@ function work(r) {
     var q = db.prepare("SELECT COUNT(*) AS count FROM relations WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND refer_bibliographicrecordid = bibliographicrecordid");
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
+    q.execute();
     var r = q.fetch();
     var standAlone = r['count'] === 0;
     q.done();
 
-    q = db.prepare("SELECT * FROM enqueue(:bibliographicrecordid, :agency, :mimetype, :provider, :changed, :leaf)");
+    q = db.prepare("SELECT * FROM enqueue(:bibliographicrecordid, CAST(:agencyid AS int), :mimetype, :provider, :changed, :leaf)");
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     q['mimetype'] = standAlone ? "text/marcxchange" : "text/enrichment+marcxchange";
