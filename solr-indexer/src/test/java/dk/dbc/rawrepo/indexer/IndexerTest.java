@@ -14,9 +14,10 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
 import org.apache.solr.common.SolrInputDocument;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -126,16 +127,17 @@ public class IndexerTest {
         Indexer indexer = new Indexer();
         indexer.contentsIndexed = new Counter();
         indexer.contentsSkipped = new Counter();
+        indexer.contentsFailed = new Counter();
         return indexer;
     }
 
     @Test
-    public void testCreateIndexDocument() throws IOException, ParserConfigurationException, SAXException {
+    public void testCreateIndexDocument() throws IOException, ParserConfigurationException, SAXException, Exception {
 
         Date created = new Date(100);
         Date modified = new Date(200);
         String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                         + "<marcx:record format=\"danMARC2\" type=\"Bibliographic\" xmlns:marcx=\"info:lc/xmlns/marcxchange-v2\">\n"
+                         + "<marcx:record format=\"danMARC2\" type=\"Bibliographic\" xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\">\n"
                          + "      <marcx:leader>00000n    2200000   4500</marcx:leader>\n"
                          + "      <marcx:datafield tag=\"001\" ind1=\"0\" ind2=\"0\">\n"
                          + "        <marcx:subfield code=\"a\">2 364 149 6</marcx:subfield>\n"
@@ -261,7 +263,7 @@ public class IndexerTest {
 
         Indexer indexer = createInstance();
         indexer.createIndexDocumentTimer = new Timer();
-        indexer.parser = SAXParserFactory.newInstance().newSAXParser();
+        indexer.worker = new JavaScriptWorker();
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 
@@ -283,7 +285,7 @@ public class IndexerTest {
 
     }
     @Test
-    public void testCreateIndexDocument_whenContentCanNotBeParsed() throws IOException, ParserConfigurationException, SAXException {
+    public void testCreateIndexDocument_whenContentCanNotBeParsed() throws IOException, ParserConfigurationException, SAXException, Exception {
 
         Date created = new Date(100);
         Date modified = new Date(200);
@@ -293,7 +295,7 @@ public class IndexerTest {
 
         Indexer indexer = createInstance();
         indexer.createIndexDocumentTimer = new Timer();
-        indexer.parser = SAXParserFactory.newInstance().newSAXParser();
+        indexer.worker = new JavaScriptWorker();
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 
@@ -310,7 +312,7 @@ public class IndexerTest {
     }
 
     @Test
-    public void testCreateIndexDocument_whenDocumentIsNotMarc() throws IOException, ParserConfigurationException, SAXException {
+    public void testCreateIndexDocument_whenDocumentIsNotMarc() throws IOException, ParserConfigurationException, SAXException, Exception {
 
         Date created = new Date(100);
         Date modified = new Date(200);
@@ -320,7 +322,7 @@ public class IndexerTest {
 
         Indexer indexer = createInstance();
         indexer.createIndexDocumentTimer = new Timer();
-        indexer.parser = SAXParserFactory.newInstance().newSAXParser();
+        indexer.worker = new JavaScriptWorker();
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 

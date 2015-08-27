@@ -46,8 +46,9 @@ public class SchemaValidationIT {
     private static final String FIELD_002A = "1 234 567 8";
     private static final String FIELD_021AE = "123456789X";
     private static final String FIELD_022A = "1234-5678";
-    private static final String LIBRARY = "870970";
+    private static final String AGENCY = "870970";
     private static final String DOCUMENT_ID = "1 234 432 1";
+    private static final String FIELD_COLLECTION = "dbc";
 
     private static SolrServer solrServer;
     private static String solrServerUrl;
@@ -67,17 +68,19 @@ public class SchemaValidationIT {
 
     private void addTestDocument() throws SolrServerException, IOException {
         SolrInputDocument doc = new SolrInputDocument();
-        doc.addField("id", DOCUMENT_ID+":870970");
+        doc.addField("id", DOCUMENT_ID + ":" + AGENCY);
         doc.addField("marc.001a", DOCUMENT_ID);
-        doc.addField("marc.001b", LIBRARY);
+        doc.addField("marc.001b", AGENCY);
         doc.addField("marc.002a", FIELD_002A);
         doc.addField("marc.021ae", FIELD_021AE);
         doc.addField("marc.022a", FIELD_022A);
+        doc.addField("collection", FIELD_COLLECTION);
         doc.addField("created", CREATED);
         doc.addField("modified", MODIFIED);
         solrServer.add(doc);
         solrServer.commit(true, true);
     }
+
     @Test
     public void verifyConnectivity() throws Exception {
         // Solr server must be able to start up with the supplied schema and configuration
@@ -104,12 +107,12 @@ public class SchemaValidationIT {
         addTestDocument();
         QueryResponse response;
 
-        response = solrServer.query(new SolrQuery("analyzedId:\""+"12344321"+"\\:" + LIBRARY+"\""));
+        response = solrServer.query(new SolrQuery("analyzedId:\"" + "12344321" + "\\:" + AGENCY + "\""));
         Assert.assertEquals(1, response.getResults().getNumFound());
-        
+
         response = solrServer.query(new SolrQuery("marc.001a:12344321"));
         Assert.assertEquals(1, response.getResults().getNumFound());
-        
+
         response = solrServer.query(new SolrQuery("marc.002a:12345678"));
         Assert.assertEquals(1, response.getResults().getNumFound());
 

@@ -1,0 +1,10 @@
+{
+  "collection":["any"],
+  "marc.002a":["FIELD A FROM 002"],
+  "marc.021ae":[
+    "FIELD A FROM 021 one",
+    "FIELD A FROM 021 two",
+    "FIELD E FROM 021 one",
+    "FIELD E FROM 021 two"],
+  "marc.022a":["0904-7611"]
+}

@@ -25,9 +25,7 @@ import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.annotation.PostConstruct;
@@ -36,9 +34,6 @@ import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -46,14 +41,13 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-import dk.dbc.marcx.sax.MarcxParser;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
+import java.nio.charset.StandardCharsets;
 
 /**
  *
@@ -93,8 +87,9 @@ public class Indexer {
 
     Counter contentsIndexed;
     Counter contentsSkipped;
+    Counter contentsFailed;
 
-    SAXParser parser;
+    JavaScriptWorker worker;
 
     private SolrServer solrServer;
 
@@ -119,15 +114,10 @@ public class Indexer {
         commitTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "commit"));
         contentsIndexed = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsIndexed"));
         contentsSkipped = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsSkipped"));
+        contentsFailed = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsFailed"));
 
-        try {
-            parser = SAXParserFactory.newInstance().newSAXParser();
-            searchOrder = new AgencySearchOrderFallback();
-        } catch (ParserConfigurationException | SAXException ex) {
-            log.error("Unable to initialize saxparser", ex);
-            throw new ExceptionInInitializerError(ex);
-        }
-
+        worker = new JavaScriptWorker();
+        searchOrder = new AgencySearchOrderFallback();
     }
 
     @PreDestroy
@@ -242,8 +232,13 @@ public class Indexer {
                 doc.addField("marc.001a", recordId.getBibliographicRecordId());
                 doc.addField("marc.001b", recordId.getAgencyId());
                 byte[] content = record.getContent();
-                extractFieldsFromContent(content, doc);
-                contentsIndexed.inc();
+                try {
+                    worker.addFields(doc, new String(content, StandardCharsets.UTF_8), mimeType);
+                    contentsIndexed.inc();
+                } catch (Exception ex) {
+                    log.error("Error adding fields: ", ex);
+                    contentsFailed.inc();
+                }
                 break;
             default:
                 contentsSkipped.inc();
@@ -255,25 +250,6 @@ public class Indexer {
         log.trace("Created solr document {}", doc);
         time.stop();
         return doc;
-    }
-
-    private void extractFieldsFromContent(byte[] content, final SolrInputDocument doc) {
-        try (InputStream input = new ByteArrayInputStream(content)) {
-            parser.parse(input, new MarcxParser() {
-                @Override
-                public void content(String dataField, String subField, String value) {
-                    if (dataField.equals("021") && ( subField.equals("a") || subField.equals("e") )) {
-                        doc.addField("marc.021ae", value);
-                    } else if (dataField.equals("022") && subField.equals("a")) {
-                        doc.addField("marc.022a", value);
-                    } else if (dataField.equals("002") && subField.equals("a")) {
-                        doc.addField("marc.002a", value);
-                    }
-                }
-            });
-        } catch (SAXException | IOException ex) {
-            log.error("Failed to parse content. Content document fields will be skipped", ex);
-        }
     }
 
     private void deleteSolrDocument(RecordId jobId) throws IOException, SolrServerException {

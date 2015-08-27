@@ -310,6 +310,14 @@
       <version>4.7.1</version>
     </dependency>
     <dependency>
+      <groupId>dk.dbc</groupId>
+      <artifactId>dbc-jslib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>dk.dbc</groupId>
+      <artifactId>jscommon</artifactId>
+    </dependency>
+    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
     </dependency>
@@ -339,6 +347,12 @@
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.json</artifactId>
+      <version>1.0.4</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.codahale.metrics</groupId>
