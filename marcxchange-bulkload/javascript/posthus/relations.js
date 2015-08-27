@@ -1,3 +1,5 @@
+/* global Log, XmlUtil, XPath, System, __row__ */
+
 use("Print");
 use("Log");
 use("XmlUtil");
@@ -13,6 +15,7 @@ var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "191919";
 
 function begin() {
+ Log.trace("db = " + System.arguments[0]);
 }
 
 function end() {
@@ -20,6 +23,7 @@ function end() {
 }
 
 function work(r) {
+    Log.trace('row=' + __row__);
     Log.trace(r);
     var xml = XmlUtil.fromString(r);
 
@@ -44,7 +48,7 @@ function work(r) {
             throw e;
         }
 
-        var s = "·"
+        var s = "·";
         var sibling = false;
         if (agencyid !== parent_agencyid) {
             Log.debug(id + " might have sibling");
@@ -68,8 +72,8 @@ function work(r) {
 
         if (sibling) {
             try {
-                Log.info(id + " is sibling")
-                q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:bibliographicrecordid, :agencyid, :refer_bibliographicrecordid, :ref_agencyid)");
+                Log.info(id + " is sibling");
+                q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:bibliographicrecordid, :agencyid, :refer_bibliographicrecordid, :refer_agencyid)");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
                 q['refer_bibliographicrecordid'] = bibliographicrecordid;
@@ -103,7 +107,7 @@ function work(r) {
             }
 
             try {
-                Log.info(id + " has parent")
+                Log.info(id + " has parent");
                 q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:id, :agencyid, :ref_id, :ref_agencyid)");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
