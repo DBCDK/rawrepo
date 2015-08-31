@@ -49,6 +49,7 @@ public class SchemaValidationIT {
     private static final String AGENCY = "870970";
     private static final String DOCUMENT_ID = "1 234 432 1";
     private static final String FIELD_COLLECTION = "dbc";
+    private static final String REC_TRACKING_ID = "abc123";
 
     private static SolrServer solrServer;
     private static String solrServerUrl;
@@ -77,6 +78,7 @@ public class SchemaValidationIT {
         doc.addField("collection", FIELD_COLLECTION);
         doc.addField("created", CREATED);
         doc.addField("modified", MODIFIED);
+        doc.addField("rec.trackingId", REC_TRACKING_ID);
         solrServer.add(doc);
         solrServer.commit(true, true);
     }

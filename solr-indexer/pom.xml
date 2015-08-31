@@ -20,6 +20,14 @@
   </properties>
 
   <build>
+      <resources>
+          <resource>
+              <directory>solr-config</directory>
+              <excludes>
+                  <exclude>*</exclude>
+              </excludes>
+          </resource>
+      </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

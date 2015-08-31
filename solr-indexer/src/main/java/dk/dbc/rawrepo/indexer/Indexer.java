@@ -247,6 +247,7 @@ public class Indexer {
 
         doc.addField("created", record.getCreated());
         doc.addField("modified", record.getModified());
+        doc.addField("rec.trackingId", record.getTrackingId());
         log.trace("Created solr document {}", doc);
         time.stop();
         return doc;

@@ -278,6 +278,7 @@
     <field name="collection" type="id" indexed="true" stored="true" required="false" />
     <field name="created" type="date" indexed="true" stored="true" required="false" />
     <field name="modified" type="date" indexed="true" stored="true" required="false" />
+    <field name="rec.trackingId" type="id" indexed="true" stored="true" required="false" />
 
     <field name="default" type="dbc-default" indexed="true" stored="true" required="false"/>
 
@@ -290,6 +291,7 @@
     <copyField source="marc.022a" dest="default"/>
     <copyField source="created" dest="default"/>
     <copyField source="modified" dest="default"/>
+    <copyField source="rec.trackingId" dest="default"/>
 
   </fields>
 
