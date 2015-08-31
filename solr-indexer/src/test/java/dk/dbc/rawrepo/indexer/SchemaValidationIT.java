@@ -75,7 +75,7 @@ public class SchemaValidationIT {
         doc.addField("marc.002a", FIELD_002A);
         doc.addField("marc.021ae", FIELD_021AE);
         doc.addField("marc.022a", FIELD_022A);
-        doc.addField("collection", FIELD_COLLECTION);
+        doc.addField("rec.collectionIdentifier", FIELD_COLLECTION);
         doc.addField("created", CREATED);
         doc.addField("modified", MODIFIED);
         doc.addField("rec.trackingId", REC_TRACKING_ID);

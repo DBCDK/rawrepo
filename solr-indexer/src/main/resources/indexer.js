@@ -5,6 +5,8 @@ use("XmlUtil");
 use("XmlNamespaces");
 use("Log");
 
+var COLLECTION_IDENTIFIER = 'rec.collectionIdentifier';
+
 var RULES = {
     'danMARC2': {
         '001': {
@@ -25,7 +27,7 @@ var RULES = {
         },
         's11': function (obj) {
             if (obj['agency'] === '870970')
-                obj['collection'] = ['dbc'];
+                obj[COLLECTION_IDENTIFIER] = ['dbc'];
         }
     }
 };
@@ -50,9 +52,8 @@ function index(content, mimetype) {
     }
 
     // DEFAULT VALUES
-    var obj = {
-        'collection': ['any']
-    };
+    var obj = {};
+    obj[COLLECTION_IDENTIFIER] = ['any'];
 
     for (var node = e.firstChild; node !== null; node = node.nextSibling) {
         if (node.nodeType === node.ELEMENT_NODE && node.namespaceURI === XmlNamespaces.marcx.uri) {
@@ -97,7 +98,7 @@ function index(content, mimetype) {
 
     for (var i in obj) {
         var a = obj[i];
-        if (! (a instanceof Array))
+        if (!(a instanceof Array))
             continue;
         for (var n = 0; n < a.length; n++) {
             solrField(i, a[n]);

@@ -275,7 +275,7 @@
     <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" />
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
     <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
-    <field name="collection" type="id" indexed="true" stored="true" required="false" />
+    <field name="rec.collectionIdentifier" type="id" indexed="true" stored="true" required="false" />
     <field name="created" type="date" indexed="true" stored="true" required="false" />
     <field name="modified" type="date" indexed="true" stored="true" required="false" />
     <field name="rec.trackingId" type="id" indexed="true" stored="true" required="false" />

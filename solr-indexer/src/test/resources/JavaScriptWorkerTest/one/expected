@@ -1,5 +1,5 @@
 {
-  "collection":["any"],
+  "rec.collectionIdentifier":["any"],
   "marc.002a":["FIELD A FROM 002"],
   "marc.021ae":[
     "FIELD A FROM 021 one",
