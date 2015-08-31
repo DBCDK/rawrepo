@@ -22,7 +22,7 @@
   <build>
       <resources>
           <resource>
-              <directory>solr-config</directory>
+              <directory>${basedir}/solr-config</directory>
               <excludes>
                   <exclude>*</exclude>
               </excludes>
