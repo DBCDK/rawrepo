@@ -33,10 +33,10 @@
         </resources>
         <testResources>
             <testResource>
-                <directory>${basedir}/src/test/recources</directory>
+                <directory>${basedir}/src/test/resources</directory>
             </testResource>
             <testResource>
-                <directory>${basedir}/src/main/recources</directory>
+                <directory>${basedir}/src/main/resources</directory>
             </testResource>
         </testResources>
         <plugins>
