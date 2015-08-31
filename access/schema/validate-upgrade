@@ -92,6 +92,7 @@ java -jar tools/apgdiff-2.4.jar --ignore-start-with $tmp/$name-$version-upgrade.
 if ! cmp -s $tmp/$name-$version.content $tmp/$name-$version-upgrade.content; then
     echo "Content Mismatch"
     diff -y $tmp/$name-$version.content $tmp/$name-$version-upgrade.content
+    exit 1
 fi
 
 

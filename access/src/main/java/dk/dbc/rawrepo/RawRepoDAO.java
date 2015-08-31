@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2014 DBC A/S (http://dbc.dk/)
  *
- * This is part of dbc-rawrepo-commons
+ * This is part of dbc-rawrepo
  *
- * dbc-rawrepo-commons is free software: you can redistribute it and/or modify
+ * dbc-rawrepo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * dbc-rawrepo-commons is distributed in the hope that it will be useful,
+ * dbc-rawrepo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -263,11 +264,26 @@ public abstract class RawRepoDAO {
                                              merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
                                              record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
                                              record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                             record.getModified().after(next.getModified()) ? record.getTrackingId(): next.getTrackingId(),
                                              enrichmentTrail.toString());
             }
         }
         return record;
     }
+
+
+    /**
+     * Retrieve all trackingids for a record since a specific time
+     *
+     * This is useful for logging when multiple record updates result in one queue entry
+     *
+     * @param bibliographicRecordId
+     * @param agencyId
+     * @param timestamp
+     * @return list of trackingid's
+     * @throws RawRepoException
+     */
+    public abstract List<String> getTrackingIdsSince(String bibliographicRecordId, int agencyId, Timestamp timestamp) throws RawRepoException;
 
     /**
      *

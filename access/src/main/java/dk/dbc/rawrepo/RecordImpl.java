@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2014 DBC A/S (http://dbc.dk/)
  *
- * This is part of dbc-rawrepo-commons
+ * This is part of dbc-rawrepo
  *
- * dbc-rawrepo-commons is free software: you can redistribute it and/or modify
+ * dbc-rawrepo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * dbc-rawrepo-commons is distributed in the hope that it will be useful,
+ * dbc-rawrepo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -33,6 +33,7 @@ class RecordImpl implements Record {
     byte[] content;
     Date created;
     Date modified;
+    String trackingId;
     boolean original;
     boolean enriched;
     String enrichmentTrail;
@@ -44,38 +45,41 @@ class RecordImpl implements Record {
         this.content = new byte[0];
         this.created = new Date();
         this.modified = new Date();
+        this.trackingId = "";
         this.original = true;
         this.enriched = false;
         this.enrichmentTrail = String.valueOf(id.getAgencyId());
     }
 
     /* for mocking */
-    RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Date created, Date modified, boolean original) {
+    RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Date created, Date modified, String trackingId, boolean original) {
         this.id = new RecordId(id, agencyId);
         this.deleted = deleted;
         this.mimeType = mimeType;
         this.content = content;
         this.created = created;
         this.modified = modified;
+        this.trackingId = trackingId;
         this.original = original;
         this.enriched = false;
         this.enrichmentTrail = String.valueOf(agencyId);
     }
 
-    private RecordImpl(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String enrichmentTrail) {
+    private RecordImpl(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
         this.id = new RecordId(id, agencyId);
         this.deleted = false;
         this.mimeType = mimeType;
         this.content = content;
         this.created = created;
         this.modified = modified;
+        this.trackingId = trackingId;
         this.original = false;
         this.enriched = true;
         this.enrichmentTrail = enrichmentTrail;
     }
 
-    static RecordImpl Enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String enrichmentTrail) {
-        return new RecordImpl(id, agencyId, mimeType, content, created, modified, enrichmentTrail);
+    static RecordImpl Enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
+        return new RecordImpl(id, agencyId, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 
     @Override
@@ -140,6 +144,16 @@ class RecordImpl implements Record {
     }
 
     @Override
+    public String getTrackingId() {
+        return trackingId;
+    }
+
+    @Override
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
+    }
+
+    @Override
     public boolean isOriginal() {
         return original;
     }
@@ -161,7 +175,7 @@ class RecordImpl implements Record {
 
     @Override
     public String toString() {
-        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content[?]=" + content.length + ", created=" + created + ", modified=" + modified + ", original=" + original + ", enrichmentTrail=" + enrichmentTrail + '}';
+        return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content=" + content + ", created=" + created + ", modified=" + modified + ", original=" + original + ", enriched=" + enriched + ", trackingId=" + trackingId + ", enrichmentTrail=" + enrichmentTrail + '}';
     }
 
 }

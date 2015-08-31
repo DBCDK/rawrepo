@@ -120,6 +120,14 @@ public class IndexerTest {
             return String.valueOf(id.getAgencyId());
         }
 
+        @Override
+        public String getTrackingId() {
+            return "track";
+        }
+
+        @Override
+        public void setTrackingId(String trackingId) {
+        }
     }
 
     private static Indexer createInstance() {

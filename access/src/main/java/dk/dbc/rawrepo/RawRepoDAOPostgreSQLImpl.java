@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2014 DBC A/S (http://dbc.dk/)
  *
- * This is part of dbc-rawrepo-commons
+ * This is part of dbc-rawrepo
  *
- * dbc-rawrepo-commons is free software: you can redistribute it and/or modify
+ * dbc-rawrepo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * dbc-rawrepo-commons is distributed in the hope that it will be useful,
+ * dbc-rawrepo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -41,21 +41,27 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 8;
+    private static final int SCHEMA_VERSION = 12;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
-    private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified) VALUES(?, ?, ?, ?, ?, ?, ?)";
-    private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=? WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified, trackingId) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=?, trackingId=? WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
 
-    private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype FROM records WHERE agencyid=? AND bibliographicrecordid=?"
-                                                    + " UNION SELECT created, modified, deleted, mimetype FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
+    private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?"
+                                                    + " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
                                                     + " ORDER BY modified DESC";
     private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?"
                                                    + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
+
+    private static final String TRACKING_IDS_SINCE = "SELECT trackingid, modified FROM records"
+                                                     + " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?"
+                                                     + " UNION SELECT trackingid, modified FROM records_archive"
+                                                     + " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?"
+                                                     + " ORDER BY modified DESC;";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -127,7 +133,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         Timestamp created = resultSet.getTimestamp("CREATED");
                         Timestamp modified = resultSet.getTimestamp("MODIFIED");
-                        Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, false);
+                        String trackingId = resultSet.getString("TRACKINGID");
+                        Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, trackingId, false);
 
                         resultSet.close();
                         stmt.close();
@@ -176,17 +183,20 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             ArrayList<RecordMetaDataHistory> ret = new ArrayList<>();
             try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_METADATA);) {
                 RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-                stmt.setInt(1, agencyId);
-                stmt.setString(2, bibliographicRecordId);
-                stmt.setInt(3, agencyId);
-                stmt.setString(4, bibliographicRecordId);
+                int pos = 1;
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
                 try (ResultSet resultSet = stmt.executeQuery();) {
                     while (resultSet.next()) {
-                        Timestamp created = resultSet.getTimestamp(1);
-                        Timestamp modified = resultSet.getTimestamp(2);
-                        boolean deleted = resultSet.getBoolean(3);
-                        String mimeType = resultSet.getString(4);
-                        ret.add(new RecordMetaDataHistory(recordId, deleted, mimeType, created, modified));
+                        pos = 1;
+                        Timestamp created = resultSet.getTimestamp(pos++);
+                        Timestamp modified = resultSet.getTimestamp(pos++);
+                        boolean deleted = resultSet.getBoolean(pos++);
+                        String mimeType = resultSet.getString(pos++);
+                        String trackingId = resultSet.getString(pos++);
+                        ret.add(new RecordMetaDataHistory(recordId, deleted, mimeType, created, modified, trackingId));
                     }
                 }
             }
@@ -203,19 +213,20 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             String bibliographicRecordId = recordMetaData.getId().getBibliographicRecordId();
             Timestamp timestamp = recordMetaData.getTimestamp();
             try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_CONTENT);) {
-                stmt.setInt(1, agencyId);
-                stmt.setString(2, bibliographicRecordId);
-                stmt.setTimestamp(3, timestamp);
-                stmt.setInt(4, agencyId);
-                stmt.setString(5, bibliographicRecordId);
-                stmt.setTimestamp(6, timestamp);
+                int pos = 1;
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
+                stmt.setTimestamp(pos++, timestamp);
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
+                stmt.setTimestamp(pos++, timestamp);
                 try (ResultSet resultSet = stmt.executeQuery();) {
                     if (resultSet.next()) {
                         final String base64Content = resultSet.getString(1);
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         return new RecordImpl(bibliographicRecordId, agencyId, recordMetaData.isDeleted(),
                                               recordMetaData.getMimeType(), content,
-                                              recordMetaData.getCreated(), recordMetaData.getModified(), false);
+                                              recordMetaData.getCreated(), recordMetaData.getModified(), recordMetaData.getTrackingId(), false);
                     }
                 }
             }
@@ -224,6 +235,30 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error getting record history", ex);
         }
 
+    }
+
+    @Override
+    public List<String> getTrackingIdsSince(String bibliographicRecordId, int agencyId, Timestamp timestamp) throws RawRepoException {
+        ArrayList<String> list = new ArrayList<>();
+        try {
+            try (PreparedStatement stmt = connection.prepareStatement(TRACKING_IDS_SINCE);) {
+                int pos = 1;
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
+                stmt.setTimestamp(pos++, timestamp);
+                stmt.setInt(pos++, agencyId);
+                stmt.setString(pos++, bibliographicRecordId);
+                stmt.setTimestamp(pos++, timestamp);
+                try (ResultSet resultSet = stmt.executeQuery();) {
+                    while (resultSet.next()) {
+                        list.add(resultSet.getString(1));
+                    }
+                    return list;
+                }
+            }
+        } catch (SQLException ex) {
+            throw new RawRepoException("Error getting record history", ex);
+        }
     }
 
     @Deprecated
@@ -236,8 +271,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void purgeRecord(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(PURGE_RECORD)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -260,12 +296,14 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Record has unset mimetype, cannot save");
         }
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
-            stmt.setBoolean(1, record.isDeleted());
-            stmt.setString(2, record.getMimeType());
-            stmt.setString(3, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(4, new Timestamp(record.getModified().getTime()));
-            stmt.setString(5, record.getId().getBibliographicRecordId());
-            stmt.setInt(6, record.getId().getAgencyId());
+            int pos = 1;
+            stmt.setBoolean(pos++, record.isDeleted());
+            stmt.setString(pos++, record.getMimeType());
+            stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
+            stmt.setString(pos++, record.getTrackingId());
+            stmt.setString(pos++, record.getId().getBibliographicRecordId());
+            stmt.setInt(pos++, record.getId().getAgencyId());
             if (stmt.executeUpdate() > 0) {
                 stmt.close();
                 return;
@@ -275,13 +313,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error updating record", ex);
         }
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
-            stmt.setString(1, record.getId().getBibliographicRecordId());
-            stmt.setInt(2, record.getId().getAgencyId());
-            stmt.setBoolean(3, record.isDeleted());
-            stmt.setString(4, record.getMimeType());
-            stmt.setString(5, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(6, new Timestamp(record.getCreated().getTime()));
-            stmt.setTimestamp(7, new Timestamp(record.getModified().getTime()));
+            int pos = 1;
+            stmt.setString(pos++, record.getId().getBibliographicRecordId());
+            stmt.setInt(pos++, record.getId().getAgencyId());
+            stmt.setBoolean(pos++, record.isDeleted());
+            stmt.setString(pos++, record.getMimeType());
+            stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
+            stmt.setTimestamp(pos++, new Timestamp(record.getCreated().getTime()));
+            stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
+            stmt.setString(pos++, record.getTrackingId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -295,8 +335,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_MIMETYPE)) {
-            stmt.setString(1, bibliographicRecordId);
-            stmt.setInt(2, agencyId);
+            int pos = 1;
+            stmt.setString(pos++, bibliographicRecordId);
+            stmt.setInt(pos++, agencyId);
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
@@ -313,8 +354,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_DELETED)) {
-            stmt.setString(1, bibliographicRecordId);
-            stmt.setInt(2, agencyId);
+            int pos = 1;
+            stmt.setString(pos++, bibliographicRecordId);
+            stmt.setInt(pos++, agencyId);
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
@@ -341,8 +383,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsFrom(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -366,8 +409,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void deleteRelationsFrom(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RELATIONS)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -388,11 +432,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
         deleteRelationsFrom(recordId);
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RELATION)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             for (RecordId refer : refers) {
-                stmt.setString(3, refer.getBibliographicRecordId());
-                stmt.setInt(4, refer.getAgencyId());
+                int p = pos;
+                stmt.setString(p++, refer.getBibliographicRecordId());
+                stmt.setInt(p++, refer.getAgencyId());
                 stmt.execute();
             }
         } catch (SQLException ex) {
@@ -414,8 +460,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsChildren(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_CHILDREN)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -442,8 +489,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsParents(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_PARENTS)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -468,8 +516,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -494,8 +543,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public Set<RecordId> getRelationsSiblingsFromMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
-            stmt.setString(1, recordId.getBibliographicRecordId());
-            stmt.setInt(2, recordId.getAgencyId());
+            int pos = 1;
+            stmt.setString(pos++, recordId.getBibliographicRecordId());
+            stmt.setInt(pos++, recordId.getAgencyId());
             if (stmt.execute()) {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
@@ -549,12 +599,13 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException {
         try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
-            stmt.setString(1, job.getBibliographicRecordId());
-            stmt.setInt(2, job.getAgencyId());
-            stmt.setString(3, mimeType);
-            stmt.setString(4, provider);
-            stmt.setString(5, changed ? "Y" : "N");
-            stmt.setString(6, leaf ? "Y" : "N");
+            int pos = 1;
+            stmt.setString(pos++, job.getBibliographicRecordId());
+            stmt.setInt(pos++, job.getAgencyId());
+            stmt.setString(pos++, mimeType);
+            stmt.setString(pos++, provider);
+            stmt.setString(pos++, changed ? "Y" : "N");
+            stmt.setString(pos++, leaf ? "Y" : "N");
             stmt.execute();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
@@ -598,8 +649,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
         List<QueueJob> result = new ArrayList<>();
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
-            stmt.setString(1, worker);
-            stmt.setInt(2, wanted);
+            int pos = 1;
+            stmt.setString(pos++, worker);
+            stmt.setInt(pos++, wanted);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
@@ -668,11 +720,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error cannot be empty in queueFail");
         }
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
-            stmt.setString(1, queueJob.job.bibliographicRecordId);
-            stmt.setInt(2, queueJob.job.agencyId);
-            stmt.setString(3, queueJob.worker);
-            stmt.setString(4, error);
-            stmt.setTimestamp(5, queueJob.queued);
+            int pos = 1;
+            stmt.setString(pos++, queueJob.job.bibliographicRecordId);
+            stmt.setInt(pos++, queueJob.job.agencyId);
+            stmt.setString(pos++, queueJob.worker);
+            stmt.setString(pos++, error);
+            stmt.setTimestamp(pos++, queueJob.queued);
             stmt.executeUpdate();
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);

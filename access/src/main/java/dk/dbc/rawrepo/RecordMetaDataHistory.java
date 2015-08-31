@@ -1,14 +1,14 @@
 /*
  * Copyright (C) 2014 DBC A/S (http://dbc.dk/)
  *
- * This is part of dbc-rawrepo-commons
+ * This is part of dbc-rawrepo
  *
- * dbc-rawrepo-commons is free software: you can redistribute it and/or modify
+ * dbc-rawrepo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * dbc-rawrepo-commons is distributed in the hope that it will be useful,
+ * dbc-rawrepo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -28,13 +28,15 @@ public class RecordMetaDataHistory implements RecordMetaData {
     String mimeType;
     Timestamp created;
     Timestamp modified;
+    String trackingId;
 
-    public RecordMetaDataHistory(RecordId id, boolean deleted, String mimeType, Timestamp created, Timestamp modified) {
+    public RecordMetaDataHistory(RecordId id, boolean deleted, String mimeType, Timestamp created, Timestamp modified, String trackingId) {
         this.id = id;
         this.deleted = deleted;
         this.mimeType = mimeType;
         this.created = (Timestamp) created.clone();
         this.modified = (Timestamp) modified.clone();
+        this.trackingId = trackingId;
     }
 
     @Override
@@ -87,8 +89,18 @@ public class RecordMetaDataHistory implements RecordMetaData {
     }
 
     @Override
+    public String getTrackingId() {
+        return trackingId;
+    }
+
+    @Override
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
+    }
+
+    @Override
     public String toString() {
-        return "RecordMetaDataHistory{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", created=" + created + ", modified=" + modified + '}';
+        return "RecordMetaDataHistory{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", created=" + created + ", modified=" + modified + ", trackingId=" + trackingId + '}';
     }
 
 }
