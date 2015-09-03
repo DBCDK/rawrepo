@@ -304,7 +304,7 @@ class IndexerDeployScript extends GluScriptBase {
       <maxIndex>10</maxIndex>
     </rollingPolicy>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
+       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%X{trackingId},%C{0},%M %m%n</pattern>
        <immediateFlush>true</immediateFlush>
     </encoder>
   </appender>
@@ -320,7 +320,7 @@ class IndexerDeployScript extends GluScriptBase {
       <maxIndex>10</maxIndex>
     </rollingPolicy>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
+       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%X{trackingId},%C{0},%M %m%n</pattern>
        <immediateFlush>true</immediateFlush>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -362,7 +362,7 @@ class IndexerDeployScript extends GluScriptBase {
       <maxIndex>10</maxIndex>
     </rollingPolicy>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
+       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%X{trackingId},%C{0},%M %m%n</pattern>
        <immediateFlush>true</immediateFlush>
     </encoder>
   </appender>
@@ -378,7 +378,7 @@ class IndexerDeployScript extends GluScriptBase {
       <maxIndex>10</maxIndex>
     </rollingPolicy>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
+       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%X{trackingId},%C{0},%M %m%n</pattern>
        <immediateFlush>true</immediateFlush>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">

@@ -48,6 +48,7 @@ import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
 import java.nio.charset.StandardCharsets;
+import org.slf4j.MDC;
 
 /**
  *
@@ -56,6 +57,8 @@ import java.nio.charset.StandardCharsets;
 public class Indexer {
 
     private final static Logger log = LoggerFactory.getLogger(Indexer.class);
+
+    private final static String TRACKING_ID = "trackingId";
 
     @Resource(name = "solrUrl")
     String solrUrl;
@@ -139,6 +142,7 @@ public class Indexer {
                 QueueJob job = dequeueJob(dao);
 
                 if (job != null) {
+                    MDC.put(TRACKING_ID, createTrackingId(job));
                     processJob(job, dao);
                     commit(connection);
                     processedJobs++;
@@ -153,6 +157,8 @@ public class Indexer {
             } catch (MarcXMergerException | RawRepoException | SQLException ex) {
                 moreWork = false;
                 log.error("Error getting job from database", ex);
+            } finally {
+                MDC.remove(TRACKING_ID);
             }
         }
         log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
@@ -180,6 +186,7 @@ public class Indexer {
         int library = jobId.getAgencyId();
         try {
             Record record = fetchRecord(dao, id, library);
+            MDC.put(TRACKING_ID, createTrackingId(job, record));
             if (record.isDeleted()) {
                 deleteSolrDocument(jobId);
             } else {
@@ -277,5 +284,18 @@ public class Indexer {
         Timer.Context time = commitTimer.time();
         connection.commit();
         time.stop();
+    }
+
+    private static String createTrackingId(QueueJob job) {
+        return "RawRepoIndexer:" + job.toString();
+    }
+
+    private static String createTrackingId(QueueJob job, Record record) {
+        String trackingId = record.getTrackingId();
+        if (trackingId == null || trackingId.isEmpty()) {
+            return createTrackingId(job);
+        } else {
+            return createTrackingId(job) + "<" + trackingId;
+        }
     }
 }
