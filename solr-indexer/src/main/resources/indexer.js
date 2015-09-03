@@ -13,6 +13,8 @@ var RULES = {
             'b': function (obj, val) {
                 Log.trace("001b" + val);
                 obj['agency'] = val;
+                if(val === '191919')
+                    obj[COLLECTION_IDENTIFIER] = ['common'];
             }
         },
         '002': {
