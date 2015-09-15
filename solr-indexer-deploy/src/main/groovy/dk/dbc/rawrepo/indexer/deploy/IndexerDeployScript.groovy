@@ -105,7 +105,15 @@ class IndexerDeployScript extends GluScriptBase {
         'insecure': false,
     ]
 
-    GlassFishAppDeployer deployer
+    // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
+    transient def deployer
+
+    def getDeployer() {
+      if (deployer == null) {
+        deployer = new GlassFishAppDeployer(glassfishProperties)
+      }
+      return deployer;
+    }
 
     /*******************************************************
      * install phase
@@ -154,8 +162,6 @@ class IndexerDeployScript extends GluScriptBase {
             // Overwrite insecure flag, so CURL does not check certificates
             glassfishProperties.insecure = true
         }
-
-        deployer = new GlassFishAppDeployer(glassfishProperties)
     }
 
     /*******************************************************
@@ -176,7 +182,7 @@ class IndexerDeployScript extends GluScriptBase {
         // Re-assemble .war archive
         log.info "Re-packaging webapp to ${warFile.file} "
         jar( stagingArea, warFile )
-        deployer.deploy([
+        getDeployer().deploy([
             name: appName,
             id: warFile.file.getPath(),
             contextroot: contextPath,
@@ -190,7 +196,7 @@ class IndexerDeployScript extends GluScriptBase {
      *******************************************************/
 
     def start = {
-        deployer.start(appName)
+        getDeployer().start(appName)
     }
 
     /*******************************************************
@@ -198,7 +204,7 @@ class IndexerDeployScript extends GluScriptBase {
      *******************************************************/
 
     def stop = {
-        deployer.stop(appName)
+        getDeployer().stop(appName)
     }
 
     /*******************************************************
@@ -206,7 +212,7 @@ class IndexerDeployScript extends GluScriptBase {
      *******************************************************/
 
     def unconfigure = {
-        deployer.undeploy(appName)
+        getDeployer().undeploy(appName)
         deleteJdbcResources()
     }
 
@@ -407,12 +413,12 @@ class IndexerDeployScript extends GluScriptBase {
         ]
         poolOptions += params.jdbcPoolProperties ?: [:]
 
-        deployer.createPGConnectionPool(JDBC_POOL, JDBC_RESOURCE, params.dbUser, params.dbPassword, dbUrl, poolOptions)
+        getDeployer().createPGConnectionPool(JDBC_POOL, JDBC_RESOURCE, params.dbUser, params.dbPassword, dbUrl, poolOptions)
     }
 
     def deleteJdbcResources() {
-        deployer.deleteJdbcResource( JDBC_RESOURCE )
-        deployer.deleteJdbcConnectionPool( JDBC_POOL )
+        getDeployer().deleteJdbcResource( JDBC_RESOURCE )
+        getDeployer().deleteJdbcConnectionPool( JDBC_POOL )
     }
 
 }

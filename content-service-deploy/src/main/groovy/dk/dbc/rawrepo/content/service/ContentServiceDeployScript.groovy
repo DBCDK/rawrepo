@@ -148,7 +148,15 @@ class ContentServiceDeployScript extends GluScriptBase {
         'insecure': false,
     ]
     
-    GlassFishAppDeployer deployer
+    // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
+    transient def deployer
+
+    def getDeployer() {
+      if (deployer == null) {
+        deployer = new GlassFishAppDeployer(glassfishProperties)
+      }
+      return deployer;
+    }
 
     /*******************************************************
      * install phase
@@ -214,8 +222,6 @@ class ContentServiceDeployScript extends GluScriptBase {
             // Overwrite insecure flag, so CURL does not check certificates
             glassfishProperties.insecure = true
         }
-
-        deployer = new GlassFishAppDeployer( glassfishProperties )
     }
     
     void validateLoggers() {
@@ -262,7 +268,7 @@ class ContentServiceDeployScript extends GluScriptBase {
 
         log.info "Re-packaging webapp to ${warFile.file}"
         jar( stagingFolder, warFile )
-        deployer.deploy([
+        getDeployer().deploy([
                 name: appName,
                 id: warFile.file.getPath(),
                 contextroot: contextPath,
@@ -298,12 +304,12 @@ class ContentServiceDeployScript extends GluScriptBase {
     }
         
     void configureCustomResource( String name, Map properties ) {
-        deployer.createCustomResource( [
+        getDeployer().createCustomResource( [
                 'id': name,
                 'restype': 'java.util.Properties',
                 'factoryclass': 'org.glassfish.resources.custom.factory.PropertiesFactory'
             ])
-        deployer.setCustomResourceProperties( name, properties )
+        getDeployer().setCustomResourceProperties( name, properties )
     }
 
     void configureJdbcResource(String name, String pool, String resource) {
@@ -325,8 +331,8 @@ class ContentServiceDeployScript extends GluScriptBase {
         def extraPoolOptions = [ 'steadypoolsize', 'maxpoolsize' ]
         poolOptions += db.findAll({ extraPoolOptions.contains( it.key ) })
         
-        deployer.createJdbcConnectionPool( poolOptions )
-        deployer.createJdbcResource([ id: resource, poolName: pool ])
+        getDeployer().createJdbcConnectionPool( poolOptions )
+        getDeployer().createJdbcResource([ id: resource, poolName: pool ])
     }
 
     /*******************************************************
@@ -335,7 +341,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     def start = {
         log.info "Starting..."
         
-        deployer.start( appName )
+        getDeployer().start( appName )
     }
 
     /*******************************************************
@@ -345,7 +351,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     def stop = {
         log.info "Stopping..."
         
-        deployer.stop( appName )
+        getDeployer().stop( appName )
     }
 
     /*******************************************************
@@ -355,10 +361,10 @@ class ContentServiceDeployScript extends GluScriptBase {
     def unconfigure = {
         log.info "Unconfiguring..."
         
-        deployer.undeploy( appName )
-        deployer.deleteCustomResource( CUSTOM_RESOURCE_NAME )
-        deployer.deleteJdbcResource( RAWREPO_RESOURCE )
-        deployer.deleteJdbcConnectionPool( RAWREPO_POOL )
+        getDeployer().undeploy( appName )
+        getDeployer().deleteCustomResource( CUSTOM_RESOURCE_NAME )
+        getDeployer().deleteJdbcResource( RAWREPO_RESOURCE )
+        getDeployer().deleteJdbcConnectionPool( RAWREPO_POOL )
     }
 
     /*******************************************************

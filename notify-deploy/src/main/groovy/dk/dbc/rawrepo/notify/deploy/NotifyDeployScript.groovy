@@ -98,7 +98,15 @@ class NotifyDeployScript extends GluScriptBase {
         'insecure': false,
     ]
 
-    GlassFishAppDeployer deployer
+    // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
+    transient def deployer
+
+    def getDeployer() {
+      if (deployer == null) {
+        deployer = new GlassFishAppDeployer(glassfishProperties)
+      }
+      return deployer;
+    }
 
     /*******************************************************
      * install phase
@@ -147,8 +155,6 @@ class NotifyDeployScript extends GluScriptBase {
             // Overwrite insecure flag, so CURL does not check certificates
             glassfishProperties.insecure = true
         }
-
-        deployer = new GlassFishAppDeployer(glassfishProperties)
     }
 
     /*******************************************************
@@ -169,7 +175,7 @@ class NotifyDeployScript extends GluScriptBase {
         // Re-assemble .war archive
         log.info "Re-packaging webapp to ${warFile.file} "
         jar( stagingArea, warFile )
-        deployer.deploy([
+        getDeployer().deploy([
             name: appName,
             id: warFile.file.getPath(),
             contextroot: contextPath,
@@ -183,7 +189,7 @@ class NotifyDeployScript extends GluScriptBase {
      *******************************************************/
 
     def start = {
-        deployer.start(appName)
+        getDeployer().start(appName)
     }
 
     /*******************************************************
@@ -191,7 +197,7 @@ class NotifyDeployScript extends GluScriptBase {
      *******************************************************/
 
     def stop = {
-        deployer.stop(appName)
+        getDeployer().stop(appName)
     }
 
     /*******************************************************
@@ -199,7 +205,7 @@ class NotifyDeployScript extends GluScriptBase {
      *******************************************************/
 
     def unconfigure = {
-        deployer.undeploy(appName)
+        getDeployer().undeploy(appName)
         deleteJdbcResources()
     }
 
@@ -390,7 +396,7 @@ class NotifyDeployScript extends GluScriptBase {
 
         def dbUrl = params.dbUrl.replace(":", "\\:");
 
-        deployer.createJdbcConnectionPool([
+        getDeployer().createJdbcConnectionPool([
                 name: JDBC_POOL,
                 resType: "javax.sql.DataSource",
                 datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
@@ -398,15 +404,15 @@ class NotifyDeployScript extends GluScriptBase {
                 //maxpoolsize: "32",
                 property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
         ])
-        deployer.createJdbcResource([
+        getDeployer().createJdbcResource([
                 id: JDBC_RESOURCE,
                 poolName: JDBC_POOL,
         ])
     }
 
     def deleteJdbcResources() {
-        deployer.deleteJdbcResource( JDBC_RESOURCE )
-        deployer.deleteJdbcConnectionPool( JDBC_POOL )
+        getDeployer().deleteJdbcResource( JDBC_RESOURCE )
+        getDeployer().deleteJdbcConnectionPool( JDBC_POOL )
     }
 
 }

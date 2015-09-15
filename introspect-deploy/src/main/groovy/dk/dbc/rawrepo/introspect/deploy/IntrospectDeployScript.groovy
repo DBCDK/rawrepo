@@ -89,7 +89,15 @@ class IntrospectDeployScript extends GluScriptBase {
         'insecure': false,
     ]
 
-    GlassFishAppDeployer deployer
+    // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
+    transient def deployer
+
+    def getDeployer() {
+      if (deployer == null) {
+        deployer = new GlassFishAppDeployer(glassfishProperties)
+      }
+      return deployer;
+    }
 
     /*******************************************************
      * install phase
@@ -138,8 +146,6 @@ class IntrospectDeployScript extends GluScriptBase {
             // Overwrite insecure flag, so CURL does not check certificates
             glassfishProperties.insecure = true
         }
-
-        deployer = new GlassFishAppDeployer(glassfishProperties)
     }
 
     /*******************************************************
@@ -160,7 +166,7 @@ class IntrospectDeployScript extends GluScriptBase {
         // Re-assemble .war archive
         log.info "Re-packaging webapp to ${warFile.file} "
         jar( stagingArea, warFile )
-        deployer.deploy([
+        getDeployer().deploy([
                 name: appName,
                 id: warFile.file.getPath(),
                 contextroot: contextPath,
@@ -174,7 +180,7 @@ class IntrospectDeployScript extends GluScriptBase {
      *******************************************************/
 
     def start = {
-        deployer.start(appName)
+        getDeployer().start(appName)
     }
 
     /*******************************************************
@@ -182,7 +188,7 @@ class IntrospectDeployScript extends GluScriptBase {
      *******************************************************/
 
     def stop = {
-        deployer.stop(appName)
+        getDeployer().stop(appName)
     }
 
     /*******************************************************
@@ -190,7 +196,7 @@ class IntrospectDeployScript extends GluScriptBase {
      *******************************************************/
 
     def unconfigure = {
-        deployer.undeploy(appName)
+        getDeployer().undeploy(appName)
         deleteJdbcResources()
     }
 
@@ -381,15 +387,15 @@ class IntrospectDeployScript extends GluScriptBase {
             def user = (m[2] == null ? "" : m[2]).replace(":", "\\:")
             def pass = (m[3] == null ? "" : m[3]).replace(":", "\\:")
             
-            deployer.createPGConnectionPool(JDBC_BASE + "/" + resource + "/pool", JDBC_BASE + "/" + resource, user, pass, jdbc, params.jdbcPoolProperties)
+            getDeployer().createPGConnectionPool(JDBC_BASE + "/" + resource + "/pool", JDBC_BASE + "/" + resource, user, pass, jdbc, params.jdbcPoolProperties)
         }
     }
 
     def deleteJdbcResources() {
         for(jdbcEntry in jdbcResources) {
             def resource = jdbcEntry.key
-            deployer.deleteJdbcResource(JDBC_BASE + "/" + resource)
-            deployer.deleteJdbcConnectionPool(JDBC_BASE + "/" + resource + "/pool")
+            getDeployer().deleteJdbcResource(JDBC_BASE + "/" + resource)
+            getDeployer().deleteJdbcConnectionPool(JDBC_BASE + "/" + resource + "/pool")
         }
     }
 
