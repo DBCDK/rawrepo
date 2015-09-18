@@ -275,11 +275,11 @@ public class IndexerTest {
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 
-        assertEquals(created, doc.getField("created").getValue());
-        assertEquals(modified, doc.getField("modified").getValue());
+        assertEquals(created, doc.getField("rec.created").getValue());
+        assertEquals(modified, doc.getField("rec.modified").getValue());
         assertEquals("id:123456", doc.getField("id").getValue());
-        assertEquals("id", doc.getField("marc.001a").getValue());
-        assertEquals(123456, doc.getField("marc.001b").getValue());
+        assertEquals("id", doc.getField("rec.bibliographicRecordId").getValue());
+        assertEquals(123456, doc.getField("rec.agencyId").getValue());
 
         // check that Marcx record is indexed correctly
         String field002a = (String) doc.getField("marc.002a").getValue();
@@ -307,11 +307,11 @@ public class IndexerTest {
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 
-        assertEquals(created, doc.getField("created").getValue());
-        assertEquals(modified, doc.getField("modified").getValue());
+        assertEquals(created, doc.getField("rec.created").getValue());
+        assertEquals(modified, doc.getField("rec.modified").getValue());
         assertEquals("id:123456", doc.getField("id").getValue());
-        assertEquals("id", doc.getField("marc.001a").getValue());
-        assertEquals(123456, doc.getField("marc.001b").getValue());
+        assertEquals("id", doc.getField("rec.bibliographicRecordId").getValue());
+        assertEquals(123456, doc.getField("rec.agencyId").getValue());
 
         // check that Marcx record is not indexed
         assertNull("marc.002a is not present", doc.getField("marc.002a"));
@@ -334,11 +334,11 @@ public class IndexerTest {
 
         SolrInputDocument doc = indexer.createIndexDocument(record);
 
-        assertEquals(created, doc.getField("created").getValue());
-        assertEquals(modified, doc.getField("modified").getValue());
+        assertEquals(created, doc.getField("rec.created").getValue());
+        assertEquals(modified, doc.getField("rec.modified").getValue());
         assertEquals("id:123456", doc.getField("id").getValue());
-        assertNull("marc.001a is not present", doc.getField("marc.001a"));
-        assertNull("marc.001b is not present", doc.getField("marc.001b"));
+        assertEquals("id", doc.getField("rec.bibliographicRecordId").getValue());
+        assertEquals(123456, doc.getField("rec.agencyId").getValue());
 
         assertNull("marc.002a is not present", doc.getField("marc.002a"));
         assertNull("marc.021ae is not present", doc.getField("marc.021ae"));

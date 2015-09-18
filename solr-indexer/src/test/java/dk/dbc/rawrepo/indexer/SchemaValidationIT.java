@@ -70,14 +70,14 @@ public class SchemaValidationIT {
     private void addTestDocument() throws SolrServerException, IOException {
         SolrInputDocument doc = new SolrInputDocument();
         doc.addField("id", DOCUMENT_ID + ":" + AGENCY);
-        doc.addField("marc.001a", DOCUMENT_ID);
-        doc.addField("marc.001b", AGENCY);
+        doc.addField("rec.bibliographicRecordId", DOCUMENT_ID);
+        doc.addField("rec.agencyId", AGENCY);
         doc.addField("marc.002a", FIELD_002A);
         doc.addField("marc.021ae", FIELD_021AE);
         doc.addField("marc.022a", FIELD_022A);
         doc.addField("rec.collectionIdentifier", FIELD_COLLECTION);
-        doc.addField("created", CREATED);
-        doc.addField("modified", MODIFIED);
+        doc.addField("rec.created", CREATED);
+        doc.addField("rec.modified", MODIFIED);
         doc.addField("rec.trackingId", REC_TRACKING_ID);
         solrServer.add(doc);
         solrServer.commit(true, true);
@@ -112,7 +112,7 @@ public class SchemaValidationIT {
         response = solrServer.query(new SolrQuery("analyzedId:\"" + "12344321" + "\\:" + AGENCY + "\""));
         Assert.assertEquals(1, response.getResults().getNumFound());
 
-        response = solrServer.query(new SolrQuery("marc.001a:12344321"));
+        response = solrServer.query(new SolrQuery("rec.bibliographicRecordId:12344321"));
         Assert.assertEquals(1, response.getResults().getNumFound());
 
         response = solrServer.query(new SolrQuery("marc.002a:12345678"));
@@ -131,7 +131,7 @@ public class SchemaValidationIT {
         response = solrServer.query(new SolrQuery("id:Document\\:870970"));
         Assert.assertEquals(0, response.getResults().getNumFound());
 
-        response = solrServer.query(new SolrQuery("marc.001a:Document"));
+        response = solrServer.query(new SolrQuery("rec.bibliographicRecordId:Document"));
         Assert.assertEquals(0, response.getResults().getNumFound());
 
         response = solrServer.query(new SolrQuery("marc.021ae:123456789x"));

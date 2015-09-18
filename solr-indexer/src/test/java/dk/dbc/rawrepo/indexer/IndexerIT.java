@@ -132,7 +132,7 @@ public class IndexerIT {
         indexer.performWork();
         solrServer.commit(true, true);
 
-        QueryResponse response = solrServer.query(new SolrQuery("marc.001b:" + AGENCY_ID));
+        QueryResponse response = solrServer.query(new SolrQuery("rec.agencyId:" + AGENCY_ID));
         assertEquals("Document can be found using library no.", 1, response.getResults().getNumFound());
 
         response = solrServer.query(new SolrQuery("marc.001b:870971"));

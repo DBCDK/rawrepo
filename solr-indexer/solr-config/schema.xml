@@ -269,28 +269,38 @@
     <field name="_version_" type="long" indexed="true" stored ="true"/>
   	<!-- -->
     <field name="id" type="id" indexed="true" stored="true" required="true" />
-    <field name="analyzedId" type="dbc-analyzed-id" indexed="true" stored="true" required="true" />
-    <field name="marc.001a" type="dbc-doc-id" indexed="true" stored="true" required="false" />
+    <field name="marc.001a001b" type="dbc-analyzed-id" indexed="true" stored="true" required="true" />
+    <field name="marc.001a" type="dbc-faust" indexed="true" stored="true" required="false" />
     <field name="marc.001b" type="sint" indexed="true" stored="true" required="false" />
+    <field name="marc.001c" type="date" indexed="true" stored="true" required="false" />
+    <field name="marc.001d" type="date" indexed="true" stored="true" required="false" />
     <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" />
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
     <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
+    <field name="marc.245a" type="dbc-default" indexed="true" stored="true" required="false" />
     <field name="rec.collectionIdentifier" type="id" indexed="true" stored="true" required="false" />
-    <field name="created" type="date" indexed="true" stored="true" required="false" />
-    <field name="modified" type="date" indexed="true" stored="true" required="false" />
+    <field name="rec.created" type="date" indexed="true" stored="true" required="false" />
+    <field name="rec.modified" type="date" indexed="true" stored="true" required="false" />
+    <field name="rec.bibliographicRecordId" type="dbc-doc-id" indexed="true" stored="true" required="false" />
+    <field name="rec.agencyId" type="sint" indexed="true" stored="true" required="false" />
     <field name="rec.trackingId" type="id" indexed="true" stored="true" required="false" />
 
     <field name="default" type="dbc-default" indexed="true" stored="true" required="false"/>
 
     <copyField source="id" dest="default"/>
-    <copyField source="id" dest="analyzedId"/>
+    <copyField source="marc.001a001b" dest="default"/>
     <copyField source="marc.001a" dest="default"/>
     <copyField source="marc.001b" dest="default"/>
+    <copyField source="marc.001c" dest="default"/>
+    <copyField source="marc.001d" dest="default"/>
     <copyField source="marc.002a" dest="default"/>
     <copyField source="marc.021ae" dest="default"/>
     <copyField source="marc.022a" dest="default"/>
-    <copyField source="created" dest="default"/>
-    <copyField source="modified" dest="default"/>
+    <copyField source="marc.245a" dest="default"/>
+    <copyField source="rec.created" dest="default"/>
+    <copyField source="rec.modified" dest="default"/>
+    <copyField source="rec.bibliographicRecordId" dest="default"/>
+    <copyField source="rec.agencyId" dest="default"/>
     <copyField source="rec.trackingId" dest="default"/>
 
   </fields>

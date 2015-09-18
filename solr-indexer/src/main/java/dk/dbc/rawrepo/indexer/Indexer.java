@@ -236,8 +236,6 @@ public class Indexer {
             case MarcXChangeMimeType.AUTHORITTY:
             case MarcXChangeMimeType.ENRICHMENT:
                 log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);
-                doc.addField("marc.001a", recordId.getBibliographicRecordId());
-                doc.addField("marc.001b", recordId.getAgencyId());
                 byte[] content = record.getContent();
                 try {
                     worker.addFields(doc, new String(content, StandardCharsets.UTF_8), mimeType);
@@ -252,8 +250,10 @@ public class Indexer {
                 log.debug("Skipping indexing of {} with mimetype {}", recordId, mimeType);
         }
 
-        doc.addField("created", record.getCreated());
-        doc.addField("modified", record.getModified());
+        doc.addField("rec.bibliographicRecordId", recordId.getBibliographicRecordId());
+        doc.addField("rec.agencyId", recordId.getAgencyId());
+        doc.addField("rec.created", record.getCreated());
+        doc.addField("rec.modified", record.getModified());
         doc.addField("rec.trackingId", record.getTrackingId());
         log.trace("Created solr document {}", doc);
         time.stop();

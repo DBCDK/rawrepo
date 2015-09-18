@@ -1,1 +1,8 @@
-{"rec.collectionIdentifier":["dbc"]}
+{
+  "rec.collectionIdentifier":["dbc"],
+  "marc.001a001b":["50040771:870970"],
+  "marc.001a":["50040771"],
+  "marc.001b":["870970"],
+  "marc.001c":["2008-03-07T13:05:17Z"],
+  "marc.001d":["1981-01-06T00:00:00Z"]
+}
