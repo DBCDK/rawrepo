@@ -269,7 +269,7 @@
     <field name="_version_" type="long" indexed="true" stored ="true"/>
   	<!-- -->
     <field name="id" type="id" indexed="true" stored="true" required="true" />
-    <field name="marc.001a001b" type="dbc-analyzed-id" indexed="true" stored="true" required="true" />
+    <field name="marc.001a001b" type="dbc-analyzed-id" indexed="true" stored="true" required="false" />
     <field name="marc.001a" type="dbc-faust" indexed="true" stored="true" required="false" />
     <field name="marc.001b" type="sint" indexed="true" stored="true" required="false" />
     <field name="marc.001c" type="date" indexed="true" stored="true" required="false" />

@@ -109,9 +109,6 @@ public class SchemaValidationIT {
         addTestDocument();
         QueryResponse response;
 
-        response = solrServer.query(new SolrQuery("analyzedId:\"" + "12344321" + "\\:" + AGENCY + "\""));
-        Assert.assertEquals(1, response.getResults().getNumFound());
-
         response = solrServer.query(new SolrQuery("rec.bibliographicRecordId:12344321"));
         Assert.assertEquals(1, response.getResults().getNumFound());
 
