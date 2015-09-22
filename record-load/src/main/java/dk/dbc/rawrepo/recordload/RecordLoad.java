@@ -18,12 +18,14 @@
  */
 package dk.dbc.rawrepo.recordload;
 
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -85,6 +87,18 @@ public class RecordLoad implements Closeable {
     public void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
         Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
         record.setDeleted(true);
+        record.setContent(( "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                            + "<marcx:record xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\" format=\"danMARC2\" type=\"Bibliographic\">\n"
+                            + "    <marcx:leader>00000d    2200000   4500</marcx:leader>\n"
+                            + "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"001\">\n"
+                            + "        <marcx:subfield code=\"a\">" + bibliographicRecordId + "</marcx:subfield>\n"
+                            + "        <marcx:subfield code=\"b\">" + agencyId + "</marcx:subfield>\n"
+                            + "    </marcx:datafield>\n"
+                            + "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"004\">\n"
+                            + "        <marcx:subfield code=\"r\">d</marcx:subfield>\n"
+                            + "    </marcx:datafield>\n"
+                            + "</marcx:record>" ).getBytes(StandardCharsets.UTF_8));
+        record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.deleteRelationsFrom(record.getId());
         dao.saveRecord(record);
     }
