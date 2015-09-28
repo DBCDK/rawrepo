@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="explain.xsl"?>
-<explain xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://explain.z3950.org/dtd/2.0/" xsi:schemaLocation="http://explain.z3950.org/dtd/2.0/ http://explain.z3950.org/dtd/zeerex-2.0.xsd">
+<explain xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://explain.openseach.cql.dbc.dk/1.0/" xsi:schemaLocation="opesearch_explain.xsd">
 	<!-- This file is part of Open Library System.
 Copyright © 2012, Dansk Bibliotekscenter a/s,  Tempovej 7-11, DK-2750 Ballerup, Denmark. CVR: 15149043
 
@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	    <dateModified>2015-09-17</dateModified>
 	</metaInfo>
 	<indexInfo>
-                <set identifier="info:srw/cql-context-set/1/cql-v1.1" name="cql"/>
+    <set identifier="info:srw/cql-context-set/1/cql-v1.1" name="cql"/>
 		<set identifier="http://oss.dbc.dk/ns/display" name="display"/>
 		<set identifier="http://oss.dbc.dk/ns/dkcclphrase" name="dkcclphrase"/>
 		<set identifier="http://oss.dbc.dk/ns/dkcclterm" name="dkcclterm"/>
@@ -30,7 +30,7 @@ You should have received a copy of the GNU Affero General Public License along w
 		<set identifier="http://oss.dbc.dk/ns/rankterm" name="sort"/>
 		<set identifier="http://oss.dbc.dk/ns/term" name="term"/>
 		<set identifier="http://oss.dbc.dk/ns/unit" name="unit"/>
-                <set identifier="http://oss.dbc.dk/ns/rawrepo" name="marc"/>
+    <set identifier="http://oss.dbc.dk/ns/rawrepo" name="marc"/>
 		<index>
 			<title lang="da">Internt register</title>
 			<map hidden="1">
