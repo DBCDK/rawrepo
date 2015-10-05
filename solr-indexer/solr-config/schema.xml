@@ -278,6 +278,7 @@
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
     <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
     <field name="marc.245a" type="dbc-default" indexed="true" stored="true" required="false" />
+    <field name="marc.y08a" type="dbc-default" indexed="true" stored="true" required="false" />
     <field name="rec.collectionIdentifier" type="id" indexed="true" stored="true" required="false" />
     <field name="rec.created" type="date" indexed="true" stored="true" required="false" />
     <field name="rec.modified" type="date" indexed="true" stored="true" required="false" />
@@ -297,6 +298,7 @@
     <copyField source="marc.021ae" dest="default"/>
     <copyField source="marc.022a" dest="default"/>
     <copyField source="marc.245a" dest="default"/>
+    <copyField source="marc.y08a" dest="default"/>
     <copyField source="rec.created" dest="default"/>
     <copyField source="rec.modified" dest="default"/>
     <copyField source="rec.bibliographicRecordId" dest="default"/>

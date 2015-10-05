@@ -74,6 +74,9 @@ var RULES = {
         's11': function (obj) {
             if (obj['agency'] === '870970')
                 obj[COLLECTION_IDENTIFIER] = ['dbc'];
+        },
+        'y08': {
+            'a': 'marc.y08a'
         }
     }
 };

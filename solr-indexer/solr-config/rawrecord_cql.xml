@@ -94,6 +94,13 @@ You should have received a copy of the GNU Affero General Public License along w
 			</map>
 		</index>
 		<index>
+			<title lang="en">Y08a</title>
+			<title lang="da">Y08a</title>
+			<map>
+				<name set="marc">y08a</name>
+			</map>
+		</index>
+		<index>
 			<title lang="en">marc.001a:marc.001b</title>
 			<title lang="da">marc.001a:marc.001b</title>
 			<map hidden="1">
