@@ -216,7 +216,7 @@ public abstract class RawRepoDAO {
                 return agencyId;
             }
         }
-        throw new RawRepoExceptionRecordNotFound("Cound not find base agency");
+        throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + originalAgencyId);
     }
 
     /**
