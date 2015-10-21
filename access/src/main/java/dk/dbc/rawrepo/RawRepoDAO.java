@@ -209,10 +209,10 @@ public abstract class RawRepoDAO {
     public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
-            if (allAgenciesWithRecord.contains(agencyId)
-                && ( fetchDeleted
-                     ? recordExistsMabyDeleted(bibliographicRecordId, agencyId)
-                     : recordExists(bibliographicRecordId, agencyId) )) {
+            if (allAgenciesWithRecord.contains(agencyId) &&
+                fetchDeleted ?
+                recordExistsMabyDeleted(bibliographicRecordId, agencyId) :
+                recordExists(bibliographicRecordId, agencyId)) {
                 return agencyId;
             }
         }
@@ -251,7 +251,6 @@ public abstract class RawRepoDAO {
 
             while (iterator.hasNext()) {
                 Record next = iterator.next();
-                log.debug("next = " + next.getId());
                 if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
                     log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                     throw new MarcXMergerException("Cannot merge enrichment");
@@ -264,18 +263,18 @@ public abstract class RawRepoDAO {
                                              merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
                                              record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
                                              record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                             record.getModified().after(next.getModified()) ? record.getTrackingId(): next.getTrackingId(),
+                                             record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
                                              enrichmentTrail.toString());
             }
         }
         return record;
     }
 
-
     /**
      * Retrieve all trackingids for a record since a specific time
      *
-     * This is useful for logging when multiple record updates result in one queue entry
+     * This is useful for logging when multiple record updates result in one
+     * queue entry
      *
      * @param bibliographicRecordId
      * @param agencyId
@@ -455,8 +454,8 @@ public abstract class RawRepoDAO {
      */
     private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId, boolean allowDeleted) throws RawRepoException {
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
-            if (allowDeleted && agencyId == originalAgencyId && recordExistsMabyDeleted(bibliographicRecordId, agencyId)
-                || recordExists(bibliographicRecordId, agencyId)) { // first available record
+            if (allowDeleted && agencyId == originalAgencyId && recordExistsMabyDeleted(bibliographicRecordId, agencyId) ||
+                recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
                 // find most common through sibling relations
                 // stops at localrecord or commonrecord
