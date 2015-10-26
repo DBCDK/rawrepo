@@ -93,7 +93,8 @@ function index(content, mimetype) {
     }
 
     // find record format
-    var format = e.getAttribute('format');
+    var format = e.hasAttribute('format') ? e.getAttribute('format') : "danMARC2";
+
     Log.trace("format = " + format);
     var actions = RULES[format];
     if (actions === undefined) {
