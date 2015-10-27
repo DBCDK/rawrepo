@@ -18,7 +18,6 @@
  */
 package dk.dbc.rawrepo.content.service;
 
-import com.codahale.metrics.Timer;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,10 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.regex.Pattern;
-import javax.annotation.PostConstruct;
 import javax.ejb.EJBException;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
