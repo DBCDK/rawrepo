@@ -453,7 +453,8 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId, boolean allowDeleted) throws RawRepoException {
-        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
+        List<Integer> agenciesFor = agencySearchOrder.getAgenciesFor(originalAgencyId);
+        for (Integer agencyId : agenciesFor) {
             if (allowDeleted && agencyId == originalAgencyId && recordExistsMabyDeleted(bibliographicRecordId, agencyId) ||
                 recordExists(bibliographicRecordId, agencyId)) { // first available record
                 Set<RecordId> siblings;
@@ -469,7 +470,7 @@ public abstract class RawRepoDAO {
                 return agencyId;
             }
         }
-        log.error("Cannot locate agency for " + originalAgencyId + ":" + bibliographicRecordId);
+        log.error("Cannot locate agency for " + originalAgencyId + ":" + bibliographicRecordId + " in agencies: " + agenciesFor);
         throw new RawRepoExceptionRecordNotFound("Cannot find record");
     }
 

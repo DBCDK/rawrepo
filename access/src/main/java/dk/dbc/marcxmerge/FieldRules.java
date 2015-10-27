@@ -175,7 +175,7 @@ public class FieldRules {
      * @param validRegex regex that tag must match to be considered valid
      * @param fixups     list of fixes that needs to be run post merge
      */
-    public FieldRules(String immutable, String overwrite, String invalid, String validRegex, MarcXFixup[] fixups) {
+    public FieldRules(String immutable, String overwrite, String invalid, String validRegex, final MarcXFixup[] fixups) {
         this.invalid = collectionInit(invalid);
         this.immutable = collectionInit(immutable);
         this.remove = new HashSet<>();
@@ -218,7 +218,7 @@ public class FieldRules {
         return null;
     }
 
-    public static interface MarcXFixup {
+    public interface MarcXFixup {
 
         /**
          *

@@ -146,18 +146,23 @@ public class RawRepoDAOIT {
         record.setMimeType("text/plain");
         record.setDeleted(false);
         dao.saveRecord(record);
+        connection.commit();
 
+        connection.setAutoCommit(false);
         record = dao.fetchRecord("a bcd efg h", 100000);
         record.setContent("Version 2".getBytes());
         record.setMimeType("text/not-so-plain");
         record.setDeleted(true);
         dao.saveRecord(record);
+        connection.commit();
 
+        connection.setAutoCommit(false);
         record = dao.fetchRecord("a bcd efg h", 100000);
         record.setContent("Version 3".getBytes());
         record.setMimeType("text/really-plain");
         record.setDeleted(false);
         dao.saveRecord(record);
+        connection.commit();
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory("a bcd efg h", 100000);
         assertEquals(recordHistory.size(), 3);
@@ -173,8 +178,6 @@ public class RawRepoDAOIT {
         assertArrayEquals("newest content", "Version 3".getBytes(), dao.getHistoricRecord(recordHistory.get(0)).getContent());
         assertArrayEquals("modified content", "Version 2".getBytes(), dao.getHistoricRecord(recordHistory.get(1)).getContent());
         assertArrayEquals("oldest content", "Version 1".getBytes(), dao.getHistoricRecord(recordHistory.get(2)).getContent());
-
-        connection.commit();
     }
 
     @Test
