@@ -87,12 +87,19 @@ You should have received a copy of the GNU Affero General Public License along w
 			</map>
 		</index>
 		<index>
-			<title lang="en">ISSN</title>
-			<title lang="da">ISSN</title>
+			<title lang="en">Title</title>
+			<title lang="da">Titel</title>
 			<map>
-				<name set="marc">022a</name>
+				<name set="marc">245a</name>
 			</map>
 		</index>
+                <index>
+                        <title lang="en">ISSN</title>
+                        <title lang="da">ISSN</title>
+                        <map>
+                                <name set="marc">022a</name>
+                        </map>
+                </index>
 		<index>
 			<title lang="en">Y08a</title>
 			<title lang="da">Y08a</title>
