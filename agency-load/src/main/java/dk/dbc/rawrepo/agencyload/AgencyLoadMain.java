@@ -133,7 +133,7 @@ public class AgencyLoadMain {
             addOption(PARENT_AGENCIES, "list of parent-agencied (could be 300000,191919)", false, false, string, null);
             addOption("common", "most common agency (implied by --" + PARENT_AGENCIES + " to last from list). \n" +
                                 "\tThis agency holds parent-relations, if record/agency exists", false, false, integer, null);
-            addOption("role", "who to put on queue as (could be agency-delete)", false, false, string, null);
+            addOption("role", "who to put on queue as (could be agency-maintain)", false, false, string, null);
             addOption("debug", "turn on debug logging", false, false, null, yes);
             addOption("allow-fail", "commit even if something fails", false, false, null, yes);
         }
