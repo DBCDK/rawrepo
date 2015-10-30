@@ -23,6 +23,8 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.rawrepo.RawRepoException;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -50,11 +52,14 @@ public class AgencyLoadMain {
         List<Integer> list = new ArrayList<>();
         Integer commonAgency = null;
         String role = null;
+            InputStream in = System.in;
         try {
             commandLine.parse(args);
             List<String> agencies = commandLine.getExtraArguments();
-            if (!agencies.isEmpty()) {
-                throw new IllegalStateException("No extra arguments allowed");
+            if (agencies.size() == 1) {
+                in = new FileInputStream(agencies.get(0));
+            } else if (!agencies.isEmpty()) {
+                throw new IllegalStateException("Only 1 extra argument allowed");
             }
 
             if (commandLine.hasOption(PARENT_AGENCIES)) {
@@ -80,7 +85,7 @@ public class AgencyLoadMain {
                 setLogLevel("logback-info.xml");
             }
 
-        } catch (IllegalStateException | NumberFormatException ex) {
+        } catch (IllegalStateException | NumberFormatException | FileNotFoundException ex) {
             System.err.println(ex.getMessage());
             System.err.println(commandLine.usage());
             System.exit(1);
@@ -91,13 +96,12 @@ public class AgencyLoadMain {
             return;
         }
 
-
         boolean useTransaction = !commandLine.hasOption("allow-fail");
         try (AgencyLoad agencyLoad = new AgencyLoad((String) commandLine.getOption("db"),
                                                     list, commonAgency, role, parrallel, useTransaction)) {
             agencyLoad.timingStart();
             boolean success = true;
-            success = agencyLoad.load(System.in) && success;
+            success = agencyLoad.load(in) && success;
             success = agencyLoad.buildParentRelations() && success;
             success = agencyLoad.queue() && success;
             if (success && useTransaction) {
@@ -140,7 +144,7 @@ public class AgencyLoadMain {
 
         @Override
         String usageCommandLine() {
-            return "prog [ options ]";
+            return "prog [ options ] [ file ]";
         }
     }
 
