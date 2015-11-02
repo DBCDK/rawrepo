@@ -59,7 +59,6 @@ public class AgencyLoad implements AutoCloseable {
     private final List<Integer> agencies;
     private final Integer commonAgency;
     private final String role;
-    private final int threads;
     private final Set<RecordId> bibliographicRecordIds;
     private final Map<RecordId, String> parentRelations;
 
@@ -87,7 +86,7 @@ public class AgencyLoad implements AutoCloseable {
         reporter.stop();
     }
 
-    AgencyLoad(String db, List<Integer> agencies, Integer commonAgency, String role, int threads, boolean useTransaction) throws RawRepoException, SQLException {
+    AgencyLoad(String db, List<Integer> agencies, Integer commonAgency, String role, boolean useTransaction) throws RawRepoException, SQLException {
         this.connection = getConnection(db);
         if (useTransaction) {
             this.connection.setAutoCommit(false);
@@ -98,7 +97,6 @@ public class AgencyLoad implements AutoCloseable {
         this.role = role;
         this.bibliographicRecordIds = new HashSet<>();
         this.parentRelations = new HashMap<>();
-        this.threads = threads;
 
         createMetrics();
 
@@ -284,6 +282,8 @@ public class AgencyLoad implements AutoCloseable {
                                   " from " + recordId.getBibliographicRecordId() +
                                   " for agency " + recordId.getAgencyId() +
                                   " parent not found");
+                        success = false;
+                        relationErrors.inc();
                     }
                 } catch (RawRepoException ex) {
                     log.error("Error relating record: " + parentBibliographicRecordId +

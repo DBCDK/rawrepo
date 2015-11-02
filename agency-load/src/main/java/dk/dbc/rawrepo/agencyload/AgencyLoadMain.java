@@ -42,7 +42,6 @@ import org.xml.sax.SAXException;
 public class AgencyLoadMain {
 
     private static final Logger log = LoggerFactory.getLogger(AgencyLoadMain.class);
-    private static final int parrallel = Runtime.getRuntime().availableProcessors();
 
     private static final String PARENT_AGENCIES = "parent-agencies";
 
@@ -52,7 +51,7 @@ public class AgencyLoadMain {
         List<Integer> list = new ArrayList<>();
         Integer commonAgency = null;
         String role = null;
-            InputStream in = System.in;
+        InputStream in = System.in;
         try {
             commandLine.parse(args);
             List<String> agencies = commandLine.getExtraArguments();
@@ -98,7 +97,7 @@ public class AgencyLoadMain {
 
         boolean useTransaction = !commandLine.hasOption("allow-fail");
         try (AgencyLoad agencyLoad = new AgencyLoad((String) commandLine.getOption("db"),
-                                                    list, commonAgency, role, parrallel, useTransaction)) {
+                                                    list, commonAgency, role, useTransaction)) {
             agencyLoad.timingStart();
             boolean success = true;
             success = agencyLoad.load(in) && success;
