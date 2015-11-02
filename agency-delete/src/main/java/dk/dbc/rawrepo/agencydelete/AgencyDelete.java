@@ -22,6 +22,7 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -115,43 +116,41 @@ class AgencyDelete {
         }
     }
 
-    void deleteRecords(Set<String> ids, Set<String> parentRelations, String role) throws RawRepoException, IOException, SQLException {
+    void queueRecords(Set<String> ids, Set<String> parentRelations, String role) throws RawRepoException, IOException, SQLException {
+        int no = 0;
+
+        for (String id : ids) {
+            String mimetype = dao.getMimeTypeOf(id, agencyid);
+            dao.changedRecord(role, new RecordId(id, agencyid), mimetype);
+            if (++no % 1000 == 0) {
+                log.info("Queued: " + no);
+            }
+        }
+        log.info("Queued: " + no);
+    }
+
+    void deleteRecords(Set<String> ids, Set<String> parentRelations) throws RawRepoException, IOException, SQLException {
         int no = 0;
 
         DataTemplate template = new DataTemplate("content.xml");
         Properties props = new Properties();
         props.put(AGENCYID, String.valueOf(agencyid));
-        try (PreparedStatement stmt = connection.prepareCall("{CALL enqueue(?, ?, ?, ?, ?, ?)}")) {
-            stmt.setInt(2, agencyid);
-            stmt.setString(4, role);
-            stmt.setString(5, "Y");
 
-            for (String id : ids) {
-                log.debug("Processing bibliographicrecordid:" + id);
-                props.put(BIBLIOGRAPHICRECORDID, id);
-                Record record = dao.fetchRecord(id, agencyid);
-                String mimeType = record.getMimeType();
-                switch (mimeType) {
-                    case MarcXChangeMimeType.AUTHORITTY:
-                        break;
-                    default:
-                        mimeType = MarcXChangeMimeType.MARCXCHANGE;
-                }
+        for (String id : ids) {
+            log.debug("Processing bibliographicrecordid:" + id);
+            props.put(BIBLIOGRAPHICRECORDID, id);
+            Record record = dao.fetchRecord(id, agencyid);
 
-                record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
-                record.setContent(template.build(props).getBytes("UTF-8"));
-                record.setDeleted(true);
-                dao.saveRecord(record);
+            record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
+            record.setContent(template.build(props).getBytes("UTF-8"));
+            record.setDeleted(true);
+            dao.saveRecord(record);
 
-                stmt.setString(1, id);
-                stmt.setString(3, mimeType);
-                stmt.setString(6, parentRelations.contains(id) ? "N" : "Y");
-                stmt.execute();
-                if (++no % 1000 == 0) {
-                    System.err.print('·');
-                }
+            if (++no % 1000 == 0) {
+                log.info("Deleted: " + no);
             }
         }
+        log.info("Deleted: " + no);
     }
 
     public void begin() throws SQLException {

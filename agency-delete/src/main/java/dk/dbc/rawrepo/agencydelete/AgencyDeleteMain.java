@@ -51,8 +51,9 @@ public class AgencyDeleteMain {
                 throw new IllegalStateException("Only One Agency");
             }
             agencyid = Integer.parseInt(agencies.get(0), 10);
-            if(agencyid < 0)
+            if (agencyid < 0) {
                 throw new NumberFormatException("Positive integer expected");
+            }
             if (commandLine.hasOption("debug")) {
                 setLogLevel("logback-debug.xml");
             } else {
@@ -73,7 +74,7 @@ public class AgencyDeleteMain {
             AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid);
             Set<String> ids = agencyDelete.getIds();
             Set<String> siblingRelations = agencyDelete.getSiblingRelations();
-            if(! siblingRelations.isEmpty()) {
+            if (!siblingRelations.isEmpty()) {
                 throw new RuntimeException("Cannot remove agency, there's sibling relations to agency");
             }
             Set<String> parentRelations = agencyDelete.getParentRelations();
@@ -85,12 +86,12 @@ public class AgencyDeleteMain {
             }
 
             agencyDelete.begin();
-            agencyDelete.removeRelations();
-            String role = "agency-delete";
             if (commandLine.hasOption("role")) {
-                role = (String) commandLine.getOption("role");
+                String role = (String) commandLine.getOption("role");
+                agencyDelete.queueRecords(ids, parentRelations, role);
             }
-            agencyDelete.deleteRecords(ids, parentRelations, role);
+            agencyDelete.removeRelations();
+            agencyDelete.deleteRecords(ids, parentRelations);
 
             agencyDelete.commit();
         } catch (RuntimeException | SQLException | RawRepoException | IOException ex) {

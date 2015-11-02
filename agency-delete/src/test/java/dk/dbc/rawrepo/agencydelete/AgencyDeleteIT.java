@@ -31,7 +31,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.After;
@@ -74,10 +73,10 @@ public class AgencyDeleteIT {
     public void tearDown() {
     }
 
-    @Test
+//    @Test
     public void testGetIds() throws Exception {
         System.out.println("testGetIds()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 870970);
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 191919);
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
         testArray(ids, "Ids", "H", "S", "B", "E");
@@ -91,6 +90,7 @@ public class AgencyDeleteIT {
 
     @Test
     public void testBasics() throws Exception {
+        System.out.println("testBasics()");
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777);
 
         agencyDelete.begin();
@@ -99,15 +99,18 @@ public class AgencyDeleteIT {
 
         Set<String> parentRelations = agencyDelete.getParentRelations();
 
+        agencyDelete.queueRecords(ids, parentRelations, "provider");
+        System.out.println("queued records");
         agencyDelete.removeRelations();
-
-        agencyDelete.deleteRecords(ids, parentRelations, "provider");
+        System.out.println("removed relations");
+        agencyDelete.deleteRecords(ids, parentRelations);
+        System.out.println("deleted records");
         agencyDelete.commit();
 
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970"));
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
 
-        HashSet<String> leafs = new HashSet<>();
         countQueued("leaf", 2);
+        HashSet<String> leafs = new HashSet<>();
         for (QueueJob dequeue = dao.dequeue("leaf") ; dequeue != null ; dequeue = dao.dequeue("leaf")) {
             leafs.add(dequeue.getJob().getBibliographicRecordId());
         }
@@ -124,8 +127,32 @@ public class AgencyDeleteIT {
         connection.commit();
     }
 
+    @Test
+    public void testQueue() throws Exception {
+        {
+            RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
+            connection.setAutoCommit(false);
+            setupRecord(dao, "S", 888888, "S:191919");
+            connection.commit();
+        }
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888);
+        agencyDelete.begin();
+        Set<String> ids = agencyDelete.getIds();
+
+        Set<String> parentRelations = agencyDelete.getParentRelations();
+
+        agencyDelete.queueRecords(ids, parentRelations, "provider");
+        agencyDelete.removeRelations();
+        agencyDelete.deleteRecords(ids, parentRelations);
+        agencyDelete.commit();
+
+        countQueued("node", 1);
+        countQueued("leaf", 1);
+
+    }
+
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970"));
+        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();
@@ -149,14 +176,14 @@ public class AgencyDeleteIT {
         stmt.setString(3, "N");
         stmt.execute();
 
-        setupRecord(dao, "H", 870970);
-        setupRecord(dao, "S", 870970, "H:870970");
-        setupRecord(dao, "B", 870970, "S:870970");
-        setupRecord(dao, "E", 870970);
+        setupRecord(dao, "H", 191919);
+        setupRecord(dao, "S", 191919, "H:191919");
+        setupRecord(dao, "B", 191919, "S:191919");
+        setupRecord(dao, "E", 191919);
 
-        setupRecord(dao, "H", 777777, "H:870970");
-        setupRecord(dao, "S", 777777, "S:870970");
-        setupRecord(dao, "B", 777777, "B:870970");
+        setupRecord(dao, "H", 777777, "H:191919");
+        setupRecord(dao, "S", 777777, "S:191919");
+        setupRecord(dao, "B", 777777, "B:191919");
         setupRecord(dao, "E", 777777);
 
         connection.commit();
