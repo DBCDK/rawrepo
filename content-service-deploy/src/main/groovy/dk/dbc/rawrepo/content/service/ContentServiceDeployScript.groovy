@@ -128,7 +128,7 @@ class ContentServiceDeployScript extends GluScriptBase {
     static String SEARCHORDER_URL = "searchOrderUrl"
 
     static String RAWREPO_NAME = "rawrepo"
-    static String RAWREPO_RESOURCE = "jdbc/rawrepocontentservice/rewrepo"
+    static String RAWREPO_RESOURCE = "jdbc/rawrepocontentservice/rawrepo"
     static String RAWREPO_POOL = "jdbc/rawrepocontentservice/rawrepo/pool"
 
     Resource logFolder

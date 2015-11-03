@@ -62,7 +62,7 @@ public class C {
 
     public static class RAWREPO {
 
-        public static final String DATASOURCE = "jdbc/rawrepocontentservice/rewrepo";
+        public static final String DATASOURCE = "jdbc/rawrepocontentservice/rawrepo";
     }
 
     public static class SEARCHORDER {
