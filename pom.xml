@@ -41,7 +41,6 @@
     <!--<module>management</module>-->
     <module>agency-dump</module>
     <module>agency-load</module>
-    <module>roll-back</module>
     <module>debian</module>
   </modules>
 
