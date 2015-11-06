@@ -319,7 +319,7 @@ class ContentServiceDeployScript extends GluScriptBase {
             name: pool,
             resType: "javax.sql.DataSource",
             datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-            //steadypoolsize: "8", maxpoolsize: "32",
+            steadypoolsize: "0", maxpoolsize: "2",
             property: "\"driverClass=org.postgresql.Driver:url=$url:User=$db.user:Password=$db.password\"",
             isConnectionValidationRequired: "true",
             validateAtmostOncePeriodInSeconds: db.validateInterval,

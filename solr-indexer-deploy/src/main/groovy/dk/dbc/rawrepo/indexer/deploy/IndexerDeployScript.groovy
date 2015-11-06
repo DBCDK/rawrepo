@@ -410,6 +410,8 @@ class IndexerDeployScript extends GluScriptBase {
 
         def poolOptions = [
             validateAtmostOncePeriodInSeconds: (int)Integer.parseInt(params.pollInterval)/2,
+            maxPoolSize: params.threadPoolSize,
+            steadyPoolSize: params.threadPoolSize,
         ]
         poolOptions += params.jdbcPoolProperties ?: [:]
 

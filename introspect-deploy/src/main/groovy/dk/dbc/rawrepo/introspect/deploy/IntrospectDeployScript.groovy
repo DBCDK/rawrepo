@@ -88,6 +88,11 @@ class IntrospectDeployScript extends GluScriptBase {
         'password': 'admin',
         'insecure': false,
     ]
+    
+    Map jdbcPoolProperties = [
+        'maxPoolSize': 2,
+        'steadyPoolSize': 0
+    ]
 
     // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
     transient def deployer
@@ -134,6 +139,9 @@ class IntrospectDeployScript extends GluScriptBase {
 
         warFile = webappsFolder."${appName}.war"
 
+        // override default jdbcPoolProperties with init parameters
+        jdbcPoolProperties += params.jdbcPoolProperties ?: [:]
+        
         // override default glassfishProperties with init parameters
         glassfishProperties += params.glassfishProperties ?: [:]
 
@@ -387,7 +395,7 @@ class IntrospectDeployScript extends GluScriptBase {
             def user = (m[2] == null ? "" : m[2]).replace(":", "\\:")
             def pass = (m[3] == null ? "" : m[3]).replace(":", "\\:")
             
-            getDeployer().createPGConnectionPool(JDBC_BASE + "/" + resource + "/pool", JDBC_BASE + "/" + resource, user, pass, jdbc, params.jdbcPoolProperties)
+            getDeployer().createPGConnectionPool(JDBC_BASE + "/" + resource + "/pool", JDBC_BASE + "/" + resource, user, pass, jdbc, jdbcPoolProperties)
         }
     }
 
