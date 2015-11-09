@@ -58,6 +58,10 @@ class NotifyDeployScript extends GluScriptBase {
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
      *                                 (OPTIONAL).
+     *                                 
+     * jdbcPoolProperties  : Map     : Properties for the connection pool.
+     *                                 See full list of properties in GlassFishAppDeployer
+     *                                 (OPTIONAL) 
      *
      * debugFlag           : Boolean : Flag toggling debug configuration.
      *                                 Configuring for debug mode will for
@@ -97,6 +101,7 @@ class NotifyDeployScript extends GluScriptBase {
         'password': 'admin',
         'insecure': false,
     ]
+    
 
     // Must be transient or glu will attemp to call getDeployer during installation when enumerating script properties
     transient def deployer
@@ -395,19 +400,16 @@ class NotifyDeployScript extends GluScriptBase {
     def configureJdbcResources() {
 
         def dbUrl = params.dbUrl.replace(":", "\\:");
+        
+        def poolOptions = [
+            validateAtmostOncePeriodInSeconds: (int)Integer.parseInt(params.pollInterval)/2,
+            maxPoolSize: params.threadPoolSize,
+            steadyPoolSize: params.threadPoolSize,
+        ]
+        poolOptions += params.jdbcPoolProperties ?: [:]
 
-        getDeployer().createJdbcConnectionPool([
-                name: JDBC_POOL,
-                resType: "javax.sql.DataSource",
-                datasourceClassname: "org.postgresql.ds.PGSimpleDataSource",
-                //steadypoolsize: "8",
-                //maxpoolsize: "32",
-                property: "\"driverClass=org.postgresql.Driver:url=$dbUrl:User=$params.dbUser:Password=$params.dbPassword\"",
-        ])
-        getDeployer().createJdbcResource([
-                id: JDBC_RESOURCE,
-                poolName: JDBC_POOL,
-        ])
+        getDeployer().createPGConnectionPool(JDBC_POOL, JDBC_RESOURCE, params.dbUser, params.dbPassword, dbUrl, poolOptions)
+
     }
 
     def deleteJdbcResources() {
