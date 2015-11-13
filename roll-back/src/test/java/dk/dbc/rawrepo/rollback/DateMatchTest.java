@@ -56,17 +56,17 @@ public class DateMatchTest {
     }
 
     @Test
-    public void same_whenNoMatch() {
+    public void equal_whenNoMatch() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertNull(DateMatch.same(DAY_4, historyData) );
+        assertNull(DateMatch.equal(DAY_4, historyData) );
     }
 
     @Test
-    public void same_whenExactMatch() {
+    public void equal_whenExactMatch() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals( DAY_1, DateMatch.same(DAY_1, historyData).getModified() );
-        assertEquals( DAY_3, DateMatch.same(DAY_3, historyData).getModified() );
-        assertEquals( DAY_5, DateMatch.same(DAY_5, historyData).getModified() );
+        assertEquals( DAY_1, DateMatch.equal(DAY_1, historyData).getModified() );
+        assertEquals( DAY_3, DateMatch.equal(DAY_3, historyData).getModified() );
+        assertEquals( DAY_5, DateMatch.equal(DAY_5, historyData).getModified() );
     }
 
     @Test

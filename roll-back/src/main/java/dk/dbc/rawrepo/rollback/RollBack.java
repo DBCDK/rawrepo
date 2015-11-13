@@ -27,6 +27,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -40,12 +42,26 @@ public class RollBack {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger( RollBack.class );
 
+    private final static DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
+//    static {
+//        dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ));
+//    }
+
     public enum State {
 
-        Keep,
-        Rollback,
-        Delete,
-        Active,
+        Keep ( "Keep the current state of the record" ) ,
+        Rollback ( "Roll back the state of the record" ),
+        Delete( "Set the record to deleted" ),
+        Active( "Set the record to not deleted" );
+
+        private final String description ;
+        State(String description) {
+            this.description = description;
+        }
+        public String getDescription() {
+            return name() + " - " + description;
+        }
+
     }
 
     public static boolean rollbackRecord( Connection connection, RecordId id, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
@@ -58,7 +74,7 @@ public class RollBack {
         return modified;
     }
 
-    public static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
+    static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( id.getBibliographicRecordId(), id.getAgencyId() );
 
@@ -66,8 +82,8 @@ public class RollBack {
         String matchOperator = "";
 
         switch ( matchType ) {
-            case Same: {
-                matching = DateMatch.same( matchDate, recordHistory );
+            case Equal: {
+                matching = DateMatch.equal( matchDate, recordHistory );
                 matchOperator = "=";
                 break;
             }
@@ -97,7 +113,7 @@ public class RollBack {
             }
         }
         if ( matching != null ) {
-            log.debug( "Rolling record {} back to {}", id, matchDate );
+            log.debug( "Rolling record {} back to {}", id, dateFormat.format( matchDate ) );
 
             Record currentRecord = dao.fetchRecord( id.getBibliographicRecordId(), id.getAgencyId() );
             Record historicRecord = dao.getHistoricRecord( matching );
@@ -125,8 +141,11 @@ public class RollBack {
                     break;
                 }
             }
-            log.debug( "Old deleted state {}, new deleted state {}", historicRecord.isDeleted(), deleted );
-            if ( currentRecord.isDeleted() && !historicRecord.isDeleted() ) {
+            if ( historicRecord.isDeleted() != deleted  || currentRecord.isDeleted() != deleted) {
+                log.debug( "Current deleted state {}, old deleted state {}, new deleted state {}",
+                        currentRecord.isDeleted(), historicRecord.isDeleted(), deleted );
+            }
+            if ( currentRecord.isDeleted() && !deleted ) {
                 log.warn( "Undeleting record {}. Relations are not restored", id );
             }
             historicRecord.setDeleted( deleted );
@@ -136,7 +155,8 @@ public class RollBack {
             return true;
         }
         else {
-            log.debug( "No matching history for record {} to {}", id, matchDate );
+
+            log.debug( "No matching history for record {} to {} in history: {}", id, dateFormat.format( matchDate ), recordHistory );
             return false;
         }
     }
@@ -161,7 +181,7 @@ public class RollBack {
         return set;
     }
 
-    static void rollbackRecords( int agencyId, Set<String> ids, RawRepoDAO dao, Date matchDate, DateMatch.Match matchType, State state ) {
+    static void rollbackRecords( int agencyId, Iterable<String> ids, RawRepoDAO dao, Date matchDate, DateMatch.Match matchType, State state ) {
         int success = 0;
         int skipped = 0;
         int failed = 0;
@@ -200,19 +220,23 @@ public class RollBack {
         log.info( "Queued {}", no );
     }
 
-    public static void rollbackAgency( Connection connection, int agencyId, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException, SQLException {
+    public static void rollbackAgency( Connection connection, int agencyId, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
 
         RawRepoDAO dao = RawRepoDAO.newInstance( connection );
 
         log.info( "Identifying records for {}", agencyId );
-        Set<String> ids = getRecordIds( connection, agencyId );
+        try {
+            Set<String> ids = getRecordIds( connection, agencyId );
+            log.info( "Rolling back {} records for agency {}. Matching {} as '{}'",
+                    ids.size(), agencyId, matchDate, matchType );
 
-        log.info( "Rolling back {} records for agency {}. Matching {} as '{}'",
-                ids.size(), agencyId, matchDate, matchType );
-
-        rollbackRecords( agencyId, ids, dao, matchDate, matchType, state );
-        if ( queueRole != null ) {
-            queueRecords( dao, agencyId, ids, queueRole );
+            rollbackRecords( agencyId, ids, dao, matchDate, matchType, state );
+            if ( queueRole != null ) {
+                queueRecords( dao, agencyId, ids, queueRole );
+            }
+        }
+        catch ( SQLException ex ) {
+            throw new RawRepoException(ex);
         }
     }
 
