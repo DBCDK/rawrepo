@@ -75,7 +75,6 @@ public class DateMatch
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    @SuppressWarnings( "static-access" ) // No static warning for dateFormat
     public static RecordMetaDataHistory beforeOrSame( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>( history );
         Collections.sort( newestFirstHistory, new Comparator<RecordMetaDataHistory>() {

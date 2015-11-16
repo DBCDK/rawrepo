@@ -132,7 +132,6 @@ public class RollBack {
         return modified;
     }
 
-    @SuppressWarnings( "static-access" ) // No static warning for dateFormat
     static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( id.getBibliographicRecordId(), id.getAgencyId() );
