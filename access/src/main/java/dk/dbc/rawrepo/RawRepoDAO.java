@@ -67,7 +67,8 @@ public abstract class RawRepoDAO {
         }
 
         /**
-         * use {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
+         * use
+         * {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
          * with a static service, to facilitate caching
          *
          * @param agencySearchOrder
@@ -82,7 +83,8 @@ public abstract class RawRepoDAO {
         }
 
         /**
-         * use {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
+         * use
+         * {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
          * with a static service, to facilitate caching
          *
          * @param relationHints
@@ -117,7 +119,8 @@ public abstract class RawRepoDAO {
         /**
          * Construct a dao from the builder
          *
-         * @return {@link RawRepoDAO} dao with default services, if none has been provided.
+         * @return {@link RawRepoDAO} dao with default services, if none has
+         *         been provided.
          * @throws RawRepoException
          */
         public RawRepoDAO build() throws RawRepoException {
@@ -169,7 +172,6 @@ public abstract class RawRepoDAO {
     public static Builder builder(Connection connection) {
         return new Builder(connection);
     }
-
 
     protected void validateConnection() throws RawRepoException {
     }
@@ -302,17 +304,55 @@ public abstract class RawRepoDAO {
         throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + originalAgencyId);
     }
 
-    public int relationAgency(String bibliographicRecordId, int originalAgencyId, boolean allowSelf) throws RawRepoException {
-        Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
+    /**
+     * Find agency for sibling relation
+     *
+     * @param bibliographicRecordId id of the record
+     * @param originalAgencyId the agency trying to make a sibling relation
+     * @return agencyid of whom to make a sibling relation
+     * @throws RawRepoException if no agency could be found for record
+     */
+
+    public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
         try {
             if (relationHints.usesCommonAgency(originalAgencyId)) {
                 for (Integer agencyId : relationHints.get(originalAgencyId)) {
-                    if (allAgenciesWithRecord.contains(agencyId)) {
+                    if (recordExists(bibliographicRecordId, agencyId)) {
                         return agencyId;
                     }
                 }
             }
-            if (allowSelf && allAgenciesWithRecord.contains(originalAgencyId)) {
+        } catch (CacheException ex) {
+            log.error("Could not access cache: " + ex.getMessage());
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                log.error("Cause: " + cause.getMessage());
+            }
+            throw new RawRepoException("Error accessing relation hints", ex);
+        }
+        throw new RawRepoExceptionRecordNotFound("Could not find (sibling) relation agency for " + bibliographicRecordId + " from " + originalAgencyId);
+    }
+
+    /**
+     * Find agency for parent relation
+     *
+     * @param bibliographicRecordId id of the parent record
+     * @param originalAgencyId the agency trying to make a parent relation
+     * @return agencyid of whom to make a parent relation
+     * @throws RawRepoException if no agency could be found for record
+     */
+    public int findParentRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
+        try {
+            if (relationHints.usesCommonAgency(originalAgencyId)) {
+                List<Integer> list = relationHints.get(originalAgencyId);
+                if (!list.isEmpty()) {
+                    int agencyId = list.get(list.size() - 1);
+                    if (recordExists(bibliographicRecordId, agencyId)) {
+                        return agencyId;
+                    }
+                }
+            }
+            if (recordExists(bibliographicRecordId, originalAgencyId)) {
                 return originalAgencyId;
             }
         } catch (CacheException ex) {
@@ -323,7 +363,7 @@ public abstract class RawRepoDAO {
             }
             throw new RawRepoException("Error accessing relation hints", ex);
         }
-        throw new RawRepoExceptionRecordNotFound("Could not find relation agency for " + originalAgencyId);
+        throw new RawRepoExceptionRecordNotFound("Could not find (parent) relation agency for " + bibliographicRecordId + " from " + originalAgencyId);
     }
 
     /**

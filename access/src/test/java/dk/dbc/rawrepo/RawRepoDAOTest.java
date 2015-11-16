@@ -34,13 +34,13 @@ import static org.mockito.Mockito.*;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -51,8 +51,6 @@ public class RawRepoDAOTest {
 
     public RawRepoDAOTest() {
     }
-
-
 
     @Test
     public void testEnrichmentTrail() throws RawRepoException, MarcXMergerException {
@@ -91,7 +89,6 @@ public class RawRepoDAOTest {
         }
 
     }
-
 
     @Test
     public void testQueueEntityWithout() throws RawRepoException {
@@ -606,6 +603,64 @@ public class RawRepoDAOTest {
         }
     }
 
+    @Test
+    public void parentRelationAgency() throws Exception {
+        RawRepoDAO mock = mock(RawRepoDAO.class);
+        mock.relationHints = mock(RelationHints.class);
+        doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
+        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 191919));
+        when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
+        when(mock.relationHints.get(654321)).thenReturn(Arrays.asList());
+        when(mock.relationHints.usesCommonAgency(654321)).thenReturn(Boolean.FALSE);
+        when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
+        when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("PRIVATE", 654321)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 654321)).thenReturn(Boolean.TRUE);
+        int parentRelationAgency;
+        parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 123456);
+        Assert.assertEquals(123456, parentRelationAgency);
+        parentRelationAgency = mock.findParentRelationAgency("COMMON", 123456);
+        Assert.assertEquals(191919, parentRelationAgency);
+        parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 654321);
+        Assert.assertEquals(654321, parentRelationAgency);
+        parentRelationAgency = mock.findParentRelationAgency("COMMON", 654321);
+        Assert.assertEquals(654321, parentRelationAgency);
+        try {
+            mock.findParentRelationAgency("NA", 123456);
+            Assert.fail("Expected RawRepoExceptionRecordNotFound");
+        } catch (RawRepoExceptionRecordNotFound ex) {
+        }
+    }
+
+    @Test
+    public void siblingRelationAgency() throws Exception {
+        RawRepoDAO mock = mock(RawRepoDAO.class);
+        mock.relationHints = mock(RelationHints.class);
+        doCallRealMethod().when(mock).findSiblingRelationAgency(anyString(), anyInt());
+        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 191919));
+        when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
+        when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("INTERM", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("INTERM", 300000)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("INTERM", 123456)).thenReturn(Boolean.TRUE);
+        int siblingRelationAgency;
+        siblingRelationAgency = mock.findSiblingRelationAgency("COMMON", 123456);
+        System.out.println("parentRelationAgency = " + siblingRelationAgency);
+        Assert.assertEquals(191919, siblingRelationAgency);
+        siblingRelationAgency = mock.findSiblingRelationAgency("INTERM", 123456);
+        Assert.assertEquals(300000, siblingRelationAgency);
+        try {
+            mock.findSiblingRelationAgency("PRIVATE", 123456);
+            Assert.fail("Expected RawRepoExceptionRecordNotFound");
+        } catch (RawRepoExceptionRecordNotFound ex) {
+        }
+    }
+
     //  _   _      _                   _____                 _   _
     // | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
     // | |_| |/ _ \ | '_ \ / _ \ '__| | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
@@ -698,6 +753,7 @@ public class RawRepoDAOTest {
     }
 
     private static int trackingIdCounter = 0;
+
     private static Record recordFromContent(final String content) {
         String[] split = content.split(":", 2);
         final String id = split[0];
@@ -708,7 +764,7 @@ public class RawRepoDAOTest {
             boolean enriched = false;
             String mimeType = agencyId == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
             byte[] c = content.getBytes();
-            String trackingId = "Track-" + (++trackingIdCounter);
+            String trackingId = "Track-" + ( ++trackingIdCounter );
 
             @Override
             public byte[] getContent() {
@@ -826,9 +882,9 @@ public class RawRepoDAOTest {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                collection.add(( (RecordId) arguments[0] ).getBibliographicRecordId() + ":" + ( (RecordId) arguments[0] ).getAgencyId()
-                               + ( ( (Boolean) arguments[3] ) ? ":Y" : ":N" )
-                               + ( ( (Boolean) arguments[4] ) ? ":Y" : ":N" ));
+                collection.add(( (RecordId) arguments[0] ).getBibliographicRecordId() + ":" + ( (RecordId) arguments[0] ).getAgencyId() +
+                               ( ( (Boolean) arguments[3] ) ? ":Y" : ":N" ) +
+                               ( ( (Boolean) arguments[4] ) ? ":Y" : ":N" ));
                 return null;
             }
         }).when(access).enqueue((RecordId) anyObject(), anyString(), anyString(), anyBoolean(), anyBoolean());
