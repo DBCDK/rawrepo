@@ -84,7 +84,7 @@ public class RollBackMain {
 
         String dbUrl = options.getOptionValue( OPTION_DB );
         String role = options.getOptionValue( OPTION_ROLE );
-        int library = Integer.valueOf( options.getOptionValue( OPTION_LIBRARY ) );
+        int library = Integer.parseInt( options.getOptionValue( OPTION_LIBRARY ) );
         String match = options.getOptionValue( OPTION_MATCH, DateMatch.Match.BeforeOrEqual.name() );
         String state = options.getOptionValue( OPTION_STATE, RollBack.State.Keep.name() );
         String timestamp = options.getOptionValue( OPTION_TIMESTAMP );
