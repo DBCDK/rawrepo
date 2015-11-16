@@ -64,20 +64,18 @@ public class RollBackMain {
         new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" ),
         new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
     };
-//    static {
-//        for ( SimpleDateFormat dateFormat : dateFormats ) {
-//            dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ));
-//        }
-//    }
 
     public static void main( String[] args ) {
-        new RollBackMain().run( args );
+        RollBackMain main = new RollBackMain();
+        if ( !main.run( args ) ) {
+            System.exit( -1 );
+        }
     }
 
-    public void run( String[] args ) {
+    public boolean run( String[] args ) {
         CommandLine options = readOptions( args );
         if ( options == null ) {
-            System.exit( -1 );
+            return false;
         }
         if ( options.hasOption( OPTION_DEBUG ) ) {
             ch.qos.logback.classic.Logger root = ( ch.qos.logback.classic.Logger ) LoggerFactory.getLogger( Logger.ROOT_LOGGER_NAME );
@@ -94,9 +92,7 @@ public class RollBackMain {
 
         String[] records = options.getArgs();
 
-        if ( !rollBackRecords( dbUrl, library, records, timestamp, match, state, role, dryrun ) ) {
-            System.exit( -1 );
-        }
+        return rollBackRecords( dbUrl, library, records, timestamp, match, state, role, dryrun );
     }
 
     private static Connection getConnection( String url ) throws SQLException {

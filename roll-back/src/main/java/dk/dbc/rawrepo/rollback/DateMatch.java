@@ -43,24 +43,26 @@ public class DateMatch
     private static final org.slf4j.Logger log = LoggerFactory.getLogger( DateMatch.class );
 
     private final static DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
-//    static {
-//        dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ));
-//    }
 
     public enum Match {
 
-        Equal ( "Match against records with the exact specified timestamp" ),
-        Before ( "Match against the record version with the closest timestamp before the specified date" ),
-        BeforeOrEqual ( "Match against the record version with the closest timestamp before, or equal to, the specified date" ),
-        After ( "Match against the record version with the closest timestamp after the specified date" ),
-        AfterOrEqual ( "Match against the record version with the closest timestamp after, or equal to, the specified date" );
+        Equal ( "Match against records with the exact specified timestamp", "=" ),
+        Before ( "Match against the record version with the closest timestamp before the specified date", "<" ),
+        BeforeOrEqual ( "Match against the record version with the closest timestamp before, or equal to, the specified date", "<=" ),
+        After ( "Match against the record version with the closest timestamp after the specified date", ">" ),
+        AfterOrEqual ( "Match against the record version with the closest timestamp after, or equal to, the specified date", ">=" );
 
         private final String description ;
-        Match(String description) {
+        private final String operator ;
+        Match(String description, String operator) {
             this.description = description;
+            this.operator = operator;
         }
         public String getDescription() {
             return name() + " - " + description;
+        }
+        public String getOperator() {
+            return operator;
         }
     }
 
@@ -73,6 +75,7 @@ public class DateMatch
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
+    @SuppressWarnings( "static-access" ) // No static warning for dateFormat
     public static RecordMetaDataHistory beforeOrSame( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>( history );
         Collections.sort( newestFirstHistory, new Comparator<RecordMetaDataHistory>() {

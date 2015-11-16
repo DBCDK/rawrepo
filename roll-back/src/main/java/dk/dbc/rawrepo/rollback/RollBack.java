@@ -43,9 +43,6 @@ public class RollBack {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger( RollBack.class );
 
     private final static DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
-//    static {
-//        dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ));
-//    }
 
     public enum State {
 
@@ -64,6 +61,67 @@ public class RollBack {
 
     }
 
+    private static RecordMetaDataHistory findMatching( Date matchDate, DateMatch.Match matchType,
+            List<RecordMetaDataHistory> recordHistory ) {
+        RecordMetaDataHistory matching;
+        switch ( matchType ) {
+            case Equal: {
+                matching = DateMatch.equal( matchDate, recordHistory );
+                break;
+            }
+            case Before: {
+                matching = DateMatch.before( matchDate, recordHistory );
+                break;
+            }
+            case BeforeOrEqual: {
+                matching = DateMatch.beforeOrSame( matchDate, recordHistory );
+                break;
+            }
+            case After: {
+                matching = DateMatch.after( matchDate, recordHistory );
+                break;
+            }
+            case AfterOrEqual: {
+                matching = DateMatch.afterOrSame( matchDate, recordHistory );
+                break;
+            }
+            default: {
+                log.error( "Unsupported match type '{}'", matchType );
+                matching = null;
+                break;
+            }
+        }
+        return matching;
+    }
+
+    static boolean getNewDeleted( State state, Record currentRecord, Record historicRecord ) {
+        boolean deleted;
+        switch ( state ) {
+            case Keep: {
+                deleted = currentRecord.isDeleted();
+                break;
+            }
+            case Rollback: {
+                deleted = historicRecord.isDeleted();
+                break;
+            }
+            case Delete: {
+                deleted = true;
+                break;
+            }
+            case Active: {
+                deleted = false;
+                break;
+            }
+            default: {
+                log.error( "Unsupported state option '{}'", state );
+                deleted = historicRecord.isDeleted();
+                break;
+            }
+        }
+        return deleted;
+    }
+
     public static boolean rollbackRecord( Connection connection, RecordId id, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
         log.info( "Rolling record {} back to {}", id, matchDate );
         RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
@@ -74,85 +132,40 @@ public class RollBack {
         return modified;
     }
 
+    @SuppressWarnings( "static-access" ) // No static warning for dateFormat
     static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( id.getBibliographicRecordId(), id.getAgencyId() );
 
-        RecordMetaDataHistory matching = null;
-        String matchOperator = "";
-
-        switch ( matchType ) {
-            case Equal: {
-                matching = DateMatch.equal( matchDate, recordHistory );
-                matchOperator = "=";
-                break;
-            }
-            case Before: {
-                matching = DateMatch.before( matchDate, recordHistory );
-                matchOperator = "<";
-                break;
-            }
-            case BeforeOrEqual: {
-                matching = DateMatch.beforeOrSame( matchDate, recordHistory );
-                matchOperator = "<=";
-                break;
-            }
-            case After: {
-                matching = DateMatch.after( matchDate, recordHistory );
-                matchOperator = ">";
-                break;
-            }
-            case AfterOrEqual: {
-                matching = DateMatch.afterOrSame( matchDate, recordHistory );
-                matchOperator = "=>";
-                break;
-            }
-            default: {
-                log.error( "Unsupported match type '{}'", matchType );
-                break;
-            }
-        }
+        RecordMetaDataHistory matching = findMatching( matchDate, matchType, recordHistory );
         if ( matching != null ) {
             log.debug( "Rolling record {} back to {}", id, dateFormat.format( matchDate ) );
 
             Record currentRecord = dao.fetchRecord( id.getBibliographicRecordId(), id.getAgencyId() );
             Record historicRecord = dao.getHistoricRecord( matching );
-            boolean deleted;
-            switch ( state ) {
-                case Keep: {
-                    deleted = currentRecord.isDeleted();
-                    break;
+
+            log.debug( "Comparing found record date {} to current record date {}",
+                    dateFormat.format( matching.getModified() ), dateFormat.format( currentRecord.getModified() ) );
+            if ( ! currentRecord.getModified().equals(matching.getModified() ) ) {
+
+                boolean deleted = getNewDeleted( state, currentRecord, historicRecord );
+
+                if ( historicRecord.isDeleted() != deleted  || currentRecord.isDeleted() != deleted) {
+                    log.debug( "Current deleted state {}, old deleted state {}, new deleted state {}",
+                            currentRecord.isDeleted(), historicRecord.isDeleted(), deleted );
                 }
-                case Rollback: {
-                    deleted = historicRecord.isDeleted();
-                    break;
+                if ( currentRecord.isDeleted() && !deleted ) {
+                    log.warn( "Undeleting record {}. Relations are not restored", id );
                 }
-                case Delete: {
-                    deleted = true;
-                    break;
-                }
-                case Active: {
-                    deleted = false;
-                    break;
-                }
-                default: {
-                    log.error( "Unsupported match type '{}'", matchType );
-                    deleted = historicRecord.isDeleted();
-                    break;
-                }
+                historicRecord.setDeleted( deleted );
+                historicRecord.setModified( new Date() );
+                historicRecord.setTrackingId( "Rollback:" + matchType.getOperator() + matchDate );
+                dao.saveRecord( historicRecord );
+                return true;
+            } else {
+                log.debug( "Record {} is already at required date {}", id, dateFormat.format( currentRecord.getModified() ) );
+                return false;
             }
-            if ( historicRecord.isDeleted() != deleted  || currentRecord.isDeleted() != deleted) {
-                log.debug( "Current deleted state {}, old deleted state {}, new deleted state {}",
-                        currentRecord.isDeleted(), historicRecord.isDeleted(), deleted );
-            }
-            if ( currentRecord.isDeleted() && !deleted ) {
-                log.warn( "Undeleting record {}. Relations are not restored", id );
-            }
-            historicRecord.setDeleted( deleted );
-            historicRecord.setModified( new Date() );
-            historicRecord.setTrackingId( "Rollback:" + matchOperator + matchDate );
-            dao.saveRecord( historicRecord );
-            return true;
         }
         else {
 
