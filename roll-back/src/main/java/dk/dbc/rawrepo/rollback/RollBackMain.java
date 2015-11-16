@@ -159,7 +159,7 @@ public class RollBackMain {
         Connection connection = null;
         try {
             connection = getConnection(dbUrl);
-            RawRepoDAO dao = RawRepoDAO.newInstance( connection );
+            RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
             if ( records.length > 0 ) {
                 log.debug( "Rolling back up to {} records to '{}', time matching rule: '{}', library {}, state modification option '{}', queue role '{}'",
                         records.length, timestamp, match, library, state, role );

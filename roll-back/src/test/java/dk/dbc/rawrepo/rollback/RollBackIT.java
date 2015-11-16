@@ -105,7 +105,7 @@ public class RollBackIT {
     @Test
     public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.newInstance( connection );
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
         connection.setAutoCommit( false );
         Record record;
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
@@ -152,11 +152,11 @@ public class RollBackIT {
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
         assertEquals( "Version 3", new String ( record.getContent(), StandardCharsets.UTF_8) );
     }
-    
+
     @Test
     public void testBulkAgency_with2Records() throws SQLException, ClassNotFoundException, RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.newInstance( connection );
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
         connection.setAutoCommit( false );
         Record record;
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );

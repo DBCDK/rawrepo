@@ -66,7 +66,7 @@ public class RollBack {
 
     public static boolean rollbackRecord( Connection connection, RecordId id, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
         log.info( "Rolling record {} back to {}", id, matchDate );
-        RawRepoDAO dao = RawRepoDAO.newInstance( connection );
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
         boolean modified = rollbackRecord( dao, id, matchDate, matchType, state );
         if ( modified ) {
             queueRecord( dao, id, queueRole );
@@ -222,7 +222,7 @@ public class RollBack {
 
     public static void rollbackAgency( Connection connection, int agencyId, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.newInstance( connection );
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
 
         log.info( "Identifying records for {}", agencyId );
         try {
