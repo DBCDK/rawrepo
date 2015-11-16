@@ -174,7 +174,7 @@ public class Indexer {
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
         Timer.Context time = createDAOTimer.time();
-        final RawRepoDAO dao = RawRepoDAO.newInstance(connection, searchOrder);
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(searchOrder).build();
         time.stop();
         return dao;
     }

@@ -18,8 +18,11 @@
  */
 package dk.dbc.rawrepo;
 
+import dk.dbc.gracefulcache.CacheException;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -45,57 +48,128 @@ public abstract class RawRepoDAO {
     private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
 
     AgencySearchOrder agencySearchOrder;
+    RelationHints relationHints;
 
     /**
-     * Load a class and instantiate it based on the driver name from the
-     * supplied connection
-     * <p>
-     * USE:
-     * {@link #newInstance(java.sql.Connection, dk.dbc.rawrepo.AgencySearchOrder)}
+     * Builder Pattern from RawRepoDAO
      *
-     *
-     * @param connection database connection
-     * @return a RawRepoDAO for the connection
-     * @throws RawRepoException
      */
-    public static RawRepoDAO newInstance(Connection connection) throws RawRepoException {
-        return newInstance(connection, new AgencySearchOrderFallback());
-    }
+    public static class Builder {
 
-    /**
-     * Load a class and instantiate it based on the driver name from the
-     * supplied connection
-     *
-     * @param connection        database connection
-     * @param agencySearchOrder search order provider for an agency, only used
-     *                          by {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger)},
-     *                          {@link #changedRecord(java.lang.String, dk.dbc.rawrepo.RecordId, java.lang.String)}
-     *                          and
-     *                          {@link #fetchRecordCollection(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger)}
-     * @return a RawRepoDAO for the connection
-     * @throws RawRepoException
-     */
-    public static RawRepoDAO newInstance(Connection connection, AgencySearchOrder agencySearchOrder) throws RawRepoException {
-        try {
-            DatabaseMetaData metaData = connection.getMetaData();
-            String databaseProductName = metaData.getDatabaseProductName();
-            String daoName = RawRepoDAO.class.getName();
-            String className = daoName + databaseProductName + "Impl";
-            Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
-            if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
-                log.error("Class found by not an instance of RawRepoDAO");
-                throw new RawRepoException("Unable to load driver");
-            }
-            Constructor<?> constructor = clazz.getConstructor(Connection.class);
-            RawRepoDAO dao = (RawRepoDAO) constructor.newInstance(connection);
-            dao.validateConnection();
-            dao.agencySearchOrder = agencySearchOrder;
-            return dao;
-        } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            log.error("Caught exception tryini to instantiate dao", ex);
-            throw new RawRepoException("Unable to load driver", ex);
+        private final Connection connection;
+        private AgencySearchOrder agencySearchOrder;
+        private RelationHints relationHints;
+
+        private Builder(Connection connection) {
+            this.connection = connection;
+            this.agencySearchOrder = null;
+            this.relationHints = null;
         }
+
+        /**
+         * use {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
+         * with a static service, to facilitate caching
+         *
+         * @param agencySearchOrder
+         * @return self
+         */
+        public Builder searchOrder(AgencySearchOrder agencySearchOrder) {
+            if (this.agencySearchOrder != null) {
+                throw new IllegalStateException("Cannot set agencySearchOrder again");
+            }
+            this.agencySearchOrder = agencySearchOrder;
+            return this;
+        }
+
+        /**
+         * use {@link #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL)}
+         * with a static service, to facilitate caching
+         *
+         * @param relationHints
+         * @return self
+         */
+        public Builder relationHints(RelationHints relationHints) {
+            if (this.relationHints != null) {
+                throw new IllegalStateException("Cannot set relationHints again");
+            }
+            this.relationHints = relationHints;
+            return this;
+        }
+
+        /**
+         * Construct all services that uses openagency webservice
+         *
+         * @param service
+         * @return self
+         */
+        public Builder openAgency(OpenAgencyServiceFromURL service) {
+            if (this.agencySearchOrder != null) {
+                throw new IllegalStateException("Cannot set agencySearchOrder again");
+            }
+            if (this.relationHints != null) {
+                throw new IllegalStateException("Cannot set relationHints again");
+            }
+            this.agencySearchOrder = new AgencySearchOrderFromShowOrder(service);
+            this.relationHints = new RelationHintsOpenAgency(service);
+            return this;
+        }
+
+        /**
+         * Construct a dao from the builder
+         *
+         * @return {@link RawRepoDAO} dao with default services, if none has been provided.
+         * @throws RawRepoException
+         */
+        public RawRepoDAO build() throws RawRepoException {
+            try {
+                DatabaseMetaData metaData = connection.getMetaData();
+                String databaseProductName = metaData.getDatabaseProductName();
+                RawRepoDAO dao;
+                switch (databaseProductName) {
+                    case "PostgreSQL":
+                        dao = new RawRepoDAOPostgreSQLImpl(connection);
+                        break;
+                    default:
+                        String daoName = RawRepoDAO.class.getName();
+                        String className = daoName + databaseProductName + "Impl";
+                        Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
+                        if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
+                            log.error("Class found by not an instance of RawRepoDAO");
+                            throw new RawRepoException("Unable to load driver");
+                        }
+                        Constructor<?> constructor = clazz.getConstructor(Connection.class);
+                        dao = (RawRepoDAO) constructor.newInstance(connection);
+                }
+                dao.validateConnection();
+
+                if (agencySearchOrder == null) {
+                    agencySearchOrder = new AgencySearchOrderFallback();
+                }
+                dao.agencySearchOrder = agencySearchOrder;
+
+                if (relationHints == null) {
+                    relationHints = new RelationHints();
+                }
+                dao.relationHints = relationHints;
+
+                return dao;
+            } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                log.error("Caught exception tryini to instantiate dao", ex);
+                throw new RawRepoException("Unable to load driver", ex);
+            }
+        }
+    };
+
+    /**
+     * Make a dao builder
+     *
+     * @param connection
+     * @return builder
+     */
+    public static Builder builder(Connection connection) {
+        return new Builder(connection);
     }
+
 
     protected void validateConnection() throws RawRepoException {
     }
@@ -206,6 +280,15 @@ public abstract class RawRepoDAO {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, false);
     }
 
+    /**
+     * Identify agency for a record, if agency doesn't have one self
+     *
+     * @param bibliographicRecordId record
+     * @param originalAgencyId      agency requesting record
+     * @param fetchDeleted          allow deleted records
+     * @return agency that has the wanted record
+     * @throws RawRepoException if no agency could be found
+     */
     public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
@@ -217,6 +300,30 @@ public abstract class RawRepoDAO {
             }
         }
         throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + originalAgencyId);
+    }
+
+    public int relationAgency(String bibliographicRecordId, int originalAgencyId, boolean allowSelf) throws RawRepoException {
+        Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
+        try {
+            if (relationHints.usesCommonAgency(originalAgencyId)) {
+                for (Integer agencyId : relationHints.get(originalAgencyId)) {
+                    if (allAgenciesWithRecord.contains(agencyId)) {
+                        return agencyId;
+                    }
+                }
+            }
+            if (allowSelf && allAgenciesWithRecord.contains(originalAgencyId)) {
+                return originalAgencyId;
+            }
+        } catch (CacheException ex) {
+            log.error("Could not access cache: " + ex.getMessage());
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                log.error("Cause: " + cause.getMessage());
+            }
+            throw new RawRepoException("Error accessing relation hints", ex);
+        }
+        throw new RawRepoExceptionRecordNotFound("Could not find relation agency for " + originalAgencyId);
     }
 
     /**
@@ -259,7 +366,7 @@ public abstract class RawRepoDAO {
                 content = merger.merge(content, next.getContent(), next.getId().getAgencyId() == originalAgencyId);
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
-                record = RecordImpl.Enriched(bibliographicRecordId, next.getId().getAgencyId(),
+                record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
                                              merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
                                              record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
                                              record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
@@ -596,7 +703,7 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     * Traverse up through parents, and add all affected libraries
+     * Traverse up through parents, and searchOrder all affected libraries
      *
      * @param recordId
      * @return

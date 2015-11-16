@@ -40,21 +40,19 @@ public class AgencySearchOrderEJB {
     Properties props;
 
     private OpenAgencyServiceFromURL openAgencyService;
-    private AgencySearchOrderFromShowOrder agencySearchOrder;
 
     @PostConstruct
     public void init() {
         log.debug("init()");
         String url = props.getProperty(C.SEARCHORDER.URL, C.SEARCHORDER.URL_DEFAULT);
         openAgencyService = OpenAgencyServiceFromURL.builder()
-                .connectTimeout(getInteger(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
-                .requestTimeout(getInteger(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
-                .build(url);
-        agencySearchOrder = new AgencySearchOrderFromShowOrder(openAgencyService);
+        .connectTimeout(getInteger(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
+        .requestTimeout(getInteger(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
+        .build(url);
     }
 
-    public AgencySearchOrderFromShowOrder getAgencySearchOrder() {
-        return agencySearchOrder;
+    public OpenAgencyServiceFromURL getOpenAgencyService() {
+        return openAgencyService;
     }
 
     private int getInteger(String key, String defaultValue) {

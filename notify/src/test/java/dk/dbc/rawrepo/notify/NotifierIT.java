@@ -86,7 +86,7 @@ public class NotifierIT {
     @Test
     public void testPerformWork() throws Exception {
         // Create dao
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists("A", 870970));
         assertEquals(0, getQueueSize());
 

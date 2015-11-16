@@ -18,11 +18,11 @@
  */
 package dk.dbc.rawrepo;
 
-import java.util.HashMap;
+import dk.dbc.gracefulcache.CacheProvider;
+import dk.dbc.gracefulcache.CacheTimeoutException;
+import dk.dbc.gracefulcache.CacheValueException;
+import dk.dbc.gracefulcache.GracefulCache;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Interface for providing a list of agencies, which is the search order for
@@ -35,12 +35,13 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
-public abstract class AgencySearchOrder {
+public abstract class AgencySearchOrder implements CacheProvider<Integer, List<Integer>> {
 
-    private final HashMap<Integer, CacheEntry> cache;
+    private final GracefulCache<Integer, List<Integer>> cache;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public AgencySearchOrder() {
-        this.cache = new HashMap<>();
+        this.cache = new GracefulCache<>(this, 2, 3600 * 1000, 60 * 1000, 10, 3000);
     }
 
     /**
@@ -48,78 +49,16 @@ public abstract class AgencySearchOrder {
      *
      * @param agencyId
      * @return list in search order
+     * @throws dk.dbc.rawrepo.RawRepoException
      */
-    public List<Integer> getAgenciesFor(int agencyId) {
-        boolean fetch = false;
-        CacheEntry cacheEntry;
-        synchronized (cache) {
-            cacheEntry = cache.get(agencyId);
-            if (cacheEntry == null
-                || cacheEntry.isTimeout()) {
-                cacheEntry = new CacheEntry();
-                cache.put(agencyId, cacheEntry);
-                fetch = true;
-            }
+    public List<Integer> getAgenciesFor(int agencyId) throws RawRepoException {
+        try {
+            return cache.get(agencyId);
+        } catch (CacheTimeoutException | CacheValueException ex) {
+            throw new RawRepoException("Cannot get data: " + ex.getMessage());
         }
-        if (fetch) {
-            cacheEntry.setList(provideAgenciesFor(agencyId));
-        }
-        return cacheEntry.getList();
     }
 
-    /**
-     *
-     * @param agencyId
-     * @return list of search order of agencies
-     */
-    public abstract List<Integer> provideAgenciesFor(int agencyId);
-
-    private static final long MAX_AGE_SECONDS = 3600 * 12;
-
-    private static class CacheEntry {
-
-        private final Lock lock;
-        private final Condition condition;
-
-        private final long timeOut;
-        private List<Integer> list;
-
-        public CacheEntry() {
-            this.lock = new ReentrantLock();
-            this.condition = this.lock.newCondition();
-            this.timeOut = System.currentTimeMillis() + MAX_AGE_SECONDS * 1000;
-            this.list = null;
-        }
-
-        public boolean isTimeout() {
-            return timeOut > System.currentTimeMillis();
-        }
-
-        public List<Integer> getList() {
-            lock.lock();
-            try {
-                while (list == null) {
-                    try {
-                        condition.await();
-                    } catch (InterruptedException ex) {
-                    }
-                }
-            } finally {
-                lock.unlock();
-            }
-            return list;
-        }
-
-        public void setList(List<Integer> list) {
-            lock.lock();
-            try {
-                this.list = list;
-                condition.signalAll();
-            } finally {
-                lock.unlock();
-            }
-        }
-
-    }
-
+    @Override
+    public abstract List<Integer> provide(Integer key) throws Exception;
 }

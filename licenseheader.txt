@@ -3,14 +3,14 @@ ${licenseFirst}
 </#if>
 ${licensePrefix}Copyright (C) ${date?date?string("yyyy")} DBC A/S (http://dbc.dk/)
 ${licensePrefix?replace(" +$", "", "r")}
-${licensePrefix}This is part of dbc-rawrepo-commons
+${licensePrefix}This is part of dbc-rawrepo
 ${licensePrefix?replace(" +$", "", "r")}
-${licensePrefix}dbc-rawrepo-commons is free software: you can redistribute it and/or modify
+${licensePrefix}dbc-rawrepo is free software: you can redistribute it and/or modify
 ${licensePrefix}it under the terms of the GNU General Public License as published by
 ${licensePrefix}the Free Software Foundation, either version 3 of the License, or
 ${licensePrefix}(at your option) any later version.
 ${licensePrefix?replace(" +$", "", "r")}
-${licensePrefix}dbc-rawrepo-commons is distributed in the hope that it will be useful,
+${licensePrefix}dbc-rawrepo is distributed in the hope that it will be useful,
 ${licensePrefix}but WITHOUT ANY WARRANTY; without even the implied warranty of
 ${licensePrefix}MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ${licensePrefix}GNU General Public License for more details.

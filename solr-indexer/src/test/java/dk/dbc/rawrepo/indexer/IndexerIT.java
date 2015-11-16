@@ -118,7 +118,7 @@ public class IndexerIT {
 
     @Test
     public void createRecord() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
@@ -141,7 +141,7 @@ public class IndexerIT {
 
     @Test
     public void deleteRecord() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         // Put in a document that is going to be deleted
@@ -169,7 +169,7 @@ public class IndexerIT {
 
     @Test
     public void createRecordWhenIndexingFails() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);

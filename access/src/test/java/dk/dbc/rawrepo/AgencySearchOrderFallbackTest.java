@@ -33,7 +33,7 @@ public class AgencySearchOrderFallbackTest {
     }
 
     @Test
-    public void testProvideAgenciesFor() {
+    public void testProvideAgenciesFor() throws Exception {
         AgencySearchOrderFallback agencySearchOrderFallback = new AgencySearchOrderFallback("4,3,2,1");
 
         assertEquals(Arrays.asList(5, 4, 3, 2, 1), agencySearchOrderFallback.getAgenciesFor(5));

@@ -23,7 +23,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -91,7 +90,7 @@ public class AgencyLoad implements AutoCloseable {
         if (useTransaction) {
             this.connection.setAutoCommit(false);
         }
-        this.dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback());
+        this.dao = RawRepoDAO.builder(connection).build();
         this.agencies = agencies;
         this.commonAgency = commonAgency;
         this.role = role;

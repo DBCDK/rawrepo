@@ -125,7 +125,7 @@ public class Notifier {
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
         Timer.Context time = createDAOTimer.time();
-        final RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         time.stop();
         return dao;
     }

@@ -133,7 +133,7 @@ public class Introspect {
     public Response getAgenciesWith(@PathParam("db") String resource,
                                     @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);
             ArrayList<Integer> response = new ArrayList<>(agencies);
             Collections.sort(response);
@@ -151,7 +151,7 @@ public class Introspect {
                                     @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
 
             ArrayList<Object> response = xmlDiff(record, record);
@@ -170,7 +170,7 @@ public class Introspect {
                                       @PathParam("id") String bibliographicRecordId,
                                       @PathParam("version") Integer version) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record record = dao.getHistoricRecord(recordHistory.get(version));
 
@@ -191,7 +191,7 @@ public class Introspect {
                                   @PathParam("left") Integer left,
                                   @PathParam("right") Integer right) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record leftRecord = dao.getHistoricRecord(recordHistory.get(left));
             Record rightRecord = dao.getHistoricRecord(recordHistory.get(right));
@@ -211,7 +211,7 @@ public class Introspect {
                                      @PathParam("agency") Integer agencyId,
                                      @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             ArrayList<Object> response = new ArrayList<>();
             for (RecordMetaDataHistory recordMetaData : recordHistory) {
@@ -232,7 +232,7 @@ public class Introspect {
                                  @PathParam("agency") Integer agencyId,
                                  @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
             HashMap<String, Object> response = new HashMap();
 

@@ -55,7 +55,7 @@ class AgencyDelete {
     public AgencyDelete(String db, int agencyid) throws SQLException, RawRepoException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
-        this.dao = RawRepoDAO.newInstance(connection);
+        this.dao = RawRepoDAO.builder(connection).build();
 
     }
 

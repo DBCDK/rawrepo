@@ -29,7 +29,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,7 +72,9 @@ public class AgencySearchOrderFromShowOrderIT {
 
     @Test
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException, IOException, MarcXMergerException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("870970,191919"));
+        RawRepoDAO dao = RawRepoDAO.builder(connection)
+                   .searchOrder(new AgencySearchOrderFallback("870970,191919"))
+                   .build();
         connection.setAutoCommit(false);
 
         Record rec;
@@ -195,10 +196,10 @@ public class AgencySearchOrderFromShowOrderIT {
 
     void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
         connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         Map<String, Set<RecordId>> idMap = new HashMap<>();
         for (String id : ids) {
-            idMap.put(id, new HashSet<RecordId>());
+            idMap.put(id, new HashSet<>());
         }
         Set<String> keys = idMap.keySet();
 
@@ -219,13 +220,13 @@ public class AgencySearchOrderFromShowOrderIT {
 
     void setupRelations(String... relations) throws NumberFormatException, RawRepoException, SQLException {
         connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         for (String relation : relations) {
             String[] list = relation.split(",", 2);
             RecordId from = recordIdFromString(list[0]);
             RecordId to = recordIdFromString(list[1]);
-            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId())
-                && dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
+            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId()) &&
+                dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
                 Set<RecordId> relationsFrom = dao.getRelationsFrom(from);
                 relationsFrom.add(to);
                 dao.setRelationsFrom(from, relationsFrom);
@@ -271,23 +272,6 @@ public class AgencySearchOrderFromShowOrderIT {
         return collection;
     }
 
-    /**
-     * Raise an (descriptive) exception if a collection of strings doesn't match
-     * supplied list
-     *
-     * @param col   collection
-     * @param elems string elements collection should consist of
-     */
-    private static void collectionIs(Collection<String> col, String... elems) {
-        HashSet<String> missing = new HashSet();
-        Collections.addAll(missing, elems);
-        HashSet<String> extra = new HashSet(col);
-        extra.removeAll(missing);
-        missing.removeAll(col);
-        if (!extra.isEmpty() || !missing.isEmpty()) {
-            throw new RuntimeException("missing:" + missing.toString() + ", extra=" + extra.toString());
-        }
-    }
 
     /**
      * Parse a string to a recordid

@@ -195,7 +195,7 @@ public class RecordInspector implements Closeable {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.newInstance(connection, aso);
+        return RawRepoDAO.builder(connection).searchOrder(aso).build();
     }
 
 }

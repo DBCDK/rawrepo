@@ -18,7 +18,6 @@
  */
 package dk.dbc.rawrepo.showorder;
 
-import dk.dbc.openagency.client.OpenAgencyException;
 import java.util.Arrays;
 import org.junit.Test;
 
@@ -36,15 +35,15 @@ public class AgencySearchOrderFromShowOrderTest {
     }
 
     @Test
-    public void testProvideAgenciesFor() throws OpenAgencyException {
+    public void testProvideAgenciesFor() throws Exception {
         AgencySearchOrderFromShowOrder showOrder = mock(AgencySearchOrderFromShowOrder.class);
-        doCallRealMethod().when(showOrder).provideAgenciesFor(anyInt());
-        when(showOrder.fetchAgencies(100000)).thenReturn(Arrays.asList("870970", "150000"));
-        when(showOrder.fetchAgencies(101000)).thenReturn(Arrays.asList("870970", "150000", "101000"));
+        doCallRealMethod().when(showOrder).provide(anyInt());
+        when(showOrder.fetchOrder(100000)).thenReturn(Arrays.asList("870970", "150000"));
+        when(showOrder.fetchOrder(101000)).thenReturn(Arrays.asList("870970", "150000", "101000"));
 
-        assertArrayEquals(new Object[]{100000, 870970, 150000}, showOrder.provideAgenciesFor(100000).toArray());
+        assertArrayEquals(new Object[]{100000, 870970, 150000}, showOrder.provide(100000).toArray());
 
-        assertArrayEquals(new Object[]{870970, 150000, 101000}, showOrder.provideAgenciesFor(101000).toArray());
+        assertArrayEquals(new Object[]{870970, 150000, 101000}, showOrder.provide(101000).toArray());
 
     }
 

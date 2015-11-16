@@ -20,6 +20,7 @@ package dk.dbc.rawrepo.agencydump;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
@@ -27,7 +28,6 @@ import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,7 +56,11 @@ public class AgencyDump implements AutoCloseable {
     AgencyDump(String db, int agencyid, String openAgency) throws RawRepoException, SQLException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
-        this.dao = RawRepoDAO.newInstance(connection, openAgency == null ? new AgencySearchOrderFallback() : new AgencySearchOrderFromShowOrder(openAgency));
+        RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
+        if(openAgency != null) {
+            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgency));
+        }
+        this.dao = builder.build();
     }
 
     @Override

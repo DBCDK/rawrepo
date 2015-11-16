@@ -51,17 +51,17 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
 
-    private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?"
-                                                    + " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
-                                                    + " ORDER BY modified DESC";
-    private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?"
-                                                   + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
+    private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?" +
+                                 " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
+                                 " ORDER BY modified DESC";
+    private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?" +
+                                 " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
 
-    private static final String TRACKING_IDS_SINCE = "SELECT trackingid, modified FROM records"
-                                                     + " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?"
-                                                     + " UNION SELECT trackingid, modified FROM records_archive"
-                                                     + " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?"
-                                                     + " ORDER BY modified DESC;";
+    private static final String TRACKING_IDS_SINCE = "SELECT trackingid, modified FROM records" +
+                                 " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+                                 " UNION SELECT trackingid, modified FROM records_archive" +
+                                 " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+                                 " ORDER BY modified DESC;";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -201,7 +201,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
             return ret;
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
         }
     }

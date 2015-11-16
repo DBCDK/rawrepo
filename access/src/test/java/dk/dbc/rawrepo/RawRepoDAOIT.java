@@ -34,12 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -77,7 +72,8 @@ public class RawRepoDAOIT {
     @Test
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException {
         setupData(100000, "A:870970");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+
         connection.setAutoCommit(false);
 
         //
@@ -138,7 +134,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         Record record;
         record = dao.fetchRecord("a bcd efg h", 100000);
@@ -183,7 +179,7 @@ public class RawRepoDAOIT {
     @Test
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, ClassNotFoundException {
         setupData(100000, "B:2", "B:870970", "C:870970", "D:1", "D:870970", "E:870970", "F:1", "F:870970", "G:870970", "H:1", "H:870970");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         MarcXMerger merger = new MarcXMerger() {
@@ -213,7 +209,7 @@ public class RawRepoDAOIT {
     public void testFetchRecordCollectionNoCommonLibrary() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "B:1", "C:1", "D:1", "E:1", "F:1", "G:1", "H:1");
         setupRelations("C:1,B:1", "D:1,C:1", "E:1,C:1", "F:1,B:1", "G:1,F:1", "H:1,F:1");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         MarcXMerger merger = new MarcXMerger();
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, merger)), "B:1", "C:1", "D:1");
@@ -222,7 +218,7 @@ public class RawRepoDAOIT {
     @Test
     public void testDeleteRecord() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "B:870970");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         //Ensure record is in base
@@ -254,7 +250,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityWithout() throws SQLException, RawRepoException {
         setupData(100000, "A:870970");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -266,7 +262,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityWith() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -280,7 +276,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityLocalData() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:1"), "text/plain");
         collectionIs(getQueue(),
@@ -298,7 +294,7 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("C:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -317,7 +313,7 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("B:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -343,7 +339,7 @@ public class RawRepoDAOIT {
                 "S1:870970,H:870970", "S1:2,S1:870970", "S1:3,S1:2",
                 "B11:870970,S1:870970",
                 "B12:870970,S1:870970", "B12:4,B12:870970");
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         clearQueue();
@@ -374,19 +370,18 @@ public class RawRepoDAOIT {
     @Test
     public void testDeQueueWithSavepoint() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         Connection connection1 = DriverManager.getConnection(jdbc);
-        RawRepoDAO dao1 = RawRepoDAO.newInstance(connection1);
+        RawRepoDAO dao1 = RawRepoDAO.builder(connection1).build();
         connection1.setAutoCommit(false);
 
         Connection connection2 = DriverManager.getConnection(jdbc);
-        RawRepoDAO dao2 = RawRepoDAO.newInstance(connection2);
+        RawRepoDAO dao2 = RawRepoDAO.builder(connection2).build();
         connection2.setAutoCommit(false);
 
         Connection connection3 = DriverManager.getConnection(jdbc);
-        RawRepoDAO dao3 = RawRepoDAO.newInstance(connection3);
         connection3.setAutoCommit(false);
 
         System.out.println("QUEUE A:1");
@@ -458,7 +453,7 @@ public class RawRepoDAOIT {
     @Test
     public void testDeQueue() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         dao.enqueue(new RecordId("A", 1), "test", "", true, true);
@@ -472,7 +467,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testQueueFail() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
@@ -497,7 +492,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testDequeueBulk() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         for (int i = 0 ; i < 10 ; i++) {
             dao.enqueue(new RecordId("rec" + i, 123456), "test", "text/plain", false, false);
@@ -562,7 +557,7 @@ public class RawRepoDAOIT {
     @Test
     public void testArchive() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
 
         Record record1 = dao.fetchRecord("1 234 567 8", 123456);
@@ -621,7 +616,7 @@ public class RawRepoDAOIT {
 
     void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
         connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         Map<String, Set<RecordId>> idMap = new HashMap<>();
         for (String id : ids) {
             idMap.put(id, new HashSet<RecordId>());
@@ -645,7 +640,7 @@ public class RawRepoDAOIT {
 
     void setupRelations(String... relations) throws NumberFormatException, RawRepoException, SQLException {
         connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         for (String relation : relations) {
             String[] list = relation.split(",", 2);
             RecordId from = recordIdFromString(list[0]);

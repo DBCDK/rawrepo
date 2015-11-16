@@ -181,7 +181,7 @@ public class FieldRules {
         this.remove = new HashSet<>();
         this.overwriteCollections = overwriteCollectionsInit(overwrite);
         this.validRegex = Pattern.compile(validRegex, Pattern.MULTILINE);
-        this.fixups = fixups;
+        this.fixups = fixups.clone();
     }
 
     /**

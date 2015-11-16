@@ -107,7 +107,7 @@ public class AgencyDeleteIT {
         System.out.println("deleted records");
         agencyDelete.commit();
 
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
+        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
 
         countQueued("leaf", 2);
         HashSet<String> leafs = new HashSet<>();
@@ -130,7 +130,7 @@ public class AgencyDeleteIT {
     @Test
     public void testQueue() throws Exception {
         {
-            RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
+            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:191919");
             connection.commit();
@@ -152,7 +152,7 @@ public class AgencyDeleteIT {
     }
 
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
-        RawRepoDAO dao = RawRepoDAO.newInstance(connection, new AgencySearchOrderFallback("191919"));
+        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();

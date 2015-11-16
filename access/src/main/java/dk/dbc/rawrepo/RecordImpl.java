@@ -78,7 +78,7 @@ class RecordImpl implements Record {
         this.enrichmentTrail = enrichmentTrail;
     }
 
-    static RecordImpl Enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
+    static RecordImpl enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
         return new RecordImpl(id, agencyId, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 

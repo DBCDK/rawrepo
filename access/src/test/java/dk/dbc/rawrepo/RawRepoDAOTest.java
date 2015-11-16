@@ -49,8 +49,6 @@ import org.slf4j.LoggerFactory;
 @RunWith(MockitoJUnitRunner.class)
 public class RawRepoDAOTest {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(RawRepoDAOTest.class);
-
     public RawRepoDAOTest() {
     }
 
@@ -72,7 +70,6 @@ public class RawRepoDAOTest {
                               "F:870970", // SECTION
                               "G:870970", "G:1", "G:2", // BIND
                               "H:870970", "H:1", "H:2");// BIND
-            Record r;
             MarcXMerger marcXMerger = new MarcXMerger() {
 
                 @Override

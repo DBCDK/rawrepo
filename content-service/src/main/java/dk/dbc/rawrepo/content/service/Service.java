@@ -157,7 +157,7 @@ public abstract class Service {
             }
 
             try (Connection connection = rawrepo.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.newInstance(connection, agencySearchOrder.getAgencySearchOrder());
+                RawRepoDAO dao = RawRepoDAO.builder(connection).openAgency(agencySearchOrder.getOpenAgencyService()).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 

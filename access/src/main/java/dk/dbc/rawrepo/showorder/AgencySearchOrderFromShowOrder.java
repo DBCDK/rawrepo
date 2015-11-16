@@ -23,11 +23,8 @@ import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.openagency.client.ShowOrder;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implements {@link AgencySearchOrder}, using openagency webservicecall
@@ -37,8 +34,6 @@ import org.slf4j.LoggerFactory;
  * @author Morten Bøgeskov <mb@dbc.dk>
  */
 public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
-
-    private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderFromShowOrder.class);
 
     private final OpenAgencyServiceFromURL service;
     private final ShowOrder showOrder;
@@ -73,11 +68,10 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     }
 
     @Override
-    public List<Integer> provideAgenciesFor(int agencyId) {
+    public List<Integer> provide(Integer agencyId) throws Exception {
         ArrayList<Integer> agencies = new ArrayList<>();
         boolean seen = false;
-        try {
-            for (String agencyAsString : fetchAgencies(agencyId)) {
+            for (String agencyAsString : fetchOrder(agencyId)) {
                 int agency = Integer.parseInt(agencyAsString, 10);
                 seen = seen || agency == agencyId;
                 agencies.add(agency);
@@ -86,13 +80,9 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
                 agencies.add(0, agencyId);
             }
             return agencies;
-        } catch (OpenAgencyException ex) {
-            log.error("Caught: OpenAgencyException: " + ex.getMessage());
-            throw new RuntimeException(ex);
-        }
     }
 
-    List<String> fetchAgencies(int agencyId) throws OpenAgencyException {
+    List<String> fetchOrder(Integer agencyId) throws OpenAgencyException {
         return showOrder.getOrder(agencyId);
     }
 

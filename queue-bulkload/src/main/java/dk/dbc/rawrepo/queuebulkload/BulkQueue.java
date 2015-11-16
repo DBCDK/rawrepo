@@ -138,6 +138,6 @@ public class BulkQueue {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.newInstance(connection);
+        return RawRepoDAO.builder(connection).build();
     }
 }
