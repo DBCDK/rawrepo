@@ -7,6 +7,8 @@
        <immediateFlush>true</immediateFlush>
     </encoder>
   </appender>
+  
+  <logger name="wiremock.org.mortbay.log" level="INFO"/>
 
   <root>
     <level value="TRACE"/>

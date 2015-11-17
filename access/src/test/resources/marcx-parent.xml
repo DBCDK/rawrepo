@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<marcx:record xmlns:marcx="info:lc/xmlns/marcxchange-v1" format="danMARC2" type="Bibliographic">
+    <marcx:leader>00000n    2200000   4500</marcx:leader>
+    <marcx:datafield ind1="0" ind2="0" tag="001">
+        <marcx:subfield code="a">01990810</marcx:subfield>
+        <marcx:subfield code="b">870970</marcx:subfield>
+        <marcx:subfield code="c">19820825</marcx:subfield>
+        <marcx:subfield code="d">19780410</marcx:subfield>
+        <marcx:subfield code="f">a</marcx:subfield>
+        <marcx:subfield code="o">c</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="004">
+        <marcx:subfield code="r">n</marcx:subfield>
+        <marcx:subfield code="a">b</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="008">
+        <marcx:subfield code="t">s</marcx:subfield>
+        <marcx:subfield code="u">f</marcx:subfield>
+        <marcx:subfield code="a">1962</marcx:subfield>
+        <marcx:subfield code="l">swe</marcx:subfield>
+        <marcx:subfield code="v">1</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="014">
+        <marcx:subfield code="a">50155919</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="245">
+        <marcx:subfield code="g">Del 2</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="260">
+        <marcx:subfield code="c">1962</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="530">
+        <marcx:subfield code="a">Indhold: Mathilda Wrede, Viktor Magnus von Born, Carl Gustaf Estlander, Jacob Tegengren, Nils Oskar Jansson, Julius Sundblom, Ernst von Born, John Österholm</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">11</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Wrede</marcx:subfield>
+        <marcx:subfield code="h">Mathilda</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">12</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Born</marcx:subfield>
+        <marcx:subfield code="h">Viktor Magnus von</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">13</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Estlander</marcx:subfield>
+        <marcx:subfield code="h">Carl Gustaf</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">14</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Tegengren</marcx:subfield>
+        <marcx:subfield code="h">Jacob</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">15</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Jansson</marcx:subfield>
+        <marcx:subfield code="h">Nils Oskar</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">16</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Sundblom</marcx:subfield>
+        <marcx:subfield code="h">Julius</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">17</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Born</marcx:subfield>
+        <marcx:subfield code="h">Ernst von</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="å">18</marcx:subfield>
+        <marcx:subfield code="i">99.4</marcx:subfield>
+        <marcx:subfield code="a">Österholm</marcx:subfield>
+        <marcx:subfield code="h">John</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="996">
+        <marcx:subfield code="a">DBC</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="s10">
+        <marcx:subfield code="a">DBC</marcx:subfield>
+    </marcx:datafield>
+</marcx:record>

@@ -18,21 +18,17 @@
  */
 package dk.dbc.rawrepo;
 
-import com.github.tomakehurst.wiremock.global.GlobalSettings;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import dk.dbc.openagency.client.LibraryRuleHandler;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
  *
@@ -41,10 +37,18 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 public class RelationHintsOpenAgencyTest {
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(getPort());
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(getPort()).withRootDirectory(getPath()));
+
+    static int fallbackPort = (int) ( 15000.0 * Math.random() ) + 15000;
 
     static int getPort() {
-        return Integer.parseInt(System.getProperty("wiremock.port", "12345"));
+        int port = Integer.parseInt(System.getProperty("wiremock.port", "0"));
+        if(port == 0)
+            port = fallbackPort;
+        return port;
+    }
+    static String getPath() {
+        return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
     }
 
     @Before
@@ -64,7 +68,6 @@ public class RelationHintsOpenAgencyTest {
                         .withStatus(200)
                         .withBodyFile("openagency_libraryRules_870970.xml")));
     }
-
 
     @Test
     public void testUsesCommonAgency() throws Exception {
