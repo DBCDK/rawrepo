@@ -29,7 +29,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov
  */
 public class MarcXParser extends DefaultHandler {
 
