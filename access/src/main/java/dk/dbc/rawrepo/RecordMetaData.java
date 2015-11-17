@@ -22,7 +22,7 @@ import java.util.Date;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public interface RecordMetaData {
 

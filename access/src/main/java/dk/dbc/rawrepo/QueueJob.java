@@ -22,7 +22,7 @@ import java.sql.Timestamp;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class QueueJob {
 

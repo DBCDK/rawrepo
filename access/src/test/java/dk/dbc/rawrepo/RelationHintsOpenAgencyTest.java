@@ -32,7 +32,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class RelationHintsOpenAgencyTest {
 

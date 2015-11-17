@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author Morten Bøgeskov
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class MarcXParserTest {
 
