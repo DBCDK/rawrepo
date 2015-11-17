@@ -19,7 +19,6 @@
 package dk.dbc.rawrepo.content.service;
 
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import java.util.Properties;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Stateless
 public class AgencySearchOrderEJB {

@@ -23,7 +23,7 @@ import javax.ws.rs.core.Application;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @ApplicationPath(C.SERVICE)
 public class RestConfig extends Application{

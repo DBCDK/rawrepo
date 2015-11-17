@@ -32,7 +32,7 @@ import org.xml.sax.SAXParseException;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @WebService(serviceName = C.SERVICE, targetNamespace = C.NS, portName = C.PORT)
 @SchemaValidation(handler = WsdlValidationErrorHandler.class)

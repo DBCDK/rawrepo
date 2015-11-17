@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Singleton
 public class XmlToolsEJB extends Pool<XmlTools>{

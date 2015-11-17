@@ -20,7 +20,7 @@ package dk.dbc.rawrepo.content.service;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class C {
 

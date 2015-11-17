@@ -22,7 +22,7 @@ import java.util.LinkedList;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class Pool<T> {
 

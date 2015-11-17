@@ -41,6 +41,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.PostConstruct;
@@ -59,7 +61,7 @@ import org.xml.sax.SAXParseException;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class Service {
 
@@ -112,8 +114,11 @@ public abstract class Service {
 
     List<IPRange> ipRanges;
 
+    ExecutorService executorService;
+
     @PostConstruct
     public void init() {
+        log.info("init()");
         ipRanges = new ArrayList<>();
         String ranges = props.getProperty(C.X_FORWARDED_FOR, "");
         if (!ranges.isEmpty()) {
@@ -126,6 +131,7 @@ public abstract class Service {
                 }
             }
         }
+        executorService = Executors.newFixedThreadPool(2);
     }
 
     @WebMethod(operationName = C.OPERATION_FETCH)
@@ -157,7 +163,7 @@ public abstract class Service {
             }
 
             try (Connection connection = rawrepo.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).openAgency(agencySearchOrder.getOpenAgencyService()).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).openAgency(agencySearchOrder.getOpenAgencyService(), executorService).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 
@@ -168,9 +174,9 @@ public abstract class Service {
                     try {
                         switch (requestRecord.mode) {
                             case RAW:
-                                if (allowDeleted
-                                    ? !dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)
-                                    : !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                                if (allowDeleted ?
+                                    !dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId) :
+                                    !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                                     throw new RawRepoExceptionRecordNotFound();
                                 }
                                 record.content = fetchRaw(dao, requestRecord);
@@ -267,8 +273,8 @@ public abstract class Service {
             rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
         }
         byte[] content = rawRecord.getContent();
-        if (isMarcXChange(rawRecord.getMimeType())
-            && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+        if (isMarcXChange(rawRecord.getMimeType()) &&
+            ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
             content = filterContent(content);
         }
         return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
@@ -286,8 +292,8 @@ public abstract class Service {
             throw new RuntimeException(ex);
         }
         byte[] content = rawRecord.getContent();
-        if (isMarcXChange(rawRecord.getMimeType())
-            && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+        if (isMarcXChange(rawRecord.getMimeType()) &&
+            ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
             content = filterContent(content);
         }
         return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
@@ -297,9 +303,9 @@ public abstract class Service {
         Map<String, Record> collection;
         try (Timer.Context time = fetchCollection.time() ;
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
-            if (requestRecord.allowDeleted
-                && !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)
-                && dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+            if (requestRecord.allowDeleted &&
+                !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId) &&
+                dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                 Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                 collection = new HashMap<>();
                 collection.put(requestRecord.bibliographicRecordId, rawRecord);
@@ -321,8 +327,8 @@ public abstract class Service {
                     return "Cannot make marcx:collection from mimetype: " + rawRecord.getMimeType();
                 }
                 byte[] content = rawRecord.getContent();
-                if (isMarcXChange(rawRecord.getMimeType())
-                    && ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+                if (isMarcXChange(rawRecord.getMimeType()) &&
+                    ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
                     content = filterContent(content);
                 }
                 combined.add(content);
@@ -397,10 +403,10 @@ class IPRange {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Not a valid ip range: " + range);
         }
-        long num1 = ( Long.parseLong(matcher.group(1)) << 24 )
-                    + ( Long.parseLong(matcher.group(2)) << 16 )
-                    + ( Long.parseLong(matcher.group(3)) << 8 )
-                    + ( Long.parseLong(matcher.group(4)) );
+        long num1 = ( Long.parseLong(matcher.group(1)) << 24 ) +
+                    ( Long.parseLong(matcher.group(2)) << 16 ) +
+                    ( Long.parseLong(matcher.group(3)) << 8 ) +
+                    ( Long.parseLong(matcher.group(4)) );
         long minCalc = num1;
         long maxCalc = num1;
         if (matcher.group(5) != null) {
@@ -410,10 +416,10 @@ class IPRange {
             maxCalc |= ~mask;
         }
         if (matcher.group(6) != null) {
-            long num2 = ( Long.parseLong(matcher.group(6)) << 24 )
-                        + ( Long.parseLong(matcher.group(7)) << 16 )
-                        + ( Long.parseLong(matcher.group(8)) << 8 )
-                        + ( Long.parseLong(matcher.group(9)) );
+            long num2 = ( Long.parseLong(matcher.group(6)) << 24 ) +
+                        ( Long.parseLong(matcher.group(7)) << 16 ) +
+                        ( Long.parseLong(matcher.group(8)) << 8 ) +
+                        ( Long.parseLong(matcher.group(9)) );
             maxCalc = Math.max(num1, num2);
             minCalc = Math.min(num1, num2);
         }
@@ -429,10 +435,10 @@ class IPRange {
     boolean inRange(String ip) {
         Matcher matcher = IPV4_PATTERN.matcher(ip);
         if (matcher.matches()) {
-            return inRange(( Long.parseLong(matcher.group(1)) << 24 )
-                           + ( Long.parseLong(matcher.group(2)) << 16 )
-                           + ( Long.parseLong(matcher.group(3)) << 8 )
-                           + ( Long.parseLong(matcher.group(4)) ));
+            return inRange(( Long.parseLong(matcher.group(1)) << 24 ) +
+                           ( Long.parseLong(matcher.group(2)) << 16 ) +
+                           ( Long.parseLong(matcher.group(3)) << 8 ) +
+                           ( Long.parseLong(matcher.group(4)) ));
         }
         return false;
     }

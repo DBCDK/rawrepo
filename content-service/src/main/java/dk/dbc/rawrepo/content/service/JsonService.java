@@ -40,7 +40,7 @@ import org.xml.sax.SAXParseException;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Path("")
 @Stateless

@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class XmlToolsTest {
 
