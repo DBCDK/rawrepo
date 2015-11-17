@@ -35,12 +35,12 @@ public class RelationHints implements CacheProvider<Integer, List<Integer>> {
 
     @SuppressWarnings("LeakingThisInConstructor")
     public RelationHints() {
-        this.cache = new GracefulCache<>(this, 2, 3600 * 1000, 60 * 1000, 10, 10 * 1000);
+        this.cache = new GracefulCache<>(this, null, 3600 * 1000, 60 * 1000, 10, 10 * 1000);
     }
 
     @SuppressWarnings("LeakingThisInConstructor")
     public RelationHints(ExecutorService es) {
-        this.cache = new GracefulCache<>(this, es);
+        this.cache = new GracefulCache<>(this, es, 3600 * 1000, 60 * 1000, 10, 10 * 1000);
     }
 
     @Override

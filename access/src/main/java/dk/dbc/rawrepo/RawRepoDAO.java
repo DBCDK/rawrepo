@@ -126,7 +126,7 @@ public abstract class RawRepoDAO {
          * Construct all services that uses openagency webservice
          *
          * @param service
-         * @param es
+         * @param es executer service, or null if block while fetching
          * @return self
          */
         public Builder openAgency(OpenAgencyServiceFromURL service, ExecutorService es) {

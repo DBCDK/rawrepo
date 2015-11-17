@@ -34,6 +34,7 @@ public class AgencySearchOrderFallback extends AgencySearchOrder {
     private final Set<Integer> agenciesInSearchOrder;
 
     public AgencySearchOrderFallback(String agencies) throws NumberFormatException {
+        super(null);
         this.searchOrder = new ArrayList<>();
         for (String agency : agencies.split("[^0-9]+")) {
             this.searchOrder.add(Integer.parseInt(agency));
@@ -42,6 +43,7 @@ public class AgencySearchOrderFallback extends AgencySearchOrder {
     }
 
     public AgencySearchOrderFallback() {
+        super(null);
         this.searchOrder = initSearchOrderList();
         this.agenciesInSearchOrder = new HashSet<>(searchOrder);
     }
