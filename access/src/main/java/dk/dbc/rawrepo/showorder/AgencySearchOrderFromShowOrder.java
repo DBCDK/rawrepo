@@ -25,13 +25,14 @@ import dk.dbc.rawrepo.AgencySearchOrder;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Implements {@link AgencySearchOrder}, using openagency webservicecall
  * showOrder
  *
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
 
@@ -63,6 +64,12 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
     }
 
     public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service) {
+        this.service = service;
+        this.showOrder = service.showOrder();
+    }
+
+    public AgencySearchOrderFromShowOrder(OpenAgencyServiceFromURL service, ExecutorService es) {
+        super(es);
         this.service = service;
         this.showOrder = service.showOrder();
     }

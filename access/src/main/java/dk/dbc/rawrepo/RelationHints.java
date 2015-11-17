@@ -23,10 +23,11 @@ import dk.dbc.gracefulcache.CacheTimeoutException;
 import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.gracefulcache.GracefulCache;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class RelationHints implements CacheProvider<Integer, List<Integer>> {
 
@@ -35,6 +36,11 @@ public class RelationHints implements CacheProvider<Integer, List<Integer>> {
     @SuppressWarnings("LeakingThisInConstructor")
     public RelationHints() {
         this.cache = new GracefulCache<>(this, 2, 3600 * 1000, 60 * 1000, 10, 10 * 1000);
+    }
+
+    @SuppressWarnings("LeakingThisInConstructor")
+    public RelationHints(ExecutorService es) {
+        this.cache = new GracefulCache<>(this, es);
     }
 
     @Override

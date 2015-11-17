@@ -23,16 +23,22 @@ import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class RelationHintsOpenAgency extends RelationHints {
 
     private final OpenAgencyServiceFromURL openAgencyService;
 
     public RelationHintsOpenAgency(OpenAgencyServiceFromURL openAgencyService) {
+        this.openAgencyService = openAgencyService;
+    }
+
+    public RelationHintsOpenAgency(OpenAgencyServiceFromURL openAgencyService, ExecutorService es) {
+        super(es);
         this.openAgencyService = openAgencyService;
     }
 

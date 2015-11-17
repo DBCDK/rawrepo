@@ -36,12 +36,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class RawRepoDAO {
 
@@ -101,9 +102,14 @@ public abstract class RawRepoDAO {
         /**
          * Construct all services that uses openagency webservice
          *
+         * use {@link  #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL, java.util.concurrent.ExecutorService) } instead.
+         *
+         * This produces 2 threadpools, mostly often not used at all
+         *
          * @param service
          * @return self
          */
+        @Deprecated
         public Builder openAgency(OpenAgencyServiceFromURL service) {
             if (this.agencySearchOrder != null) {
                 throw new IllegalStateException("Cannot set agencySearchOrder again");
@@ -113,6 +119,25 @@ public abstract class RawRepoDAO {
             }
             this.agencySearchOrder = new AgencySearchOrderFromShowOrder(service);
             this.relationHints = new RelationHintsOpenAgency(service);
+            return this;
+        }
+
+        /**
+         * Construct all services that uses openagency webservice
+         *
+         * @param service
+         * @param es
+         * @return self
+         */
+        public Builder openAgency(OpenAgencyServiceFromURL service, ExecutorService es) {
+            if (this.agencySearchOrder != null) {
+                throw new IllegalStateException("Cannot set agencySearchOrder again");
+            }
+            if (this.relationHints != null) {
+                throw new IllegalStateException("Cannot set relationHints again");
+            }
+            this.agencySearchOrder = new AgencySearchOrderFromShowOrder(service, es);
+            this.relationHints = new RelationHintsOpenAgency(service, es);
             return this;
         }
 

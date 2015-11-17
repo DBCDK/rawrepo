@@ -23,6 +23,7 @@ import dk.dbc.gracefulcache.CacheTimeoutException;
 import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.gracefulcache.GracefulCache;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Interface for providing a list of agencies, which is the search order for
@@ -33,15 +34,20 @@ import java.util.List;
  * <p>
  * This ought to be in a @Singleton or an application global
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class AgencySearchOrder implements CacheProvider<Integer, List<Integer>> {
 
     private final GracefulCache<Integer, List<Integer>> cache;
 
-    @SuppressWarnings("LeakingThisInConstructor")
+    @SuppressWarnings(value = "LeakingThisInConstructor")
     public AgencySearchOrder() {
         this.cache = new GracefulCache<>(this, 2, 3600 * 1000, 60 * 1000, 10, 3000);
+    }
+
+    @SuppressWarnings("LeakingThisInConstructor")
+    public AgencySearchOrder(ExecutorService es) {
+        this.cache = new GracefulCache<>(this, es);
     }
 
     /**
