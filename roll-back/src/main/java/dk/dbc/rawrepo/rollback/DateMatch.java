@@ -44,6 +44,21 @@ public class DateMatch
 
     private final static DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
 
+    private final static Comparator<RecordMetaDataHistory> newestFirst = new Comparator<RecordMetaDataHistory>() {
+        @Override
+        public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
+            return o2.getModified().compareTo( o1.getModified() );
+        }
+    };
+    
+    private final static Comparator<RecordMetaDataHistory> oldestFirst = new Comparator<RecordMetaDataHistory>() {
+        @Override
+        public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
+            return o1.getModified().compareTo( o2.getModified() );
+        }
+    };
+
+
     public enum Match {
 
         Equal ( "Match against records with the exact specified timestamp", "=" ),
@@ -77,12 +92,7 @@ public class DateMatch
      */
     public static RecordMetaDataHistory beforeOrSame( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>( history );
-        Collections.sort( newestFirstHistory, new Comparator<RecordMetaDataHistory>() {
-            @Override
-            public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
-                return o2.getModified().compareTo( o1.getModified() );
-            }
-        } );
+        Collections.sort(newestFirstHistory, newestFirst);
         for ( RecordMetaDataHistory element : newestFirstHistory ) {
             if ( element.getModified().getTime() <= date.getTime() ) {
                 log.debug( "Found match {} for {}", element, dateFormat.format( date ) );
@@ -104,12 +114,7 @@ public class DateMatch
      */
     public static RecordMetaDataHistory before( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>( history );
-        Collections.sort( newestFirstHistory, new Comparator<RecordMetaDataHistory>() {
-            @Override
-            public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
-                return o2.getModified().compareTo( o1.getModified() );
-            }
-        } );
+        Collections.sort( newestFirstHistory, newestFirst );
         for ( RecordMetaDataHistory element : newestFirstHistory ) {
             if ( element.getModified().getTime() < date.getTime() ) {
                 log.debug( "Found match {} for {}", element, dateFormat.format( date ) );
@@ -131,12 +136,7 @@ public class DateMatch
      */
     public static RecordMetaDataHistory afterOrSame( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> oldestFirstHistory = new ArrayList<>( history );
-        Collections.sort( oldestFirstHistory, new Comparator<RecordMetaDataHistory>() {
-            @Override
-            public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
-                return o1.getModified().compareTo( o2.getModified() );
-            }
-        } );
+        Collections.sort( oldestFirstHistory, oldestFirst );
         for ( RecordMetaDataHistory element : oldestFirstHistory ) {
             if ( element.getModified().getTime() >= date.getTime() ) {
                 log.debug( "Found match {} for {}", element, dateFormat.format( date ) );
@@ -158,12 +158,7 @@ public class DateMatch
      */
     public static RecordMetaDataHistory after( Date date, List<RecordMetaDataHistory> history ) {
         List<RecordMetaDataHistory> oldestFirstHistory = new ArrayList<>( history );
-        Collections.sort( oldestFirstHistory, new Comparator<RecordMetaDataHistory>() {
-            @Override
-            public int compare( RecordMetaDataHistory o1, RecordMetaDataHistory o2 ) {
-                return o1.getModified().compareTo( o2.getModified() );
-            }
-        } );
+        Collections.sort( oldestFirstHistory, oldestFirst );
         for ( RecordMetaDataHistory element : oldestFirstHistory ) {
             if ( element.getModified().getTime() > date.getTime() ) {
                 log.debug( "Found match {} for {}", element, dateFormat.format( date ) );
