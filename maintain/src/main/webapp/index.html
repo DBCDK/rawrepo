@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>RawRepo Maintain</title>
+        <link href="css/error.css" type="text/css" rel="stylesheet">
+        <link href="css/content.css" type="text/css" rel="stylesheet">
+        <script src="js/moment.min.js"></script><!-- http://momentjs.com License: MIT -->
+        <script src="js/marked.min.js"></script><!-- https://github.com/chjj/marked License: ASIS-->
+        <script type="text/javascript">
+            /* global Service, marked */
+            marked.setOptions({
+//                renderer: new marked.Renderer(),
+//                gfm: true,
+//                tables: true,
+//                breaks: false,
+//                pedantic: false,
+                sanitize: true //, escape html
+//                smartLists: true,
+//                smartypants: false
+            });
+
+        </script>
+        <script src="js/service.js"></script>
+    </head>
+    <body onload="Service.constructContent();" onkeydown="Service.keydown(event);">
+        <h1 class="center">RawRepo Maintenance</h1>
+        <div id="titles"></div>
+        <div id="content">
+            <div class="selected">
+                <div class="center">
+                    <h1>Velkommen til RawRepo vedligehold</h1>
+                    <hr>
+                    <p>Her kan man rette i RawRepo, ved at vælge en fane, som kan løse ens opgave.</p>
+                    <p>Brug Ctrl + '1' - '9', for at skifte faner</p>
+
+                </div>
+            </div>
+
+            Queue Records
+            <div id="queueRecords">
+                <a class="reset" href="#" onclick="Service.resetPage('queueRecords');">Reset</a>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="agencyId#agencyid"></td>
+                            <td>AgencyId</td>
+                        </tr>
+                        <tr>
+                            <td><textarea name="ids/id#lines"></textarea><br><input type="file" onchange="Service.loadFileHandler(event, this);"></td>
+                            <td>BibliographicRecordId<br>One pr. line</td>
+                        </tr>
+                        <tr>
+                            <td><select name="provider#token"><option value="">[Select One]</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
+                            <td>Queue provider</td>
+                        </tr>
+                        <tr>
+                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('queueRecords')">Perform</button></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            Remove Records
+            <div id="removeRecords">
+                <a class="reset" href="#" onclick="Service.resetPage('removeRecords');">Reset</a>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="agencyId#agencyid"></td>
+                            <td>AgencyId</td>
+                        </tr>
+                        <tr>
+                            <td><textarea name="ids/id#lines"></textarea><br><input type="file" onchange="Service.loadFileHandler(event, this);"></td>
+                            <td>BibliographicRecordId<br>One pr. line</td>
+                        </tr>
+                        <tr>
+                            <td><select name="provider#?token"><option value="">None</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
+                            <td>Queue provider (optional)</td>
+                        </tr>
+                        <tr>
+                            <td><input name="trackingId#any" placeholder="TrackingId"></td>
+                            <td>Tracking id (optional)</td>
+                        </tr>
+                        <tr>
+                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('removeRecords')">Perform</button></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            Revert Records
+            <div id="revertRecords">
+                <a class="reset" href="#" onclick="Service.resetPage('revertRecords');">Reset</a>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="agencyId#agencyid"></td>
+                            <td>AgencyId</td>
+                        </tr>
+                        <tr>
+                            <td><textarea name="ids/id#lines"></textarea><br><input type="file" onchange="Service.loadFileHandler(event, this);"></td>
+                            <td>BibliographicRecordId<br>One pr. line</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" name="time/millis#timestamp"></td>
+                            <td>When (YYYY-MM-DD HH:MM:SS(.SSS))</td>
+                        </tr>
+                        <tr>
+                            <td><select name="provider#?token"><option value="">None</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
+                            <td>Queue provider (optional)</td>
+                        </tr>
+                        <tr>
+                            <td><input name="trackingId#any" placeholder="TrackingId" onchange="Service.SoapRequest.pageContent('revertRecords', 'trackingId');"></td>
+                            <td>Tracking id (optional)</td>
+                        </tr>
+                        <tr>
+                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('revertRecords')">Perform</button></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+        <div class="" id="status" onclick="false;"><div class="status-header"><div class="status-close" onclick="Service.closeStatus();">x</div></div><div class="status-body-wrapper"><div id="status-body">message</div></div></div>
+        <div class="selected" id="spinner" onclick="false;"><div><img src="images/pleasewait.gif" title="http://mentalized.net/activity-indicators/ [public domain]"></div></div>
+        <div id="errors"><a href="#" onclick="Service.errorsClear();">Clear All</a></div>
+    </body>
+</html>

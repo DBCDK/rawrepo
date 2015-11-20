@@ -1,0 +1,84 @@
+.error-message-fatal {
+    display: inline-block;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    border: 1px solid;
+    padding: 10px;
+    margin: 8px;
+    float: right;
+    clear: both;
+    background-color: #faa;
+}
+.error-message {
+    display: inline-block;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    border: 1px solid;
+    padding: 10px;
+    margin: 8px;
+    float: right;
+    clear: both;
+    background-color: #eee;
+}
+.error-message-fatal .error-header,
+.error-message .error-header {
+    display: block;
+    text-align: right;
+    position: absolute;
+    right: 20px;
+    margin-top: -20px;
+}
+.error-message-fatal .error-header .error-close,
+.error-message .error-header .error-close {
+    display: inline-block;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    border: 1px solid;
+    padding-left: 5px;
+    padding-right: 5px;
+    float: right;
+    clear: both;
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-family: sans-serif;
+    top: -0.5ex;
+}
+.error-message-fatal .error-body,
+.error-message .error-body {
+    display: inline-block;
+    white-space: pre-wrap;
+}
+#errors {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+#errors > a:last-child {
+    display: none;
+}
+#errors > a {
+    display: inline-block;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    border: 1px solid;
+    padding: 5px;
+    padding-left: 50px;
+    padding-right: 50px;
+    margin-right: 8px;
+    margin-bottom: 3px;
+    float: right;
+    clear: both;
+    background-color: #eee;
+    text-decoration: none;
+    color: black;
+}
+
+.invalid {
+    background-color: #f88;
+}

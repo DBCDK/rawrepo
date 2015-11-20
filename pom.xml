@@ -26,22 +26,26 @@
 
   <modules>
     <module>access</module>
-    <module>solr-indexer</module>
-    <module>queue-bulkload</module>
-    <module>record-load</module>
-    <module>record-inspector</module>
+    
     <module>agency-delete</module>
-    <module>solr-indexer-deploy</module>
-    <module>notify</module>
-    <module>notify-deploy</module>
-    <module>introspect</module>
-    <module>introspect-deploy</module>
-    <module>content-service</module>
-    <module>content-service-deploy</module>
-    <!--<module>management</module>-->
     <module>agency-dump</module>
     <module>agency-load</module>
+    <module>content-service</module>
+    <module>content-service-deploy</module>
+    <module>introspect-deploy</module>
+    <module>introspect</module>
+    <module>maintain</module>
+    <module>maintain-deploy</module>
+    <module>notify</module>
+    <module>notify-deploy</module>
+    <module>queue-bulkload</module>
+    <module>record-inspector</module>
+    <module>record-load</module>
     <module>roll-back</module>
+    <module>solr-indexer</module>
+    <module>solr-indexer-deploy</module>
+
+    <!-- This needs to be last, otherwise all following tools are not a part of the package --> 
     <module>debian</module>
   </modules>
 
