@@ -27,7 +27,7 @@ import org.xml.sax.Attributes;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class MarcXBlock {
 

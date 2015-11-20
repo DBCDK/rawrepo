@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class AgencyLoadTest {
 

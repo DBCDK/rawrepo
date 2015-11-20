@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class CommandLine {
 

@@ -20,7 +20,7 @@ package dk.dbc.rawrepo.agencyload;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public abstract class MarcXProcessor {
 
