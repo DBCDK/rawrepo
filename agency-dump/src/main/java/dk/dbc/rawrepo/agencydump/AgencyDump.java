@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class AgencyDump implements AutoCloseable {
 
@@ -58,7 +58,7 @@ public class AgencyDump implements AutoCloseable {
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if(openAgency != null) {
-            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgency));
+            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgency), null);
         }
         this.dao = builder.build();
     }
