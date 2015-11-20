@@ -116,6 +116,8 @@ public class MarcXParser extends DefaultHandler {
             case "subfield":
                 subfield = attributes.getValue("code");
                 break;
+            default:
+                break;
         }
     }
 
@@ -128,6 +130,8 @@ public class MarcXParser extends DefaultHandler {
                 break;
             case "subfield":
                 subfield = null;
+                break;
+            default:
                 break;
         }
     }
