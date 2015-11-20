@@ -48,75 +48,84 @@ public class AgencyDumpMain {
         int agencyid;
         OutputStream out = System.out;
         try {
-            commandLine.parse(args);
-            List<String> agencies = commandLine.getExtraArguments();
-            if (agencies.size() != 1) {
-                throw new IllegalStateException("Only One Agency");
-            }
-            agencyid = Integer.parseInt(agencies.get(0), 10);
-            if (agencyid < 0) {
-                throw new NumberFormatException("Positive integer expected");
-            }
-            int cnt = 0;
-            for (String option : Arrays.asList("enrichment", "merged", "entity")) {
-                if (commandLine.hasOption(option)) {
-                    cnt++;
+            try {
+                commandLine.parse(args);
+                List<String> agencies = commandLine.getExtraArguments();
+                if (agencies.size() != 1) {
+                    throw new IllegalStateException("Only One Agency");
                 }
-            }
-            if (cnt > 1) {
-                throw new IllegalStateException("Options enrichment, merged, entity are mutually exclusive");
-            }
+                agencyid = Integer.parseInt(agencies.get(0), 10);
+                if (agencyid < 0) {
+                    throw new NumberFormatException("Positive integer expected");
+                }
+                int cnt = 0;
+                for (String option : Arrays.asList("enrichment", "merged", "entity")) {
+                    if (commandLine.hasOption(option)) {
+                        cnt++;
+                    }
+                }
+                if (cnt > 1) {
+                    throw new IllegalStateException("Options enrichment, merged, entity are mutually exclusive");
+                }
 
-            if (commandLine.hasOption("open-agency") && !commandLine.hasOption("merged")) {
-                throw new IllegalStateException("--open-agency doesn't make sense without --merged");
-            }
+                if (commandLine.hasOption("open-agency") && !commandLine.hasOption("merged")) {
+                    throw new IllegalStateException("--open-agency doesn't make sense without --merged");
+                }
 
-            if (commandLine.hasOption("output")) {
-                String output = (String) commandLine.getOption("output");
-                out = new FileOutputStream(output);
-            }
+                if (commandLine.hasOption("output")) {
+                    String output = (String) commandLine.getOption("output");
+                    out = new FileOutputStream(output);
+                }
 
-            if (commandLine.hasOption("debug")) {
-                setLogLevel("logback-debug.xml");
-            } else {
-                setLogLevel("logback-info.xml");
-            }
+                if (commandLine.hasOption("debug")) {
+                    setLogLevel("logback-debug.xml");
+                } else {
+                    setLogLevel("logback-info.xml");
+                }
 
-        } catch (IllegalStateException | NumberFormatException ex) {
-            System.err.println(ex.getMessage());
-            System.err.println(commandLine.usage());
-            System.exit(1);
-            return;
-        } catch (JoranException ex) {
-            log.error("Exception", ex);
-            System.exit(1);
-            return;
-        } catch (FileNotFoundException ex) {
-            log.error("Error opening output file {}", ex.getMessage());
-            System.exit(1);
-            return;
-        }
-
-        String openAgency = null;
-        if(commandLine.hasOption("open-agency"))
-            openAgency = (String) commandLine.getOption("open-agency");
-        
-        try (AgencyDump agencyDump = new AgencyDump((String) commandLine.getOption("db"), agencyid, openAgency)) {
-
-            List<String> bibliographicRecordIds;
-            if (commandLine.hasOption("enrichment")) {
-                bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ENRICHMENT);
-            } else if (commandLine.hasOption("entity")) {
-                bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ENTITY);
-            } else {
-                bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ALL);
+            } catch (IllegalStateException | NumberFormatException ex) {
+                System.err.println(ex.getMessage());
+                System.err.println(commandLine.usage());
+                System.exit(1);
+                return;
+            } catch (JoranException ex) {
+                log.error("Exception", ex);
+                System.exit(1);
+                return;
+            } catch (FileNotFoundException ex) {
+                log.error("Error opening output file {}", ex.getMessage());
+                System.exit(1);
+                return;
             }
 
-            agencyDump.dumpRecords(bibliographicRecordIds, out, commandLine.hasOption("merged"));
+            String openAgency = null;
+            if (commandLine.hasOption("open-agency")) {
+                openAgency = (String) commandLine.getOption("open-agency");
+            }
 
-            log.info("Done");
-        } catch (MarcXMergerException | RawRepoException | SQLException | IOException ex) {
-            log.error(ex.getMessage());
+            try (AgencyDump agencyDump = new AgencyDump((String) commandLine.getOption("db"), agencyid, openAgency)) {
+
+                List<String> bibliographicRecordIds;
+                if (commandLine.hasOption("enrichment")) {
+                    bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ENRICHMENT);
+                } else if (commandLine.hasOption("entity")) {
+                    bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ENTITY);
+                } else {
+                    bibliographicRecordIds = agencyDump.getBibliographicRecordIds(AgencyDump.RecordCollection.ALL);
+                }
+
+                agencyDump.dumpRecords(bibliographicRecordIds, out, commandLine.hasOption("merged"));
+
+                log.info("Done");
+            } catch (MarcXMergerException | RawRepoException | SQLException | IOException ex) {
+                log.error(ex.getMessage());
+            }
+        } finally {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                log.error("Cannot close output: " + ex.getMessage());
+            }
         }
     }
 
