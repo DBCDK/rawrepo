@@ -60,30 +60,31 @@ public class JavaScriptWorker {
     private final Environment environment;
 
     public JavaScriptWorker() {
-        environment = new Environment();
-        ModuleHandler mh = new ModuleHandler();
-        mh.registerNonCompilableModule("Tables"); // Unlikely we need this module.
-
-        // Builtin searchpath
-        SolrFieldsSchemeHandler solrFields = new SolrFieldsSchemeHandler(this);
-        mh.registerHandler(SolrFieldsSchemeHandler.SOLR_FIELDS_SCHEME, solrFields);
-        mh.addSearchPath(new SchemeURI(SolrFieldsSchemeHandler.SOLR_FIELDS_SCHEME + ":"));
-
-        // Classpath searchpath
-        ClasspathSchemeHandler classpath = new ClasspathSchemeHandler(getClass().getClassLoader());
-        mh.registerHandler("classpath", classpath);
-        for (String searchPath : searchPaths) {
-            mh.addSearchPath(new SchemeURI(searchPath));
-        }
-//      mh.registerHandler("file", new FileSchemeHandler(root)); // Don'tuse filesystem
-
-        // Use system
-        environment.registerUseFunction(mh);
-
-        // Evaluate script
-        InputStream stream = getClass().getClassLoader().getResourceAsStream(INDEXER_SCRIPT);
-        InputStreamReader inputStreamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         try {
+            environment = new Environment();
+            ModuleHandler mh = new ModuleHandler();
+            mh.registerNonCompilableModule("Tables"); // Unlikely we need this module.
+
+            // Builtin searchpath
+            SolrFieldsSchemeHandler solrFields = new SolrFieldsSchemeHandler(this);
+            mh.registerHandler(SolrFieldsSchemeHandler.SOLR_FIELDS_SCHEME, solrFields);
+            mh.addSearchPath(new SchemeURI(SolrFieldsSchemeHandler.SOLR_FIELDS_SCHEME + ":"));
+
+            // Classpath searchpath
+            ClasspathSchemeHandler classpath = new ClasspathSchemeHandler(getClass().getClassLoader());
+            mh.registerHandler("classpath", classpath);
+            for (String searchPath : searchPaths) {
+                mh.addSearchPath(new SchemeURI(searchPath));
+            }
+    //      mh.registerHandler("file", new FileSchemeHandler(root)); // Don'tuse filesystem
+
+            // Use system
+            environment.registerUseFunction(mh);
+
+            // Evaluate script
+            InputStream stream = getClass().getClassLoader().getResourceAsStream(INDEXER_SCRIPT);
+            InputStreamReader inputStreamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+        
             environment.eval(inputStreamReader, INDEXER_SCRIPT);
         } catch (Exception ex) {
             log.error("Error initializing javascript", ex);

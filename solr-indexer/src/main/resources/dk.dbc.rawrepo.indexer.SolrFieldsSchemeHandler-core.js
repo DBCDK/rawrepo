@@ -14,6 +14,6 @@ var solrField = function (javaFunc) {
         javaFunc(name, value);
     };
 
-}(__SolrFields.addField.bind(__SolrFields));
+}(Function.prototype.bind.call(__SolrFields.addField, __SolrFields));
 
 delete __SolrFields;

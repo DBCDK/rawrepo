@@ -18,17 +18,14 @@
  */
 package dk.dbc.rawrepo.indexer;
 
+import dk.dbc.jslib.Environment;
 import dk.dbc.jslib.ISchemeHandler;
 import dk.dbc.jslib.SchemeURI;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.RhinoException;
-import org.mozilla.javascript.ScriptableObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,14 +64,14 @@ class SolrFieldsSchemeHandler implements ISchemeHandler {
     }
 
     @Override
-    public void load(SchemeURI suri, Context context, ScriptableObject scope) throws RhinoException, IOException {
-        switch (suri.toString()) {
+    public void load ( SchemeURI sUri, Environment envir) throws Exception{
+        switch (sUri.toString()) {
             case SOLR_FIELDS_SCHEME + "://" + SOLR_FIELDS:
-                scope.put("__SolrFields", scope, Context.toObject(javaScriptWorker, scope));
-                context.evaluateString(scope, content, SOLR_FIELDS_SCHEME, 1, null);
+                envir.put("__SolrFields", javaScriptWorker);
+                envir.eval(content);
                 break;
             default:
-                throw new RuntimeException("Don't know how to load: " + suri.toString());
+                throw new RuntimeException("Don't know how to load: " + sUri.toString());
         }
     }
 
@@ -86,6 +83,7 @@ class SolrFieldsSchemeHandler implements ISchemeHandler {
      */
     private static String getContent(String filename) {
         Class<?> clazz = SolrFieldsSchemeHandler.class;
+        
         InputStream stream = clazz.getClassLoader().getResourceAsStream(clazz.getCanonicalName() + "-" + filename);
         try {
             int available = stream.available();
