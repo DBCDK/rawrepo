@@ -27,7 +27,7 @@ import javax.ejb.Singleton;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Singleton
 public class MergerPool {
