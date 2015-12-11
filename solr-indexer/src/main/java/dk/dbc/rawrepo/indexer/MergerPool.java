@@ -23,7 +23,7 @@ import dk.dbc.marcxmerge.MarcXMergerException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import javax.ejb.Singleton;
+import javax.inject.Singleton;
 
 /**
  *
