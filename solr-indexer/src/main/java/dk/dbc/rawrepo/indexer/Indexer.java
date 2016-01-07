@@ -236,12 +236,12 @@ public class Indexer {
             case MarcXChangeMimeType.AUTHORITTY:
             case MarcXChangeMimeType.ENRICHMENT:
                 log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);
-                byte[] content = record.getContent();
+                String content = new String(record.getContent(), StandardCharsets.UTF_8) ;
                 try {
-                    worker.addFields(doc, new String(content, StandardCharsets.UTF_8), mimeType);
+                    worker.addFields(doc, content, mimeType);
                     contentsIndexed.inc();
                 } catch (Exception ex) {
-                    log.error("Error adding fields: ", ex);
+                    log.error("Error adding fields for document '{}': ", content, ex);
                     contentsFailed.inc();
                 }
                 break;

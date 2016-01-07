@@ -297,7 +297,7 @@ public class IndexerTest {
 
         Date created = new Date(100);
         Date modified = new Date(200);
-        String content = "";
+        String content = ">hello world<";
 
         Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true, MarcXChangeMimeType.MARCXCHANGE);
 
