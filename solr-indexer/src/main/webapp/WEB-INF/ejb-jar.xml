@@ -12,6 +12,11 @@
         <env-entry-value>http://localhost:5015/solr</env-entry-value>
       </env-entry>
       <env-entry>
+        <env-entry-name>openAgencyUrl</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value></env-entry-value>
+      </env-entry>
+      <env-entry>
         <env-entry-name>workerName</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>
         <env-entry-value>solr-sync</env-entry-value>

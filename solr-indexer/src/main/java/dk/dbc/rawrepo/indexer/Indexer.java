@@ -44,10 +44,15 @@ import org.slf4j.LoggerFactory;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.MDC;
 
 /**
@@ -69,13 +74,14 @@ public class Indexer {
     @Resource(name = "workerName")
     String workerName;
 
+    @Resource(name = "openAgencyUrl")
+    String openAgencyUrl;
+
     @Inject
     MetricsRegistry registry;
 
     @Inject
     MergerPool mergerPool;
-
-    AgencySearchOrder searchOrder;
 
     Timer processJobTimer;
     Timer getConnectionTimer;
@@ -95,8 +101,13 @@ public class Indexer {
     JavaScriptWorker worker;
 
     private SolrServer solrServer;
+    private ExecutorService executerService;
+    private OpenAgencyServiceFromURL openAgencyService;
 
     public Indexer() {
+        this.solrServer = null;
+        this.executerService = null;
+        this.openAgencyService = null;
     }
 
     @PostConstruct
@@ -104,6 +115,12 @@ public class Indexer {
         // Read solr url from application context
         log.info("Initializing with url {}", solrUrl);
         solrServer = new HttpSolrServer(solrUrl);
+        if (openAgencyUrl != null && !openAgencyUrl.isEmpty()) {
+            executerService = Executors.newFixedThreadPool(4);
+            openAgencyService = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
+        } else {
+            openAgencyService = null;
+        }
 
         processJobTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "processJob"));
         getConnectionTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "getConnection"));
@@ -120,7 +137,6 @@ public class Indexer {
         contentsFailed = registry.getRegistry().counter(MetricRegistry.name(Indexer.class, "contentsFailed"));
 
         worker = new JavaScriptWorker();
-        searchOrder = new AgencySearchOrderFallback();
     }
 
     @PreDestroy
@@ -173,10 +189,13 @@ public class Indexer {
     }
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
-        Timer.Context time = createDAOTimer.time();
-        final RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(searchOrder).build();
-        time.stop();
-        return dao;
+        try (Timer.Context time = createDAOTimer.time()) {
+            if (openAgencyService != null && executerService != null) {
+                return RawRepoDAO.builder(connection).openAgency(openAgencyService, executerService).build();
+            } else {
+                return RawRepoDAO.builder(connection).build();
+            }
+        }
     }
 
     private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
@@ -236,7 +255,7 @@ public class Indexer {
             case MarcXChangeMimeType.AUTHORITTY:
             case MarcXChangeMimeType.ENRICHMENT:
                 log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);
-                String content = new String(record.getContent(), StandardCharsets.UTF_8) ;
+                String content = new String(record.getContent(), StandardCharsets.UTF_8);
                 try {
                     worker.addFields(doc, content, mimeType);
                     contentsIndexed.inc();
