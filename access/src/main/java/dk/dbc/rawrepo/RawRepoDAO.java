@@ -340,7 +340,9 @@ public abstract class RawRepoDAO {
 
     public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
         try {
-            if (relationHints.usesCommonAgency(originalAgencyId)) {
+            if (!relationHints.usesCommonAgency(originalAgencyId)) {
+                throw new RawRepoException("agency does not use enrichments (Common agency)");
+            } else {
                 for (Integer agencyId : relationHints.get(originalAgencyId)) {
                     if (recordExists(bibliographicRecordId, agencyId)) {
                         return agencyId;
