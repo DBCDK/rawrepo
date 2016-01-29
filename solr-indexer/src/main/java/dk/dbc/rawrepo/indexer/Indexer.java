@@ -199,7 +199,7 @@ public class Indexer {
     }
 
     private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
-        log.debug("Indexing {}", job);
+        log.info("Indexing {}", job);
         RecordId jobId = job.getJob();
         String id = jobId.getBibliographicRecordId();
         int library = jobId.getAgencyId();
@@ -212,6 +212,7 @@ public class Indexer {
                 SolrInputDocument doc = createIndexDocument(record);
                 updateSolr(jobId, doc);
             }
+            log.info("Indexed {}", job);
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
             queueFail(dao, job, id);
