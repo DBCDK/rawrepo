@@ -77,6 +77,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
 
+    private static final String TIME_ZONE = "SET TIME ZONE UTC";
     /**
      * Constructor
      *
@@ -89,6 +90,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     protected void validateConnection() throws RawRepoException {
         try {
+            try (PreparedStatement stmt = connection.prepareStatement(TIME_ZONE)) {
+                stmt.executeUpdate();
+            } catch (SQLException ex) {
+            log.error(TIME_ZONE + " error", ex);
+        throw new RawRepoException("Unable to force timezone");
+            }
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
                 stmt.setInt(1, SCHEMA_VERSION);
                 try (ResultSet resultSet = stmt.executeQuery()) {
