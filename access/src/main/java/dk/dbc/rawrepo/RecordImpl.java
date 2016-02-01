@@ -20,6 +20,7 @@ package dk.dbc.rawrepo;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  *
@@ -43,8 +44,8 @@ class RecordImpl implements Record {
         this.deleted = false;
         this.mimeType = "";
         this.content = new byte[0];
-        this.created = new Date();
-        this.modified = new Date();
+        this.created = UTC();
+        this.modified = UTC();
         this.trackingId = "";
         this.original = true;
         this.enriched = false;
@@ -94,7 +95,7 @@ class RecordImpl implements Record {
 
     @Override
     public void setDeleted(boolean deleted) {
-        this.modified = new Date();
+        this.modified = UTC();
         this.deleted = deleted;
     }
 
@@ -105,7 +106,7 @@ class RecordImpl implements Record {
 
     @Override
     public void setContent(byte[] content) {
-        this.modified = new Date();
+        this.modified = UTC();
         this.content = Arrays.copyOf(content, content.length);
     }
 
@@ -116,7 +117,7 @@ class RecordImpl implements Record {
 
     @Override
     public void setMimeType(String mimeType) {
-        this.modified = new Date();
+        this.modified = UTC();
         this.mimeType = mimeType;
     }
 
@@ -176,6 +177,19 @@ class RecordImpl implements Record {
     @Override
     public String toString() {
         return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content=[...], created=" + created + ", modified=" + modified + ", original=" + original + ", enriched=" + enriched + ", trackingId=" + trackingId + ", enrichmentTrail=" + enrichmentTrail + '}';
+    }
+
+    private static Date UTC(Date date) {
+        TimeZone tz = TimeZone.getDefault();
+        int offset = tz.getRawOffset();
+        if (tz.inDaylightTime(date)) {
+            offset += tz.getDSTSavings();
+        }
+        return new Date(date.getTime() - offset);
+    }
+
+    private static Date UTC() {
+        return UTC(new Date());
     }
 
 }
