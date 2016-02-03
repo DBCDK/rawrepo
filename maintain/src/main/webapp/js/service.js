@@ -18,6 +18,13 @@ var Service = (function () {
                 throw Error("Agencyid are required");
             return [value];
         },
+        agencyidnotdbc: function (value) {
+            if (value.match(/^191919|870970$/) !== null)
+                throw Error("Agencyid " + value + " is not allowed");
+            if (value.match(/^[0-9]{6}$/) === null)
+                throw Error("Agencyid are required");
+            return [value];
+        },
         lines: function (value) {
             var l = value.match(/[^\r\n]+/g);
             if (l === null || l.length === 0 && l[0] === '')
