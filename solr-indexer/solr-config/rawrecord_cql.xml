@@ -8,161 +8,161 @@ Open Library System is free software: you can redistribute it and/or modify it u
 
 Open Library System is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with Open Library System.  If not, see http://www.gnu.org/licenses-->
-	<serverInfo>
-		<host/>
-		<port/>
-		<database/>
-	</serverInfo>
-	<metaInfo>
-	    <dateModified>2015-09-17</dateModified>
-	</metaInfo>
-	<indexInfo>
-    <set identifier="info:srw/cql-context-set/1/cql-v1.1" name="cql"/>
-		<set identifier="http://oss.dbc.dk/ns/display" name="display"/>
-		<set identifier="http://oss.dbc.dk/ns/dkcclphrase" name="dkcclphrase"/>
-		<set identifier="http://oss.dbc.dk/ns/dkcclterm" name="dkcclterm"/>
-		<set identifier="http://oss.dbc.dk/ns/facet" name="facet"/>
-		<set identifier="http://oss.dbc.dk/ns/phrase" name="phrase"/>
-		<set identifier="http://oss.dbc.dk/ns/rankphrase" name="rankphrase"/>
-		<set identifier="http://oss.dbc.dk/ns/rankterm" name="rankterm"/>
-		<set identifier="info:srw/cql-context-set/2/rec-1.1" name="rec"/>
-		<set identifier="http://oss.dbc.dk/ns/rankterm" name="sort"/>
-		<set identifier="http://oss.dbc.dk/ns/term" name="term"/>
-		<set identifier="http://oss.dbc.dk/ns/unit" name="unit"/>
-    <set identifier="http://oss.dbc.dk/ns/rawrepo" name="marc"/>
-		<index>
-			<title lang="da">Internt register</title>
-			<map hidden="1">
-				<name set="cql">allIndexes</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">marc.001a:marc.001b</title>
-			<title lang="da">marc.001a:marc.001b</title>
-			<map>
-				<name set="marc">001a001b</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Record id</title>
-			<title lang="da">Postens id-nummer (hos dataproducenten)</title>
-			<map>
-				<name set="marc">001a</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Library code of record owner</title>
-			<title lang="da">Dataproducentens biblioteksnummer</title>
-			<map>
-				<name set="marc">001b</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Modification time</title>
-			<title lang="da">Ajourføringstidspunkt</title>
-			<map>
-				<name set="marc">001c</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Creation time</title>
-			<title lang="da">Første oprettelsesdato</title>
-			<map>
-				<name set="marc">001d</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en"></title>
-			<title lang="da">Tidligere centralt faustnummer</title>
-			<map>
-				<name set="marc">002a</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">ISBN</title>
-			<title lang="da">ISBN</title>
-			<map>
-				<name set="marc">021ae</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Title</title>
-			<title lang="da">Titel</title>
-			<map>
-				<name set="marc">245a</name>
-			</map>
-		</index>
-                <index>
-                        <title lang="en">ISSN</title>
-                        <title lang="da">ISSN</title>
-                        <map>
-                                <name set="marc">022a</name>
-                        </map>
-                </index>
-		<index>
-			<title lang="en">Y08a</title>
-			<title lang="da">Y08a</title>
-			<map>
-				<name set="marc">y08a</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">marc.001a:marc.001b</title>
-			<title lang="da">marc.001a:marc.001b</title>
-			<map hidden="1">
-				<name set="">id</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">bibliographicRecordId (metadata)</title>
-			<title lang="da">bibliographicRecordId (metadata)</title>
-			<map hidden="1">
-				<name set="rec">bibliographicRecordId</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">agencyId (metadata)</title>
-			<title lang="da">agencyId (metadata)</title>
-			<map hidden="1">
-				<name set="rec">agencyId</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Timestamp</title>
-			<title lang="da">Oprettelses tidsstempel</title>
-			<map hidden="1">
-				<name set="rec">created</name>
-			</map>
-		</index>
-		<index>
-			<title lang="en">Last modified timestamp</title>
-			<title lang="da">Senest rettet tidsstempel</title>
-			<map hidden="1">
-				<name set="rec">modified</name>
-			</map>
-		</index>
-		<index>
-			<title lang="da">Fritekst (enkeltord)</title>
-			<title lang="en">Default (term)</title>
-			<map>
-				<name set="">default</name>
-			</map>
-		</index>
-	</indexInfo>
-	<configInfo>
-		<supports type="engBooleanModifier">AND</supports>
-		<supports type="engBooleanModifier">OR</supports>
-		<supports type="engBooleanModifier">NOT</supports>
-		<supports type="relation">&gt;=</supports>
-		<supports type="relation">&gt;</supports>
-		<supports type="relation">&lt;=</supports>
-		<supports type="relation">&lt;</supports>
-		<supports type="relation">=</supports>
-		<supports type="relation">ADJ</supports>
-		<supports type="maskingCharacter">?</supports>
-		<supports type="maskingCharacter">*</supports>
-		<supports type="booleanChar">(</supports>
-		<supports type="booleanChar">)</supports>
-	</configInfo>
+    You should have received a copy of the GNU Affero General Public License along with Open Library System.  If not, see http://www.gnu.org/licenses-->
+    <serverInfo>
+        <host/>
+        <port/>
+        <database/>
+    </serverInfo>
+    <metaInfo>
+        <dateModified>2015-09-17</dateModified>
+    </metaInfo>
+    <indexInfo>
+        <set identifier="info:srw/cql-context-set/1/cql-v1.1" name="cql"/>
+        <set identifier="http://oss.dbc.dk/ns/display" name="display"/>
+        <set identifier="http://oss.dbc.dk/ns/dkcclphrase" name="dkcclphrase"/>
+        <set identifier="http://oss.dbc.dk/ns/dkcclterm" name="dkcclterm"/>
+        <set identifier="http://oss.dbc.dk/ns/facet" name="facet"/>
+        <set identifier="http://oss.dbc.dk/ns/phrase" name="phrase"/>
+        <set identifier="http://oss.dbc.dk/ns/rankphrase" name="rankphrase"/>
+        <set identifier="http://oss.dbc.dk/ns/rankterm" name="rankterm"/>
+        <set identifier="info:srw/cql-context-set/2/rec-1.1" name="rec"/>
+        <set identifier="http://oss.dbc.dk/ns/rankterm" name="sort"/>
+        <set identifier="http://oss.dbc.dk/ns/term" name="term"/>
+        <set identifier="http://oss.dbc.dk/ns/unit" name="unit"/>
+        <set identifier="http://oss.dbc.dk/ns/rawrepo" name="marc"/>
+        <index>
+            <title lang="da">Internt register</title>
+            <map hidden="1">
+                <name set="cql">allIndexes</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">marc.001a:marc.001b</title>
+            <title lang="da">marc.001a:marc.001b</title>
+            <map>
+                <name set="marc">001a001b</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Record id</title>
+            <title lang="da">Postens id-nummer (hos dataproducenten)</title>
+            <map>
+                <name set="marc">001a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Library code of record owner</title>
+            <title lang="da">Dataproducentens biblioteksnummer</title>
+            <map>
+                <name set="marc">001b</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Modification time</title>
+            <title lang="da">Ajourføringstidspunkt</title>
+            <map>
+                <name set="marc">001c</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Creation time</title>
+            <title lang="da">Første oprettelsesdato</title>
+            <map>
+                <name set="marc">001d</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en"></title>
+            <title lang="da">Tidligere centralt faustnummer</title>
+            <map>
+                <name set="marc">002a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">ISBN</title>
+            <title lang="da">ISBN</title>
+            <map>
+                <name set="marc">021ae</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Title</title>
+            <title lang="da">Titel</title>
+            <map>
+                <name set="marc">245a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">ISSN</title>
+            <title lang="da">ISSN</title>
+            <map>
+                <name set="marc">022a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Y08a</title>
+            <title lang="da">Y08a</title>
+            <map>
+                <name set="marc">y08a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">marc.001a:marc.001b</title>
+            <title lang="da">marc.001a:marc.001b</title>
+            <map hidden="1">
+                <name set="">id</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">bibliographicRecordId (metadata)</title>
+            <title lang="da">bibliographicRecordId (metadata)</title>
+            <map hidden="1">
+                <name set="rec">bibliographicRecordId</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">agencyId (metadata)</title>
+            <title lang="da">agencyId (metadata)</title>
+            <map hidden="1">
+                <name set="rec">agencyId</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Timestamp</title>
+            <title lang="da">Oprettelses tidsstempel</title>
+            <map hidden="1">
+                <name set="rec">created</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Last modified timestamp</title>
+            <title lang="da">Senest rettet tidsstempel</title>
+            <map hidden="1">
+                <name set="rec">modified</name>
+            </map>
+        </index>
+        <index>
+            <title lang="da">Fritekst (enkeltord)</title>
+            <title lang="en">Default (term)</title>
+            <map>
+                <name set="">default</name>
+            </map>
+        </index>
+    </indexInfo>
+    <configInfo>
+        <supports type="engBooleanModifier">AND</supports>
+        <supports type="engBooleanModifier">OR</supports>
+        <supports type="engBooleanModifier">NOT</supports>
+        <supports type="relation">&gt;=</supports>
+        <supports type="relation">&gt;</supports>
+        <supports type="relation">&lt;=</supports>
+        <supports type="relation">&lt;</supports>
+        <supports type="relation">=</supports>
+        <supports type="relation">ADJ</supports>
+        <supports type="maskingCharacter">?</supports>
+        <supports type="maskingCharacter">*</supports>
+        <supports type="booleanChar">(</supports>
+        <supports type="booleanChar">)</supports>
+    </configInfo>
 </explain>
