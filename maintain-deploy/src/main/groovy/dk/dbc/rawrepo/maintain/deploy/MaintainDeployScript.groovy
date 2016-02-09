@@ -47,6 +47,9 @@ class MaintainDeployScript extends GluScriptBase {
      *  .openAgencyUrl     : String  : Url of openagency >= 1.19 (remember trailing /)
      *                                 (REQUIRED)
      * 
+     * .redirect-queue-provider: String : Url of queue provider doc (not defined -> 404)
+     *                                 (OPTIONAL)
+     * 
      * db                  : List>Map: List of database descriptors
      *                                 Config named 'rawrepo' REQUIRED
      * 
