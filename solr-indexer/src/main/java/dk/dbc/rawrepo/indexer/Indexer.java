@@ -44,15 +44,12 @@ import org.slf4j.LoggerFactory;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
-import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
+import dk.dbc.rawrepo.RelationHints;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Arrays;
+import java.util.List;
 import org.slf4j.MDC;
 
 /**
@@ -73,9 +70,6 @@ public class Indexer {
 
     @Resource(name = "workerName")
     String workerName;
-
-    @Resource(name = "openAgencyUrl")
-    String openAgencyUrl;
 
     @Inject
     MetricsRegistry registry;
@@ -101,13 +95,27 @@ public class Indexer {
     JavaScriptWorker worker;
 
     private SolrServer solrServer;
-    private ExecutorService executerService;
-    private OpenAgencyServiceFromURL openAgencyService;
+
+    private static final AgencySearchOrder AGENCY_SEARCH_ORDER = new AgencySearchOrder(null) {
+
+        @Override
+        public List<Integer> provide(Integer key) throws Exception {
+            log.error("key = " + key);
+            return Arrays.asList(key);
+        }
+    };
+
+    private static final RelationHints RELATION_HINTS = new RelationHints() {
+
+        @Override
+        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+            log.error("agencyId = " + agencyId);
+            return true;
+        }
+    };
 
     public Indexer() {
         this.solrServer = null;
-        this.executerService = null;
-        this.openAgencyService = null;
     }
 
     @PostConstruct
@@ -115,12 +123,6 @@ public class Indexer {
         // Read solr url from application context
         log.info("Initializing with url {}", solrUrl);
         solrServer = new HttpSolrServer(solrUrl);
-        if (openAgencyUrl != null && !openAgencyUrl.isEmpty()) {
-            executerService = Executors.newFixedThreadPool(4);
-            openAgencyService = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
-        } else {
-            openAgencyService = null;
-        }
 
         processJobTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "processJob"));
         getConnectionTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "getConnection"));
@@ -190,11 +192,7 @@ public class Indexer {
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
         try (Timer.Context time = createDAOTimer.time()) {
-            if (openAgencyService != null && executerService != null) {
-                return RawRepoDAO.builder(connection).openAgency(openAgencyService, executerService).build();
-            } else {
-                return RawRepoDAO.builder(connection).build();
-            }
+            return RawRepoDAO.builder(connection).searchOrder(AGENCY_SEARCH_ORDER).relationHints(RELATION_HINTS).build();
         }
     }
 

@@ -179,15 +179,14 @@ public class IndexerTest {
                          + "      <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"021\">\n"
                          + "        <marcx:subfield code=\"e\">9788777248573</marcx:subfield>\n"
                          + "      </marcx:datafield>\n"
-                         + "        <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"021\">\n"
-                         + "        <marcx:subfield code=\"a\">8777248570</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">ib.</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"d\">kr. 169,95</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
                          + "      <marcx:datafield tag=\"022\" ind1=\"0\" ind2=\"0\">\n"
                          + "        <marcx:subfield code=\"a\">0904-6054</marcx:subfield>\n"
                          + "        <marcx:subfield code=\"c\">hf.</marcx:subfield>\n"
                          + "        <marcx:subfield code=\"d\">kr. 6,50 pr. nr.</marcx:subfield>\n"
+                         + "      </marcx:datafield>\n"
+                         + "      <marcx:datafield tag=\"023\" ind1=\"0\" ind2=\"0\">\n"
+                         + "        <marcx:subfield code=\"a\">23-a</marcx:subfield>\n"
+                         + "        <marcx:subfield code=\"b\">23-b</marcx:subfield>\n"
                          + "      </marcx:datafield>\n"
                          + "      <marcx:datafield tag=\"032\" ind1=\"0\" ind2=\"0\">\n"
                          + "        <marcx:subfield code=\"a\">IDO200137</marcx:subfield>\n"
@@ -283,12 +282,9 @@ public class IndexerTest {
 
         // check that Marcx record is indexed correctly
         String field002a = (String) doc.getField("marc.002a").getValue();
-        List<String> field021ae = (List<String>) doc.getField("marc.021ae").getValue();
         String field022a = (String) doc.getField("marc.022a").getValue();
 
         assertEquals("06605141", field002a);
-        assertTrue(field021ae.contains("9788777248573"));
-        assertTrue(field021ae.contains("8777248570"));
         assertEquals("0904-6054", field022a);
 
     }

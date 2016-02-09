@@ -52,10 +52,6 @@ class IndexerDeployScript extends GluScriptBase {
      * solrUrl             : String  : Base url of the Solr service
      *                                 (REQUIRED).
      *
-     * openAgencyUrl       : String  : Url of the open agency service (remember trailing /)
-     *                                 If empty string use hardcoded fallback
-     *                                 (REQUIRED).
-     *
      * pollInterval        : String  : Interval (in seconds) between polling queue for work
      *                                 (REQUIRED).
      *
@@ -142,7 +138,7 @@ class IndexerDeployScript extends GluScriptBase {
         log.info "Using artifact ${artifact.file}"
 
 
-        ["solrUrl", "openAgencyUrl", "dbUrl", "dbUser", "dbPassword", "dbQueueWorker", "pollInterval", "threadPoolSize" ].each({
+        ["solrUrl", "dbUrl", "dbUser", "dbPassword", "dbQueueWorker", "pollInterval", "threadPoolSize" ].each({
             if (!params."$it") {
                 shell.fail("Required parameter '$it' is missing")
             }
@@ -254,11 +250,6 @@ class IndexerDeployScript extends GluScriptBase {
         <env-entry-name>solrUrl</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>
         <env-entry-value>$params.solrUrl</env-entry-value>
-      </env-entry>
-      <env-entry>
-        <env-entry-name>openAgencyUrl</env-entry-name>
-        <env-entry-type>java.lang.String</env-entry-type>
-        <env-entry-value>$params.openAgencyUrl</env-entry-value>
       </env-entry>
       <env-entry>
         <env-entry-name>workerName</env-entry-name>
