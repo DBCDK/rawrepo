@@ -301,14 +301,17 @@
     <copyField source="marc.014a" dest="match.014a"/>
     <field name="match.014a" type="dbc-match" indexed="true" stored="true" required="false" />
     
-    <!-- Standalone AND Combine -->
+    <!-- Standalone ... -->
     <field name="marc.021a" type="dbc-isbn" indexed="true" stored="true" required="false" />
+    <copyField source="marc.021a" dest="match.021a"/>
+    <field name="match.021a" type="dbc-match" indexed="true" stored="true" required="false" />
     <field name="marc.021e" type="dbc-isbn" indexed="true" stored="true" required="false" />
+    <copyField source="marc.021e" dest="match.021e"/>
+    <field name="match.021e" type="dbc-match" indexed="true" stored="true" required="false" />
+    <!-- ... and combine -->
     <copyField source="marc.021a" dest="marc.021ae"/>
     <copyField source="marc.021e" dest="marc.021ae"/>
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
-    <copyField source="marc.021ae" dest="match.021ae"/>
-    <field name="match.021ae" type="dbc-match" indexed="true" stored="true" required="false" />
     
     <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
     <copyField source="marc.022a" dest="match.022a"/>
