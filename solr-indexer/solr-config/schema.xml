@@ -259,8 +259,17 @@
             <filter class="solr.LowerCaseFilterFactory"/>
         </analyzer>
     </fieldType>
-  </types>
 
+   <fieldType name="dbc-match" class="solr.TextField" sortMissingLast="true" omitNorms="true" multiValued="true">
+      <analyzer>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="matchMap.txt"/>
+        <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="[^0-9a-zA-ZæÆøØåÅ]" replacement=""/>
+        <tokenizer class="solr.PatternTokenizerFactory" pattern="^(.*)$" group="1"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+  </types>
+    
   <!-- DBC Fields. All the fields allowed in the index must be specified
        here to be present and searchable in the index -->
 
@@ -275,10 +284,22 @@
     <field name="marc.001c" type="date" indexed="true" stored="true" required="false" />
     <field name="marc.001d" type="date" indexed="true" stored="true" required="false" />
     <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" />
-    <field name="marc.008a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.009a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.009g" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.014a" type="dbc-default" indexed="true" stored="true" required="false" />
+
+    <field name="marc.008a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.008a" dest="match.008a"/>
+    <field name="match.008a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.009a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.009a" dest="match.009a"/>
+    <field name="match.009a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.009g" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.009g" dest="match.009g"/>
+    <field name="match.009g" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.014a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.014a" dest="match.014a"/>
+    <field name="match.014a" type="dbc-match" indexed="true" stored="true" required="false" />
     
     <!-- Standalone AND Combine -->
     <field name="marc.021a" type="dbc-isbn" indexed="true" stored="true" required="false" />
@@ -286,27 +307,64 @@
     <copyField source="marc.021a" dest="marc.021ae"/>
     <copyField source="marc.021e" dest="marc.021ae"/>
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
+    <copyField source="marc.021ae" dest="match.021ae"/>
+    <field name="match.021ae" type="dbc-match" indexed="true" stored="true" required="false" />
     
     <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
+    <copyField source="marc.022a" dest="match.022a"/>
+    <field name="match.022a" type="dbc-match" indexed="true" stored="true" required="false" />
     
     <!-- Combine -->
     <field name="marc.023a" type="dbc-default" indexed="false" stored="false" required="false" />
     <field name="marc.023b" type="dbc-default" indexed="false" stored="false" required="false" />
-    <copyField source="marc.023a" dest="marc.023ab"/>
-    <copyField source="marc.023b" dest="marc.023ab"/>
-    <field name="marc.023ab" type="dbc-default" indexed="true" stored="true" required="false" />
+    <copyField source="marc.023a" dest="match.023ab"/>
+    <copyField source="marc.023b" dest="match.023ab"/>
+    <field name="match.023ab" type="dbc-match" indexed="true" stored="true" required="false" />
     
-    <field name="marc.024a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.028a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.100a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.110a" type="dbc-default" indexed="true" stored="true" required="false" />
+    <field name="marc.024a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.022a" dest="match.022a"/>
+    <field name="match.024a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.028a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.028a" dest="match.028a"/>
+    <field name="match.028a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.100a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.100a" dest="match.100a"/>
+    <field name="match.100a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.110a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.110a" dest="match.110a"/>
+    <field name="match.110a" type="dbc-match" indexed="true" stored="true" required="false" />
+
     <field name="marc.245a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.245ø" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.250a" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.260b" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.300e" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.538g" type="dbc-default" indexed="true" stored="true" required="false" />
-    <field name="marc.652m" type="dbc-default" indexed="true" stored="true" required="false" />
+    <copyField source="marc.245a" dest="match.245a"/>
+    <field name="match.245a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.245ø" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.245ø" dest="match.245ø"/>
+    <field name="match.245ø" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.250a" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.250a" dest="match.250a"/>
+    <field name="match.250a" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.260b" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.260b" dest="match.260b"/>
+    <field name="match.260b" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.300e" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.300e" dest="match.300e"/>
+    <field name="match.300e" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.538g" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.538g" dest="match.538g"/>
+    <field name="match.538g" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.652m" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.652m" dest="match.652m"/>
+    <field name="match.652m" type="dbc-match" indexed="true" stored="true" required="false" />
+
     <field name="marc.y08a" type="dbc-default" indexed="true" stored="true" required="false" />
     
     <field name="rec.collectionIdentifier" type="id" indexed="true" stored="true" required="false" />

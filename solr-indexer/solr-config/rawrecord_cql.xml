@@ -31,6 +31,7 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
         <set identifier="http://oss.dbc.dk/ns/term" name="term"/>
         <set identifier="http://oss.dbc.dk/ns/unit" name="unit"/>
         <set identifier="http://oss.dbc.dk/ns/rawrepo" name="marc"/>
+        <set identifier="http://oss.dbc.dk/ns/rawrepomatch" name="match"/>
         <index>
             <title lang="da">Internt register</title>
             <map hidden="1">
@@ -105,6 +106,139 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             <title lang="da">Y08a</title>
             <map>
                 <name set="marc">y08a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">008a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">009a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">009g</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">014a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">021a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">021e</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">022a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">023ab</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">024a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">028a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">100a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">110a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">245a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">245ø</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">250a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">260b</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">300e</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">538g</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">652m</name>
             </map>
         </index>
         <index>
