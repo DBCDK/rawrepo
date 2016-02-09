@@ -50,7 +50,7 @@ public class Service {
     DataSource rawrepo;
 
     @Resource(lookup = C.PROPERTIES)
-    Properties properties = new Properties();
+    Properties properties;
 
     ExecutorService executorService;
 
