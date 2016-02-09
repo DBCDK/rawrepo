@@ -47,8 +47,8 @@ class MaintainDeployScript extends GluScriptBase {
      *  .openAgencyUrl     : String  : Url of openagency >= 1.19 (remember trailing /)
      *                                 (REQUIRED)
      * 
-     * .redirect-queue-provider: String : Url of queue provider doc (not defined -> 404)
-     *                                 (OPTIONAL)
+     * .redirect-queue-provider: String : Url of queue provider doc
+     *                                 (REQUIRED)
      * 
      * db                  : List>Map: List of database descriptors
      *                                 Config named 'rawrepo' REQUIRED
@@ -98,6 +98,7 @@ class MaintainDeployScript extends GluScriptBase {
     static String NAME = "rawrepo-maintain"
     static String CUSTOM_RESOURCE_NAME = "rawrepo-maintain"
     static String OPEN_AGENCY_URL = "openAgencyUrl"
+    static String REDIRECT_QUEUE_PROVIDER = "redirect-queue-provider"
 
     static String RAWREPO_NAME = "rawrepo"
     static String RAWREPO_RESOURCE = "jdbc/rawrepomaintain/rawrepo"
@@ -149,7 +150,7 @@ class MaintainDeployScript extends GluScriptBase {
             })
         
         customProperties += params.config
-        [ OPEN_AGENCY_URL ].each({
+        [ OPEN_AGENCY_URL, REDIRECT_QUEUE_PROVIDER ].each({
                 if (!customProperties."$it") {
                     shell.fail("Required parameter 'config.$it' is missing")
                 }
