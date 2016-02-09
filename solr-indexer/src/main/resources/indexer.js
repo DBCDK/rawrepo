@@ -58,31 +58,34 @@ var RULES = {
                 addSolrTime(obj, 'marc.001d', val);
             }
         },
-        '002': {
-            'a': 'marc.002a'
-        },
-        '021': {
-            'a': 'marc.021ae',
-            'e': 'marc.021ae'
-        },
-        '022': {
-            'a': 'marc.022a'
-        },
-        '245': {
-            'a': 'marc.245a'
-        },
         's11': function (obj) {
             if (obj['agency'] === '870970')
                 obj[COLLECTION_IDENTIFIER] = ['dbc'];
-        },
-        'y08': {
-            'a': 'marc.y08a'
         }
     }
 };
 
+var setup_danmarc_field = function (field, subfield) {
+    var dm = RULES['danMARC2'];
+    for (var i = 0; i < arguments.length; i++) {
+        var spec = arguments[i];
+        var m = spec.match(/^(...)(.)$/);
+        if (m !== null) {
+            var field = dm[m[1]];
+            if (field === undefined)
+                field = dm[m[1]] = {};
+            field[m[2]] = 'marc.' + spec;
+        }
+    }
+};
 
-function index(content, mimetype) {
+setup_danmarc_field(
+        '002a', '008a', '009a', '009g', '014a', '021a', '021e', '022a',
+        '023a', '023b', '024a', '028a', '100a', '110a', '245a', '245ø',
+        '250a', '260b', '300e', '538g', '652m', 'y08a'
+        );
+
+var index = function (content, mimetype) {
 
     var dom = XmlUtil.fromString(content);
     var e = dom.documentElement;
