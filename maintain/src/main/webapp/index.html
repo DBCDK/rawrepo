@@ -9,6 +9,7 @@
         <script src="js/moment.min.js"></script><!-- http://momentjs.com License: MIT -->
         <script src="js/marked.min.js"></script><!-- https://github.com/chjj/marked License: ASIS-->
         <script type="text/javascript">
+            var queueProviderHtml = 'http://danbib-i01.dbc.dk:8193/io-diagram/prod';
             /* global Service, marked */
             marked.setOptions({
 //                renderer: new marked.Renderer(),
@@ -52,8 +53,12 @@
                             <td>BibliographicRecordId<br>One pr. line</td>
                         </tr>
                         <tr>
-                            <td><select name="provider#token"><option value="">[Select One]</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
-                            <td>Queue provider</td>
+                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
+                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
+                        </tr>
+                        <tr>
+                            <td><input name="trackingId#any" placeholder="TrackingId"></td>
+                            <td>Tracking id (optional)</td>
                         </tr>
                         <tr>
                             <td><button class="cr" onclick="Service.SoapRequest.sendRequest('queueRecords')">Perform</button></td>
@@ -77,8 +82,8 @@
                             <td>BibliographicRecordId<br>One pr. line</td>
                         </tr>
                         <tr>
-                            <td><select name="provider#?token"><option value="">None</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
-                            <td>Queue provider (optional)</td>
+                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
+                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
                         </tr>
                         <tr>
                             <td><input name="trackingId#any" placeholder="TrackingId"></td>
@@ -106,12 +111,12 @@
                             <td>BibliographicRecordId<br>One pr. line</td>
                         </tr>
                         <tr>
-                            <td><input type="text" name="time/millis#timestamp"></td>
-                            <td>When (YYYY-MM-DD HH:MM:SS(.SSS))</td>
+                            <td><input type="text" name="time/millis#timestampms"></td>
+                            <td>(YYYY-MM-DD HH:MM:SS.SSS) As record appeared at this time</td>
                         </tr>
                         <tr>
-                            <td><select name="provider#?token"><option value="">None</option></select><button class="toText" onclick="Service.toText(this);">?</button></td>
-                            <td>Queue provider (optional)</td>
+                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
+                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
                         </tr>
                         <tr>
                             <td><input name="trackingId#any" placeholder="TrackingId" onchange="Service.SoapRequest.pageContent('revertRecords', 'trackingId');"></td>

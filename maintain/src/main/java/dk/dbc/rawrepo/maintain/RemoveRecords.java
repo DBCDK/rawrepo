@@ -104,10 +104,6 @@ public class RemoveRecords extends RawRepoWorker {
                     }
                 }
             }
-//            try {
-//                Thread.sleep(2500);
-//            } catch (InterruptedException ex) {
-//            }
             StandardResponse.Result.Status status = Status.SUCCESS;
             StringBuilder message = new StringBuilder();
             message.append("Done!");

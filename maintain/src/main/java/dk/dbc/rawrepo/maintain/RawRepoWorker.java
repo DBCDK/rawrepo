@@ -26,6 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -111,6 +113,18 @@ public class RawRepoWorker implements AutoCloseable {
             }
         }
         return agencies;
+    }
+
+        protected static Date UTC(Date date) {
+        TimeZone tz = TimeZone.getDefault();
+        int offset = tz.getRawOffset();
+        if (tz.inDaylightTime(date)) {
+            offset += tz.getDSTSavings();
+        }
+        return new Date(date.getTime() - offset);
+    }
+    protected static Date UTC() {
+        return UTC(new Date());
     }
 
 }

@@ -62,7 +62,13 @@ var Service = (function () {
             return value.split(/(?:\r?\n)+/);
         },
         timestamp: function (value) {
-            var m = moment(value, ["YYYY-MM-DD H:mm:ss.SSS", "YYYY-MM-DD H:mm:ss"], true);
+            var m = moment(value, ["YYYY-MM-DD H:mm:ss.SSS", "YYYY-MM-DD H:mm:ss", "YYYY-MM-DD"], true);
+            if (!m.isValid())
+                throw Error("value: '" + value + "' is not a timestamp");
+            return [m.toDate().getTime()];
+        },
+        timestampms: function (value) {
+            var m = moment(value, ["YYYY-MM-DD H:mm:ss.SSS"], true);
             if (!m.isValid())
                 throw Error("value: '" + value + "' is not a timestamp");
             return [m.toDate().getTime()];
@@ -490,17 +496,10 @@ var Service = (function () {
                         if (node.name.indexOf('#?') >= 0) {
                             var opt = document.createElement('option');
                             opt.value = '';
-                            opt.appendChild(document.createTextNode("None"));
+                            opt.appendChild(document.createTextNode("[Select One]"));
                             sel.appendChild(opt);
                         }
                         methods.SELECT(sel, values);
-                        var button = document.createElement('button');
-                        addClass(button, 'toText');
-                        button.onclick = function () {
-                            Service.toText(this);
-                        }.bind(button);
-                        button.appendChild(document.createTextNode("?"));
-                        sel.parentNode.insertBefore(button, sel.nextSibling);
                     }
                 },
                 SELECT: function (node, values) {

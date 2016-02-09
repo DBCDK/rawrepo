@@ -143,7 +143,7 @@ public class RevertRecords extends RawRepoWorker {
                 Set<RecordId> relations = new HashSet<>();
                 dao.setRelationsFrom(id, relations);
                 historicRecord.setTrackingId(trackingId);
-                historicRecord.setModified(new Date());
+                historicRecord.setModified(UTC());
                 dao.saveRecord(historicRecord);
                 if (!historicRecord.isDeleted()) {
                     switch (historicRecord.getMimeType()) {
@@ -163,6 +163,8 @@ public class RevertRecords extends RawRepoWorker {
                             int sibling = dao.findSiblingRelationAgency(bibliographicRecordId, agencyId);
                             relations.add(new RecordId(bibliographicRecordId, sibling));
                             break;
+                        default:
+                            break;
                     }
                     if (!relations.isEmpty()) {
                         dao.setRelationsFrom(id, relations);
@@ -178,5 +180,4 @@ public class RevertRecords extends RawRepoWorker {
         }
         throw new RawRepoException("Record doesn't have incarnation that old");
     }
-
 }

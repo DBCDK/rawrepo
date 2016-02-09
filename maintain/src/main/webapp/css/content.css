@@ -75,17 +75,26 @@
     width: fit-content;
 }
 
-input, textarea, button {
+input, textarea {
     width: 250pt;
     font-size: 12pt;
 }
-select {
-    width: 230pt;
+button, select {
+    width: 256pt;
     font-size: 12pt;
 }
-button.toText {
-    width: 20pt;
+button.toDoc {
+    display: inline-block;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    border: 1px solid;
+    padding-left: 4px;
+    padding-right: 4px;
+    width: inherit;
     font-size: 12pt;
+    font-variant: small-caps;
+    font-stretch: condensed;
 }
 
 textarea {
