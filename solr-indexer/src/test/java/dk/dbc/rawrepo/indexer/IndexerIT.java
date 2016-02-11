@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Date;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -134,6 +135,9 @@ public class IndexerIT {
 
         QueryResponse response = solrServer.query(new SolrQuery("rec.agencyId:" + AGENCY_ID));
         assertEquals("Document can be found using library no.", 1, response.getResults().getNumFound());
+        
+        Date indexedDate = (Date) response.getResults().get(0).getFieldValue("rec.indexedDate");
+        assertTrue("Field 'indexedDate' has been properly set", indexedDate != null);
 
         response = solrServer.query(new SolrQuery("marc.001b:870971"));
         assertEquals("Document can not be found using different library no.", 0, response.getResults().getNumFound());

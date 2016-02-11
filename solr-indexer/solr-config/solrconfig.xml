@@ -979,11 +979,9 @@
          updateRequestProcessorChains that can be used by name
          on each Update Request
       -->
-    <!--
        <lst name="defaults">
-         <str name="update.chain">dedupe</str>
+         <str name="update.chain">timestamp</str>
        </lst>
-       -->
   </requestHandler>
 
   <!-- for back compat with clients using /update/json and /update/csv -->
@@ -1643,6 +1641,13 @@
        http://wiki.apache.org/solr/UpdateRequestProcessor
 
     -->
+    <updateRequestProcessorChain name="timestamp">
+        <processor class="solr.TimestampUpdateProcessorFactory">
+           <str name="fieldName">rec.indexedDate</str>
+        </processor>
+        <processor class="solr.LogUpdateProcessorFactory" />
+        <processor class="solr.RunUpdateProcessorFactory" />
+    </updateRequestProcessorChain>
   <!-- Deduplication
 
        An example dedup update processor that creates the "id" field

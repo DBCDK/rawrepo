@@ -376,6 +376,7 @@
     <field name="rec.bibliographicRecordId" type="dbc-doc-id" indexed="true" stored="true" required="false" />
     <field name="rec.agencyId" type="sint" indexed="true" stored="true" required="false" />
     <field name="rec.trackingId" type="id" indexed="true" stored="true" required="false" />
+    <field name="rec.indexedDate" type="date" indexed="true" stored="true" multiValued="false"/>
 
     <field name="default" type="dbc-default" indexed="true" stored="true" required="false"/>
 
