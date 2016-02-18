@@ -23,6 +23,7 @@ import dk.dbc.glu.scripts.GluScriptBase
 import org.linkedin.glu.agent.api.ScriptFailedException
 import org.linkedin.util.io.resource.Resource
 import dk.dbc.glu.utils.glassfish.GlassFishAppDeployer
+import dk.dbc.glu.utils.logback.Configuration
 
 class IntrospectDeployScript extends GluScriptBase {
 
@@ -49,10 +50,19 @@ class IntrospectDeployScript extends GluScriptBase {
      *                                 See full list of properties in GlassFishAppDeployer
      *                                 (OPTIONAL)   
      *                                 
-     * debugFlag           : Boolean : Flag toggling debug configuration.
-     *                                 Configuring for debug mode will for
-     *                                 example influence the amount of logging
-     *                                 (OPTIONAL).
+     * logging          : Map       : Map for configuring logging
+     *                                (REQUIRED).
+     *                                
+     * ..dir            : String    : Path to directory in which log files are stored 
+     *                                (REQUIRED).                  
+     *                                              
+     * ..plain          : String    : Log level for plain log files
+     *                                {OFF, ERROR, WARN, INFO, DEBUG, TRACE}
+     *                                (REQUIRED). 
+     *                                
+     * ..logstash       : String    : Log level for logstash log files
+     *                                {OFF, ERROR, WARN, INFO, DEBUG, TRACE}
+     *                                (REQUIRED).
      *
      *************************************************************************/
 
@@ -117,9 +127,8 @@ class IntrospectDeployScript extends GluScriptBase {
         rootFolder = shell.mkdirs( shell.toResource( mountPoint.getPath() ) )
 
         // Create directories
-        logFolder = shell.mkdirs( params.logDir ?: rootFolder."log-files" )
+        logFolder = installLogging( params.logging )
         shell.chmod(logFolder, "a+w")
-        log.info "Created log files folder: ${logFolder.file}"
 
         // fetch artifact
         def webappsFolder = shell.mkdirs( rootFolder."webapps" )
@@ -253,131 +262,16 @@ class IntrospectDeployScript extends GluScriptBase {
      * Writes log4j.xml configuration file to config folder
      *
      * The actual content of the configuration depends on
-     * the state of the <code>params.debugFlag</code>.
+     * the state of the <code>params.logging</code>.
      */
     def configureLogging() {
-        if( params.debugFlag ) {
-            configureDebugLogging()
-        } else {
-            configureOperationalLogging()
-        }
-    }
-
-    /**
-     * Writes debug version of log4j.xml configuration file to config folder
-     */
-    def configureDebugLogging() {
         def logConfigFile = shell.toResource( stagingArea."WEB-INF"."classes"."logback.xml" )
-
-        def logConfig = """\
-<?xml version="1.0" encoding="UTF-8" ?>
-<configuration>
-
-  <appender name="introspectlog" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logFolder.file.getPath()}/introspect.log</file>
-    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>100MB</maxFileSize>
-    </triggeringPolicy>
-    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${logFolder.file.getPath()}/introspect.%i.log</fileNamePattern>
-      <minIndex>1</minIndex>
-      <maxIndex>10</maxIndex>
-    </rollingPolicy>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
-       <immediateFlush>true</immediateFlush>
-    </encoder>
-  </appender>
-
-  <appender name="introspecterror" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logFolder.file.getPath()}/introspect-error.log</file>
-    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>100MB</maxFileSize>
-    </triggeringPolicy>
-    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${logFolder.file.getPath()}/introspect-error.%i.log</fileNamePattern>
-      <minIndex>1</minIndex>
-      <maxIndex>10</maxIndex>
-    </rollingPolicy>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
-       <immediateFlush>true</immediateFlush>
-    </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>ERROR</level>
-    </filter>
-  </appender>
-
-  <root>
-    <level value="TRACE"/>
-    <appender-ref ref="introspectlog"/>
-    <appender-ref ref="introspecterror"/>
-  </root>
-
-</configuration>
-"""
-        log.info "Writing log config in debug mode: ${logConfigFile.file}"
-        shell.saveContent( logConfigFile.file, logConfig )
-        configureLogFields( logFolder.file.getPath(), logConfig )
+        Configuration logConfig = defaultLogbackConfig()
+        registerLogFiles( logConfig )
+        logConfig.save( logConfigFile.file ) 
     }
 
-    /**
-     * Writes operational version of log4j.xml configuration file to config folder
-     */
-    def configureOperationalLogging() {
-        def logConfigFile = shell.toResource( stagingArea."WEB-INF"."classes"."logback.xml" )
-
-        def logConfig = """\
-<?xml version="1.0" encoding="UTF-8" ?>
-<configuration>
-
-  <appender name="introspectlog" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logFolder.file.getPath()}/introspect.log</file>
-    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>100MB</maxFileSize>
-    </triggeringPolicy>
-    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${logFolder.file.getPath()}/introspect.%i.log</fileNamePattern>
-      <minIndex>1</minIndex>
-      <maxIndex>10</maxIndex>
-    </rollingPolicy>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
-       <immediateFlush>true</immediateFlush>
-    </encoder>
-  </appender>
-
-  <appender name="introspecterror" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logFolder.file.getPath()}/introspect-error.log</file>
-    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>100MB</maxFileSize>
-    </triggeringPolicy>
-    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${logFolder.file.getPath()}/introspect-error.%i.log</fileNamePattern>
-      <minIndex>1</minIndex>
-      <maxIndex>10</maxIndex>
-    </rollingPolicy>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS},%p,%c,%t,%C{0},%M %m%n</pattern>
-       <immediateFlush>true</immediateFlush>
-    </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>ERROR</level>
-    </filter>
-  </appender>
-
-  <root>
-    <level value="INFO"/>
-    <appender-ref ref="introspectlog"/>
-    <appender-ref ref="introspecterror"/>
-  </root>
-
-</configuration>
-"""
-        log.info "Writing log config in operational mode: ${logConfigFile.file}"
-        shell.saveContent( logConfigFile.file, logConfig )
-        configureLogFields( logFolder.file.getPath(), logConfig )
-    }
+    
     def configureJdbcResources() {
 
         for(jdbcEntry in jdbcResources) {

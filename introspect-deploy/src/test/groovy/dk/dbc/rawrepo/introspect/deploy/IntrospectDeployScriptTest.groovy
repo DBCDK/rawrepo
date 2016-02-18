@@ -47,7 +47,11 @@ public class IndexerDeployScriptTest {
     private final static ARTIFACT = IndexerDeployScriptTest.getResource( "/" + ARTIFACT_NAME )
     private final static CONTEXT = "/rawrepointrospect"
     private final static JDBC_RESOURCES = [ "rawrepo": "user:password@localhost:12345/db" ]
-    private static LOG_FOLDER = "log-files"
+    private final static LOGGING = [ 
+        dir: "log-files",
+        plain: "INFO",
+        logstash: "INFO"
+    ]
 
 
     class GluScript extends IntrospectDeployScript {
@@ -93,7 +97,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void install_mountPointIsSet_createsMountPointFolderRelativeToFileSystemRoot() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
@@ -106,28 +110,28 @@ public class IndexerDeployScriptTest {
 
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNotSet_throwsNullPointerException() {
-        def instance = new GluScript( shellImpl, [ 
+        def instance = new GluScript( shellImpl, [ logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNull_throwsNullPointerException() {
-        def instance = new GluScript( shellImpl, [ artifact: null,
+        def instance = new GluScript( shellImpl, [ artifact: null, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=IllegalArgumentException )
     void install_artifactInitParameterIsEmpty_throwsIllegalArgumentException() {
-        def instance = new GluScript( shellImpl, [ artifact: "", 
+        def instance = new GluScript( shellImpl, [ artifact: "", logging: LOGGING, 
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
 
     @Test( expected=FileNotFoundException )
     void install_artifactInitParameterPointsToNonExistingResource_throwsFileNotFoundException() {
-        def instance = new GluScript( shellImpl, [ artifact: "no-such-file",
+        def instance = new GluScript( shellImpl, [ artifact: "no-such-file", logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
     }
@@ -136,21 +140,21 @@ public class IndexerDeployScriptTest {
 
     @Test( expected=ScriptFailedException )
     void install_jdbcResourcesInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING
             ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_jdbcResourcesInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: null ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_jdbcDefaultInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: null ] )
         instance.install()
     }
@@ -163,7 +167,7 @@ public class IndexerDeployScriptTest {
             password: 'admin',
         ]
 
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
@@ -184,7 +188,7 @@ public class IndexerDeployScriptTest {
             insecure: true,
         ]
 
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES,
                 glassfishProperties: customProperties] )
         instance.install()
@@ -199,7 +203,7 @@ public class IndexerDeployScriptTest {
 
     @Test( expected=ScriptFailedException )
     void configure_jdbcResouresInitParameterInvalidName_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: ["bl+ob": "a:b@c/d"] ] )
         instance.install()
 
@@ -220,7 +224,7 @@ public class IndexerDeployScriptTest {
 
     @Test( expected=ScriptFailedException )
     void configure_jdbcResouresInitParameterInvalidUri_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: ["blob": "invalid"] ] )
         instance.install()
 
@@ -241,7 +245,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_contextPathInitIsNotSet_usesDefaultContextPath() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
 
@@ -265,7 +269,7 @@ public class IndexerDeployScriptTest {
     @Test
     void configure_contextPathInitIsSet_usesContextPath() {
         String customPath = "context"
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES,
                 contextPath: customPath] )
         instance.install()
@@ -288,7 +292,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_addsLoggingProperties() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -310,7 +314,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_whenInstalled_exposesLogFiles() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -327,18 +331,19 @@ public class IndexerDeployScriptTest {
         instance.configure()
 
         def expected = [
-            "introspect",
-            "introspect-error",
+            "rawrepointrospect.logstash",
+            "rawrepointrospect.plain",
+            "rawrepointrospect-error.plain",
         ]
 
         expected.each { obj ->
-            assertThat( mountPointFolder."$LOG_FOLDER"."${obj}.log".file.getPath(), is( instance.logs."$obj" ) )
+            assertThat( mountPointFolder."$LOGGING.dir"."${obj}.log".file.getPath(), is( instance.logs."${obj}.log" ) )
         }
     }
 
     @Test
     void configure_whenInstalled_configuresConnectionPool() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, 
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, 
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -415,47 +420,12 @@ public class IndexerDeployScriptTest {
 
     @Test
     void uninstall_deletesMountPointFolder() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
                 jdbcResources: JDBC_RESOURCES ] )
         instance.install()
         instance.uninstall()
 
         assertThat( "Mount point is deleted", tmpFileSystem.root."$MOUNT_POINT_NAME".file.exists() as Boolean, is( false ) )
-    }
-
-    @Test
-    void configure_whenInstalledWithCustomLogDirectory_exposesLogFolder() {
-        def logDir = tmpFileSystem.root."custom-log-files";
-        def logDirPath = logDir.file.getPath();
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-                jdbcResources: JDBC_RESOURCES,
-                logDir: logDirPath ] )
-        instance.install()
-        instance.deployer = mockGlassFishAppDeployer();
-        instance.configure()
-
-        assertEquals( logDirPath, instance.logsDir )
-    }
-
-    @Test
-    void configure_whenInstalledWithCustomLogDirectory_exposesLogFiles() {
-        def logDir = tmpFileSystem.root."custom-log-files";
-        def logDirPath = logDir.file.getPath();
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
-                jdbcResources: JDBC_RESOURCES,
-                logDir: logDirPath ] )
-        instance.install()
-        instance.deployer = mockGlassFishAppDeployer();
-        instance.configure()
-
-        def expected = [
-            "introspect",
-            "introspect-error",
-        ]
-
-        expected.each { obj ->
-            assertEquals( logDir."${obj}.log".file.getPath(), instance.logs."$obj" )
-        }
     }
 
     GlassFishAppDeployer mockGlassFishAppDeployer(){

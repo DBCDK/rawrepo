@@ -21,11 +21,7 @@ package dk.dbc.rawrepo.maintain.deploy
 
 import dk.dbc.glu.scripts.GluScriptBase
 import dk.dbc.glu.utils.glassfish.GlassFishAppDeployer
-import dk.dbc.glu.utils.logback.Appender
 import dk.dbc.glu.utils.logback.Configuration
-import dk.dbc.glu.utils.logback.Format
-import dk.dbc.glu.utils.logback.Level
-import dk.dbc.glu.utils.logback.Logger
 import org.linkedin.util.io.resource.Resource
 
 class MaintainDeployScript extends GluScriptBase {
@@ -68,26 +64,19 @@ class MaintainDeployScript extends GluScriptBase {
      * ..validateInterval  : Integer : How often (sec) to validate the connection
      *                                 (REQUIRED).
      *                                 
-     * logDir              : String  : Location of logging
-     *                                 (OPTIONAL)
-     * 
-     * loggers             : List>Map: List of logger maps
-     *                                 (OPTIONAL)
-     * 
-     *  ..name             : String  : name of logger
-     *                                 (OPTIONAL)
-     * 
-     *  ..file             : String  : prefix of filename (appended $type.log)
-     *                                 (REQUIRED) 
-     *                                 
-     *  ..level            : String  : ERROR|WARN|INFO|DEBUG|TRACE
-     *                                 (OPTIONAL)
-     * 
-     *  ..format           : String  : PLAIN|LOGSTASH
-     *                                 (OPTIONAL)
-     *  
-     *  ..rotate           : Boolean : Logrotate
-     *                                 (OPTIONAL)
+     * logging          : Map       : Map for configuring logging
+     *                                (REQUIRED).
+     *                                
+     * ..dir            : String    : Path to directory in which log files are stored 
+     *                                (REQUIRED).                  
+     *                                              
+     * ..plain          : String    : Log level for plain log files
+     *                                {OFF, ERROR, WARN, INFO, DEBUG, TRACE}
+     *                                (REQUIRED). 
+     *                                
+     * ..logstash       : String    : Log level for logstash log files
+     *                                {OFF, ERROR, WARN, INFO, DEBUG, TRACE}
+     *                                (REQUIRED).
      * 
      * glassfishProperties : Map     : Glassfish properties port, username and
      *                                 password used for localhost deploy
@@ -157,15 +146,12 @@ class MaintainDeployScript extends GluScriptBase {
             })
 
         validateDatabases( RAWREPO_NAME );
-        
-        validateLoggers()
-        
+                
         rootFolder = shell.mkdirs( shell.toResource( mountPoint.getPath() ) )
         log.info "rootFolder: ${rootFolder}"
         
-        logFolder = shell.mkdirs( params.logDir ?: rootFolder."log-files" )
+        logFolder = installLogging( params.logging )
         shell.chmod(logFolder, "a+w")
-        log.info "Created log files folder: ${logFolder.file}"
 
         def webappsFolder = shell.mkdirs( rootFolder."webapps" )
         def artifact = fetchResourceIntoFolder( params.artifact, webappsFolder )
@@ -187,18 +173,6 @@ class MaintainDeployScript extends GluScriptBase {
             glassfishProperties.baseUrl = "https://localhost:$glassfishProperties.port"
             // Overwrite insecure flag, so CURL does not check certificates
             glassfishProperties.insecure = true
-        }
-    }
-    
-    void validateLoggers() {
-        if(params.loggers) {
-            params.loggers.each({
-                    Map map = it;
-                    [ 'file' ].each({
-                            if(!map."$it") 
-                            shell.fail("Required parameter 'loggers..${it}' is missing")
-                        })
-                })
         }
     }
     
@@ -243,30 +217,11 @@ class MaintainDeployScript extends GluScriptBase {
             ])
     }
 
-    Integer unnamedLoggerNo = 1;
     void configureLogging() {
         def logConfigFile = stagingFolder."WEB-INF/classes/logback.xml"
-        Configuration logbackConfiguration = basicLogbackConfiguration()
-        if(params.logging) {
-            params.logging.each({
-                    log.info "Adding custom logger $it"
-                    String name = it.name ?: ( "unnamedLoggerNo" + unnamedLoggerNo++ )
-                    String filePrefix = it.file
-                    Level level = ( it.level ?: "info" ).toUpperCase()
-                    Format format = ( it.format ?: "plain" ).toUpperCase()
-                    Boolean rotate = it.rotate ?: false
-                    Appender appender = new Appender(
-                        name: name, variant: "out",
-                        file: logFolder."${filePrefix}".file,
-                        rotate: rotate,
-                        format: format,
-                        threshold: level )
-                    logbackConfiguration.addAppender(appender)
-                })
-        }
-        logbackConfiguration.level = Level.TRACE
-        logbackConfiguration.save(logConfigFile.file)
-        registerLogFiles(logbackConfiguration)
+        Configuration logConfig = defaultLogbackConfig()
+        registerLogFiles( logConfig )
+        logConfig.save( logConfigFile.file ) 
     }
         
     void configureCustomResource( String name, Map properties ) {

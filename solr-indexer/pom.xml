@@ -355,6 +355,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
         </dependency>
+	<dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>3.1</version>
+        </dependency>
         <dependency>
             <groupId>dk.dbc</groupId>
             <artifactId>dbc-commons-exception</artifactId>

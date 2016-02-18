@@ -53,7 +53,11 @@ public class IndexerDeployScriptTest {
     private final static DB_WORKER = "worker"
     private final static POLL_INTERVAL = "5"
     private final static THREAD_POOL_SIZE = "2"
-    private static LOG_FOLDER = "log-files"
+    private final static LOGGING = [ 
+        dir: "log-files",
+        plain: "INFO",
+        logstash: "INFO"
+    ]
 
 
     class GluScript extends IndexerDeployScript {
@@ -99,7 +103,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void install_mountPointIsSet_createsMountPointFolderRelativeToFileSystemRoot() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
 
@@ -112,126 +116,126 @@ public class IndexerDeployScriptTest {
 
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNotSet_throwsNullPointerException() {
-        def instance = new GluScript( shellImpl, [ solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=NullPointerException )
     void install_artifactInitParameterIsNull_throwsNullPointerException() {
-        def instance = new GluScript( shellImpl, [ artifact: null, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: null, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=IllegalArgumentException )
     void install_artifactInitParameterIsEmpty_throwsIllegalArgumentException() {
-        def instance = new GluScript( shellImpl, [ artifact: "", solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: "", logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=FileNotFoundException )
     void install_artifactInitParameterPointsToNonExistingResource_throwsFileNotFoundException() {
-        def instance = new GluScript( shellImpl, [ artifact: "no-such-file", solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: "no-such-file", logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_solrUrlInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_solrUrlInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: null,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: null,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbUrlInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbUrlInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: null, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbUserInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbUserInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: null, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbPasswordInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbPasswordInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: null, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbWorkerInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_dbWorkerInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: null, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_pollIntervalParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_pollIntervalInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: null, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_threadPoolSizeInitParameterIsNotSet_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL ] )
         instance.install()
     }
 
     @Test( expected=ScriptFailedException )
     void install_threadPoolSizeInitParameterIsNull_throwsScriptFailedException() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: null ] )
         instance.install()
     }
@@ -244,7 +248,7 @@ public class IndexerDeployScriptTest {
             password: 'admin',
         ]
 
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
 
@@ -265,7 +269,7 @@ public class IndexerDeployScriptTest {
             insecure: true,
         ]
 
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE,
             glassfishProperties: customProperties] )
         instance.install()
@@ -280,7 +284,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_contextPathInitIsNotSet_usesDefaultContextPath() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
 
@@ -304,7 +308,7 @@ public class IndexerDeployScriptTest {
     @Test
     void configure_contextPathInitIsSet_usesContextPath() {
         String customPath = "context"
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE,
             contextPath: customPath] )
         instance.install()
@@ -327,7 +331,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_addsLoggingProperties() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -349,7 +353,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_whenInstalled_exposesLogFiles() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -366,18 +370,19 @@ public class IndexerDeployScriptTest {
         instance.configure()
 
         def expected = [
-            "indexer",
-            "indexer-error",
+            "rawrepoindexer.logstash",
+            "rawrepoindexer.plain",
+            "rawrepoindexer-error.plain",
         ]
 
         expected.each { obj ->
-            assertThat( mountPointFolder."$LOG_FOLDER"."${obj}.log".file.getPath(), is( instance.logs."$obj" ) )
+            assertThat( mountPointFolder."$LOGGING.dir"."${obj}.log".file.getPath(), is( instance.logs."${obj}.log" ) )
         }
     }
 
     @Test
     void configure_whenInstalled_configuresEjbXml() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -412,7 +417,7 @@ public class IndexerDeployScriptTest {
 
     @Test
     void configure_whenInstalled_configuresConnectionPool() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
         instance.deployer = new GlassFishAppDeployer(['baseUrl':'url']) {
@@ -488,47 +493,12 @@ public class IndexerDeployScriptTest {
 
     @Test
     void uninstall_deletesMountPointFolder() {
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
+        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, logging: LOGGING, solrUrl: SOLR_URL,
             dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE ] )
         instance.install()
         instance.uninstall()
 
         assertThat( "Mount point is deleted", tmpFileSystem.root."$MOUNT_POINT_NAME".file.exists() as Boolean, is( false ) )
-    }
-
-    @Test
-    void configure_whenInstalledWithCustomLogDirectory_exposesLogFolder() {
-        def logDir = tmpFileSystem.root."custom-log-files";
-        def logDirPath = logDir.file.getPath();
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE,
-            logDir: logDirPath ] )
-        instance.install()
-        instance.deployer = mockGlassFishAppDeployer();
-        instance.configure()
-
-        assertEquals( logDirPath, instance.logsDir )
-    }
-
-    @Test
-    void configure_whenInstalledWithCustomLogDirectory_exposesLogFiles() {
-        def logDir = tmpFileSystem.root."custom-log-files";
-        def logDirPath = logDir.file.getPath();
-        def instance = new GluScript( shellImpl, [ artifact: ARTIFACT, solrUrl: SOLR_URL,
-            dbUrl: DB_URL, dbUser: DB_USER, dbPassword: DB_PASSWORD, dbQueueWorker: DB_WORKER, pollInterval: POLL_INTERVAL, threadPoolSize: THREAD_POOL_SIZE,
-            logDir: logDirPath ] )
-        instance.install()
-        instance.deployer = mockGlassFishAppDeployer();
-        instance.configure()
-
-        def expected = [
-            "indexer",
-            "indexer-error",
-        ]
-
-        expected.each { obj ->
-            assertEquals( logDir."${obj}.log".file.getPath(), instance.logs."$obj" )
-        }
     }
 
     GlassFishAppDeployer mockGlassFishAppDeployer(){
