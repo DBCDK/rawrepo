@@ -185,7 +185,6 @@ class ContentServiceDeployScript extends GluScriptBase {
         log.info "rootFolder: ${rootFolder}"
         
         logFolder = installLogging( params.logging )
-        shell.chmod(logFolder, "a+w")
 
         def webappsFolder = shell.mkdirs( rootFolder."webapps" )
         def artifact = fetchResourceIntoFolder( params.artifact, webappsFolder )

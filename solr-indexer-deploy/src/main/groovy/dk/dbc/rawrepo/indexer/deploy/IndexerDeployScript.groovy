@@ -139,7 +139,6 @@ class IndexerDeployScript extends GluScriptBase {
 
         // Create directories
         logFolder = installLogging( params.logging )
-        shell.chmod(logFolder, "a+w")
 
         // fetch artifact
         def webappsFolder = shell.mkdirs( rootFolder."webapps" )
