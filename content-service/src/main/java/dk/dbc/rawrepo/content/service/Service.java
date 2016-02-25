@@ -352,7 +352,7 @@ public abstract class Service {
 
     private static boolean isMarcXChange(String mimeType) {
         switch (mimeType) {
-            case MarcXChangeMimeType.AUTHORITTY:
+            case MarcXChangeMimeType.AUTHORITY:
             case MarcXChangeMimeType.ENRICHMENT:
             case MarcXChangeMimeType.MARCXCHANGE:
                 return true;
