@@ -51,7 +51,7 @@ public class ValidateRelations {
     private static Map<String, Validator> initializeValidators() {
         HashMap<String, Validator> tmp = new HashMap<>();
         tmp.put(MarcXChangeMimeType.MARCXCHANGE, makeValidatorMarcXchange());
-        tmp.put(MarcXChangeMimeType.AUTHORITTY, makeValidatorAuthority());
+        tmp.put(MarcXChangeMimeType.AUTHORITY, makeValidatorAuthority());
         tmp.put(MarcXChangeMimeType.ENRICHMENT, makeValidatorEnrichment());
         return tmp;
     }
@@ -78,7 +78,7 @@ public class ValidateRelations {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
                     }
-                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITTY);
+                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (parentMimeTypes.size() > 0) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");
@@ -124,7 +124,7 @@ public class ValidateRelations {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");
                     }
-                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITTY);
+                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (!parentMimeTypes.isEmpty()) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");
@@ -137,7 +137,7 @@ public class ValidateRelations {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, too many parent relations");
                     }
-                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITTY);
+                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (parentMimeTypes.size() > 0) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");

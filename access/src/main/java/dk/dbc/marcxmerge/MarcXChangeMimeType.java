@@ -26,12 +26,12 @@ public class MarcXChangeMimeType {
 
     public static final String MARCXCHANGE = "text/marcxchange";
     public static final String ENRICHMENT = "text/enrichment+marcxchange";
-    public static final String AUTHORITTY = "text/authority+marcxchange";
+    public static final String AUTHORITY = "text/authority+marcxchange";
 
     public static boolean isMarcXChange(String mimetype) {
         switch (mimetype) {
             case MARCXCHANGE:
-            case AUTHORITTY:
+            case AUTHORITY:
                 return true;
             default:
                 return false;
