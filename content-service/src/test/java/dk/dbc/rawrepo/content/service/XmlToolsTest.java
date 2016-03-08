@@ -67,12 +67,13 @@ public class XmlToolsTest {
         XmlTools xmlTools = new FakeCDI().build(XmlTools.class);
         byte[] marcxFiltered = xmlTools.filterPrivateOut(marcxWith);
 
-        XmlDiffTextWriter writer = new XmlDiffTextWriter("«A:", "»", "«E:", "»", "", "", "«NS:", "»");
-        XmlDiff.Result compare = XmlDiff.compare(new ByteArrayInputStream(marcxFiltered), new ByteArrayInputStream(marcxWithout), writer, "  ", true, true, true);
-        if (XmlDiff.Result.DIFFERENT == compare) {
+        XmlDiffTextWriter writer = new XmlDiffTextWriter("«A:", "»", "«E:", "»", "«NS:", "»");
+        boolean equal = XmlDiff.builder().indent(2).normalize(true).strip(true).trim(true).build()
+                .compare(new ByteArrayInputStream(marcxFiltered), new ByteArrayInputStream(marcxWithout), writer);
+        if (!equal) {
             System.out.println("writer = " + writer.toString());
         }
-        assertTrue("Identical documents", XmlDiff.Result.DIFFERENT != compare);
+        assertTrue("Identical documents", equal);
     }
 
     @Test
@@ -82,12 +83,13 @@ public class XmlToolsTest {
         byte[] combinedActual = xmlTools.buildCollection().add(file("marcx-with-private_1.xml")).add(file("marcx-with-private_2.xml")).build();
         byte[] combinedExpected = file("marcx-with-private_combined.xml");
 
-        XmlDiffTextWriter writer = new XmlDiffTextWriter("«A:", "»", "«E:", "»", "", "", "«NS:", "»");
-        XmlDiff.Result compare = XmlDiff.compare(new ByteArrayInputStream(combinedActual), new ByteArrayInputStream(combinedExpected), writer, "  ", true, true, true);
-        if (XmlDiff.Result.DIFFERENT == compare) {
+        XmlDiffTextWriter writer = new XmlDiffTextWriter("«A:", "»", "«E:", "»", "«NS:", "»");
+        boolean equal = XmlDiff.builder().indent(2).normalize(true).strip(true).trim(true).build()
+                .compare(new ByteArrayInputStream(combinedActual), new ByteArrayInputStream(combinedExpected), writer);
+        if (!equal) {
             System.out.println("writer = " + writer.toString());
         }
-        assertTrue("Identical documents", XmlDiff.Result.DIFFERENT != compare);
+        assertTrue("Identical documents", equal);
 
     }
 

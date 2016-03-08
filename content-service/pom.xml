@@ -82,7 +82,7 @@
         <dependency>
             <groupId>dk.dbc.xmldiff</groupId>
             <artifactId>xmldiff-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -149,9 +149,9 @@
             </plugin>
             <!--Validate generated WSDL--> 
             <plugin>
-                <groupId>dk.dbc</groupId>
+                <groupId>dk.dbc.xmldiff</groupId>
                 <artifactId>xmldiff-maven-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>1.2-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
@@ -167,17 +167,18 @@
                     <strip>true</strip>
                     <normalize>true</normalize>
                     <reorderElements>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}binding</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}definitions</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}message</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}operation</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}portType</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}service</reorderElement>
-                        <reorderElement>{http://schemas.xmlsoap.org/wsdl/}types</reorderElement>
-                        <reorderElement>{http://www.w3.org/2001/XMLSchema}all</reorderElement>
-                        <reorderElement>{http://www.w3.org/2001/XMLSchema}choice</reorderElement>
-                        <reorderElement>{http://www.w3.org/2001/XMLSchema}restriction</reorderElement>
-                        <reorderElement>{http://www.w3.org/2001/XMLSchema}schema</reorderElement>
+                        <reorderElement>ns=http://schemas.xmlsoap.org/wsdl/</reorderElement>
+                        <reorderElement>ns:binding</reorderElement>
+                        <reorderElement>ns:definitions</reorderElement>
+                        <reorderElement>ns:message</reorderElement>
+                        <reorderElement>ns:operation</reorderElement>
+                        <reorderElement>ns:portType</reorderElement>
+                        <reorderElement>ns:service</reorderElement>
+                        <reorderElement>ns:types</reorderElement>
+                        <reorderElement>ns:all</reorderElement>
+                        <reorderElement>ns:choice</reorderElement>
+                        <reorderElement>ns:restriction</reorderElement>
+                        <reorderElement>ns:schema</reorderElement>
                     </reorderElements>
                     <leftPath>${basedir}/src/test/resources/RawRepoContentService.wsdl</leftPath>
                     <rightPath>${project.build.directory}/wsdl.xml</rightPath>
