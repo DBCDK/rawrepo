@@ -42,12 +42,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class RecordInspectorMain {
 
@@ -147,27 +148,25 @@ public class RecordInspectorMain {
                         if (left != null && right != null) {
                             XmlDiffWriter writer;
                             if (commandLine.hasOption("color")) {
-                                writer = new XmlDiffTextWriter("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m", "\u001B[44m", "\u001B[49m");
+                                writer = new XmlDiffTextWriter("\u001B[41m", "\u001B[49m", "\u001B[42m", "\u001B[49m", "\u001B[43m", "\u001B[49m");
                             } else if (commandLine.hasOption("text")) {
-                                writer = new XmlDiffTextWriter("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]", "{", "}");
+                                writer = new XmlDiffTextWriter("\u00BB-", "-\u00AB", "\u00BB+", "+\u00AB", "[", "]");
                             } else if (commandLine.hasOption("quiet")) {
                                 writer = new XmlDiffWriter();
                             } else {
-                                writer = new XmlDiffTextWriter("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m", "\u001B[7m", "\u001B[27m");
+                                writer = new XmlDiffTextWriter("\u001B[9m", "\u001B[29m", "\u001B[1m", "\u001B[21m", "\u001B[4m", "\u001B[24m");
                             }
-                            XmlDiff.Result compare = XmlDiff.compare(new ByteArrayInputStream(left), new ByteArrayInputStream(right), writer, "    ", true, true, true);
+                            exitOk = XmlDiff.builder().indent(4).normalize(true).strip(true).trim(true).build()
+                                    .compare(new ByteArrayInputStream(left), new ByteArrayInputStream(right), writer);
                             String content = writer.toString();
                             if (!content.isEmpty()) {
                                 System.out.println(content);
-                            }
-                            if (compare == XmlDiff.Result.DIFFERENT) {
-                                exitOk = false;
                             }
                         }
                     }
                     recordInspector.commit();
                 }
-            } catch (MarcXMergerException ex) {
+            } catch (MarcXMergerException | XPathExpressionException ex) {
                 Logger.getLogger(RecordInspectorMain.class.getName()).log(Level.SEVERE, null, ex);
             }
             System.exit(exitOk ? 0 : 1);
