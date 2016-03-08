@@ -47,13 +47,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Stateless
 @Path("")
@@ -256,11 +257,12 @@ public class Introspect {
     // |_| |_|\___|_| .__/ \___|_|  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
     //              |_|
     //
-    private ArrayList<Object> xmlDiff(Record leftRecord, Record rightRecord) throws SAXException, IOException {
+    private ArrayList<Object> xmlDiff(Record leftRecord, Record rightRecord) throws SAXException, IOException, XPathExpressionException {
         ByteArrayInputStream leftStream = new ByteArrayInputStream(leftRecord.getContent());
         ByteArrayInputStream rightStream = new ByteArrayInputStream(rightRecord.getContent());
         DiffWriter writer = new DiffWriter();
-        XmlDiff.compare(leftStream, rightStream, writer, "    ", true, true, true);
+        XmlDiff.builder().indent(4).normalize(true).strip(true).trim(true).build()
+                .compare(leftStream, rightStream, writer);
         ArrayList<Object> response = writer.getData();
         return response;
     }
@@ -328,16 +330,6 @@ public class Introspect {
 
         @Override
         public void openUri() {
-            add("both");
-        }
-
-        @Override
-        public void closeName() {
-            add("name");
-        }
-
-        @Override
-        public void openName() {
             add("both");
         }
 
