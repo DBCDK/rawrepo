@@ -56,7 +56,7 @@ public class RelationHintsOpenAgency extends RelationHints {
         if (usesCommonAgency(agencyId)) {
             return Arrays.asList(191919);
         }
-        return Arrays.asList();
+        return Arrays.asList(agencyId);
     }
 
 }

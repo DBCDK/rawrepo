@@ -102,7 +102,8 @@ public abstract class RawRepoDAO {
         /**
          * Construct all services that uses openagency webservice
          *
-         * use {@link  #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL, java.util.concurrent.ExecutorService) } instead.
+         * use {@link  #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL, java.util.concurrent.ExecutorService)
+         * } instead.
          *
          * This produces 2 threadpools, mostly often not used at all
          *
@@ -126,7 +127,7 @@ public abstract class RawRepoDAO {
          * Construct all services that uses openagency webservice
          *
          * @param service
-         * @param es executer service, or null if block while fetching
+         * @param es      executer service, or null if block while fetching
          * @return self
          */
         public Builder openAgency(OpenAgencyServiceFromURL service, ExecutorService es) {
@@ -279,7 +280,7 @@ public abstract class RawRepoDAO {
             Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
             collection.put(bibliographicRecordId, record);
 
-            int mostCommonAgency = mostCommonAgencyForRecord(bibliographicRecordId, agencyId, false);
+            int mostCommonAgency = findParentRelationAgency(bibliographicRecordId, agencyId);
             Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
                 fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
@@ -333,11 +334,10 @@ public abstract class RawRepoDAO {
      * Find agency for sibling relation
      *
      * @param bibliographicRecordId id of the record
-     * @param originalAgencyId the agency trying to make a sibling relation
+     * @param originalAgencyId      the agency trying to make a sibling relation
      * @return agencyid of whom to make a sibling relation
      * @throws RawRepoException if no agency could be found for record
      */
-
     public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
         try {
             if (!relationHints.usesCommonAgency(originalAgencyId)) {
@@ -364,7 +364,7 @@ public abstract class RawRepoDAO {
      * Find agency for parent relation
      *
      * @param bibliographicRecordId id of the parent record
-     * @param originalAgencyId the agency trying to make a parent relation
+     * @param originalAgencyId      the agency trying to make a parent relation
      * @return agencyid of whom to make a parent relation
      * @throws RawRepoException if no agency could be found for record
      */
