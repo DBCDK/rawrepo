@@ -344,6 +344,14 @@
     <copyField source="marc.245a" dest="match.245a"/>
     <field name="match.245a" type="dbc-match" indexed="true" stored="true" required="false" />
 
+    <field name="marc.245g" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.245g" dest="match.245g"/>
+    <field name="match.245g" type="dbc-match" indexed="true" stored="true" required="false" />
+
+    <field name="marc.245n" type="dbc-default" indexed="false" stored="false" required="false" />
+    <copyField source="marc.245n" dest="match.245n"/>
+    <field name="match.245n" type="dbc-match" indexed="true" stored="true" required="false" />
+
     <field name="marc.245ø" type="dbc-default" indexed="false" stored="false" required="false" />
     <copyField source="marc.245ø" dest="match.245ø"/>
     <field name="match.245ø" type="dbc-match" indexed="true" stored="true" required="false" />

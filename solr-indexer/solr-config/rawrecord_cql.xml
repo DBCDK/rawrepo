@@ -203,6 +203,20 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             <title lang="en">Field for record matching - not designed for external use</title>
             <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
             <map hidden="1">
+                <name set="match">245g</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
+                <name set="match">245n</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">Field for record matching - not designed for external use</title>
+            <title lang="da">Til dobbeltpostkontrol - til intert brug</title>
+            <map hidden="1">
                 <name set="match">245ø</name>
             </map>
         </index>
