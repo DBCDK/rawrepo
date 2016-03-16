@@ -34,6 +34,7 @@ import static org.mockito.Mockito.*;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
@@ -41,6 +42,9 @@ import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.doCallRealMethod;
 
 /**
  *
@@ -70,17 +74,17 @@ public class RawRepoDAOTest {
                               "H:870970", "H:1", "H:2");// BIND
             MarcXMerger marcXMerger = new MarcXMerger() {
 
-                @Override
-                public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
-                    return common;
-                }
+                    @Override
+                    public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
+                        return common;
+                    }
 
-                @Override
-                public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
-                    return true;
-                }
+                    @Override
+                    public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
+                        return true;
+                    }
 
-            };
+                };
             Assert.assertEquals("870970", access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail());
             Assert.assertEquals("870970,1", access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail());
 
@@ -567,13 +571,36 @@ public class RawRepoDAOTest {
     }
 
     @Test
-    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             access.agencySearchOrder = new AgencySearchOrderFallback();
+
+            access.relationHints = mock(RelationHintsOpenAgency.class);
+            doAnswer(new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    return true;
+                }
+            }).when(access.relationHints).usesCommonAgency(anyInt());
+            doAnswer(new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    return false;
+                }
+            }).when(access.relationHints).usesCommonAgency(2);
+
+            doAnswer(new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    return Arrays.asList(870970);
+                }
+            }).when(access.relationHints).get(anyInt());
+
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject(), anyBoolean());
+            doCallRealMethod().when(access).findParentRelationAgency(anyString(), anyInt());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2",
                               "B:870970", // HEAD
@@ -586,17 +613,18 @@ public class RawRepoDAOTest {
             System.out.println("access = " + access);
             MarcXMerger merger = new MarcXMerger() {
 
-                @Override
-                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
-                    return local;
-                }
+                    @Override
+                    public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                        return local;
+                    }
 
-            };
+                };
             recordCollectionIs(access.fetchRecordCollection("A", 870970, merger), "A:870970"); // ENTITY
             recordCollectionIs(access.fetchRecordCollection("A", 1, merger), "A:1"); // ENTITY LOCAL
             recordCollectionIs(access.fetchRecordCollection("D", 870970, merger), "D:870970", "C:870970", "B:870970"); // BIND
             recordCollectionIs(access.fetchRecordCollection("D", 1, merger), "D:870970", "C:1", "B:870970"); // BIND LOCAL SECTION
             recordCollectionIs(access.fetchRecordCollection("G", 1, merger), "G:1", "F:870970", "B:870970"); // BIND LOCAL BIND
+            recordCollectionIs(access.fetchRecordCollection("F", 2, merger), "F:2"); // NO COMMON AGENCY
 
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
