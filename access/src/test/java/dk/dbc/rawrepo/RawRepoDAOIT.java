@@ -18,12 +18,14 @@
  */
 package dk.dbc.rawrepo;
 
+import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
+import dk.dbc.gracefulcache.CacheTimeoutException;
+import dk.dbc.gracefulcache.CacheValueException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,8 +42,8 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import org.junit.Assert;
 
 /**
@@ -51,28 +53,25 @@ import org.junit.Assert;
 public class RawRepoDAOIT {
 
     private Connection connection;
-    private String jdbc;
+    private PostgresITConnection postgres;
 
     @Before
     public void setup() throws SQLException, ClassNotFoundException {
-        String port = System.getProperty("postgresql.port");
-        jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
-        Properties properties = new Properties();
-
-        connection = DriverManager.getConnection(jdbc, properties);
+        postgres = new PostgresITConnection("rawrepo");
+        connection = postgres.getConnection();
         connection.prepareStatement("SET log_statement = 'all';").execute();
         resetDatabase();
     }
 
     @After
     public void teardown() throws SQLException {
-        connection.close();
+        postgres.close();
     }
 
     @Test
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException {
         setupData(100000, "A:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
 
         connection.setAutoCommit(false);
 
@@ -134,7 +133,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         Record record;
         record = dao.fetchRecord("a bcd efg h", 100000);
@@ -179,17 +178,17 @@ public class RawRepoDAOIT {
     @Test
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, ClassNotFoundException {
         setupData(100000, "B:2", "B:870970", "C:870970", "D:1", "D:870970", "E:870970", "F:1", "F:870970", "G:870970", "H:1", "H:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         MarcXMerger merger = new MarcXMerger() {
 
-            @Override
-            public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
-                return local;
-            }
+                @Override
+                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                    return local;
+                }
 
-        };
+            };
 
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 870970, merger)), "B:870970", "C:870970", "D:870970");
 
@@ -209,7 +208,7 @@ public class RawRepoDAOIT {
     public void testFetchRecordCollectionNoCommonLibrary() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "B:1", "C:1", "D:1", "E:1", "F:1", "G:1", "H:1");
         setupRelations("C:1,B:1", "D:1,C:1", "E:1,C:1", "F:1,B:1", "G:1,F:1", "H:1,F:1");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         MarcXMerger merger = new MarcXMerger();
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, merger)), "B:1", "C:1", "D:1");
@@ -218,7 +217,7 @@ public class RawRepoDAOIT {
     @Test
     public void testDeleteRecord() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "B:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         //Ensure record is in base
@@ -250,7 +249,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityWithout() throws SQLException, RawRepoException {
         setupData(100000, "A:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -262,7 +261,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityWith() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -276,7 +275,7 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityLocalData() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("A:1"), "text/plain");
         collectionIs(getQueue(),
@@ -294,7 +293,7 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("C:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -313,7 +312,7 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("B:870970"), "text/plain");
         collectionIs(getQueue(),
@@ -339,7 +338,7 @@ public class RawRepoDAOIT {
                 "S1:870970,H:870970", "S1:2,S1:870970", "S1:3,S1:2",
                 "B11:870970,S1:870970",
                 "B12:870970,S1:870970", "B12:4,B12:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         clearQueue();
@@ -370,90 +369,89 @@ public class RawRepoDAOIT {
     @Test
     public void testDeQueueWithSavepoint() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
-        connection.setAutoCommit(false);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
 
-        Connection connection1 = DriverManager.getConnection(jdbc);
-        RawRepoDAO dao1 = RawRepoDAO.builder(connection1).build();
-        connection1.setAutoCommit(false);
+        try (Connection connection1 = postgres.getExtraConnection() ;
+             Connection connection2 = postgres.getExtraConnection() ;
+             Connection connection3 = postgres.getExtraConnection()) {
 
-        Connection connection2 = DriverManager.getConnection(jdbc);
-        RawRepoDAO dao2 = RawRepoDAO.builder(connection2).build();
-        connection2.setAutoCommit(false);
+            connection.setAutoCommit(false);
 
-        Connection connection3 = DriverManager.getConnection(jdbc);
-        connection3.setAutoCommit(false);
+            RawRepoDAO dao1 = RawRepoDAO.builder(connection1).relationHints(new MyRelationHints()).build();
+            connection1.setAutoCommit(false);
 
-        System.out.println("QUEUE A:1");
-        dao.enqueue(new RecordId("A", 1), "test", "", true, true);
-        connection.commit();
-        collectionIs(getQueueState(),
-                     "A:1:changed:1", "A:1:leaf:1");
+            RawRepoDAO dao2 = RawRepoDAO.builder(connection2).relationHints(new MyRelationHints()).build();
+            connection2.setAutoCommit(false);
 
-        System.out.println("TAKE A:1");
-        QueueJob job1 = dao1.dequeueWithSavepoint("changed");
+            connection3.setAutoCommit(false);
 
-        System.out.println("QUEUE A:1 again");
-        dao.enqueue(new RecordId("A", 1), "test", "", true, true);
-        connection.commit();
+            System.out.println("QUEUE A:1");
+            dao.enqueue(new RecordId("A", 1), "test", "", true, true);
+            connection.commit();
+            collectionIs(getQueueState(),
+                         "A:1:changed:1", "A:1:leaf:1");
 
-        System.out.println("TEST");
-        collectionIs(getQueueState(),
-                     "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
+            System.out.println("TAKE A:1");
+            QueueJob job1 = dao1.dequeueWithSavepoint("changed");
 
-        System.out.println("TAKE NULL");
-        QueueJob job2 = dao2.dequeueWithSavepoint("changed");
-        assertNull(job2); // some in queue but one is processing
+            System.out.println("QUEUE A:1 again");
+            dao.enqueue(new RecordId("A", 1), "test", "", true, true);
+            connection.commit();
 
-        System.out.println("QUEUE B:2");
-        dao.enqueue(new RecordId("B", 2), "test", "", true, true); // 2 in queue
-        connection.commit();
+            System.out.println("TEST");
+            collectionIs(getQueueState(),
+                         "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
 
-        System.out.println("TEST");
-        collectionIs(getQueueState(),
-                     "A:1:changed:2", "A:1:leaf:1",
-                     "B:2:changed:1", "B:2:leaf:1");
+            System.out.println("TAKE NULL");
+            QueueJob job2 = dao2.dequeueWithSavepoint("changed");
+            assertNull(job2); // some in queue but one is processing
 
-        System.out.println("TAKE B:2");
-        job2 = dao2.dequeueWithSavepoint("changed");
-        assertNotNull(job2); //
+            System.out.println("QUEUE B:2");
+            dao.enqueue(new RecordId("B", 2), "test", "", true, true); // 2 in queue
+            connection.commit();
 
-        System.out.println("DONE A:1");
-        dao1.queueFail(job1, "failure");
-        connection1.commit(); // Commit 1st changed;
+            System.out.println("TEST");
+            collectionIs(getQueueState(),
+                         "A:1:changed:2", "A:1:leaf:1",
+                         "B:2:changed:1", "B:2:leaf:1");
 
-        System.out.println("DONE B:2");
-        connection2.commit(); // Commit 1st changed;
+            System.out.println("TAKE B:2");
+            job2 = dao2.dequeueWithSavepoint("changed");
+            assertNotNull(job2); //
 
-        System.out.println("TEST");
-        collectionIs(getQueueState(),
-                     "A:1:changed:1",
-                     "A:1:leaf:1",
-                     "B:2:leaf:1");
+            System.out.println("DONE A:1");
+            dao1.queueFail(job1, "failure");
+            connection1.commit(); // Commit 1st changed;
 
-        System.out.println("TAKE A:1#2");
-        job1 = dao1.dequeueWithSavepoint("changed");
-        assertNotNull(job1);
+            System.out.println("DONE B:2");
+            connection2.commit(); // Commit 1st changed;
 
-        System.out.println("DONE A:1#2");
-        dao1.queueFail(job1, "failure");
-        connection1.commit(); // Commit 1st changed;
+            System.out.println("TEST");
+            collectionIs(getQueueState(),
+                         "A:1:changed:1",
+                         "A:1:leaf:1",
+                         "B:2:leaf:1");
 
-        System.out.println("TEST");
-        collectionIs(getQueueState(),
-                     "A:1:leaf:1",
-                     "B:2:leaf:1");
+            System.out.println("TAKE A:1#2");
+            job1 = dao1.dequeueWithSavepoint("changed");
+            assertNotNull(job1);
 
-        connection1.close();
-        connection2.close();
-        connection3.close();
+            System.out.println("DONE A:1#2");
+            dao1.queueFail(job1, "failure");
+            connection1.commit(); // Commit 1st changed;
+
+            System.out.println("TEST");
+            collectionIs(getQueueState(),
+                         "A:1:leaf:1",
+                         "B:2:leaf:1");
+        }
         connection.commit();
     }
 
     @Test
     public void testDeQueue() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         dao.enqueue(new RecordId("A", 1), "test", "", true, true);
@@ -467,7 +465,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testQueueFail() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
@@ -492,7 +490,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testDequeueBulk() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         for (int i = 0 ; i < 10 ; i++) {
             dao.enqueue(new RecordId("rec" + i, 123456), "test", "text/plain", false, false);
@@ -557,7 +555,7 @@ public class RawRepoDAOIT {
     @Test
     public void testArchive() throws SQLException, RawRepoException {
         setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         Record record1 = dao.fetchRecord("1 234 567 8", 123456);
@@ -583,13 +581,14 @@ public class RawRepoDAOIT {
 // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 //              |_|
     void resetDatabase() throws SQLException {
-        connection.prepareStatement("DELETE FROM relations").execute();
-        connection.prepareStatement("DELETE FROM records").execute();
-        connection.prepareStatement("DELETE FROM records_archive").execute();
-        connection.prepareStatement("DELETE FROM queue").execute();
-        connection.prepareStatement("DELETE FROM queuerules").execute();
-        connection.prepareStatement("DELETE FROM queueworkers").execute();
-        connection.prepareStatement("DELETE FROM jobdiag").execute();
+        postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
+//        connection.prepareStatement("DELETE FROM relations").execute();
+//        connection.prepareStatement("DELETE FROM records").execute();
+//        connection.prepareStatement("DELETE FROM records_archive").execute();
+//        connection.prepareStatement("DELETE FROM queue").execute();
+//        connection.prepareStatement("DELETE FROM queuerules").execute();
+//        connection.prepareStatement("DELETE FROM queueworkers").execute();
+//        connection.prepareStatement("DELETE FROM jobdiag").execute();
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
         stmt.setString(1, "changed");
@@ -619,7 +618,7 @@ public class RawRepoDAOIT {
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         Map<String, Set<RecordId>> idMap = new HashMap<>();
         for (String id : ids) {
-            idMap.put(id, new HashSet<RecordId>());
+            idMap.put(id, new HashSet<>());
         }
         Set<String> keys = idMap.keySet();
 
@@ -645,8 +644,8 @@ public class RawRepoDAOIT {
             String[] list = relation.split(",", 2);
             RecordId from = recordIdFromString(list[0]);
             RecordId to = recordIdFromString(list[1]);
-            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId())
-                && dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
+            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId()) &&
+                dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
                 Set<RecordId> relationsFrom = dao.getRelationsFrom(from);
                 relationsFrom.add(to);
                 dao.setRelationsFrom(from, relationsFrom);
@@ -756,5 +755,28 @@ public class RawRepoDAOIT {
         "H:1,H:870970",
         "H:2,H:870970",
         "H:870970,F:870970"};
+
+    private static class MyRelationHints extends RelationHints {
+
+        public MyRelationHints() {
+        }
+
+        @Override
+        public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
+            switch (agencyId) {
+                default:
+                    return Arrays.asList(870970);
+            }
+        }
+
+        @Override
+        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+            switch (agencyId) {
+                default:
+                    return true;
+            }
+        }
+
+    }
 
 }
