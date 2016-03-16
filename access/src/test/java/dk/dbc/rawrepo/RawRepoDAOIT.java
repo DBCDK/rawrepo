@@ -327,6 +327,24 @@ public class RawRepoDAOIT {
     }
 
     @Test
+    public void testQueueNotUsingCommon() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", // HEAD
+                  "C:870970", "C:1", // SECTION
+                  "D:870970", // BIND
+                  "E:870970", "E:2", // BIND
+                  "F:870970", "F:2", "F:999999", // SECTION
+                  "G:870970", "G:1", // BIND
+                  "H:870970");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("F:999999"), "text/plain");
+        System.out.println("getQueue() = " + getQueue());
+        collectionIs(getQueue(),
+                     "F:999999:changed", "F:999999:leaf");
+        connection.commit();
+    }
+
+    @Test
     public void testEnqueueWithChainedSiblings() throws SQLException, RawRepoException {
         setupData(100000, "H:870970,1",
                   "S1:870970,2,3",
@@ -582,13 +600,6 @@ public class RawRepoDAOIT {
 //              |_|
     void resetDatabase() throws SQLException {
         postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
-//        connection.prepareStatement("DELETE FROM relations").execute();
-//        connection.prepareStatement("DELETE FROM records").execute();
-//        connection.prepareStatement("DELETE FROM records_archive").execute();
-//        connection.prepareStatement("DELETE FROM queue").execute();
-//        connection.prepareStatement("DELETE FROM queuerules").execute();
-//        connection.prepareStatement("DELETE FROM queueworkers").execute();
-//        connection.prepareStatement("DELETE FROM jobdiag").execute();
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
         stmt.setString(1, "changed");
@@ -764,6 +775,8 @@ public class RawRepoDAOIT {
         @Override
         public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
             switch (agencyId) {
+                case 999999:
+                    return Arrays.asList(999999);
                 default:
                     return Arrays.asList(870970);
             }
@@ -772,6 +785,8 @@ public class RawRepoDAOIT {
         @Override
         public boolean usesCommonAgency(int agencyId) throws RawRepoException {
             switch (agencyId) {
+                case 999999:
+                    return false;
                 default:
                     return true;
             }
