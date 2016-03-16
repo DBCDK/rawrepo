@@ -18,6 +18,9 @@
  */
 package dk.dbc.rawrepo.showorder;
 
+import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
+import dk.dbc.gracefulcache.CacheTimeoutException;
+import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.rawrepo.*;
 import org.junit.After;
 import org.junit.Before;
@@ -43,6 +46,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -53,15 +58,12 @@ public class AgencySearchOrderFromShowOrderIT {
 
     private Connection connection;
     private String jdbc;
+    private PostgresITConnection postgres;
 
     @Before
     public void setup() throws SQLException, ClassNotFoundException {
-        String port = System.getProperty("postgresql.port");
-        jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
-        Properties properties = new Properties();
-
-        connection = DriverManager.getConnection(jdbc, properties);
-        connection.prepareStatement("SET log_statement = 'all';").execute();
+        postgres = new PostgresITConnection("rawrepo");
+        connection = postgres.getConnection();
         resetDatabase();
     }
 
@@ -74,6 +76,7 @@ public class AgencySearchOrderFromShowOrderIT {
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException, IOException, MarcXMergerException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
                    .searchOrder(new AgencySearchOrderFallback("870970,191919"))
+                   .relationHints(new MyRelationHints())
                    .build();
         connection.setAutoCommit(false);
 
@@ -144,13 +147,7 @@ public class AgencySearchOrderFromShowOrderIT {
 // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 //              |_|
     void resetDatabase() throws SQLException {
-        connection.prepareStatement("DELETE FROM relations").execute();
-        connection.prepareStatement("DELETE FROM records").execute();
-        connection.prepareStatement("DELETE FROM records_archive").execute();
-        connection.prepareStatement("DELETE FROM queue").execute();
-        connection.prepareStatement("DELETE FROM queuerules").execute();
-        connection.prepareStatement("DELETE FROM queueworkers").execute();
-        connection.prepareStatement("DELETE FROM jobdiag").execute();
+        postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
         stmt.setString(1, "changed");
@@ -272,7 +269,6 @@ public class AgencySearchOrderFromShowOrderIT {
         return collection;
     }
 
-
     /**
      * Parse a string to a recordid
      *
@@ -319,5 +315,21 @@ public class AgencySearchOrderFromShowOrderIT {
         "H:1,H:870970",
         "H:2,H:870970",
         "H:870970,F:870970"};
+
+    private static class MyRelationHints extends RelationHints {
+
+        public MyRelationHints() {
+        }
+
+        @Override
+        public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
+            return Arrays.asList(191919);
+        }
+
+        @Override
+        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+            return true;
+        }
+    }
 
 }
