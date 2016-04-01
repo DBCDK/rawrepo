@@ -131,22 +131,20 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(1, bibliographicRecordId);
             stmt.setInt(2, agencyId);
 
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        final boolean deleted = resultSet.getBoolean("DELETED");
-                        final String mimeType = resultSet.getString("MIMETYPE");
-                        final String base64Content = resultSet.getString("CONTENT");
-                        byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
-                        Timestamp created = resultSet.getTimestamp("CREATED");
-                        Timestamp modified = resultSet.getTimestamp("MODIFIED");
-                        String trackingId = resultSet.getString("TRACKINGID");
-                        Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, trackingId, false);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    final boolean deleted = resultSet.getBoolean("DELETED");
+                    final String mimeType = resultSet.getString("MIMETYPE");
+                    final String base64Content = resultSet.getString("CONTENT");
+                    byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
+                    Timestamp created = resultSet.getTimestamp("CREATED");
+                    Timestamp modified = resultSet.getTimestamp("MODIFIED");
+                    String trackingId = resultSet.getString("TRACKINGID");
+                    Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, trackingId, false);
 
-                        resultSet.close();
-                        stmt.close();
-                        return record;
-                    }
+                    resultSet.close();
+                    stmt.close();
+                    return record;
                 }
             }
         } catch (SQLException ex) {
@@ -345,11 +343,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
             stmt.setInt(pos++, agencyId);
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        return resultSet.getString(1);
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString(1);
                 }
             }
             throw new RawRepoExceptionRecordNotFound("Trying to find mimetype");
@@ -364,11 +360,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
             stmt.setInt(pos++, agencyId);
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        return resultSet.getBoolean(1);
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBoolean(1);
                 }
             }
             return null;
@@ -393,11 +387,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
                 }
             }
         } catch (SQLException ex) {
@@ -470,11 +462,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
                 }
             }
         } catch (SQLException ex) {
@@ -499,11 +489,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
                 }
             }
         } catch (SQLException ex) {
@@ -526,11 +514,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
                 }
             }
         } catch (SQLException ex) {
@@ -553,11 +539,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
                 }
             }
         } catch (SQLException ex) {
@@ -579,11 +563,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         Set<Integer> collection = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_AGENCIES_FOR_ID)) {
             stmt.setString(1, bibliographicRecordId);
-            if (stmt.execute()) {
-                try (ResultSet resultSet = stmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        collection.add(resultSet.getInt(1));
-                    }
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(resultSet.getInt(1));
                 }
             }
         } catch (SQLException ex) {
