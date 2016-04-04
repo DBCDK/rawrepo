@@ -52,16 +52,16 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
 
     private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?" +
-                                 " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
-                                 " ORDER BY modified DESC";
+                                                    " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
+                                                    " ORDER BY modified DESC";
     private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?" +
-                                 " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
+                                                   " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
 
     private static final String TRACKING_IDS_SINCE = "SELECT trackingid, modified FROM records" +
-                                 " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
-                                 " UNION SELECT trackingid, modified FROM records_archive" +
-                                 " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
-                                 " ORDER BY modified DESC;";
+                                                     " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+                                                     " UNION SELECT trackingid, modified FROM records_archive" +
+                                                     " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+                                                     " ORDER BY modified DESC;";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -78,6 +78,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
 
     private static final String TIME_ZONE = "SET TIME ZONE UTC";
+
     /**
      * Constructor
      *
@@ -93,8 +94,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (PreparedStatement stmt = connection.prepareStatement(TIME_ZONE)) {
                 stmt.executeUpdate();
             } catch (SQLException ex) {
-            log.error(TIME_ZONE + " error", ex);
-        throw new RawRepoException("Unable to force timezone");
+                log.error(TIME_ZONE + " error", ex);
+                throw new RawRepoException("Unable to force timezone");
             }
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
                 stmt.setInt(1, SCHEMA_VERSION);
@@ -596,6 +597,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos++, changed ? "Y" : "N");
             stmt.setString(pos++, leaf ? "Y" : "N");
             stmt.execute();
+            log.debug("Enqueued: job = " + job +
+                      "; provider = " + provider + "; mimeType = " + mimeType + ";" +
+                      "; changed = " + changed + "; leaf = " + leaf);
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
