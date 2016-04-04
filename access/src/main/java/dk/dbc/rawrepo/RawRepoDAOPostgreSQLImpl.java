@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(RawRepoDAOPostgreSQLImpl.class);
+    private static final org.slf4j.Logger logQueue = LoggerFactory.getLogger("dk.dbc.rawrepo.RawRepoDAO#queue");
 
     private final Connection connection;
 
@@ -597,7 +598,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos++, changed ? "Y" : "N");
             stmt.setString(pos++, leaf ? "Y" : "N");
             stmt.execute();
-            log.debug("Enqueued: job = " + job +
+            logQueue.debug("Enqueued: job = " + job +
                       "; provider = " + provider + "; mimeType = " + mimeType + ";" +
                       "; changed = " + changed + "; leaf = " + leaf);
         } catch (SQLException ex) {
@@ -652,6 +653,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                                                 resultSet.getString("worker"),
                                                 resultSet.getTimestamp("queued"));
                     result.add(job);
+                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
                 }
                 return result;
             }
@@ -674,10 +676,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(1, worker);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
-                    return new QueueJob(resultSet.getString("bibliographicrecordid"),
-                                        resultSet.getInt("agencyid"),
-                                        resultSet.getString("worker"),
-                                        resultSet.getTimestamp("queued"));
+                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                            resultSet.getInt("agencyid"),
+                            resultSet.getString("worker"),
+                            resultSet.getTimestamp("queued"));
+                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
+                    return job;
                 }
                 return null;
             }
