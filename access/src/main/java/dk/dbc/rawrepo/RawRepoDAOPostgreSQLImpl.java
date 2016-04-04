@@ -599,7 +599,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos++, leaf ? "Y" : "N");
             stmt.execute();
             logQueue.debug("Enqueued: job = " + job +
-                      "; provider = " + provider + "; mimeType = " + mimeType + ";" +
+                      "; provider = " + provider + "; mimeType = " + mimeType +
                       "; changed = " + changed + "; leaf = " + leaf);
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
