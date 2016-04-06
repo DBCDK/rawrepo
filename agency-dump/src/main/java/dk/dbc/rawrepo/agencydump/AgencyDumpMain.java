@@ -59,7 +59,7 @@ public class AgencyDumpMain {
                     throw new NumberFormatException("Positive integer expected");
                 }
                 int cnt = 0;
-                for (String option : Arrays.asList("enrichment", "merged", "entity")) {
+                for (String option : Arrays.asList("enrichment", "entity")) {
                     if (commandLine.hasOption(option)) {
                         cnt++;
                     }
