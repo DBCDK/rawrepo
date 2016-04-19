@@ -213,7 +213,7 @@ public class Indexer {
             log.info("Indexed {}", job);
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
-            queueFail(dao, job, id);
+            queueFail(dao, job, ex.getMessage());
         }
     }
 
@@ -292,9 +292,9 @@ public class Indexer {
         time.stop();
     }
 
-    private void queueFail(RawRepoDAO dao, QueueJob job, String id) throws RawRepoException {
+    private void queueFail(RawRepoDAO dao, QueueJob job, String error) throws RawRepoException {
         Timer.Context time = queueFailTimer.time();
-        dao.queueFail(job, id);
+        dao.queueFail(job, error);
         time.stop();
     }
 
