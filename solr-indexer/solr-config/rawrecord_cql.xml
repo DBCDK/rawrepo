@@ -81,6 +81,13 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             </map>
         </index>
         <index>
+            <title lang="en">Record Type</title>
+            <title lang="da">Postens type</title>
+            <map hidden="1">
+                <name set="marc">004a</name>
+            </map>
+        </index>
+        <index>
             <title lang="en">ISBN</title>
             <title lang="da">ISBN</title>
             <map>

@@ -285,6 +285,8 @@
     <field name="marc.001d" type="date" indexed="true" stored="true" required="false" />
     <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" />
 
+    <field name="marc.004a" type="dbc-default" indexed="false" stored="true" required="false" />
+
     <field name="marc.008a" type="dbc-default" indexed="false" stored="false" required="false" />
     <copyField source="marc.008a" dest="match.008a"/>
     <field name="match.008a" type="dbc-match" indexed="true" stored="true" required="false" />
