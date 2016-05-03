@@ -148,6 +148,7 @@ public class AgencyLoad implements AutoCloseable {
                 try (Timer.Context time1 = fetchRecord.time()) {
                     record = dao.fetchRecord(bibliographicRecordId, agencyId);
                 }
+                record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
                 bibliographicRecordIds.add(recordId);
                 HashSet<RecordId> relations = new HashSet<>();
                 if (!record.isOriginal()) {
@@ -204,55 +205,55 @@ public class AgencyLoad implements AutoCloseable {
     boolean load(InputStream is) throws ParserConfigurationException, SAXException, IOException {
         MarcXProcessor marcXProcessor = new MarcXProcessor() {
 
-            String bibliographicRecordId;
-            int agencyId;
-            String parentBibliographicRecordId;
-            boolean isDeleted;
+                   String bibliographicRecordId;
+                   int agencyId;
+                   String parentBibliographicRecordId;
+                   boolean isDeleted;
 
-            void reset() {
-                bibliographicRecordId = null;
-                agencyId = -1;
-                parentBibliographicRecordId = null;
-                isDeleted = false;
-            }
+                   void reset() {
+                       bibliographicRecordId = null;
+                       agencyId = -1;
+                       parentBibliographicRecordId = null;
+                       isDeleted = false;
+                   }
 
-            @Override
-            public void marcxContent(String pos, String data) {
-                switch (pos) {
-                    case "001a":
-                        bibliographicRecordId = data;
-                        break;
-                    case "001b":
-                        agencyId = Integer.parseInt(data, 10);
-                        break;
-                    case "014a":
-                        parentBibliographicRecordId = data;
-                        break;
-                    case "004r":
-                        isDeleted = data.equals("d");
-                    default:
-                        break;
-                }
-            }
+                   @Override
+                   public void marcxContent(String pos, String data) {
+                       switch (pos) {
+                           case "001a":
+                               bibliographicRecordId = data;
+                               break;
+                           case "001b":
+                               agencyId = Integer.parseInt(data, 10);
+                               break;
+                           case "014a":
+                               parentBibliographicRecordId = data;
+                               break;
+                           case "004r":
+                               isDeleted = data.equals("d");
+                           default:
+                               break;
+                       }
+                   }
 
-            @Override
-            public void marcxXml(final byte[] xml) {
-                log.trace("agencyId = " + agencyId);
-                log.trace("bibliographicRecordId = " + bibliographicRecordId);
-                log.trace("parentBibliographicRecordId = " + parentBibliographicRecordId);
-                log.trace("isDeleted = " + isDeleted);
-                store(xml, agencyId, bibliographicRecordId, parentBibliographicRecordId, isDeleted);
-            }
+                   @Override
+                   public void marcxXml(final byte[] xml) {
+                       log.trace("agencyId = " + agencyId);
+                       log.trace("bibliographicRecordId = " + bibliographicRecordId);
+                       log.trace("parentBibliographicRecordId = " + parentBibliographicRecordId);
+                       log.trace("isDeleted = " + isDeleted);
+                       store(xml, agencyId, bibliographicRecordId, parentBibliographicRecordId, isDeleted);
+                   }
 
-            @Override
-            public MarcXBlock makeMarcXBlock() {
-                reset();
-                MarcXBlock marcXBlock = new MarcXBlock(this);
-                marcXBlock.addPrefix("marcx", "info:lc/xmlns/marcxchange-v1");
-                return marcXBlock;
-            }
+                   @Override
+                   public MarcXBlock makeMarcXBlock() {
+                       reset();
+                       MarcXBlock marcXBlock = new MarcXBlock(this);
+                       marcXBlock.addPrefix("marcx", "info:lc/xmlns/marcxchange-v1");
+                       return marcXBlock;
+                   }
 
-        };
+               };
 
         MarcXParser.parse(is, marcXProcessor);
         return errorRecords.getCount() == 0;
