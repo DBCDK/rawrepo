@@ -148,7 +148,7 @@ public class AgencyLoad implements AutoCloseable {
                 try (Timer.Context time1 = fetchRecord.time()) {
                     record = dao.fetchRecord(bibliographicRecordId, agencyId);
                 }
-                record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
+
                 bibliographicRecordIds.add(recordId);
                 HashSet<RecordId> relations = new HashSet<>();
                 if (!record.isOriginal()) {
@@ -156,7 +156,9 @@ public class AgencyLoad implements AutoCloseable {
                         dao.setRelationsFrom(recordId, relations);
                     }
                 }
+
                 record.setContent(xml);
+                record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
                 record.setDeleted(isDeleted);
 
                 if (isDeleted) {
