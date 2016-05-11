@@ -28,7 +28,7 @@ import java.util.Scanner;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 public class StreamCollection implements Iterable<RecordId>, AutoCloseable {
 
