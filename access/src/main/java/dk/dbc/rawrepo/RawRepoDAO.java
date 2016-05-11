@@ -327,7 +327,7 @@ public abstract class RawRepoDAO {
                 return agencyId;
             }
         }
-        throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + originalAgencyId);
+        throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + bibliographicRecordId + ":" + originalAgencyId + " No agency has this record that is located in openagency showOrder");
     }
 
     /**
