@@ -67,8 +67,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
     private static final String SELECT_RELATIONS_CHILDREN = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
-    private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
-    private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
+    private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
+    private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_ALL_AGENCIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
@@ -512,7 +512,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
@@ -537,7 +537,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsSiblingsFromMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
             stmt.setInt(pos++, recordId.getAgencyId());
