@@ -41,7 +41,7 @@
                 <div id="svg-container" style="position: relative;">
                     <div class="legend"><span style="color: white">base</span> <span style="color: green">expanded</span> <span style="color: blue">unexpanded</span> | <span style="color: steelblue">parent</span> <span style="color: orchid">sibling</span></div>
                 </div>
-                <input readonly class="ui-button ui-widget ui-corner-all ui-state-default" id="record-select">
+                <input readonly class="ui-button ui-widget ui-corner-all ui-state-default" id="record-select" ondblclick="window.open('#' + this.value, '_blank');">
                 <input readonly class="ui-button ui-widget ui-corner-all ui-state-default" id="record-hover">
                 <input value="Center" type="button" class="ui-button ui-widget ui-corner-all ui-state-default" id="record-center">
             </div>
