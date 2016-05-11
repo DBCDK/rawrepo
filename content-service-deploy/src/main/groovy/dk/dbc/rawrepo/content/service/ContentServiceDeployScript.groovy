@@ -25,7 +25,7 @@ import org.linkedin.util.io.resource.Resource
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 class ContentServiceDeployScript extends GluScriptBase {
 
