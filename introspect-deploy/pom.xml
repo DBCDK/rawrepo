@@ -4,13 +4,13 @@
 
   <artifactId>rawrepo-introspect-deploy</artifactId>
   <name>rawrepo-introspect-deploy</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <parent>
     <groupId>dk.dbc</groupId>
     <artifactId>rawrepo</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
   </parent>
 
   <build>

@@ -11,7 +11,7 @@
   <parent>
     <groupId>dk.dbc</groupId>
     <artifactId>rawrepo</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -48,7 +48,7 @@
                 <artifactItem>
                   <groupId>dk.dbc</groupId>
                   <artifactId>rawrepo-access</artifactId>
-                  <version>1.0-SNAPSHOT</version>
+                  <version>1.2-SNAPSHOT</version>
                   <overWrite>true</overWrite>
                 </artifactItem>
               </artifactItems>
@@ -128,7 +128,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rawrepo-access</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
