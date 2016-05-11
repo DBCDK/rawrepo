@@ -30,7 +30,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Stateless
 public class JSONStreamer {

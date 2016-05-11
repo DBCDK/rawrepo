@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Morten Bøgeskov <mb@dbc.dk>
+ * @author Morten Bøgeskov (mb@dbc.dk)
  */
 @Singleton
 public class Merger {
@@ -47,6 +47,7 @@ public class Merger {
     }
 
     public MarcXMerger getMerger() {
+        log.debug("getMerger()");
         return merger;
     }
 
