@@ -59,7 +59,7 @@ public class RawRepoDAOIT {
     public void setup() throws SQLException, ClassNotFoundException {
         postgres = new PostgresITConnection("rawrepo");
         connection = postgres.getConnection();
-        connection.prepareStatement("SET log_statement = 'all';").execute();
+            connection.prepareStatement("SET log_statement = 'all';").execute();
         resetDatabase();
     }
 
