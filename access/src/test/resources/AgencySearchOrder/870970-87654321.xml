@@ -7,31 +7,116 @@
         <marcx:subfield code="d">19810106</marcx:subfield> 
         <marcx:subfield code="f">a</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d08"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="004"> 
+        <marcx:subfield code="r">c</marcx:subfield> 
+        <marcx:subfield code="a">h</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d08"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="008"> 
+        <marcx:subfield code="u">d</marcx:subfield> 
+        <marcx:subfield code="a">1979</marcx:subfield> 
+        <marcx:subfield code="z">2007</marcx:subfield> 
+        <marcx:subfield code="b">dk</marcx:subfield> 
+        <marcx:subfield code="c">k</marcx:subfield> 
+        <marcx:subfield code="h">m</marcx:subfield> 
+        <marcx:subfield code="i">a</marcx:subfield> 
+        <marcx:subfield code="l">eng</marcx:subfield> 
+        <marcx:subfield code="v">0</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d08"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
-        <marcx:subfield code="k">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="009"> 
+        <marcx:subfield code="a">a</marcx:subfield> 
+        <marcx:subfield code="g">xx</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d70"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
-        <marcx:subfield code="b">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="021"> 
+        <marcx:subfield code="d">Pris ikke oplyst</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d70"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
-        <marcx:subfield code="b">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="022"> 
+        <marcx:subfield code="a">0904-7611</marcx:subfield> 
+        <marcx:subfield code="c">hf.</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="s10"> 
-        <marcx:subfield code="a">DBC</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="082"> 
+        <marcx:subfield code="a">510</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="z99"> 
-        <marcx:subfield code="a">NOGET</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="210"> 
+        <marcx:subfield code="a">Mat-rep.</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="n55"> 
-        <marcx:subfield code="a">20050301</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="245"> 
+        <marcx:subfield code="a">Mat-report</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="255"> 
+        <marcx:subfield code="a">No. 50-no. 123 ; No. 01, 1984-[?]</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="260"> 
+        <marcx:subfield code="a">[Lyngby]</marcx:subfield> 
+        <marcx:subfield code="b">Department of Mathematics, Technical University of Denmark</marcx:subfield> 
+        <marcx:subfield code="c">[1979]-2007</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="300"> 
+        <marcx:subfield code="c">30 cm</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="500"> 
+        <marcx:subfield code="a">Uregelmæssig</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="505"> 
+        <marcx:subfield code="a">Serie</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="i">Varianttitel</marcx:subfield> 
+        <marcx:subfield code="t">Report (Matematisk Institut, Danmarks Tekniske Højskole)</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="a">Registrering i: Dansk periodicafortegnelse ophørt med no. 2003/07</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="a">Nogle numre med titel: Report (Matematisk Institut, Danmarks Tekniske Højskole)</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="a">Nummereringen starter med no. 50</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="a">Tidligere med udgiverbetegnelserne: Matematisk Institut, Danmarks Tekniske Højskole, eller: Mathematical Institute, The Technical University of Denmark</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="512"> 
+        <marcx:subfield code="a">Udkommer fremover kun i internetudgave</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="652"> 
+        <marcx:subfield code="m">51</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="710"> 
+        <marcx:subfield code="a">Danmarks Tekniske Universitet</marcx:subfield> 
+        <marcx:subfield code="c">Institut for Matematik</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">Institut for Matematik, Danmarks Tekniske Universitet</marcx:subfield> 
+        <marcx:subfield code="z">710</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">Den ¤Polytekniske Læreanstalt</marcx:subfield> 
+        <marcx:subfield code="z">710(a)</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">DTU</marcx:subfield> 
+        <marcx:subfield code="z">710(a)</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">Technical University of Denmark</marcx:subfield> 
+        <marcx:subfield code="c">Department of Mathematics</marcx:subfield> 
+        <marcx:subfield code="z">710</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">Department of Mathematics, Technical University of Denmark</marcx:subfield> 
+        <marcx:subfield code="z">710</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="å">6</marcx:subfield> 
+        <marcx:subfield code="a">Danmarks Tekniske Universitet</marcx:subfield> 
+        <marcx:subfield code="c">Matematiske Institut</marcx:subfield> 
+        <marcx:subfield code="x">se også under det senere navn</marcx:subfield> 
+        <marcx:subfield code="z">710</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="910"> 
+        <marcx:subfield code="a">Danmarks Tekniske Universitet</marcx:subfield> 
+        <marcx:subfield code="c">Institut for Matematik</marcx:subfield> 
+        <marcx:subfield code="x">se også under det tidligere navn</marcx:subfield> 
+        <marcx:subfield code="z">910/6</marcx:subfield> 
     </marcx:datafield> 
 </marcx:record>

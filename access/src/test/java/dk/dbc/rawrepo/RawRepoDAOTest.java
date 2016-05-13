@@ -34,7 +34,6 @@ import static org.mockito.Mockito.*;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
@@ -43,7 +42,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doCallRealMethod;
 
 /**
@@ -636,21 +634,21 @@ public class RawRepoDAOTest {
         RawRepoDAO mock = mock(RawRepoDAO.class);
         mock.relationHints = mock(RelationHints.class);
         doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
-        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 191919));
+        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
         when(mock.relationHints.get(654321)).thenReturn(Arrays.asList());
         when(mock.relationHints.usesCommonAgency(654321)).thenReturn(Boolean.FALSE);
         when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
         when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("PRIVATE", 654321)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("COMMON", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 870970)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 654321)).thenReturn(Boolean.TRUE);
         int parentRelationAgency;
         parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 123456);
         Assert.assertEquals(123456, parentRelationAgency);
         parentRelationAgency = mock.findParentRelationAgency("COMMON", 123456);
-        Assert.assertEquals(191919, parentRelationAgency);
+        Assert.assertEquals(870970, parentRelationAgency);
         parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 654321);
         Assert.assertEquals(654321, parentRelationAgency);
         parentRelationAgency = mock.findParentRelationAgency("COMMON", 654321);
@@ -667,19 +665,19 @@ public class RawRepoDAOTest {
         RawRepoDAO mock = mock(RawRepoDAO.class);
         mock.relationHints = mock(RelationHints.class);
         doCallRealMethod().when(mock).findSiblingRelationAgency(anyString(), anyInt());
-        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 191919));
+        when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
         when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("COMMON", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("COMMON", 870970)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("INTERM", 191919)).thenReturn(Boolean.TRUE);
+        when(mock.recordExists("INTERM", 870970)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("INTERM", 300000)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("INTERM", 123456)).thenReturn(Boolean.TRUE);
         int siblingRelationAgency;
         siblingRelationAgency = mock.findSiblingRelationAgency("COMMON", 123456);
         System.out.println("parentRelationAgency = " + siblingRelationAgency);
-        Assert.assertEquals(191919, siblingRelationAgency);
+        Assert.assertEquals(870970, siblingRelationAgency);
         siblingRelationAgency = mock.findSiblingRelationAgency("INTERM", 123456);
         Assert.assertEquals(300000, siblingRelationAgency);
         try {
@@ -709,8 +707,8 @@ public class RawRepoDAOTest {
         HashMap<String, List<String>> from = new HashMap<>();
         HashMap<String, List<String>> to = new HashMap<>();
         for (String id : ids) {
-            from.put(id, new ArrayList<String>());
-            to.put(id, new ArrayList<String>());
+            from.put(id, new ArrayList<>());
+            to.put(id, new ArrayList<>());
         }
         for (String relation : RELATIONS) {
             int comma = relation.indexOf(',');

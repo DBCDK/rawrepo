@@ -28,10 +28,7 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +52,6 @@ import java.util.List;
 public class AgencySearchOrderFromShowOrderIT {
 
     private Connection connection;
-    private String jdbc;
     private PostgresITConnection postgres;
 
     @Before
@@ -73,47 +69,47 @@ public class AgencySearchOrderFromShowOrderIT {
     @Test
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException, IOException, MarcXMergerException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .searchOrder(new AgencySearchOrderFallback("870970,191919"))
+                   .searchOrder(new AgencySearchOrderFallback("870970"))
                    .relationHints(new MyRelationHints())
                    .build();
         connection.setAutoCommit(false);
 
         Record rec;
         Set<RecordId> set;
-        rec = dao.fetchRecord("87654321", 191919);
-        rec.setContent(read("191919-87654321.xml"));
-        rec.setDeleted(false);
-        rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
-        dao.saveRecord(rec);
-
-        rec = dao.fetchRecord("12345678", 191919);
-        rec.setContent(read("191919-12345678.xml"));
-        rec.setDeleted(false);
-        rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
-        dao.saveRecord(rec);
-
-        set = new HashSet<>();
-        set.add(new RecordId("87654321", 191919));
-        dao.setRelationsFrom(rec.getId(), set);
-
         rec = dao.fetchRecord("87654321", 870970);
         rec.setContent(read("870970-87654321.xml"));
         rec.setDeleted(false);
-        rec.setMimeType(MarcXChangeMimeType.ENRICHMENT);
+        rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(rec);
-
-        set = new HashSet<>();
-        set.add(new RecordId("87654321", 191919));
-        dao.setRelationsFrom(rec.getId(), set);
 
         rec = dao.fetchRecord("12345678", 870970);
         rec.setContent(read("870970-12345678.xml"));
         rec.setDeleted(false);
+        rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
+        dao.saveRecord(rec);
+
+        set = new HashSet<>();
+        set.add(new RecordId("87654321", 870970));
+        dao.setRelationsFrom(rec.getId(), set);
+
+        rec = dao.fetchRecord("87654321", 191919);
+        rec.setContent(read("191919-87654321.xml"));
+        rec.setDeleted(false);
         rec.setMimeType(MarcXChangeMimeType.ENRICHMENT);
         dao.saveRecord(rec);
 
         set = new HashSet<>();
-        set.add(new RecordId("12345678", 191919));
+        set.add(new RecordId("87654321", 870970));
+        dao.setRelationsFrom(rec.getId(), set);
+
+        rec = dao.fetchRecord("12345678", 191919);
+        rec.setContent(read("191919-12345678.xml"));
+        rec.setDeleted(false);
+        rec.setMimeType(MarcXChangeMimeType.ENRICHMENT);
+        dao.saveRecord(rec);
+
+        set = new HashSet<>();
+        set.add(new RecordId("12345678", 870970));
         dao.setRelationsFrom(rec.getId(), set);
 
         rec = dao.fetchRecord("87654321", 777777);
@@ -123,7 +119,7 @@ public class AgencySearchOrderFromShowOrderIT {
         dao.saveRecord(rec);
 
         set = new HashSet<>();
-        set.add(new RecordId("12345678", 191919));
+        set.add(new RecordId("12345678", 870970));
         dao.setRelationsFrom(rec.getId(), set);
 
         connection.commit();
@@ -189,130 +185,6 @@ public class AgencySearchOrderFromShowOrderIT {
         return buffer.toByteArray();
     }
 
-    void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
-        connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
-        Map<String, Set<RecordId>> idMap = new HashMap<>();
-        for (String id : ids) {
-            idMap.put(id, new HashSet<>());
-        }
-        Set<String> keys = idMap.keySet();
-
-        for (String id : keys) {
-            String[] split1 = id.split(":");
-            String[] split2 = split1[1].split(",");
-            for (String lib : split2) {
-                RecordId recordId = new RecordId(split1[0], Integer.parseInt(lib));
-                Record record = dao.fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
-                record.setMimeType(recordId.getAgencyId() < maxEnrichmentLibrary ? MarcXChangeMimeType.ENRICHMENT : MarcXChangeMimeType.MARCXCHANGE);
-                record.setContent(id.getBytes());
-                dao.saveRecord(record);
-            }
-        }
-        setupRelations(RELATIONS);
-        connection.commit();
-    }
-
-    void setupRelations(String... relations) throws NumberFormatException, RawRepoException, SQLException {
-        connection.setAutoCommit(false);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
-        for (String relation : relations) {
-            String[] list = relation.split(",", 2);
-            RecordId from = recordIdFromString(list[0]);
-            RecordId to = recordIdFromString(list[1]);
-            if (dao.recordExists(from.getBibliographicRecordId(), from.getAgencyId()) &&
-                dao.recordExists(to.getBibliographicRecordId(), to.getAgencyId())) {
-                Set<RecordId> relationsFrom = dao.getRelationsFrom(from);
-                relationsFrom.add(to);
-                dao.setRelationsFrom(from, relationsFrom);
-            }
-        }
-        connection.commit();
-    }
-
-    void clearQueue() throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement("DELETE FROM QUEUE");
-        stmt.execute();
-    }
-
-    Collection<String> getQueue() throws SQLException {
-        Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker FROM QUEUE");
-        if (stmt.execute()) {
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3));
-            }
-        }
-        return result;
-    }
-
-    Collection<String> getQueueState() throws SQLException {
-        Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker");
-        if (stmt.execute()) {
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3) + ":" + resultSet.getInt(4));
-            }
-        }
-        return result;
-    }
-
-    public Collection<String> idsFromCollection(Map<String, Record> records) {
-        Collection<String> collection = new HashSet<>();
-        for (Record record : records.values()) {
-            collection.add(record.getId().getBibliographicRecordId() + ":" + record.getId().getAgencyId());
-        }
-        return collection;
-    }
-
-    /**
-     * Parse a string to a recordid
-     *
-     * @param target ID:LIBRARY
-     * @return recordid
-     * @throws NumberFormatException
-     */
-    private static RecordId recordIdFromString(String target) throws NumberFormatException {
-        String[] list = target.split(":");
-        return new RecordId(list[0], Integer.parseInt(list[1]));
-    }
-
-    /*
-     * (e) A
-     *
-     * (h) B
-     * (s)  C
-     * (b)   D
-     * (b)   E
-     * (s)  F
-     * (b)   G
-     * (b)   H
-     */
-    private static final String[] RELATIONS = new String[]{
-        "A:1,A:870970",
-        "A:2,A:870970",
-        "B:1,B:870970",
-        "B:2,B:870970",
-        "C:1,C:870970",
-        "C:2,C:870970",
-        "C:870970,B:870970",
-        "D:1,D:870970",
-        "D:2,D:870970",
-        "D:870970,C:870970",
-        "E:1,E:870970",
-        "E:2,E:870970",
-        "E:870970,C:870970",
-        "F:1,F:870970",
-        "F:2,F:870970",
-        "F:870970,B:870970",
-        "G:1,G:870970",
-        "G:2,G:870970",
-        "G:870970,F:870970",
-        "H:1,H:870970",
-        "H:2,H:870970",
-        "H:870970,F:870970"};
 
     private static class MyRelationHints extends RelationHints {
 
@@ -321,7 +193,7 @@ public class AgencySearchOrderFromShowOrderIT {
 
         @Override
         public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
-            return Arrays.asList(191919);
+            return Arrays.asList(870970);
         }
 
         @Override

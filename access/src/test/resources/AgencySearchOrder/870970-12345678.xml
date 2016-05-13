@@ -8,13 +8,49 @@
         <marcx:subfield code="f">a</marcx:subfield> 
         <marcx:subfield code="o">c</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="d08"> 
-        <marcx:subfield code="a">DELETE</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="004"> 
+        <marcx:subfield code="r">n</marcx:subfield> 
+        <marcx:subfield code="a">b</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="s10"> 
-        <marcx:subfield code="a">DBC</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="008"> 
+        <marcx:subfield code="t">m</marcx:subfield> 
+        <marcx:subfield code="d">å</marcx:subfield> 
+        <marcx:subfield code="v">0</marcx:subfield> 
     </marcx:datafield> 
-    <marcx:datafield ind1="0" ind2="0" tag="n55"> 
-        <marcx:subfield code="a">20050302</marcx:subfield> 
+    <marcx:datafield ind1="0" ind2="0" tag="014"> 
+        <marcx:subfield code="a">5 004 077 1</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="032"> 
+        <marcx:subfield code="a">DBF199044</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="245"> 
+        <marcx:subfield code="G">1990-15</marcx:subfield> 
+        <marcx:subfield code="g">No. 1990/15</marcx:subfield> 
+        <marcx:subfield code="a">Cyclic concatenated codes with constacyclic outer codes</marcx:subfield> 
+        <marcx:subfield code="e">Jørn M. Jensen</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="260"> 
+        <marcx:subfield code="c">1990</marcx:subfield> 
+        <marcx:subfield code="k">u. st.</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="300"> 
+        <marcx:subfield code="a">36 sider</marcx:subfield> 
+        <marcx:subfield code="c">30 cm</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="700"> 
+        <marcx:subfield code="a">Møller Jensen</marcx:subfield> 
+        <marcx:subfield code="h">Jørn</marcx:subfield> 
+        <marcx:subfield code="c">f. 1954</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="900"> 
+        <marcx:subfield code="a">Jensen</marcx:subfield> 
+        <marcx:subfield code="h">Jørn M.</marcx:subfield> 
+        <marcx:subfield code="c">f. 1954</marcx:subfield> 
+        <marcx:subfield code="z">700</marcx:subfield> 
+    </marcx:datafield> 
+    <marcx:datafield ind1="0" ind2="0" tag="900"> 
+        <marcx:subfield code="a">Jensen</marcx:subfield> 
+        <marcx:subfield code="h">Jørn Møller</marcx:subfield> 
+        <marcx:subfield code="z">700</marcx:subfield> 
     </marcx:datafield> 
 </marcx:record>

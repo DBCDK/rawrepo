@@ -54,7 +54,7 @@ public class RelationHintsOpenAgency extends RelationHints {
     @Override
     public List<Integer> provide(Integer agencyId) throws Exception {
         if (usesCommonAgency(agencyId)) {
-            return Arrays.asList(191919);
+            return Arrays.asList(870970);
         }
         return Arrays.asList(agencyId);
     }
