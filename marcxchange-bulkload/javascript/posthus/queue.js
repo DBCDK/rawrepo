@@ -8,7 +8,7 @@ use("PostgreSQL");
 
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
-var parent_agency = System.arguments.length > 1 ? System.arguments[1] : "191919";
+var parent_agency = System.arguments.length > 1 ? System.arguments[1] : "870970";
 var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
 
 function begin() {
