@@ -23,7 +23,6 @@ import dk.dbc.rawrepo.RawRepoException;
 import java.sql.SQLException;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
@@ -43,7 +42,7 @@ public class RemoveRecordsIT extends RawRepoTester {
         int records = count("records WHERE NOT deleted");
         assertEquals("Empty Queue:", 0, count("queue"));
 
-        mock.removeRecord(870970, "40254692", "test", "track");
+        mock.removeRecord(191919, "40254692", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
         assertEquals("Queue size:", 2, count("queue"));
@@ -58,7 +57,7 @@ public class RemoveRecordsIT extends RawRepoTester {
         int records = count("records WHERE NOT deleted");
         assertEquals("Empty Queue:", 0, count("queue"));
 
-        mock.removeRecord(870970, "40254641", "test", "track");
+        mock.removeRecord(191919, "40254641", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
         assertEquals("Queue size:", 5, count("queue"));
@@ -73,12 +72,12 @@ public class RemoveRecordsIT extends RawRepoTester {
         int records = count("records WHERE NOT deleted");
         assertEquals("Empty Queue:", 0, count("queue"));
 
-        mock.removeRecord(870970, "40254692", "test", "track");
+        mock.removeRecord(191919, "40254692", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
         assertEquals("Queue size:", 2, count("queue"));
 
-        mock.removeRecord(870970, "40254692", "test", "track");
+        mock.removeRecord(191919, "40254692", "test", "track");
 
     }
 
@@ -88,7 +87,7 @@ public class RemoveRecordsIT extends RawRepoTester {
 
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(870970, "NO SUCH RECORD", "test", "track");
+        mock.removeRecord(191919, "NO SUCH RECORD", "test", "track");
     }
 
     @Test(expected = RawRepoException.class)
@@ -97,7 +96,7 @@ public class RemoveRecordsIT extends RawRepoTester {
 
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(191919, "40398910", "test", "track");
+        mock.removeRecord(870970, "40398910", "test", "track");
     }
 
     @Test(expected = RawRepoException.class)
@@ -106,7 +105,7 @@ public class RemoveRecordsIT extends RawRepoTester {
 
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(191919, "40398899", "test", "track");
+        mock.removeRecord(870970, "40398899", "test", "track");
     }
 
     private RemoveRecords makeRemoveRecords() throws RawRepoException, SQLException {

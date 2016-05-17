@@ -40,7 +40,7 @@ public class QueueRecordsIT extends RawRepoTester {
         QueueRecords mock = makeQueueRecords();
 
         assertEquals("Queue is empty", 0, count("queue"));
-        mock.queueRecord(870970, "40398910", "test");
+        mock.queueRecord(191919, "40398910", "test");
         assertEquals("Queue size", 2, count("queue"));
     }
 
@@ -51,7 +51,7 @@ public class QueueRecordsIT extends RawRepoTester {
         QueueRecords mock = makeQueueRecords();
 
         assertEquals("Queue is empty", 0, count("queue"));
-        mock.queueRecord(191919, "40398910", "test");
+        mock.queueRecord(870970, "40398910", "test");
         assertEquals("Queue size", 3, count("queue"));
     }
 
@@ -62,7 +62,7 @@ public class QueueRecordsIT extends RawRepoTester {
         QueueRecords mock = makeQueueRecords();
 
         assertEquals("Queue is empty", 0, count("queue"));
-        mock.queueRecord(870970, "40254641", "test");
+        mock.queueRecord(191919, "40254641", "test");
         assertEquals("Queue size", 5, count("queue"));
     }
 
@@ -73,7 +73,7 @@ public class QueueRecordsIT extends RawRepoTester {
         QueueRecords mock = makeQueueRecords();
 
         assertEquals("Queue is empty", 0, count("queue"));
-        mock.queueRecord(191919, "40254641", "test");
+        mock.queueRecord(870970, "40254641", "test");
         assertEquals("Queue size", 9, count("queue"));
     }
 

@@ -4,7 +4,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254633</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19951031</marcx:subfield>
       <marcx:subfield code="d">19951031</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -15,7 +15,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254641</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19940916</marcx:subfield>
       <marcx:subfield code="d">19940913</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -26,7 +26,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254668</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19951031</marcx:subfield>
       <marcx:subfield code="d">19951031</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -37,7 +37,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254676</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19951031</marcx:subfield>
       <marcx:subfield code="d">19951031</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -48,7 +48,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254684</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19951031</marcx:subfield>
       <marcx:subfield code="d">19951031</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -59,7 +59,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40254692</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19951031</marcx:subfield>
       <marcx:subfield code="d">19951031</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -70,7 +70,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40398902</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19941207</marcx:subfield>
       <marcx:subfield code="d">19941207</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
@@ -81,7 +81,7 @@
     <marcx:leader>00000c    2200000   4500</marcx:leader>
     <marcx:datafield tag="001" ind1="0" ind2="0">
       <marcx:subfield code="a">40398910</marcx:subfield>
-      <marcx:subfield code="b">870970</marcx:subfield>
+      <marcx:subfield code="b">191919</marcx:subfield>
       <marcx:subfield code="c">19941207</marcx:subfield>
       <marcx:subfield code="d">19941207</marcx:subfield>
       <marcx:subfield code="f">a</marcx:subfield>
