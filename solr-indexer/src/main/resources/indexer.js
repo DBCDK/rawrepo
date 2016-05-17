@@ -44,7 +44,7 @@ var RULES = {
             'b': function (obj, val) {
                 Log.trace("001b" + val);
                 obj['agency'] = val;
-                if (val === '191919')
+                if (val === '870970')
                     obj[COLLECTION_IDENTIFIER] = ['common'];
                 add(obj, 'marc.001b', val);
                 if ('record' in obj) {
@@ -59,7 +59,7 @@ var RULES = {
             }
         },
         's11': function (obj) {
-            if (obj['agency'] === '870970')
+            if (obj['agency'] === '191919')
                 obj[COLLECTION_IDENTIFIER] = ['dbc'];
         }
     }
@@ -155,4 +155,4 @@ var index = function (content, mimetype) {
             solrField(i, a[n]);
         }
     }
-}
+};

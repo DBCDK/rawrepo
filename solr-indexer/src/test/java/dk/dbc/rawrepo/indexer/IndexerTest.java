@@ -149,7 +149,7 @@ public class IndexerTest {
                          + "      <marcx:leader>00000n    2200000   4500</marcx:leader>\n"
                          + "      <marcx:datafield tag=\"001\" ind1=\"0\" ind2=\"0\">\n"
                          + "        <marcx:subfield code=\"a\">2 364 149 6</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"b\">870970</marcx:subfield>\n"
+                         + "        <marcx:subfield code=\"b\">191919</marcx:subfield>\n"
                          + "        <marcx:subfield code=\"c\">20130118221234</marcx:subfield>\n"
                          + "        <marcx:subfield code=\"d\">20010822</marcx:subfield>\n"
                          + "        <marcx:subfield code=\"f\">a</marcx:subfield>\n"

@@ -52,7 +52,7 @@ public class IndexerIT {
     private static final String WORKER = "changed";
 
     private static final String BIBLIOGRAPHIC_RECORD_ID = "A";
-    private static final int AGENCY_ID = 870970;
+    private static final int AGENCY_ID = 191919;
 
     String jdbcUrl;
     private Connection connection;
@@ -135,7 +135,7 @@ public class IndexerIT {
 
         QueryResponse response = solrServer.query(new SolrQuery("rec.agencyId:" + AGENCY_ID));
         assertEquals("Document can be found using library no.", 1, response.getResults().getNumFound());
-        
+
         Date indexedDate = (Date) response.getResults().get(0).getFieldValue("rec.indexedDate");
         assertTrue("Field 'indexedDate' has been properly set", indexedDate != null);
 
