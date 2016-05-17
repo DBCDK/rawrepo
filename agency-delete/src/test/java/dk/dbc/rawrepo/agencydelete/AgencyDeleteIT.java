@@ -76,7 +76,7 @@ public class AgencyDeleteIT {
 //    @Test
     public void testGetIds() throws Exception {
         System.out.println("testGetIds()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 191919);
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 870970);
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
         testArray(ids, "Ids", "H", "S", "B", "E");
@@ -107,7 +107,7 @@ public class AgencyDeleteIT {
         System.out.println("deleted records");
         agencyDelete.commit();
 
-        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
 
         countQueued("leaf", 2);
         HashSet<String> leafs = new HashSet<>();
@@ -130,9 +130,9 @@ public class AgencyDeleteIT {
     @Test
     public void testQueue() throws Exception {
         {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
+            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
             connection.setAutoCommit(false);
-            setupRecord(dao, "S", 888888, "S:191919");
+            setupRecord(dao, "S", 888888, "S:870970");
             connection.commit();
         }
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888);
@@ -152,7 +152,7 @@ public class AgencyDeleteIT {
     }
 
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("191919")).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();
@@ -176,14 +176,14 @@ public class AgencyDeleteIT {
         stmt.setString(3, "N");
         stmt.execute();
 
-        setupRecord(dao, "H", 191919);
-        setupRecord(dao, "S", 191919, "H:191919");
-        setupRecord(dao, "B", 191919, "S:191919");
-        setupRecord(dao, "E", 191919);
+        setupRecord(dao, "H", 870970);
+        setupRecord(dao, "S", 870970, "H:870970");
+        setupRecord(dao, "B", 870970, "S:870970");
+        setupRecord(dao, "E", 870970);
 
-        setupRecord(dao, "H", 777777, "H:191919");
-        setupRecord(dao, "S", 777777, "S:191919");
-        setupRecord(dao, "B", 777777, "B:191919");
+        setupRecord(dao, "H", 777777, "H:870970");
+        setupRecord(dao, "S", 777777, "S:870970");
+        setupRecord(dao, "B", 777777, "B:870970");
         setupRecord(dao, "E", 777777);
 
         connection.commit();
