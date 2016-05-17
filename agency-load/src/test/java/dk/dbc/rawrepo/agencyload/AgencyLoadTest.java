@@ -19,7 +19,6 @@
 package dk.dbc.rawrepo.agencyload;
 
 import java.io.InputStream;
-import java.util.concurrent.ArrayBlockingQueue;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -64,8 +63,8 @@ public class AgencyLoadTest {
 
         agencyLoad.load(is);
 
-        verify(agencyLoad, times(1)).store(any(byte[].class), eq(870970), eq("01704036"), isNull(String.class), anyBoolean());
-        verify(agencyLoad, times(1)).store(any(byte[].class), eq(870970), eq("01990810"), eq("50155919"), anyBoolean());
+        verify(agencyLoad, times(1)).store(any(byte[].class), eq(191919), eq("01704036"), isNull(String.class), anyBoolean());
+        verify(agencyLoad, times(1)).store(any(byte[].class), eq(191919), eq("01990810"), eq("50155919"), anyBoolean());
     }
 
 }

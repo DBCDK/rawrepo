@@ -62,7 +62,7 @@ public class AgencyLoadMain {
             }
 
             if (commandLine.hasOption(PARENT_AGENCIES)) {
-                commonAgency = 191919;
+                commonAgency = null;
                 String parentAgencies = (String) commandLine.getOption(PARENT_AGENCIES);
                 for (String agency : parentAgencies.split("[^0-9]+")) {
                     int agencyid = Integer.parseInt(agency, 10);

@@ -4,7 +4,7 @@
         <marcx:leader>00000n    2200000   4500</marcx:leader>
         <marcx:datafield ind1="0" ind2="0" tag="001">
             <marcx:subfield code="a">01990810</marcx:subfield>
-            <marcx:subfield code="b">870970</marcx:subfield>
+            <marcx:subfield code="b">191919</marcx:subfield>
             <marcx:subfield code="c">19820825</marcx:subfield>
             <marcx:subfield code="d">19780410</marcx:subfield>
             <marcx:subfield code="f">a</marcx:subfield>
@@ -92,7 +92,7 @@
         <marcx:leader>00000n    2200000   4500</marcx:leader>
         <marcx:datafield ind1="0" ind2="0" tag="001">
             <marcx:subfield code="a">01704036</marcx:subfield>
-            <marcx:subfield code="b">870970</marcx:subfield>
+            <marcx:subfield code="b">191919</marcx:subfield>
             <marcx:subfield code="c">19780306</marcx:subfield>
             <marcx:subfield code="d">19770819</marcx:subfield>
             <marcx:subfield code="f">a</marcx:subfield>
