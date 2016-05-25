@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:oa="http://oss.dbc.dk/ns/openagency" xmlns="http://oss.dbc.dk/ns/openagency">
+    <SOAP-ENV:Body>
+        <oa:showOrderResponse>
+            <oa:agencyId>870970</oa:agencyId>
+        </oa:showOrderResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

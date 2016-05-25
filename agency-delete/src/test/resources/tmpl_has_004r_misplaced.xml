@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<marcx:record format="danMARC2" type="Bibliographic" xmlns:marcx="info:lc/xmlns/marcxchange-v1">
+    <marcx:leader>00000n    2200000   4500</marcx:leader>
+    <marcx:datafield ind1="0" ind2="0" tag="001">
+        <marcx:subfield code="a">@bibliographicrecordid@</marcx:subfield>
+        <marcx:subfield code="b">@agencyid@</marcx:subfield>
+        <marcx:subfield code="c">19990223105231</marcx:subfield>
+        <marcx:subfield code="d">19990216</marcx:subfield>
+        <marcx:subfield code="f">a</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="004">
+        <marcx:subfield code="a">e</marcx:subfield>
+        <marcx:subfield code="r">n</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="245">
+        <marcx:subfield code="a">@title@</marcx:subfield>
+    </marcx:datafield>
+</marcx:record>

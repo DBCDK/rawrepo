@@ -18,16 +18,21 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,9 +42,13 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
  *
@@ -47,8 +56,26 @@ import static org.junit.Assert.*;
  */
 public class AgencyDeleteIT {
 
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(getPort()).withRootDirectory(getPath()));
+
+    static int fallbackPort = (int) ( 15000.0 * Math.random() ) + 15000;
+
+    static int getPort() {
+        int port = Integer.parseInt(System.getProperty("wiremock.port", "0"));
+        if (port == 0) {
+            port = fallbackPort;
+        }
+        return port;
+    }
+
+    static String getPath() {
+        return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
+    }
+
     private String jdbcUrl;
     private Connection connection;
+    private PostgresITConnection postgresITConnection;
 
     public AgencyDeleteIT() {
     }
@@ -62,52 +89,70 @@ public class AgencyDeleteIT {
     }
 
     @Before
-    public void setUp() throws SQLException, RawRepoException, UnsupportedEncodingException {
-        String port = System.getProperty("postgresql.port");
-        jdbcUrl = "jdbc:postgresql://localhost:" + port + "/rawrepo";
-        connection = DriverManager.getConnection(jdbcUrl);
+    public void setUp() throws Exception {
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:libraryRulesRequest/ns1:agencyId[.='777777']")
+                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_777777.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:showOrderRequest/ns1:agencyId[.='777777']")
+                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_showOrder_777777.xml")));
+
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:libraryRulesRequest/ns1:agencyId[.='888888']")
+                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_888888.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:showOrderRequest/ns1:agencyId[.='888888']")
+                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_showOrder_888888.xml")));
+
+        postgresITConnection = new PostgresITConnection("rawrepo");
+        connection = postgresITConnection.getConnection();
+        jdbcUrl = postgresITConnection.getUrl();
         setupRecords();
     }
 
     @After
     public void tearDown() {
-    }
-
-//    @Test
-    public void testGetIds() throws Exception {
-        System.out.println("testGetIds()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 870970);
-        agencyDelete.begin();
-        Set<String> ids = agencyDelete.getIds();
-        testArray(ids, "Ids", "H", "S", "B", "E");
-
-        Set<String> siblingRelations = agencyDelete.getSiblingRelations();
-        testArray(siblingRelations, "SiblingRelations", "H", "S", "B");
-        Set<String> parentRelations = agencyDelete.getParentRelations();
-        testArray(parentRelations, "parentRelations", "H", "S");
-        agencyDelete.commit();
+        try {
+            connection.rollback();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Test
     public void testBasics() throws Exception {
         System.out.println("testBasics()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777);
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + getPort() + "/openagency/");
 
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
         testArray(ids, "Ids", "H", "S", "B", "E");
 
-        Set<String> parentRelations = agencyDelete.getParentRelations();
-
-        agencyDelete.queueRecords(ids, parentRelations, "provider");
+        agencyDelete.queueRecords(ids, "provider");
         System.out.println("queued records");
-        agencyDelete.removeRelations();
-        System.out.println("removed relations");
-        agencyDelete.deleteRecords(ids, parentRelations);
+        agencyDelete.deleteRecords(ids);
         System.out.println("deleted records");
         agencyDelete.commit();
 
-        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection)
+                   .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                   .build();
 
         countQueued("leaf", 2);
         HashSet<String> leafs = new HashSet<>();
@@ -130,25 +175,71 @@ public class AgencyDeleteIT {
     @Test
     public void testQueue() throws Exception {
         {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
+            RawRepoDAO dao = RawRepoDAO.builder(connection)
+                       .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                       .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
             connection.commit();
         }
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888);
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
 
-        Set<String> parentRelations = agencyDelete.getParentRelations();
-
-        agencyDelete.queueRecords(ids, parentRelations, "provider");
-        agencyDelete.removeRelations();
-        agencyDelete.deleteRecords(ids, parentRelations);
+        agencyDelete.queueRecords(ids, "provider");
+        agencyDelete.deleteRecords(ids);
         agencyDelete.commit();
 
         countQueued("node", 1);
         countQueued("leaf", 1);
 
+    }
+
+    @Test
+    public void textGetIds() throws Exception {
+        {
+            RawRepoDAO dao = RawRepoDAO.builder(connection)
+                       .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                       .build();
+            connection.setAutoCommit(false);
+            setupRecord(dao, "H", 888888, "S:870970");
+            setupRecord(dao, "E", 888888, "S:870970");
+            connection.commit();
+        }
+
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+
+        Set<String> nodes = agencyDelete.getIds();
+        System.out.println("nodes = " + nodes);
+
+        assertTrue("has H", nodes.contains("H"));
+        assertTrue("has S", nodes.contains("S"));
+        assertTrue("has B", nodes.contains("B"));
+        assertTrue("has E", nodes.contains("E"));
+        assertEquals("has no extras", 4, nodes.size());
+    }
+
+    private static final String TMPL = new String(getResource("tmpl.xml"), StandardCharsets.UTF_8);
+
+    private static byte[] content(String bibiolgraphicRecordId, String agencyId) {
+        String title = "title of: " + bibiolgraphicRecordId + " from " + agencyId;
+
+        return TMPL.replaceAll("@bibliographicrecordid@", bibiolgraphicRecordId)
+                .replaceAll("@agencyid@", agencyId)
+                .replaceAll("@title@", title).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static byte[] getResource(String res) {
+        try {
+            try (InputStream is = AgencyDeleteIT.class.getClassLoader().getResourceAsStream(res)) {
+                int available = is.available();
+                byte[] bytes = new byte[available];
+                is.read(bytes);
+                return bytes;
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
@@ -193,7 +284,7 @@ public class AgencyDeleteIT {
     private void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException, UnsupportedEncodingException {
         System.out.println("bibliographicRecordId = " + bibliographicRecordId + "; agencyId = " + agencyId);
         Record rec = dao.fetchRecord(bibliographicRecordId, agencyId);
-        rec.setContent(( bibliographicRecordId + ":" + agencyId ).getBytes("UTF-8"));
+        rec.setContent(content(bibliographicRecordId, String.valueOf(agencyId)));
         rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         rec.setDeleted(false);
         Set<RecordId> relationSet = new HashSet<>();

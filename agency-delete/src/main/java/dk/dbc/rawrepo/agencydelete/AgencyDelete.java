@@ -18,24 +18,60 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
+import dk.dbc.gracefulcache.CacheTimeoutException;
+import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.marcxmerge.MarcXMerger;
+import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RelationHints;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -45,43 +81,164 @@ class AgencyDelete {
 
     private static final Logger log = LoggerFactory.getLogger(AgencyDelete.class);
 
-    private static final String AGENCYID = "agencyid";
-    private static final String BIBLIOGRAPHICRECORDID = "bibliographicrecordid";
-
     private final int agencyid;
     private final Connection connection;
     private final RawRepoDAO dao;
+    private final DocumentBuilder documentBuilder;
+    private final Transformer transformer;
+    private final MarcXMerger marcXMerger;
+    private final List<Integer> commonAgencies;
 
-    public AgencyDelete(String db, int agencyid) throws SQLException, RawRepoException {
+    public AgencyDelete(String db, int agencyid, String openAgency) throws Exception {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
-        this.dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
+        if (openAgency != null) {
+            OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build(openAgency);
+            builder.openAgency(service, null);
+            RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
+            if (relationHints.usesCommonAgency(agencyid)) {
+                this.commonAgencies = relationHints.get(agencyid);
 
+            } else {
+                this.commonAgencies = Collections.EMPTY_LIST;
+            }
+        } else {
+            builder.searchOrder(new AgencySearchOrder(null) {
+                @Override
+                public List<Integer> provide(Integer key) throws Exception {
+                    return Arrays.asList(key);
+                }
+            });
+            builder.relationHints(new RelationHints() {
+                @Override
+                public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+                    return false;
+                }
+            });
+            this.commonAgencies = Collections.EMPTY_LIST;
+        }
+
+        this.dao = builder.build();
+        this.documentBuilder = newDocumentBuilder();
+        this.transformer = newTransformer();
+        this.marcXMerger = new MarcXMerger();
+    }
+
+    private AgencyDelete() throws Exception {
+        this.agencyid = 0;
+        this.connection = null;
+        this.dao = null;
+        this.documentBuilder = newDocumentBuilder();
+        this.transformer = newTransformer();
+        this.marcXMerger = null;
+        this.commonAgencies = null;
+    }
+
+    static AgencyDelete unittestObject() throws Exception {
+        return new AgencyDelete();
     }
 
     public Set<String> getIds() throws SQLException {
-        Set<String> set = new HashSet<>();
+        Set<String> ids = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM records WHERE deleted = false AND agencyid = ?")) {
             stmt.setInt(1, agencyid);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
-                    set.add(resultSet.getString(1));
+                    ids.add(resultSet.getString(1));
                 }
             }
         }
-        return set;
+        Map<String, Collection<String>> children = getChildrenRelationMap();
+        Set<String> nodes = new HashSet<>();
+        for (String id : ids) {
+            expandChildren(id, children, nodes);
+        }
+        return nodes;
     }
 
-    public Set<String> getParentRelations() throws SQLException {
-        Set<String> set = new HashSet<>();
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT refer_bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid")) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                while (resultSet.next()) {
-                    set.add(resultSet.getString(1));
-                }
+    private static void expandChildren(String bibliographicRecordId, Map<String, Collection<String>> children, Set<String> nodes) {
+        if (nodes.contains(bibliographicRecordId)) {
+            return;
+        }
+        nodes.add(bibliographicRecordId);
+        Collection<String> childIds = children.get(bibliographicRecordId);
+        if (childIds != null) {
+            for (String childId : childIds) {
+                expandChildren(childId, children, nodes);
             }
         }
-        return set;
+    }
+
+    private Map<String, Collection<String>> getChildrenRelationMap() throws SQLException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT refer_bibliographicrecordid, bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid AND agencyid IN (");
+        sb.append(agencyid);
+        for (Integer commonAgency : commonAgencies) {
+            sb.append(", ").append(commonAgency);
+        }
+        sb.append(")");
+        log.debug("sb = " + sb);
+        try (Statement stmt = connection.createStatement()) {
+            try (ResultSet resultSet = stmt.executeQuery(sb.toString())) {
+                Map<String, Collection<String>> ret = new HashMap<>();
+                while (resultSet.next()) {
+                    Collection<String> col = ret.get(resultSet.getString(1));
+                    if (col == null) {
+                        col = new HashSet<>();
+                        ret.put(resultSet.getString(1), col);
+                    }
+                    col.add(resultSet.getString(2));
+                }
+                return ret;
+            }
+        }
+    }
+
+    /**
+     * Create an xml document parser
+     *
+     * @return
+     * @throws ParserConfigurationException
+     */
+    private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
+        try {
+            synchronized (DocumentBuilderFactory.class) {
+                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                documentBuilderFactory.setNamespaceAware(true);
+                documentBuilderFactory.setIgnoringComments(true);
+                documentBuilderFactory.setIgnoringElementContentWhitespace(true);
+                return documentBuilderFactory.newDocumentBuilder();
+            }
+        } catch (ParserConfigurationException ex) {
+            log.error("Cannot create parser part of xml merger", ex);
+            throw new MarcXMergerException("Cannot init record merger", ex);
+        }
+    }
+
+    /**
+     * Create an xml transformer for writing a document
+     *
+     * @return new transformer
+     * @throws TransformerConfigurationException
+     * @throws TransformerFactoryConfigurationError
+     * @throws IllegalArgumentException
+     */
+    private static Transformer newTransformer() throws MarcXMergerException {
+        try {
+            synchronized (TransformerFactory.class) {
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                transformer.setOutputProperty(OutputKeys.INDENT, "no");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                return transformer;
+            }
+        } catch (TransformerFactoryConfigurationError | TransformerConfigurationException | IllegalArgumentException ex) {
+            log.error("Cannot create writer part of xml merger", ex);
+            throw new MarcXMergerException("Cannot init record merger", ex);
+        }
     }
 
     public Set<String> getSiblingRelations() throws SQLException {
@@ -97,31 +254,11 @@ class AgencyDelete {
         return set;
     }
 
-    void removeRelations() throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT refer_bibliographicrecordid, agencyid, bibliographicrecordid FROM relations WHERE refer_agencyid = ? AND agencyid <> refer_agencyid")) {
-            stmt.setInt(1, agencyid);
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if (resultSet.next()) {
-                    do {
-                        log.error("Relation to me (id:" + resultSet.getString(1) + ") from (agency:" + resultSet.getInt(2) + "; id:" + resultSet.getString(3) + ")");
-                    } while (resultSet.next());
-                    throw new IllegalStateException("Relations to this agency");
-                }
-            }
-        }
-
-        try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM relations WHERE agencyid = ?")) {
-            stmt.setInt(1, agencyid);
-            stmt.execute();
-        }
-    }
-
-    void queueRecords(Set<String> ids, Set<String> parentRelations, String role) throws RawRepoException, IOException, SQLException {
+    void queueRecords(Set<String> ids, String role) throws RawRepoException, IOException, SQLException {
         int no = 0;
 
         for (String id : ids) {
-            String mimetype = dao.getMimeTypeOf(id, agencyid);
-            dao.changedRecord(role, new RecordId(id, agencyid), mimetype);
+            dao.changedRecord(role, new RecordId(id, agencyid), MarcXChangeMimeType.MARCXCHANGE);
             if (++no % 1000 == 0) {
                 log.info("Queued: " + no);
             }
@@ -129,21 +266,22 @@ class AgencyDelete {
         log.info("Queued: " + no);
     }
 
-    void deleteRecords(Set<String> ids, Set<String> parentRelations) throws RawRepoException, IOException, SQLException {
+    void deleteRecords(Set<String> ids) throws RawRepoException, MarcXMergerException, SAXException, IOException, TransformerException {
         int no = 0;
-
-        DataTemplate template = new DataTemplate("content.xml");
-        Properties props = new Properties();
-        props.put(AGENCYID, String.valueOf(agencyid));
-
+        log.debug("Setting content of records to deleted");
         for (String id : ids) {
-            log.debug("Processing bibliographicrecordid:" + id);
-            props.put(BIBLIOGRAPHICRECORDID, id);
-            Record record = dao.fetchRecord(id, agencyid);
-
-            record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
-            record.setContent(template.build(props).getBytes("UTF-8"));
+            Record record = dao.fetchMergedRecord(id, agencyid, marcXMerger, true);
+            if (record.getId().getAgencyId() != agencyid) {
+                log.debug("Creating record for: " + id);
+                Record r = dao.fetchRecord(id, agencyid);
+                r.setContent(record.getContent());
+                r.setMimeType(record.getMimeType());
+                record = r;
+            }
+            byte[] content = markMarcContentDeleted(record.getContent());
+            record.setContent(content);
             record.setDeleted(true);
+            dao.deleteRelationsFrom(record.getId());
             dao.saveRecord(record);
 
             if (++no % 1000 == 0) {
@@ -151,6 +289,77 @@ class AgencyDelete {
             }
         }
         log.info("Deleted: " + no);
+    }
+
+    byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {
+        Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
+        Element marcx = dom.getDocumentElement();
+        Node child = marcx.getFirstChild();
+        for (;;) {
+            if (child == null ||
+                ( child.getNodeType() == Node.ELEMENT_NODE &&
+                  "datafield".equals(child.getLocalName()) )) {
+                int cmp = -1;
+                if (child != null) {
+                    String tag = ( (Element) child ).getAttribute("tag");
+                    cmp = "004".compareTo(tag);
+                }
+                if (cmp < 0) {
+                    Element n = dom.createElementNS("info:lc/xmlns/marcxchange-v1", "datafield");
+                    n.setAttribute("tag", "004");
+                    n.setAttribute("ind1", "0");
+                    n.setAttribute("ind2", "0");
+                    marcx.insertBefore(n, child);
+                    child = n;
+                }
+                if (cmp <= 0) {
+                    Node subChild = child.getFirstChild();
+                    for (;;) {
+                        // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
+                        // r is 1st field
+                        if (subChild == null || ( subChild.getNodeType() == Node.ELEMENT_NODE &&
+                                                  "subfield".equals(subChild.getLocalName()) )) {
+                            boolean isR = false;
+                            if (subChild != null) {
+                                String code = ( (Element) subChild ).getAttribute("code");
+                                isR = "r".equals(code);
+                            }
+                            if (!isR) {
+                                Element n = dom.createElementNS("info:lc/xmlns/marcxchange-v1", "subfield");
+                                n.setAttribute("code", "r");
+                                child.insertBefore(n, subChild);
+                                subChild = n;
+                            }
+                            while (subChild.hasChildNodes()) {
+                                subChild.removeChild(subChild.getFirstChild());
+                            }
+                            subChild.appendChild(dom.createTextNode("d"));
+                            subChild = subChild.getNextSibling();
+                            while (subChild != null) {
+                                Node next = subChild.getNextSibling();
+                                if (subChild.getNodeType() == Node.ELEMENT_NODE &&
+                                    "subfield".equals(subChild.getLocalName()) &&
+                                    "r".equals(( (Element) subChild ).getAttribute("code"))) {
+                                    child.removeChild(subChild);
+                                }
+                                subChild = next;
+                            }
+                            break;
+
+                        }
+                        subChild = subChild.getNextSibling();
+                    }
+                    break;
+                }
+            }
+            child = child.getNextSibling();
+        }
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        transformer.transform(
+                new DOMSource(dom),
+                new StreamResult(new OutputStreamWriter(os, StandardCharsets.UTF_8)));
+        return os.toByteArray();
     }
 
     public void begin() throws SQLException {

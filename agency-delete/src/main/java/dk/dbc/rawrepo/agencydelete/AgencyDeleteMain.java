@@ -22,10 +22,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
-import dk.dbc.rawrepo.RawRepoException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
@@ -70,14 +67,18 @@ public class AgencyDeleteMain {
             return;
         }
 
+        String openAgency = null;
+        if (commandLine.hasOption("openagency")) {
+            openAgency = (String) commandLine.getOption("openagency");
+        }
+
         try {
-            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid);
+            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, openAgency);
             Set<String> ids = agencyDelete.getIds();
             Set<String> siblingRelations = agencyDelete.getSiblingRelations();
             if (!siblingRelations.isEmpty()) {
                 throw new RuntimeException("Cannot remove agency, there's sibling relations to agency");
             }
-            Set<String> parentRelations = agencyDelete.getParentRelations();
 
             System.out.print("Are you sure you want to remove all(" + ids.size() + ") records for agency " + agencyid + " [y/N]? ");
             String line = new Scanner(System.in, "UTF-8").nextLine();
@@ -88,13 +89,12 @@ public class AgencyDeleteMain {
             agencyDelete.begin();
             if (commandLine.hasOption("role")) {
                 String role = (String) commandLine.getOption("role");
-                agencyDelete.queueRecords(ids, parentRelations, role);
+                agencyDelete.queueRecords(ids, role);
             }
-            agencyDelete.removeRelations();
-            agencyDelete.deleteRecords(ids, parentRelations);
+            agencyDelete.deleteRecords(ids);
 
             agencyDelete.commit();
-        } catch (RuntimeException | SQLException | RawRepoException | IOException ex) {
+        } catch (Exception ex) {
             log.error(ex.getMessage());
             System.exit(1);
         }
@@ -117,6 +117,8 @@ public class AgencyDeleteMain {
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
             addOption("role", "name of enqueue software (provider: agency-delete)", false, false, string, null);
+            addOption("openagency", "url", false, false, string, null);
+
             addOption("debug", "turn on debug logging", false, false, null, yes);
         }
 
