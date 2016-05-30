@@ -1,3 +1,23 @@
+/*
+ * dbc-rawrepo-queue-bulkload
+ * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
+ * Denmark. CVR: 15149043
+ *
+ * This file is part of dbc-rawrepo-queue-bulkload.
+ *
+ * dbc-rawrepo-queue-bulkload is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * dbc-rawrepo-queue-bulkload is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with dbc-rawrepo-queue-bulkload.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package dk.dbc.rawrepo.queuebulkload;
 
 import dk.dbc.rawrepo.RecordId;
@@ -11,24 +31,6 @@ import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/*
- * Copyright (C) 2015 DBC A/S (http://dbc.dk/)
- *
- * This is part of dbc-rawrepo
- *
- * dbc-rawrepo is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 /**
  *
  * @author Morten Bøgeskov (mb@dbc.dk)

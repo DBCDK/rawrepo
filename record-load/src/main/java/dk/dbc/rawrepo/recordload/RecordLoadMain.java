@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2014 DBC A/S (http://dbc.dk/)
+ * dbc-rawrepo-record-load
+ * Copyright (C) 2014 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
+ * Denmark. CVR: 15149043
  *
- * This is part of dbc-rawrepo-record-load
+ * This file is part of dbc-rawrepo-record-load.
  *
  * dbc-rawrepo-record-load is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with dbc-rawrepo-record-load.  If not, see <http://www.gnu.org/licenses/>.
  */
 package dk.dbc.rawrepo.recordload;
 
