@@ -29,7 +29,7 @@ import org.xml.sax.Attributes;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXBlock {
 

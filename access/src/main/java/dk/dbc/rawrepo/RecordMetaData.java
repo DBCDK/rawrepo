@@ -24,7 +24,7 @@ import java.util.Date;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public interface RecordMetaData {
 

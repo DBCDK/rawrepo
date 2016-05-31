@@ -42,7 +42,7 @@ import org.xml.sax.SAXParseException;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @Path("")
 @Stateless

@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class AgencySearchOrderFallback extends AgencySearchOrder {
 

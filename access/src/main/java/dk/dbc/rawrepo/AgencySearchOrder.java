@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutorService;
  * <p>
  * This ought to be in a @Singleton or an application global
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public abstract class AgencySearchOrder implements CacheProvider<Integer, List<Integer>> {
 

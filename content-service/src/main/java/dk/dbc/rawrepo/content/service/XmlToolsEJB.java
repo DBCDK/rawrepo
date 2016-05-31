@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @Singleton
 public class XmlToolsEJB extends Pool<XmlTools>{

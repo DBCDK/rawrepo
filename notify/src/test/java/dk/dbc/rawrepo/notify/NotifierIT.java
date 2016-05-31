@@ -38,7 +38,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class NotifierIT {
 

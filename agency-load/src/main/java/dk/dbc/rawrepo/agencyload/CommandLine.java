@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public abstract class CommandLine {
 

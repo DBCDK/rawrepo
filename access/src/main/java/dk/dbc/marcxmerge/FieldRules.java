@@ -35,7 +35,7 @@ import org.w3c.dom.Node;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class FieldRules {
 

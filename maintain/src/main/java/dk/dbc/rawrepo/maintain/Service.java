@@ -55,7 +55,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @WebService(targetNamespace = C.NS, serviceName = C.SERVICE, portName = C.PORT)
 @SchemaValidation(handler = WsdlValidationErrorHandler.class)

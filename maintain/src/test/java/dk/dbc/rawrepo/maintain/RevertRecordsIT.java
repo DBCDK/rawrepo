@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class RevertRecordsIT extends RawRepoTester {
 

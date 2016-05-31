@@ -32,7 +32,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @Stateless
 public class JSONStreamer {

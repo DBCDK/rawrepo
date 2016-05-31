@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)
 @XmlAccessorOrder(XmlAccessOrder.UNDEFINED)

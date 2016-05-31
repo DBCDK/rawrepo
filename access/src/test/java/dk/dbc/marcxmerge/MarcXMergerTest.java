@@ -62,7 +62,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @RunWith(Parameterized.class)
 public class MarcXMergerTest {

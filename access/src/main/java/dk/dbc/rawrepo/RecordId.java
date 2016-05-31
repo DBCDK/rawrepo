@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class RecordId {
 

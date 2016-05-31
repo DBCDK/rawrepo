@@ -25,7 +25,7 @@ import javax.ws.rs.core.Application;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @ApplicationPath("resources")
 public class RestConfig extends Application {

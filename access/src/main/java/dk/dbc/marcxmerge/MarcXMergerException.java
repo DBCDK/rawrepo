@@ -22,7 +22,7 @@ package dk.dbc.marcxmerge;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXMergerException extends Exception {
 

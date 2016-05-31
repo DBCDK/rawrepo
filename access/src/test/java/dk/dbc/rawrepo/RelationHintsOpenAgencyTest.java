@@ -34,7 +34,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class RelationHintsOpenAgencyTest {
 

@@ -50,7 +50,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class RecordInspectorMain {
 

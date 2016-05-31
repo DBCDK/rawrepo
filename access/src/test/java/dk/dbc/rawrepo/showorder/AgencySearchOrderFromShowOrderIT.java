@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class AgencySearchOrderFromShowOrderIT {
 

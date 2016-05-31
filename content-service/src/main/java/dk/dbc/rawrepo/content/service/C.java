@@ -22,7 +22,7 @@ package dk.dbc.rawrepo.content.service;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class C {
 

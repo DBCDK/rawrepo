@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 class RawRepoTester {
 

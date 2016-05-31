@@ -22,7 +22,7 @@ package dk.dbc.rawrepo.agencyload;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public abstract class MarcXProcessor {
 

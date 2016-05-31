@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS, name = "entry")
 public class ValueEntry {

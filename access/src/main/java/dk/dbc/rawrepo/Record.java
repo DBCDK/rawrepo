@@ -22,7 +22,7 @@ package dk.dbc.rawrepo;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public interface Record extends RecordMetaData {
 

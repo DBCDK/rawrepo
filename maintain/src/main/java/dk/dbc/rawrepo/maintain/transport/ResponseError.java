@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS, name = "responseError")
 @XmlAccessorOrder(value = XmlAccessOrder.UNDEFINED)

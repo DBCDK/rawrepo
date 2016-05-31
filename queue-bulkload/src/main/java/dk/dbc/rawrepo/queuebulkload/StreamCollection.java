@@ -30,7 +30,7 @@ import java.util.Scanner;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public class StreamCollection implements Iterable<RecordId>, AutoCloseable {
 

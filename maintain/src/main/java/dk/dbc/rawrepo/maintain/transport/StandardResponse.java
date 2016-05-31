@@ -33,7 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)
 public class StandardResponse {

@@ -24,7 +24,7 @@ import java.util.LinkedList;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 public abstract class Pool<T> {
 

@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  *
- * @author DBC <dbc.dk>
+ * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS)
 @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
