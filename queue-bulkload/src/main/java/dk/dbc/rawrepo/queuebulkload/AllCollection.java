@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author bogeskov
+ * @author DBC <dbc.dk>
  */
 public class AllCollection implements Iterable<RecordId>, AutoCloseable {
 

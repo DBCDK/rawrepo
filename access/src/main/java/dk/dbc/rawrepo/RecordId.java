@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class RecordId {
 

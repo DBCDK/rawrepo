@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 @Singleton
 public class MarcXMergerEJB extends Pool<MarcXMerger> {

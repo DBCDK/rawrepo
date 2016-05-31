@@ -48,7 +48,7 @@ import static org.mockito.Mockito.doCallRealMethod;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RawRepoDAOTest {

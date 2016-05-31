@@ -24,7 +24,7 @@ import java.sql.Timestamp;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class QueueJob {
 

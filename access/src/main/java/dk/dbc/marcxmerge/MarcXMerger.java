@@ -52,7 +52,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class MarcXMerger {
 

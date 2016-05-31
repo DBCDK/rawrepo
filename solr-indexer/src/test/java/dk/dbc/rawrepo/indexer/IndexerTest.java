@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author kasper
+ * @author DBC <dbc.dk>
  */
 public class IndexerTest {
 

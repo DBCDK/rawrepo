@@ -63,7 +63,7 @@ import org.xml.sax.SAXParseException;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public abstract class Service {
 

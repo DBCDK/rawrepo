@@ -22,7 +22,7 @@ package dk.dbc.rawrepo;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public interface Record extends RecordMetaData {
 

@@ -25,7 +25,7 @@ import javax.ws.rs.core.Application;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 @ApplicationPath(C.SERVICE)
 public class RestConfig extends Application{

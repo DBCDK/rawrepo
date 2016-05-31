@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class AgencySearchOrderFromShowOrderIT {
 

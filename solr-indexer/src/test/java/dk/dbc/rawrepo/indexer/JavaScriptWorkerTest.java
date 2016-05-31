@@ -50,7 +50,7 @@ import static org.mockito.Mockito.*;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 @RunWith(Parameterized.class)
 public class JavaScriptWorkerTest {

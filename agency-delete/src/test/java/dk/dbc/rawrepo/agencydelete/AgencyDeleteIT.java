@@ -54,7 +54,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class AgencyDeleteIT {
 

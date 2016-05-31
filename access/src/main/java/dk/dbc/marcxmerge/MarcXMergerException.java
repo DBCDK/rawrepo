@@ -22,7 +22,7 @@ package dk.dbc.marcxmerge;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class MarcXMergerException extends Exception {
 

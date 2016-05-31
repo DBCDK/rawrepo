@@ -26,7 +26,7 @@ import java.util.TimeZone;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 class RecordImpl implements Record {
 

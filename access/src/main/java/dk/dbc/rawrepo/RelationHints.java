@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class RelationHints implements CacheProvider<Integer, List<Integer>> {
 

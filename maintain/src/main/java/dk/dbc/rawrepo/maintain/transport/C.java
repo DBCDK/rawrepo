@@ -22,7 +22,7 @@ package dk.dbc.rawrepo.maintain.transport;
 
 /**
  *
- * @author bogeskov
+ * @author DBC <dbc.dk>
  */
 public class C {
 

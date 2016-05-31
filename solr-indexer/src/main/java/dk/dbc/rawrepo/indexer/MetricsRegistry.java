@@ -29,7 +29,7 @@ import javax.ejb.Singleton;
 
 /**
  *
- * @author thp
+ * @author DBC <dbc.dk>
  */
 @Singleton
 public class MetricsRegistry {

@@ -33,7 +33,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 /**
  *
- * @author thp/bogeskov
+ * @author DBC <dbc.dk>
  */
 @Singleton
 @Startup

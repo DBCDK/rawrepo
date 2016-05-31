@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutorService;
  * showOrder
  *
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
 

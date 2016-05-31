@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 
 /**
  *
- * @author thp
+ * @author DBC <dbc.dk>
  */
 public class RollBackTest {
 

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 public class AgencyLoadTest {
 

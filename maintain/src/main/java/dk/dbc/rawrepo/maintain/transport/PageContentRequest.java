@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
- * @author bogeskov
+ * @author DBC <dbc.dk>
  */
 @XmlRootElement(namespace = C.NS)
 @XmlAccessorOrder(XmlAccessOrder.UNDEFINED)

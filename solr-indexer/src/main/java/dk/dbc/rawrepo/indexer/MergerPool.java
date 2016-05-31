@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 
 /**
  *
- * @author Morten Bøgeskov (mb@dbc.dk)
+ * @author DBC <dbc.dk>
  */
 @Singleton
 public class MergerPool {

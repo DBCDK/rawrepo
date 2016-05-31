@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  *
- * @author bogeskov
+ * @author DBC <dbc.dk>
  */
 @XmlRootElement(namespace = C.NS)
 public class PageContentResponse {
