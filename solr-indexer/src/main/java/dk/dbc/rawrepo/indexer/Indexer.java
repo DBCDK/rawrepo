@@ -102,7 +102,6 @@ public class Indexer {
 
         @Override
         public List<Integer> provide(Integer key) throws Exception {
-            log.error("key = " + key);
             return Arrays.asList(key);
         }
     };
@@ -111,7 +110,6 @@ public class Indexer {
 
         @Override
         public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-            log.error("agencyId = " + agencyId);
             return true;
         }
     };
