@@ -327,7 +327,7 @@
     <field name="match.023ab" type="dbc-match" indexed="true" stored="true" required="false" />
     
     <field name="marc.024a" type="dbc-default" indexed="false" stored="false" required="false" />
-    <copyField source="marc.022a" dest="match.022a"/>
+    <copyField source="marc.024a" dest="match.024a"/>
     <field name="match.024a" type="dbc-match" indexed="true" stored="true" required="false" />
 
     <field name="marc.028a" type="dbc-default" indexed="false" stored="false" required="false" />
