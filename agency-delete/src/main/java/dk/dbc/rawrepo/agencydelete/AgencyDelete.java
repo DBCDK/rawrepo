@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
-import dk.dbc.gracefulcache.CacheTimeoutException;
-import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -49,7 +47,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
