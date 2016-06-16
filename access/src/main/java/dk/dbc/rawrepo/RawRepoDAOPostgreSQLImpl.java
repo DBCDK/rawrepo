@@ -404,7 +404,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Delete all relations related to an bibliographicRecordId
+     * Delete all relations related from an bibliographicRecordId
      *
      * @param recordId complex key of bibliographicRecordId
      * @throws RawRepoException

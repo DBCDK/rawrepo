@@ -165,7 +165,7 @@ public abstract class RawRepoDAO {
                         String className = daoName + databaseProductName + "Impl";
                         Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
                         if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
-                            log.error("Class found by not an instance of RawRepoDAO");
+                            log.error("Class found is not an instance of RawRepoDAO");
                             throw new RawRepoException("Unable to load driver");
                         }
                         Constructor<?> constructor = clazz.getConstructor(Connection.class);
@@ -185,7 +185,7 @@ public abstract class RawRepoDAO {
 
                 return dao;
             } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                log.error("Caught exception tryini to instantiate dao", ex);
+                log.error("Caught exception trying to instantiate dao", ex);
                 throw new RawRepoException("Unable to load driver", ex);
             }
         }
