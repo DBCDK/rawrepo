@@ -112,8 +112,8 @@ public class RemoveRecordsIT extends RawRepoTester {
 
     private RemoveRecords makeRemoveRecords() throws RawRepoException, SQLException {
         RemoveRecords mock = mock(RemoveRecords.class);
-        when(mock.getConnection()).thenReturn(pg.connection);
-        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.connection).build());
+        when(mock.getConnection()).thenReturn(pg.getConnection());
+        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).build());
         doCallRealMethod().when(mock).removeRecord(anyInt(), anyString(), anyString(), anyString());
         return mock;
     }

@@ -109,8 +109,8 @@ public class RevertRecordsIT extends RawRepoTester {
 
     private RevertRecords makeRevertRecords() throws RawRepoException, SQLException {
         RevertRecords mock = mock(RevertRecords.class);
-        when(mock.getConnection()).thenReturn(pg.connection);
-        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.connection).build());
+        when(mock.getConnection()).thenReturn(pg.getConnection());
+        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).build());
         doCallRealMethod().when(mock).revertRecord(anyInt(), anyString(), anyLong(), anyString(), anyString());
         return mock;
     }

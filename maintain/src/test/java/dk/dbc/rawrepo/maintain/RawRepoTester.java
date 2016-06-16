@@ -55,7 +55,7 @@ class RawRepoTester {
                         justification = "connection initliazed in @Before." +
                                         "arg might contain 'where ...'")
     protected int count(String arg) throws SQLException {
-        try (Statement stmt = pg.connection.createStatement()) {
+        try (Statement stmt = pg.getConnection().createStatement()) {
             try (ResultSet resultSet = stmt.executeQuery("SELECT COUNT(*) FROM " + arg)) {
                 resultSet.next();
                 return resultSet.getInt(1);
@@ -69,9 +69,9 @@ class RawRepoTester {
         RelationHints relationHints = mock(RelationHints.class);
         when(relationHints.get(anyInt())).thenReturn(Arrays.asList());
         when(relationHints.usesCommonAgency(anyInt())).thenReturn(Boolean.FALSE);
-  
 
-        return RawRepoDAO.builder(pg.connection).relationHints(relationHints).build();
+
+        return RawRepoDAO.builder(pg.getConnection()).relationHints(relationHints).build();
     }
 
 }

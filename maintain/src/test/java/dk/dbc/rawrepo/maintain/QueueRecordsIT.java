@@ -81,8 +81,8 @@ public class QueueRecordsIT extends RawRepoTester {
 
     private QueueRecords makeQueueRecords() throws RawRepoException, SQLException {
         QueueRecords mock = mock(QueueRecords.class);
-        when(mock.getConnection()).thenReturn(pg.connection);
-        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.connection).build());
+        when(mock.getConnection()).thenReturn(pg.getConnection());
+        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).build());
         doCallRealMethod().when(mock).queueRecord(anyInt(), anyString(), anyString());
         return mock;
     }
