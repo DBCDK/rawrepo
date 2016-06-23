@@ -63,12 +63,12 @@ var Service = (function () {
             return value.match(/(\S)+/);
         },
         token: function (value) {
-            if (value.match(/[^a-z0-9_-]/i) || value === '')
+            if (value.match(/[^a-z0-9._-]/i) || value === '')
                 throw Error("value: '" + value + "' is not a token");
             return [value];
         },
         tokens: function (value) {
-            if (value.match(/[^\sa-z0-9_-]/i) || value.match(/^\s*$/))
+            if (value.match(/[^\sa-z0-9._-]/i) || value.match(/^\s*$/))
                 throw Error("value: '" + value + "' is not tokens");
             return value.match(/(\S)+/);
         },
