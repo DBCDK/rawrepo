@@ -20,6 +20,7 @@
  */
 package dk.dbc.introsepct;
 
+import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
@@ -30,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -154,7 +156,12 @@ public class Introspect {
                                     @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
         try (Connection connection = getDataSource(resource).getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
+                   @Override
+                   public List<Integer> provide(Integer key) throws Exception {
+                       return Arrays.asList(key);
+                   }
+               }).build();
             Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
 
             ArrayList<Object> response = xmlDiff(record, record);
