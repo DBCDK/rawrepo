@@ -24,11 +24,13 @@ import dk.dbc.rawrepo.maintain.transport.ResponseError;
 import dk.dbc.rawrepo.maintain.transport.C;
 import com.sun.xml.ws.developer.SchemaValidation;
 import dk.dbc.commons.webservice.WsdlValidationErrorHandler;
+import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.maintain.transport.PageContentResponse;
 import dk.dbc.rawrepo.maintain.transport.RecordIds;
 import dk.dbc.rawrepo.maintain.transport.TS;
 import dk.dbc.rawrepo.maintain.transport.ValueEntry;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,11 +40,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 import javax.xml.ws.Action;
 import javax.xml.ws.Holder;
 import javax.xml.ws.RequestWrapper;
@@ -69,8 +73,9 @@ public class Service {
     @Resource(lookup = C.DATASOURCE)
     DataSource rawrepo;
 
-    @Resource(lookup = C.PROPERTIES)
-    Properties properties;
+    @Inject
+    @EEConfig.Url
+    String openAgencyUrl;
 
     ExecutorService executorService;
 
@@ -80,7 +85,6 @@ public class Service {
     @PostConstruct
     public void init() {
         log.info("init()");
-        String openAgencyUrl = properties.getProperty("openAgencyUrl", null);
         if (openAgencyUrl != null) {
             this.openAgency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
         } else {
@@ -258,6 +262,8 @@ public class Service {
     }
 
     private static class ResponseErrorException extends Exception {
+
+        private static final long serialVersionUID = 2415958974972575922L;
 
         private final String message;
         private final ResponseError.Type type;

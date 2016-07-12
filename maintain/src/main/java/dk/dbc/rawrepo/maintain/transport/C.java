@@ -40,4 +40,5 @@ public class C {
     public static final String OPERATION_QUEUE_RECORDS = "queueRecords";
     public static final String OPERATION_REMOVE_RECORDS = "removeRecords";
     public static final String OPERATION_REVERT_RECORDS = "revertRecords";
+    public static final String OPEN_AGENCY_URL = "openAgencyUrl";
 }
