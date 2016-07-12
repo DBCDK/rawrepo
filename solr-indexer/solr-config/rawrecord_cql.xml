@@ -81,6 +81,20 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             </map>
         </index>
         <index>
+            <title lang="en"></title>
+            <title lang="da">Dataproducentens biblioteksnummer</title>
+            <map>
+                <name set="marc">002b</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en"></title>
+            <title lang="da">Decentralt faustnummer</title>
+            <map>
+                <name set="marc">002c</name>
+            </map>
+        </index>
+        <index>
             <title lang="en">Record Type</title>
             <title lang="da">Postens type</title>
             <map hidden="1">
