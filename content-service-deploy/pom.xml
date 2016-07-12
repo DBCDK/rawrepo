@@ -33,16 +33,14 @@
         <version>1.2-SNAPSHOT</version>
     </parent>
 
-    <build>
 
+    <build>
         <sourceDirectory>src/main/groovy</sourceDirectory>
         <plugins>
-
             <plugin>
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>gmaven-plugin</artifactId>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -62,20 +60,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -92,7 +76,6 @@
     </build>
 
     <dependencies>
-        <!-- Groovy/Glu framework dependencies -->
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
@@ -105,19 +88,10 @@
         </dependency>
         <dependency>
             <groupId>dk.dbc</groupId>
-            <artifactId>glu-commons-scripts</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>dk.dbc</groupId>
-            <artifactId>glu-commons-utils-logback-configurator</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>dk.dbc</groupId>
-            <artifactId>glu-commons-utils-glassfish-deployer</artifactId>
+            <artifactId>glu-commons-utils-glassfish-webservice-deployer</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
+
 
 </project>

@@ -20,11 +20,12 @@
  */
 package dk.dbc.rawrepo.content.service;
 
+import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import java.util.Properties;
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,33 +38,40 @@ public class AgencySearchOrderEJB {
 
     private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderEJB.class);
 
-    @Resource(lookup = C.PROPERTIES_LOOKUP)
-    Properties props;
+
+    @Inject
+    @EEConfig.Name(C.SEARCHORDER.URL)
+    @EEConfig.Default(C.SEARCHORDER.URL_DEFAULT)
+    @EEConfig.Url
+    String searchOrderUrl;
+
+    @Inject
+    @EEConfig.Name(C.SEARCHORDER.CONNECT_TIMEOUT)
+    @EEConfig.Default(C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT)
+    @Min(1)
+    int connectTimeout;
+
+    @Inject
+    @EEConfig.Name(C.SEARCHORDER.REQUEST_TIMEOUT)
+    @EEConfig.Default(C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT)
+    @Min(1)
+    int requestTimeout;
+
+
 
     private OpenAgencyServiceFromURL openAgencyService;
 
     @PostConstruct
     public void init() {
         log.debug("init()");
-        String url = props.getProperty(C.SEARCHORDER.URL, C.SEARCHORDER.URL_DEFAULT);
         openAgencyService = OpenAgencyServiceFromURL.builder()
-        .connectTimeout(getInteger(C.SEARCHORDER.CONNECT_TIMEOUT, C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT))
-        .requestTimeout(getInteger(C.SEARCHORDER.REQUEST_TIMEOUT, C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT))
-        .build(url);
+        .connectTimeout(connectTimeout)
+        .requestTimeout(requestTimeout)
+        .build(searchOrderUrl);
     }
 
     public OpenAgencyServiceFromURL getOpenAgencyService() {
         return openAgencyService;
-    }
-
-    private int getInteger(String key, String defaultValue) {
-        String value = props.getProperty(key, defaultValue);
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            log.warn("NumberFormatException in: " + value + " from " + key);
-            return Integer.parseInt(value);
-        }
     }
 
 }

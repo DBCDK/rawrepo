@@ -22,6 +22,7 @@ package dk.dbc.rawrepo.content.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.forsrights.client.ForsRightsException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
@@ -42,7 +43,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -69,9 +69,6 @@ public abstract class Service {
 
     @Resource(lookup = C.RAWREPO.DATASOURCE)
     DataSource rawrepo;
-
-    @Resource(lookup = C.PROPERTIES_LOOKUP)
-    Properties props;
 
     @Inject
     AuthenticationService forsRights;
@@ -112,6 +109,12 @@ public abstract class Service {
     @Inject
     Timer fetchCollection;
 
+
+    @Inject
+    @EEConfig.Name(C.X_FORWARDED_FOR)
+    @EEConfig.Default("")
+    String xForwardedFor;
+
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
     List<IPRange> ipRanges;
@@ -122,9 +125,8 @@ public abstract class Service {
     public void init() {
         log.info("init()");
         ipRanges = new ArrayList<>();
-        String ranges = props.getProperty(C.X_FORWARDED_FOR, "");
-        if (!ranges.isEmpty()) {
-            for (String range : ranges.split("[,;:\\s]+")) {
+        if (!xForwardedFor.isEmpty()) {
+            for (String range : xForwardedFor.split("[,;:\\s]+")) {
                 try {
                     ipRanges.add(new IPRange(range));
                 } catch (RuntimeException ex) {
