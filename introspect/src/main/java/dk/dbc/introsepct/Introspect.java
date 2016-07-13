@@ -80,8 +80,7 @@ public class Introspect {
 
     Context context;
 
-    @Resource(name = "jdbcResourceBase")
-    String jdbcResourceBase;
+    private final String jdbcResourceBase = "jdbc/rawrepointrospect";
 
     @Inject
     Merger merger;
