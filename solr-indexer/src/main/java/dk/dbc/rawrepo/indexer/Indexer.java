@@ -23,6 +23,7 @@ package dk.dbc.rawrepo.indexer;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
@@ -51,7 +52,10 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RelationHints;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
+import javax.validation.constraints.NotNull;
 import org.slf4j.MDC;
 
 /**
@@ -64,13 +68,18 @@ public class Indexer {
 
     private final static String TRACKING_ID = "trackingId";
 
-    @Resource(name = "solrUrl")
+    @Inject
+    @EEConfig.Name(C.SOLR_URL)
+    @NotNull
     String solrUrl;
 
-    @Resource(lookup = "jdbc/rawrepoindexer/rawrepo")
+    @Resource(lookup = C.DATASOURCE)
     DataSource dataSource;
 
-    @Resource(name = "workerName")
+    @Inject
+    @EEConfig.Name(C.WORKER_NAME)
+    @EEConfig.Default(C.WORKER_NAME_DEFAULT)
+    @NotNull
     String workerName;
 
     @Inject
@@ -100,19 +109,19 @@ public class Indexer {
 
     private static final AgencySearchOrder AGENCY_SEARCH_ORDER = new AgencySearchOrder(null) {
 
-        @Override
-        public List<Integer> provide(Integer key) throws Exception {
-            return Arrays.asList(key);
-        }
-    };
+                                       @Override
+                                       public List<Integer> provide(Integer key) throws Exception {
+                                           return Arrays.asList(key);
+                                       }
+                                   };
 
     private static final RelationHints RELATION_HINTS = new RelationHints() {
 
-        @Override
-        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-            return true;
-        }
-    };
+                                   @Override
+                                   public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+                                       return true;
+                                   }
+                               };
 
     public Indexer() {
         this.solrServer = null;
@@ -157,22 +166,27 @@ public class Indexer {
             Timer.Context time = processJobTimer.time();
             try (Connection connection = getConnection()) {
                 RawRepoDAO dao = createDAO(connection);
-                QueueJob job = dequeueJob(dao);
+                try {
+                    QueueJob job = dequeueJob(dao);
 
-                if (job != null) {
-                    MDC.put(TRACKING_ID, createTrackingId(job));
-                    processJob(job, dao);
-                    commit(connection);
-                    processedJobs++;
-                    if (processedJobs % 1000 == 0) {
-                        log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
+                    if (job != null) {
+                        MDC.put(TRACKING_ID, createTrackingId(job));
+                        processJob(job, dao);
+                        commit(connection);
+                        processedJobs++;
+                        if (processedJobs % 1000 == 0) {
+                            log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
+                        }
+                        time.stop();
+                    } else {
+                        moreWork = false;
+                        log.trace("Queue is empty. Nothing to index");
                     }
-                    time.stop();
-                } else {
-                    moreWork = false;
-                    log.trace("Queue is empty. Nothing to index");
+                } catch (RawRepoException | IllegalArgumentException | MarcXMergerException | SQLException ex) {
+                    connection.rollback();
+                    throw ex;
                 }
-            } catch (MarcXMergerException | RawRepoException | SQLException ex) {
+            } catch (MarcXMergerException | RawRepoException | SQLException | RuntimeException ex) {
                 moreWork = false;
                 log.error("Error getting job from database", ex);
             } finally {

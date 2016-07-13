@@ -20,6 +20,7 @@
  */
 package dk.dbc.rawrepo.indexer;
 
+import dk.dbc.eeconfig.EEConfig;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,6 +36,8 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.inject.Inject;
+import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +56,16 @@ public class Dispatcher {
     @EJB
     Indexer indexer;
 
-    @Resource(name = "timeout")
+    @Inject
+    @EEConfig.Name(C.TIMEOUT)
+    @EEConfig.Default(C.TIMEOUT_DEFAULT)
+    @Min(1)
     int timeout;
-    @Resource(name = "maxConcurrent")
+
+    @Inject
+    @EEConfig.Name(C.MAX_CONCURRENT)
+    @EEConfig.Default(C.MAX_CONCURRENT)
+    @Min(1)
     int maxConcurrent;
 
     // all runnables that are given to "mes", they remove themselves upon completion
