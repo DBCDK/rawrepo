@@ -33,7 +33,6 @@
     <version>1.2-SNAPSHOT</version>
   </parent>
 
-
     <build>
         <sourceDirectory>src/main/groovy</sourceDirectory>
         <plugins>

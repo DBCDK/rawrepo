@@ -39,7 +39,7 @@ class DeployScript extends GlassFishWebserviceDeployer {
      * config              : Map     : Configuration (string:string)
      *                                 (REQUIRED)
      *
-     * ..solrUrl           : URL     : Url of solr-server-core
+     * ..solrUrlRawrepo    : URL     : Url of solr-server-core
      *                                 (REQUIRED)
      *
      * ..workerName        : String  : Name of queue to take jobs from
@@ -101,7 +101,7 @@ class DeployScript extends GlassFishWebserviceDeployer {
     }
 
     protected  Map<String, ArgumentValidator> getConfigRequired() {
-        return ['solrUrl' : ArgumentValidator.URL]
+        return ['solrUrlRawrepo' : ArgumentValidator.URL]
     }
 
     protected  Map<String, ArgumentValidator> getConfigOptional() {

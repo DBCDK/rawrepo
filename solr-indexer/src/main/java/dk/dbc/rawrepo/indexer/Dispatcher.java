@@ -64,7 +64,7 @@ public class Dispatcher {
 
     @Inject
     @EEConfig.Name(C.MAX_CONCURRENT)
-    @EEConfig.Default(C.MAX_CONCURRENT)
+    @EEConfig.Default(C.MAX_CONCURRENT_DEFAULT)
     @Min(1)
     int maxConcurrent;
 
