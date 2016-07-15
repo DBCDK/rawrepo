@@ -284,9 +284,9 @@
     <field name="marc.001c" type="date" indexed="true" stored="true" required="false" />
     <field name="marc.001d" type="date" indexed="true" stored="true" required="false" />
 
-    <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" />
+    <field name="marc.002a" type="dbc-faust" indexed="true" stored="true" required="false" multiValued="true" />
     <field name="marc.002b" type="dbc-analyzed-id" indexed="true" stored="true" required="false" multiValued="true" />
-    <field name="marc.002c" type="dbc-doc-id" indexed="true" stored="true" required="false" />
+    <field name="marc.002c" type="dbc-doc-id" indexed="true" stored="true" required="false" multiValued="true" />
 
     <field name="marc.004a" type="dbc-default" indexed="true" stored="true" required="false" multiValued="false"/>
 
