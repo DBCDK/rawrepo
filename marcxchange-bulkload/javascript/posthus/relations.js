@@ -13,6 +13,8 @@ use("Log");
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : null;
+if(parent_agency === '')
+    parent_agency = null
 
 function begin() {
  Log.trace("db = " + System.arguments[0]);
