@@ -12,12 +12,10 @@ use("Log");
 
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
-var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : null;
-if(parent_agency === '')
-    parent_agency = null
+var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '';
 
 function begin() {
- Log.trace("db = " + System.arguments[0]);
+    Log.trace("db = " + System.arguments[0]);
 }
 
 function end() {
@@ -52,7 +50,7 @@ function work(r) {
 
         var s = "·";
         var sibling = false;
-        if (parent_agencyid !== null && agencyid !== parent_agencyid) {
+        if (parent_agencyid !== '' && agencyid !== parent_agencyid) {
             Log.debug(id + " might have sibling");
             try {
                 var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
@@ -89,7 +87,7 @@ function work(r) {
                 throw e;
             }
         } else if (parent !== "") {
-            var foreign = parent_agencyid === null ? [agencyid] : [parent_agencyid, agencyid];
+            var foreign = parent_agencyid === '' ? [agencyid] : [parent_agencyid, agencyid];
             var refer_agencyid = null;
             q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {
@@ -103,7 +101,7 @@ function work(r) {
                 }
             }
             q.done();
-            if(refer_agencyid === null) {
+            if (refer_agencyid === null) {
                 Log.error("Parent (" + parent + ") for " + id + " cannot be found!");
                 throw new Error("Parent (" + parent + ") for " + id + " cannot be found!");
             }
