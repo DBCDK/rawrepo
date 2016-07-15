@@ -12,7 +12,7 @@ use("Log");
 
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
-var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "870970";
+var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : null;
 
 function begin() {
  Log.trace("db = " + System.arguments[0]);
@@ -50,7 +50,7 @@ function work(r) {
 
         var s = "·";
         var sibling = false;
-        if (agencyid !== parent_agencyid) {
+        if (parent_agencyid !== null && agencyid !== parent_agencyid) {
             Log.debug(id + " might have sibling");
             try {
                 var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
@@ -87,7 +87,7 @@ function work(r) {
                 throw e;
             }
         } else if (parent !== "") {
-            var foreign = [parent_agencyid, agencyid];
+            var foreign = parent_agencyid === null ? [agencyid] : [parent_agencyid, agencyid];
             var refer_agencyid = null;
             q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {
