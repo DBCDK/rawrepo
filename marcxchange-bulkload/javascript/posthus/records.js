@@ -11,6 +11,7 @@ var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "";
 
 function begin() {
+    Log.info("parent_agency = " + parent_agency);
 }
 
 function end() {

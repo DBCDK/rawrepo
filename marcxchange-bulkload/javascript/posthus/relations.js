@@ -16,6 +16,7 @@ var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '';
 
 function begin() {
     Log.trace("db = " + System.arguments[0]);
+    Log.info("parent_agency = " + parent_agency);
 }
 
 function end() {

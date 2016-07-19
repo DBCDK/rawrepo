@@ -12,6 +12,8 @@ var parent_agency = System.arguments.length > 1 ? System.arguments[1] : '';
 var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
 
 function begin() {
+    Log.info("parent_agency = " + parent_agency);
+    Log.info("provider = " + provider);
 }
 
 function end() {
