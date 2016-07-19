@@ -8,7 +8,7 @@ use("PostgreSQL");
 
 var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
-var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '';
+var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
 
 function begin() {
@@ -86,7 +86,7 @@ function work(r) {
     // Inbound relations to this id (any agency)
     var q = db.prepare("SELECT COUNT(*) AS count FROM relations WHERE refer_bibliographicrecordid <> bibliographicrecordid AND refer_bibliographicrecordid = :bibliographicrecordid AND refer_agencyid IN (:common, :agencyid)");
     q['bibliographicrecordid'] = bibliographicrecordid;
-    q['common'] = parent_agencyid === '' ? agencyid : parent_agencyid;
+    q['common'] = parent_agencyid === '0' ? agencyid : parent_agencyid;
     q['agencyid'] = agencyid;
     q.execute();
     var r = q.fetch();
@@ -112,7 +112,7 @@ function work(r) {
     q.execute();
     Log.info(id + " queued " + bibliographicrecordid + " with changed=Y & leaf=" + (leaf ? "Y" : "N"));
     if (!leaf) {
-        var leaves = findLeaves(bibliographicrecordid, parent_agencyid === '' ? [agencyid] : [agencyid, parent_agencyid]);
+        var leaves = findLeaves(bibliographicrecordid, parent_agencyid === '0' ? [agencyid] : [agencyid, parent_agencyid]);
         for (var i = 0; i < leaves.length; i++) {
             q['bibliographicrecordid'] = leaves[i];
             q['agencyid'] = agencyid;
