@@ -3,12 +3,12 @@ use("Log");
 use("XmlUtil");
 use("XPath");
 use("XmlNamespaces");
-use("Binary");
 use("PostgreSQL");
+use("DateUtil");
 
-var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "0";
+var tracking_base = System.arguments.length > 2 ? System.arguments[2] : ("bulk-" + DateUtil.jsToYYYYmmddHHMMSS(DateUtil.now()) + "-");
 
 function begin() {
     Log.info("System.arguments = " + System.arguments);
@@ -43,14 +43,15 @@ function work(r) {
     var d = date.substr(6, 2);
 
     var blob = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + xml.toString();
-
+    //var blob = new Binary('<?xml version="1.0" encoding="UTF-8"?>' + "\n" + xml.toString(), Binary.Utf8);
+    
     Log.info(id + " date=" + date);
 
     db.begin();
 
     var sibling = false;
     if (parent_agencyid !== '0' && agencyid !== parent_agencyid) {
-	var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
+	var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
 	q['bibliographicrecordid'] = bibliographicrecordid;
 	q['agencyid'] = parent_agencyid;
 	q.execute();
@@ -62,21 +63,23 @@ function work(r) {
     Log.info(id + " is sibling");
 
     Log.info(id + " update if exists");
-    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created, modified=TIMEOFDAY()::TIMESTAMP WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
+    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
     q['blob'] = blob;
     q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
     q['created'] = y + "-" + m + "-" + d;
+    q['trackingid'] = tracking_base + bibliographicrecordid;
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     if (q.execute() === 0) {
         Log.info(id + " create");
         q.done();
-        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created, TIMEOFDAY()::TIMESTAMP)");
+        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified, trackingid) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created, TIMEOFDAY()::TIMESTAMP, :trackingid)");
         q['bibliographicrecordid'] = bibliographicrecordid;
         q['agencyid'] = agencyid;
         q['blob'] = blob;
 	q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
         q['created'] = y + "-" + m + "-" + d;
+        q['trackingid'] = tracking_base + bibliographicrecordid;
         q.execute();
     }
     q.done();

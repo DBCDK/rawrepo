@@ -1,16 +1,11 @@
-/* global Log, XmlUtil, XPath, System, __row__ */
-
 use("Print");
 use("Log");
 use("XmlUtil");
 use("XPath");
 use("XmlNamespaces");
-use("Binary");
 use("PostgreSQL");
 use("Log");
 
-
-var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 
@@ -54,7 +49,7 @@ function work(r) {
         if (parent_agencyid !== '0' && agencyid !== parent_agencyid) {
             Log.debug(id + " might have sibling");
             try {
-                var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
+                var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = parent_agencyid;
                 q.execute();
@@ -90,7 +85,7 @@ function work(r) {
         } else if (parent !== "") {
             var foreign = parent_agencyid === '0' ? [agencyid] : [parent_agencyid, agencyid];
             var refer_agencyid = null;
-            q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
+            q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {
                 q['bibliographicrecordid'] = parent;
                 q['agencyid'] = foreign[i];

@@ -3,10 +3,8 @@ use("Log");
 use("XmlUtil");
 use("XPath");
 use("XmlNamespaces");
-use("Binary");
 use("PostgreSQL");
 
-var marcx = new Namespace("marcx", "info:lc/xmlns/marcxchange-v1");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
@@ -22,7 +20,7 @@ function end() {
 }
 
 function findMostCommonAgency(bibliographicrecordid, agencyidList) {
-    var q = db.prepare("SELECT COUNT(*) AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND deleted = false");
+    var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND deleted = false");
     for (var i = 0; i < agencyidList.length; i++) {
         var agencyid = agencyidList[i];
         q['bibliographicrecordid'] = bibliographicrecordid;
@@ -84,17 +82,19 @@ function work(r) {
     db.begin();
 
     // Inbound relations to this id (any agency)
-    var q = db.prepare("SELECT COUNT(*) AS count FROM relations WHERE refer_bibliographicrecordid <> bibliographicrecordid AND refer_bibliographicrecordid = :bibliographicrecordid AND refer_agencyid IN (:common, :agencyid)");
+    var q = db.prepare("SELECT COUNT(*)::integer AS count FROM relations WHERE refer_bibliographicrecordid <> bibliographicrecordid AND refer_bibliographicrecordid = :bibliographicrecordid AND refer_agencyid IN (:common, :agencyid)");
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['common'] = parent_agencyid === '0' ? agencyid : parent_agencyid;
     q['agencyid'] = agencyid;
     q.execute();
     var r = q.fetch();
+    Log.info("r['count'] = " + r['count']);
+//    var leaf = (0 + r['count']) === 0;
     var leaf = r['count'] === 0;
     q.done();
 
     // Outbound sibling relation
-    var q = db.prepare("SELECT COUNT(*) AS count FROM relations WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND refer_bibliographicrecordid = bibliographicrecordid");
+    var q = db.prepare("SELECT COUNT(*)::integer AS count FROM relations WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND refer_bibliographicrecordid = bibliographicrecordid");
     q['bibliographicrecordid'] = bibliographicrecordid;
     q['agencyid'] = agencyid;
     q.execute();
