@@ -50,6 +50,7 @@
     <module>agency-delete</module>
     <module>agency-dump</module>
     <module>agency-load</module>
+    <module>agency-purge</module>
     <module>content-service</module>
     <module>content-service-deploy</module>
     <module>introspect-deploy</module>
