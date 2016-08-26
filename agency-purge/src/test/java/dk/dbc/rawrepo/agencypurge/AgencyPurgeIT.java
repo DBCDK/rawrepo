@@ -74,7 +74,9 @@ public class AgencyPurgeIT {
     @After
     public void tearDown() {
         try {
-            connection.rollback();
+            if (!connection.getAutoCommit()) {
+                connection.rollback();
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -105,7 +107,7 @@ public class AgencyPurgeIT {
     }
 
 
-    
+
     private void setupRecords(String... args) throws SQLException, RawRepoException, UnsupportedEncodingException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
                    .build();
