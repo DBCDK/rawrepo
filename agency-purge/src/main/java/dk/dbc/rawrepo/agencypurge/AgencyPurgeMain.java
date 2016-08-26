@@ -81,13 +81,13 @@ public class AgencyPurgeMain {
                 if (queued > 0) {
                     System.out.print("Cannot purge agency " + agencyid + " " + queued + " records still on queue");
                 }
+            }
 
-                if (!commandLine.hasOption("batch")) {
-                    System.out.print("Are you sure you want to purge all records for agency " + agencyid + " for prosperity [y/N]? ");
-                    String line = new Scanner(System.in, "UTF-8").nextLine();
-                    if (line == null || !line.toLowerCase(Locale.ROOT).startsWith("y")) {
-                        return;
-                    }
+            if (!commandLine.hasOption("batch")) {
+                System.out.print("Are you sure you want to purge all records for agency " + agencyid + " for prosperity [y/N]? ");
+                String line = new Scanner(System.in, "UTF-8").nextLine();
+                if (line == null || !line.toLowerCase(Locale.ROOT).startsWith("y")) {
+                    return;
                 }
             }
 
