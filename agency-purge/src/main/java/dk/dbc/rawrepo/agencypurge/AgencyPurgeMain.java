@@ -59,6 +59,7 @@ public class AgencyPurgeMain {
             }
 
         } catch (IllegalStateException | NumberFormatException ex) {
+            System.err.println(commandLine.usage());
             System.exit(1);
             return;
         } catch (JoranException ex) {
