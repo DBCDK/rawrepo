@@ -289,6 +289,8 @@
     <field name="marc.002c" type="dbc-doc-id" indexed="true" stored="true" required="false" multiValued="true" />
 
     <field name="marc.004a" type="dbc-default" indexed="true" stored="true" required="false" multiValued="false"/>
+    <copyField source="marc.004a" dest="match.004a"/>
+    <field name="match.004a" type="dbc-match" indexed="true" stored="true" required="false" />
 
     <field name="marc.008a" type="dbc-default" indexed="false" stored="false" required="false" />
     <copyField source="marc.008a" dest="match.008a"/>
