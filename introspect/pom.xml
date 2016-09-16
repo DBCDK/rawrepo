@@ -39,6 +39,10 @@
             <url>http://mavenrepo.dbc.dk/content/groups/public</url>
         </repository>
     </repositories>
+    
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+    </properties>
 
     <dependencies>
         <dependency>
