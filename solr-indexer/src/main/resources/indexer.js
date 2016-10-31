@@ -25,6 +25,7 @@ use("SolrFields");
 use("XmlUtil");
 use("XmlNamespaces");
 use("Log");
+use("NodeTypes");
 
 var COLLECTION_IDENTIFIER = 'rec.collectionIdentifier';
 
@@ -130,7 +131,7 @@ var index = function (content, mimetype) {
     obj[COLLECTION_IDENTIFIER] = ['any'];
 
     for (var node = e.firstChild; node !== null; node = node.nextSibling) {
-        if (node.nodeType === node.ELEMENT_NODE && node.namespaceURI === XmlNamespaces.marcx.uri) {
+        if (node.nodeType === NodeTypes.ELEMENT_NODE && node.namespaceURI === XmlNamespaces.marcx.uri) {
             // marcx v1 / datafield
             if (node.localName === 'datafield') {
                 var tag = node.getAttribute('tag');
@@ -141,7 +142,7 @@ var index = function (content, mimetype) {
                     fieldActions(obj);
                 } else if (typeof (fieldActions) === 'object') {
                     for (var subnode = node.firstChild; subnode !== null; subnode = subnode.nextSibling) {
-                        if (subnode.nodeType === subnode.ELEMENT_NODE && subnode.namespaceURI === XmlNamespaces.marcx.uri) {
+                        if (subnode.nodeType === NodeTypes.ELEMENT_NODE && subnode.namespaceURI === XmlNamespaces.marcx.uri) {
                             // marcx v1 / subfield
                             if (subnode.localName === 'subfield') {
                                 var code = subnode.getAttribute('code');
