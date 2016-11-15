@@ -280,7 +280,7 @@
          should have this set to false while those in a SolrCloud
          cluster need to be set to true. Default: true
       -->
-    <nrtMode>false</nrtMode>
+    <nrtMode>true</nrtMode>
 
     <!-- Commit Deletion Policy
          Custom deletion policies can be specified here. The class must

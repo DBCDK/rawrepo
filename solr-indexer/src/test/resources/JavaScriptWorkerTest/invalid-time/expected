@@ -1,0 +1,16 @@
+{
+  "rec.collectionIdentifier":["any"],
+  "marc.001a001b":["50040771:191919"],
+  "marc.001a":["50040771"],
+  "marc.001b":["191919"],
+  "marc.001d":["1981-01-06T00:00:00Z"],
+  "marc.002a":["FIELD A FROM 002"],
+  "marc.002c":["hf."],
+  "marc.021a":[
+    "FIELD A FROM 021 one",
+    "FIELD A FROM 021 two"],
+  "marc.021e":[
+    "FIELD E FROM 021 one",
+    "FIELD E FROM 021 two"],
+  "marc.022a":["0904-7611"]
+}

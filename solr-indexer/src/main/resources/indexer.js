@@ -19,13 +19,13 @@
  * along with dbc-rawrepo-solr-indexer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global XmlUtil, XmlNamespaces, Log, solrField */
+/* global XmlUtil, XmlNamespaces, Log, solrField, NodeTypes */
 
 use("SolrFields");
 use("XmlUtil");
 use("XmlNamespaces");
-use("Log");
 use("NodeTypes");
+use("Log");
 
 var COLLECTION_IDENTIFIER = 'rec.collectionIdentifier';
 
@@ -36,20 +36,41 @@ function add(obj, field) {
         obj[field].push(arguments[i]);
 }
 
+function pad(number) {
+    if (number < 10) {
+        return '0' + number;
+    }
+    return number;
+}
+
 function addSolrTime(obj, field, value) {
+//    Log.error("value = " + value);
+    var iso8601;
     if (value.length === 8) {
-        add(obj, field,
-                value.slice(0, 4) + "-" +
+        iso8601 = value.slice(0, 4) + "-" +
                 value.slice(4, 6) + "-" +
-                value.slice(6, 8) + "T00:00:00Z");
+                value.slice(6, 8) + "T00:00:00Z";
     } else if (value.length === 14) {
-        add(obj, field,
-                value.slice(0, 4) + "-" +
+        iso8601 = value.slice(0, 4) + "-" +
                 value.slice(4, 6) + "-" +
                 value.slice(6, 8) + "T" +
                 value.slice(8, 10) + ":" +
                 value.slice(10, 12) + ":" +
-                value.slice(12, 14) + "Z");
+                value.slice(12, 14) + "Z";
+    } else {
+        return;
+    }
+//    Log.trace("iso8601 = " + iso8601);
+    var ts = new Date(iso8601);
+    if (!isNaN(ts.getTime())) {
+        var iso8601_parsed = ts.getUTCFullYear() + '-' +
+                pad(ts.getUTCMonth() + 1) + '-' +
+                pad(ts.getUTCDate()) + 'T' +
+                pad(ts.getUTCHours()) + ':' +
+                pad(ts.getUTCMinutes()) + ':' +
+                pad(ts.getUTCSeconds()) + "Z";
+        if (iso8601_parsed === iso8601)
+            add(obj, field, iso8601);
     }
 }
 

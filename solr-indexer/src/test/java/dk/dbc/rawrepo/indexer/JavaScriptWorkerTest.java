@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -80,13 +81,15 @@ public class JavaScriptWorkerTest {
         }
         File[] dirs = file.listFiles(new FileFilter() {
 
-            @Override
-            public boolean accept(File file) {
-                return file.isDirectory();
-            }
-        });
+           @Override
+           public boolean accept(File file) {
+               return file.isDirectory() &&
+                      // file.getName().equals("y08") &&
+                      true;
+           }
+       });
         for (File dir : dirs) {
-            list.add(new String[]{dir.getName(), dir.getPath()});
+            list.add(new String[] {dir.getName(), dir.getPath()});
         }
         return list;
     }
@@ -137,16 +140,20 @@ public class JavaScriptWorkerTest {
                 }
             }
         }
-        if(actual.isEmpty() && missing.isEmpty())
+        if (actual.isEmpty() && missing.isEmpty()) {
             return;
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("Content error: ");
-        if(!actual.isEmpty())
+        if (!actual.isEmpty()) {
             sb.append("has extra: ").append(actual);
-        if(!actual.isEmpty() && !missing.isEmpty())
+        }
+        if (!actual.isEmpty() && !missing.isEmpty()) {
             sb.append(" ");
-        if(!missing.isEmpty())
+        }
+        if (!missing.isEmpty()) {
             sb.append("missing: ").append(missing);
+        }
         fail(sb.toString());
     }
 
