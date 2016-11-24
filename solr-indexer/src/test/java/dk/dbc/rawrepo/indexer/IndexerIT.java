@@ -64,7 +64,7 @@ public class IndexerIT {
         connection.setAutoCommit(false);
         resetDatabase();
 
-        solrServerUrl = "http://localhost:" + System.getProperty("jetty.port") + "/solr";
+        solrServerUrl = "http://localhost:" + System.getProperty("jetty.port") + "/solr/raw-repo-index";
         solrServer = new HttpSolrServer(solrServerUrl);
     }
 

@@ -49,6 +49,7 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.RelationHints;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -225,6 +226,9 @@ public class Indexer {
                 updateSolr(jobId, doc);
             }
             log.info("Indexed {}", job);
+        } catch (RawRepoExceptionRecordNotFound ex) {
+            log.error("Queued record does not exist {}", job);
+            queueFail(dao, job, ex.getMessage());
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
             queueFail(dao, job, ex.getMessage());

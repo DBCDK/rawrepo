@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>4.7</luceneMatchVersion>
+  <luceneMatchVersion>6.3.0</luceneMatchVersion>
 
   <!-- <lib/> directives can be used to instruct Solr to load an Jars
        identified and use them to resolve any "plugins" specified in
@@ -274,13 +274,6 @@
          Default is 128 and is likely good for most everyone.
       -->
     <!-- <termIndexInterval>128</termIndexInterval> -->
-
-    <!-- If true, IndexReaders will be opened/reopened from the IndexWriter
-         instead of from the Directory. Hosts in a master/slave setup
-         should have this set to false while those in a SolrCloud
-         cluster need to be set to true. Default: true
-      -->
-    <nrtMode>true</nrtMode>
 
     <!-- Commit Deletion Policy
          Custom deletion policies can be specified here. The class must
@@ -1072,59 +1065,6 @@
   <requestHandler name="/analysis/document"
                   class="solr.DocumentAnalysisRequestHandler"
                   startup="lazy" />
-
-  <!-- Admin Handlers
-
-       Admin Handlers - This will register all the standard admin
-       RequestHandlers.
-    -->
-  <requestHandler name="/admin/"
-                  class="solr.admin.AdminHandlers" />
-  <!-- This single handler is equivalent to the following... -->
-  <!--
-     <requestHandler name="/admin/luke"       class="solr.admin.LukeRequestHandler" />
-     <requestHandler name="/admin/system"     class="solr.admin.SystemInfoHandler" />
-     <requestHandler name="/admin/plugins"    class="solr.admin.PluginInfoHandler" />
-     <requestHandler name="/admin/threads"    class="solr.admin.ThreadDumpHandler" />
-     <requestHandler name="/admin/properties" class="solr.admin.PropertiesRequestHandler" />
-     <requestHandler name="/admin/file"       class="solr.admin.ShowFileRequestHandler" >
-    -->
-  <!-- If you wish to hide files under ${solr.home}/conf, explicitly
-       register the ShowFileRequestHandler using the definition below.
-       NOTE: The glob pattern ('*') is the only pattern supported at present, *.xml will
-             not exclude all files ending in '.xml'. Use it to exclude _all_ updates
-    -->
-  <!--
-     <requestHandler name="/admin/file"
-                     class="solr.admin.ShowFileRequestHandler" >
-       <lst name="invariants">
-         <str name="hidden">synonyms.txt</str>
-         <str name="hidden">anotherfile.txt</str>
-         <str name="hidden">*</str>
-       </lst>
-     </requestHandler>
-    -->
-
-  <!--
-    Enabling this request handler (which is NOT a default part of the admin handler) will allow the Solr UI to edit
-    all the config files. This is intended for secure/development use ONLY! Leaving available and publically
-    accessible is a security vulnerability and should be done with extreme caution!
-  -->
-  <!-- ping/healthcheck -->
-  <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
-    <lst name="invariants">
-      <str name="q">solrpingquery</str>
-    </lst>
-    <lst name="defaults">
-      <str name="echoParams">all</str>
-    </lst>
-    <!-- An optional feature of the PingRequestHandler is to configure the
-         handler with a "healthcheckFile" which can be used to enable/disable
-         the PingRequestHandler.
-         relative paths are resolved against the data dir
-      -->
-    <!-- <str name="healthcheckFile">server-enabled.txt</str> -->
-  </requestHandler>
 
   <!-- Echo the request contents back to the client -->
   <requestHandler name="/debug/dump" class="solr.DumpRequestHandler" >
