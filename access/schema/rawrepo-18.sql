@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP
 -- 
 -- dbc-rawrepo-access
 -- Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
@@ -38,8 +39,8 @@ CREATE TABLE records ( -- V2
        deleted BOOLEAN NOT NULL DEFAULT FALSE, -- V3
        mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange', -- V3
        content TEXT, -- base64 encoded
-       created TIMESTAMP NOT NULL,
-       modified TIMESTAMP NOT NULL,
+       created TIMESTAMP WITH TIME ZONE NOT NULL,
+       modified TIMESTAMP WITH TIME ZONE NOT NULL,
        trackingId VARCHAR(256) NOT NULL DEFAULT '',
        CONSTRAINT records_pk PRIMARY KEY (bibliographicrecordid, agencyid)
 );
@@ -53,8 +54,8 @@ CREATE TABLE records_archive ( -- V2
        deleted BOOLEAN NOT NULL DEFAULT FALSE, -- V3
        mimetype VARCHAR(128) NOT NULL DEFAULT 'text/marcxchange', -- V3
        content TEXT, -- base64 encoded
-       created TIMESTAMP NOT NULL,
-       modified TIMESTAMP NOT NULL,
+       created TIMESTAMP WITH TIME ZONE NOT NULL,
+       modified TIMESTAMP WITH TIME ZONE NOT NULL,
        trackingId VARCHAR(256) NOT NULL DEFAULT ''
 );
 
@@ -76,7 +77,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION archive_record_cleanup() RETURNS TRIGGER AS $$ -- V12
 DECLARE
-    ts TIMESTAMP;
+    ts TIMESTAMP WITH TIME ZONE;
 BEGIN
     INSERT INTO records_archive(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified, trackingId)
         VALUES(OLD.bibliographicrecordid, OLD.agencyid, OLD.deleted, OLD.mimetype, OLD.content, OLD.created, OLD.modified, OLD.trackingId);
@@ -159,7 +160,7 @@ CREATE TABLE queue ( -- V2
        bibliographicrecordid VARCHAR(64) NOT NULL,
        agencyid NUMERIC(6) NOT NULL,
        worker VARCHAR(32) NOT NULL,              -- name of designated worker
-       queued TIMESTAMP NOT NULL DEFAULT timeofday()::timestamp,  -- timestamp for when it has been put into the queue
+       queued TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timeofday()::timestamp,  -- timestamp for when it has been put into the queue
        CONSTRAINT queue_fk_worker FOREIGN KEY (worker) REFERENCES queueworkers(worker)
 -- NO primary key
 -- if it's claimed by worker
@@ -171,7 +172,7 @@ CREATE TABLE jobdiag ( -- V17
        agencyid NUMERIC(6) NOT NULL,
        worker VARCHAR(32) NOT NULL,  -- name of designated worker
        error TEXT NOT NULL,  -- errormessage
-       queued TIMESTAMP NOT NULL     -- timestamp for when it has been put into the queue
+       queued TIMESTAMP WITH TIME ZONE NOT NULL     -- timestamp for when it has been put into the queue
 -- NO primary key
 -- if it's claimed by worker
 -- a new job should be reinserted
