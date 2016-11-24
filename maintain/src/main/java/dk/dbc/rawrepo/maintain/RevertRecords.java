@@ -139,7 +139,7 @@ public class RevertRecords extends RawRepoWorker {
             if (oldTime <= millis) {
                 Record historicRecord = dao.getHistoricRecord(oldRecord);
                 if (historicRecord.isDeleted() && !current.isDeleted() && provider != null) {
-                    dao.changedRecord(provider, id, historicRecord.getMimeType());
+                    dao.changedRecord(provider, id);
                 }
 
                 Set<RecordId> relations = new HashSet<>();
@@ -173,7 +173,7 @@ public class RevertRecords extends RawRepoWorker {
                     }
 
                     if (provider != null) {
-                        dao.changedRecord(provider, id, historicRecord.getMimeType());
+                        dao.changedRecord(provider, id);
                     }
                 }
                 return;

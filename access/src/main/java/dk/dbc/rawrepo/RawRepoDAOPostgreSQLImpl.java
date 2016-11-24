@@ -44,7 +44,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 15;
+    private static final int SCHEMA_VERSION = 18;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -75,7 +75,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
-    private static final String CALL_ENQUEUE_MIMETYPE = "{CALL enqueue(?, ?, ?, ?, ?, ?)}";
+    private static final String CALL_ENQUEUE = "SELECT * FROM enqueue(?, ?, ?, ?, ?)";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
     private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
@@ -584,25 +584,34 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param job      job description
      * @param provider change initiator
-     * @param mimeType
      * @param changed  is job for a record that has been changed
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
     @Override
-    public void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException {
-        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
+    public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
+        //        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
+        try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
             stmt.setString(pos++, job.getBibliographicRecordId());
             stmt.setInt(pos++, job.getAgencyId());
-            stmt.setString(pos++, mimeType);
+//            stmt.setString(pos++, mimeType);
             stmt.setString(pos++, provider);
             stmt.setString(pos++, changed ? "Y" : "N");
             stmt.setString(pos++, leaf ? "Y" : "N");
-            stmt.execute();
-            logQueue.debug("Enqueued: job = " + job +
-                      "; provider = " + provider + "; mimeType = " + mimeType +
-                      "; changed = " + changed + "; leaf = " + leaf);
+            logQueue.debug("Enqueu: job = " + job +
+                           "; provider = " + provider +
+                           "; changed = " + changed + "; leaf = " + leaf);
+            try(ResultSet resultSet = stmt.executeQuery()) {
+                while(resultSet.next()) {
+                    if(resultSet.getBoolean(2)) {
+                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job);
+                    } else {
+                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job + "; skipped - already on queue");
+                    }
+                }
+
+            }
         } catch (SQLException ex) {
             log.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
@@ -679,9 +688,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
                     QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
-                            resultSet.getInt("agencyid"),
-                            resultSet.getString("worker"),
-                            resultSet.getTimestamp("queued"));
+                                                resultSet.getInt("agencyid"),
+                                                resultSet.getString("worker"),
+                                                resultSet.getTimestamp("queued"));
                     logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
                     return job;
                 }

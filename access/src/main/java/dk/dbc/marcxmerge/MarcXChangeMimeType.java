@@ -28,11 +28,17 @@ public class MarcXChangeMimeType {
 
     public static final String MARCXCHANGE = "text/marcxchange";
     public static final String ENRICHMENT = "text/enrichment+marcxchange";
+    public static final String ARTICLE = "text/article+marcxchange";
     public static final String AUTHORITY = "text/authority+marcxchange";
+    public static final String UNKNOWN = "unknown/unknown";
 
     public static boolean isMarcXChange(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
         switch (mimetype) {
             case MARCXCHANGE:
+            case ARTICLE:
             case AUTHORITY:
                 return true;
             default:
@@ -41,8 +47,23 @@ public class MarcXChangeMimeType {
     }
 
     public static boolean isEnrichment(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
         switch (mimetype) {
             case ENRICHMENT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isArticle(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
+        switch (mimetype) {
+            case ARTICLE:
                 return true;
             default:
                 return false;

@@ -24,13 +24,13 @@
 
     <artifactId>rawrepo-content-service-deploy</artifactId>
     <name>rawrepo-content-service-deploy</name>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.3-SNAPSHOT</version>
     </parent>
 
 

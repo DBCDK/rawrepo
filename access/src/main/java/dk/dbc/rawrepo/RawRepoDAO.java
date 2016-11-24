@@ -21,6 +21,7 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.gracefulcache.CacheException;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -229,6 +232,13 @@ public abstract class RawRepoDAO {
      */
     public abstract String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
+    public String getMimeTypeOfSafe(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        if (recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
+            return getMimeTypeOf(bibliographicRecordId, agencyId);
+        }
+        return MarcXChangeMimeType.UNKNOWN;
+    }
+
     /**
      * Check for existence of a record
      *
@@ -322,8 +332,10 @@ public abstract class RawRepoDAO {
     public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
-            if (allAgenciesWithRecord.contains(agencyId) &&
-                fetchDeleted ?
+            if (!allAgenciesWithRecord.contains(agencyId)) {
+                continue;
+            }
+            if (fetchDeleted ?
                 recordExistsMabyDeleted(bibliographicRecordId, agencyId) :
                 recordExists(bibliographicRecordId, agencyId)) {
                 return agencyId;
@@ -582,75 +594,6 @@ public abstract class RawRepoDAO {
     public abstract Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException;
 
     /**
-     * Traverse relations calling enqueue(...) to trigger manipulation of change
-     *
-     * @param provider         parameter to pass to enqueue(...)
-     * @param recordId         the record that has been changed
-     * @param fallbackMimetype Which mimetype to use when no mimetype can be
-     *                         found (deleted)
-     * @throws RawRepoException
-     */
-    public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
-        try {
-
-            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId(), true);
-            // The mostCommonAgency, is the one that defines parent/child relationship
-            Set<Integer> agencies = allParentAgenciesAffectedByChange(recordId);
-            Set<RecordId> children = getRelationsChildren(new RecordId(recordId.getBibliographicRecordId(), mostCommonAgency));
-            if (!agencies.isEmpty()) {
-                String mimeType;
-                mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
-                for (Integer agencyId : agencies) {
-                    String currentMimeType = mimeType;
-                    if (recordExistsMabyDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())) {
-                        currentMimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), recordId.getAgencyId());
-                    }
-                    enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, currentMimeType, agencyId == recordId.getAgencyId(), children.isEmpty());
-                }
-            }
-            for (RecordId child : children) {
-                touchChildRecords(agencies, provider, child);
-            }
-        } catch (RawRepoExceptionRecordNotFound ex) {
-            log.debug("Using fallback enqueue for " + recordId);
-            enqueue(recordId, provider, fallbackMimetype, true, true);
-        }
-    }
-
-    /**
-     * Traverse list of common libraries, to find least common version of record
-     *
-     * Then traverse siblings to find most common version of record, which is
-     * provided by agencySearchOrder
-     *
-     * @param bibliographicRecordId
-     * @return
-     * @throws IllegalStateException
-     * @throws RawRepoException
-     */
-    private int mostCommonAgencyForRecord(String bibliographicRecordId, int originalAgencyId, boolean allowDeleted) throws RawRepoException {
-        List<Integer> agenciesFor = agencySearchOrder.getAgenciesFor(originalAgencyId);
-        for (Integer agencyId : agenciesFor) {
-            if (allowDeleted && agencyId == originalAgencyId && recordExistsMabyDeleted(bibliographicRecordId, agencyId) ||
-                recordExists(bibliographicRecordId, agencyId)) { // first available record
-                Set<RecordId> siblings;
-                // find most common through sibling relations
-                // stops at localrecord or commonrecord
-                while (!( siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId)) ).isEmpty()) {
-                    if (siblings.size() != 1) {
-                        throw new RawRepoException("record " + new RecordId(bibliographicRecordId, agencyId) + " points to multiple siblings");
-                    }
-                    RecordId sibling = siblings.iterator().next();
-                    agencyId = sibling.getAgencyId();
-                }
-                return agencyId;
-            }
-        }
-        log.error("Cannot locate agency for " + originalAgencyId + ":" + bibliographicRecordId + " in agencies: " + agenciesFor);
-        throw new RawRepoExceptionRecordNotFound("Cannot find record");
-    }
-
-    /**
      * Put job(s) on the queue (in the database)
      *
      * @param job      job description
@@ -660,7 +603,7 @@ public abstract class RawRepoDAO {
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
-    abstract void enqueue(RecordId job, String provider, String mimeType, boolean changed, boolean leaf) throws RawRepoException;
+    abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
 
     /**
      * Pull a job from the queue
@@ -728,92 +671,215 @@ public abstract class RawRepoDAO {
     public abstract void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException;
 
     /**
-     * Get a collection of Me and all siblings pointing towards me
+     * Traverse relations calling enqueue(...) to trigger manipulation of change
      *
-     * @param record
-     * @return collection of library numbers
+     * @param provider parameter to pass to enqueue(...)
+     * @param recordId the record that has been changed
      * @throws RawRepoException
      */
-    private Set<Integer> allSiblingAgenciesForRecord(RecordId record) throws RawRepoException {
-        HashSet<Integer> ret = new HashSet<>();
-
-        HashSet<RecordId> tmp = new HashSet<>();
-        tmp.add(record);
-        while (!tmp.isEmpty()) {
-            Iterator<RecordId> iterator = tmp.iterator();
-            RecordId next = iterator.next();
-            iterator.remove();
-            ret.add(next.getAgencyId());
-            tmp.addAll(getRelationsSiblingsToMe(next));
-        }
-        return ret;
+    public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
+        changedRecord(provider, recordId, recordId.getAgencyId(), true);
     }
 
     /**
-     * When having a list of libraries and an id then return a new list (copy)
-     * of all libraries, and all libraries that points towards something in this
-     * collection
+     * Traverse relations calling enqueue(...) to trigger manipulation of change
      *
-     * @param agencyIds
-     * @param bibliographicRecordId
-     * @return collection of library numbers
+     * @param provider         parameter to pass to enqueue(...)
+     * @param recordId         the record that has been changed
+     * @param fallbackMimetype Which mimetype to use when no mimetype can be
+     *                         found (deleted)
      * @throws RawRepoException
      */
-    private Set<Integer> expandSiblingsForId(Set<Integer> agencyIds, String bibliographicRecordId) throws RawRepoException {
-        Set<Integer> ret = new HashSet<>();
-        Set<Integer> tmp = new HashSet<>(agencyIds);
-        while (!tmp.isEmpty()) {
-            Iterator<Integer> iterator = tmp.iterator();
-            int next = iterator.next();
-            iterator.remove();
-            ret.addAll(allSiblingAgenciesForRecord(new RecordId(bibliographicRecordId, next)));
-        }
-        return ret;
+    @Deprecated
+    public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
+        changedRecord(provider, recordId);
     }
 
-    /**
-     * Traverse up through parents, and searchOrder all affected libraries
-     *
-     * @param recordId
-     * @return
-     * @throws RawRepoException
-     */
-    private Set<Integer> allParentAgenciesAffectedByChange(RecordId recordId) throws RawRepoException {
-        HashSet<Integer> ret = new HashSet<>();
-        ret.addAll(allSiblingAgenciesForRecord(recordId));
-        Set<RecordId> tmp = new HashSet<>();
-        tmp.addAll(getRelationsParents(recordId));
-        while (!tmp.isEmpty()) {
-            Iterator<RecordId> iterator = tmp.iterator();
-            RecordId next = iterator.next();
-            iterator.remove();
-            ret.addAll(allSiblingAgenciesForRecord(next));
-            tmp.addAll(getRelationsParents(new RecordId(next.getBibliographicRecordId(), recordId.getAgencyId())));
+    private void changedRecord(String provider, RecordId recordId, int originalAgencyId, boolean changed) throws RawRepoException {
+        String bibliographicRecordId = recordId.getBibliographicRecordId();
+        int agencyId = recordId.getAgencyId();
+        if (recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
+            if (recordExists(bibliographicRecordId, agencyId)) {
+                HashSet<Integer> agenciIds = findParentsSiblingsFilter(bibliographicRecordId, agencyId);
+                changedRecord(provider, bibliographicRecordId, agenciIds, originalAgencyId, true, changed);
+            } else {
+                enqueue(recordId, provider, true, true);
+            }
+        } else if (relationHints.usesCommonAgency(agencyId)) {
+            log.info("Queued non-existent record: " + agencyId + ":" + bibliographicRecordId);
+            enqueue(recordId, provider, true, true);
+        } else {
+            throw new RawRepoExceptionRecordNotFound("Could not find record: " + agencyId + ":" + bibliographicRecordId);
         }
-        return ret;
     }
 
-    /**
-     * Traverse down touching records for all affected libraries
-     *
-     * @param agencies
-     * @param provider
-     * @param recordId
-     * @throws RawRepoException
-     */
-    private void touchChildRecords(Set<Integer> agencies, String provider, RecordId recordId) throws RawRepoException {
-        Set<Integer> siblingAgencies = expandSiblingsForId(agencies, recordId.getBibliographicRecordId());
-        Set<RecordId> children = getRelationsChildren(recordId);
-        if (!siblingAgencies.isEmpty()) {
-            int mostCommonAgency = mostCommonAgencyForRecord(recordId.getBibliographicRecordId(), siblingAgencies.iterator().next(), false);
-            String mimeType = getMimeTypeOf(recordId.getBibliographicRecordId(), mostCommonAgency);
-            for (Integer agencyId : siblingAgencies) {
-                enqueue(new RecordId(recordId.getBibliographicRecordId(), agencyId), provider, mimeType, false, children.isEmpty());
+    private void changedRecord(String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean traverse, boolean changed) throws RawRepoException {
+        Set<Integer> agencies = new HashSet<>();
+        for (Integer agencyId : agencyIds) {
+            findMinorSiblingsAdd(agencies, bibliographicRecordId, agencyId, true);
+        }
+        Set<Integer> searchChildrenAgencies = new HashSet<>(agencies);
+        for (Integer agency : agencies) {
+            if (recordExists(bibliographicRecordId, agency)) {
+                findMajorSiblings(searchChildrenAgencies, bibliographicRecordId, agency);
+            } else {
+                try {
+                    searchChildrenAgencies.add(findSiblingRelationAgency(bibliographicRecordId, agency));
+                } catch (RawRepoExceptionRecordNotFound ex) {
+                    log.warn("When trying to queue: " + bibliographicRecordId + " for " + agency + " cound not find record");
+                    log.debug("realtion hints showed no record");
+                    log.debug(ex.getMessage());
+                }
             }
         }
-        for (RecordId child : children) {
-            touchChildRecords(siblingAgencies, provider, child);
+
+        Set<RecordId> children = new HashSet<>();
+        Set<RecordId> foreignChildren = new HashSet<>(); // Children with different agencyid
+        Set<RecordId> minorChildren = new HashSet<>(); // Children that aent
+
+        for (Integer searchAgency : searchChildrenAgencies) {
+            if (recordExists(bibliographicRecordId, searchAgency)) {
+                for (RecordId recordId : getRelationsChildren(new RecordId(bibliographicRecordId, searchAgency))) {
+                    if (recordId.getAgencyId() == searchAgency) {
+                        if (agencies.contains(searchAgency)) {
+                            children.add(recordId);
+                        } else {
+
+                            //??????????????
+                            for (Integer agency : agencies) {
+                                minorChildren.add(new RecordId(recordId.getBibliographicRecordId(), agency));
+                            }
+                        }
+                    } else {
+                        foreignChildren.add(recordId);
+                    }
+                }
+            }
         }
+        // Find all children only by major sibling search
+        // Filter out those by direct reference... there should be none?
+        Set<Integer> directChildAgencies = new HashSet<>();
+        children.stream().map(r -> r.getAgencyId()).forEach(a -> directChildAgencies.add(a));
+        foreignChildren.stream().map(r -> r.getAgencyId()).forEach(a -> directChildAgencies.add(a));
+        minorChildren.stream()
+                .filter(r -> !directChildAgencies.contains(r.getAgencyId()))
+                .forEach(r -> children.add(r));
+
+        for (Integer agency : agencies) {
+            RecordId recordId = new RecordId(bibliographicRecordId, agency);
+            enqueue(recordId, provider,
+                    changed && agency == originalAgencyId,
+                    children.isEmpty());
+        }
+        if (traverse) {
+            Set<String> bi = children.stream()
+                        .filter(r -> agencies.contains(r.getAgencyId()))
+                        .map(r -> r.getBibliographicRecordId())
+                        .distinct()
+                        .collect(Collectors.toSet());
+            Set<RecordId> be = children.stream()
+                          .filter(r -> !agencies.contains(r.getAgencyId()))
+                          .collect(Collectors.toSet());
+            for (String b : bi) {
+                changedRecord(provider, b, agencies, -1, traverse, true);
+            }
+            for (RecordId child : foreignChildren) {
+                changedRecord(provider, child, child.getAgencyId(), false);
+            }
+        }
+    }
+
+    private void findMajorSiblings(Set<Integer> agencies, String bibliographicRecordId, int agencyId) throws RawRepoException {
+        Set<RecordId> siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId));
+        for (RecordId sibling : siblings) {
+            int siblingAgencyId = sibling.getAgencyId();
+            if (!agencies.contains(siblingAgencyId)) {
+                agencies.add(siblingAgencyId);
+                findMajorSiblings(agencies, bibliographicRecordId, siblingAgencyId);
+            }
+        }
+    }
+
+    /**
+     * Traverse to minor siblings, collecting agencyids
+     *
+     * If an agency is traversed that already is in agencies, then add all minor
+     * siblings to this agency
+     *
+     *
+     * @param agencies              output of agencies seen
+     * @param bibliographicRecordId record to start from
+     * @param agencyId              agency to start from
+     * @param add                   whether or not to add this
+     * @throws RawRepoException if unable to find relations
+     */
+    private void findMinorSiblingsAdd(Set<Integer> agencies, String bibliographicRecordId, int agencyId, boolean add) throws RawRepoException {
+        if (add) {
+            agencies.add(agencyId);
+        } else if (agencies.contains(agencyId)) {
+            add = true;
+        }
+        Set<RecordId> relations = getRelationsSiblingsToMe(new RecordId(bibliographicRecordId, agencyId));
+        for (RecordId relation : relations) {
+            if (agencies.contains(relation.getAgencyId())) {
+                add = true;
+            }
+            findMinorSiblingsAdd(agencies, bibliographicRecordId, relation.getAgencyId(), add);
+        }
+    }
+
+    private void findParentsSiblingsTraverse(HashSet<Integer> agencies, String bibliographicRecordId, int agencyId, HashMap<RecordId, String> loopTrack, String loop, boolean add) throws RawRepoException {
+        RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
+        loop = checkCircularDependency(loop, recordId, loopTrack);
+        findMinorSiblingsAdd(agencies, bibliographicRecordId, agencyId, add);
+
+        HashSet<Integer> major = new HashSet<>();
+        findMajorSiblings(major, bibliographicRecordId, agencyId);
+        for (Integer m : major) {
+            findParentsSiblingsTraverse(agencies, bibliographicRecordId, m, loopTrack, loop, false);
+        }
+
+        for (RecordId parent : getRelationsParents(recordId)) {
+            if (changedCanTraverseUp(recordId, parent)) {
+                findParentsSiblingsTraverse(agencies, parent.getBibliographicRecordId(), parent.getAgencyId(), loopTrack, loop, false);
+            }
+        }
+    }
+
+    private HashSet<Integer> findParentsSiblingsFilter(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        HashSet<Integer> agencies = new HashSet<>();
+        findParentsSiblingsTraverse(agencies, bibliographicRecordId, agencyId, new HashMap<>(), "*", true);
+        agencies.removeIf(a -> {
+            try {
+                return a != agencyId && recordExistsMabyDeleted(bibliographicRecordId, a);
+            } catch (RawRepoException ex) {
+            }
+            return false;
+        });
+        return agencies;
+
+    }
+
+    private boolean changedCanTraverseUp(RecordId recordId, RecordId parentId) throws RawRepoException {
+        String current = getMimeTypeOf(recordId.getBibliographicRecordId(), recordId.getAgencyId());
+        String parent = getMimeTypeOf(parentId.getBibliographicRecordId(), parentId.getAgencyId());
+        if (MarcXChangeMimeType.isArticle(current)) {
+            return MarcXChangeMimeType.isArticle(parent);
+        } else if (MarcXChangeMimeType.isMarcXChange(current) ||
+                   MarcXChangeMimeType.isEnrichment(current)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static String checkCircularDependency(String circDepPos, RecordId recordId, HashMap<RecordId, String> circDepTrack) throws RawRepoException {
+        String thisLoc = circDepPos + ">" + recordId.getAgencyId() + ":" + recordId.getBibliographicRecordId();
+        String loc = circDepTrack.get(recordId);
+        if (loc != null) {
+            throw new RawRepoExceptionCircularDependency("Circular dependency found: " + thisLoc.substring(loc.length() == 0 ? 0 : loc.length() + 1));
+        }
+        circDepTrack.put(recordId, circDepPos);
+        return thisLoc;
     }
 
 }

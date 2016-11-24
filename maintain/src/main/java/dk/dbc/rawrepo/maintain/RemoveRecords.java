@@ -138,8 +138,8 @@ public class RemoveRecords extends RawRepoWorker {
         if (!dao.getRelationsSiblingsToMe(record.getId()).isEmpty()) {
             throw new RawRepoException("There's relations to this record (has siblings)");
         }
-        dao.changedRecord(provider, record.getId(), record.getMimeType());
-        dao.setRelationsFrom(record.getId(), new HashSet<RecordId>());
+        dao.changedRecord(provider, record.getId());
+        dao.setRelationsFrom(record.getId(), new HashSet<>());
         record.setDeleted(true);
         if (record.getMimeType().equals(MarcXChangeMimeType.ENRICHMENT)) {
             record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);

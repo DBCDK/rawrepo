@@ -257,7 +257,7 @@ class AgencyDelete {
         int no = 0;
 
         for (String id : ids) {
-            dao.changedRecord(role, new RecordId(id, agencyid), MarcXChangeMimeType.MARCXCHANGE);
+            dao.changedRecord(role, new RecordId(id, agencyid));
             if (++no % 1000 == 0) {
                 log.info("Queued: " + no);
             }

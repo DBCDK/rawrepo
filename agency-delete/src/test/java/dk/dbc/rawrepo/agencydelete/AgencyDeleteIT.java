@@ -131,7 +131,9 @@ public class AgencyDeleteIT {
     @After
     public void tearDown() {
         try {
-            connection.rollback();
+            if (!connection.getAutoCommit()) {
+                connection.rollback();
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -259,7 +261,7 @@ public class AgencyDeleteIT {
         stmt.setString(1, "node");
         stmt.execute();
 
-        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, mimetype, changed, leaf) VALUES(?, ?, '', 'A', ?)");
+        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, 'A', ?)");
         stmt.setString(1, "provider");
         stmt.setString(2, "leaf");
         stmt.setString(3, "Y");

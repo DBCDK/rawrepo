@@ -114,6 +114,6 @@ public class QueueRecords extends RawRepoWorker {
         if (dao.recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
             mimeType = dao.getMimeTypeOf(bibliographicRecordId, agencyId);
         }
-        dao.changedRecord(provider, new RecordId(bibliographicRecordId, agencyId), mimeType);
+        dao.changedRecord(provider, new RecordId(bibliographicRecordId, agencyId));
     }
 }
