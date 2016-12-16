@@ -63,7 +63,7 @@ function work(r) {
     Log.info(id + " is sibling");
 
     Log.info(id + " update if exists");
-    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=TIMESTAMP WITH TIME ZONE :created, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
+    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created::timestamp, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
     q['blob'] = blob;
     q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
     q['created'] = y + "-" + m + "-" + d;
@@ -73,7 +73,7 @@ function work(r) {
     if (q.execute() === 0) {
         Log.info(id + " create");
         q.done();
-        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified, trackingid) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, TIMESTAMP WITH TIME ZONE :created, TIMEOFDAY()::TIMESTAMP, :trackingid)");
+        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified, trackingid) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created::timestamp, TIMEOFDAY()::TIMESTAMP, :trackingid)");
         q['bibliographicrecordid'] = bibliographicrecordid;
         q['agencyid'] = agencyid;
         q['blob'] = blob;
