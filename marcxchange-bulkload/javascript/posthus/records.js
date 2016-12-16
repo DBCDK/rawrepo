@@ -42,7 +42,7 @@ function work(r) {
     var m = date.substr(4, 2);
     var d = date.substr(6, 2);
 
-    var blob = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + xml.toString();
+    var blob = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + XmlUtil.toXmlString(xml);
     //var blob = new Binary('<?xml version="1.0" encoding="UTF-8"?>' + "\n" + xml.toString(), Binary.Utf8);
     
     Log.info(id + " date=" + date);
