@@ -104,7 +104,7 @@ function work(r) {
 
             try {
                 Log.info(id + " has parent");
-                q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:id, :agencyid, :ref_id, :ref_agencyid)");
+                q = db.prepare("INSERT INTO relations(bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(:bibliographicrecordid, :agencyid, :refer_bibliographicrecordid, :ref_agencyid)");
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
                 q['refer_bibliographicrecordid'] = parent;
