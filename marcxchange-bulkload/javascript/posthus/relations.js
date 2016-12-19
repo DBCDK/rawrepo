@@ -10,7 +10,8 @@ var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 
 function begin() {
-    Log.info("System.arguments = " + System.arguments);
+    for(var i = 0 ; i < System.arguments.length ; i++)
+        Log.info("System.arguments[" + i + "] = " + System.arguments);
     Log.info("parent_agency = " + parent_agencyid);
 }
 

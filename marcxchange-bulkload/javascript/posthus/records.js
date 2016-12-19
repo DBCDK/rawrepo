@@ -11,7 +11,8 @@ var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "0";
 var tracking_base = System.arguments.length > 2 ? System.arguments[2] : ("bulk-" + DateUtil.jsToYYYYmmddHHMMSS(DateUtil.now()) + "-");
 
 function begin() {
-    Log.info("System.arguments = " + System.arguments);
+    for(var i = 0 ; i < System.arguments.length ; i++)
+        Log.info("System.arguments[" + i + "] = " + System.arguments);
     Log.info("parent_agency = " + parent_agencyid);
 }
 
