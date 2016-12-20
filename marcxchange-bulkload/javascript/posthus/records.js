@@ -49,44 +49,63 @@ function work(r) {
     Log.info(id + " date=" + date);
 
     db.begin();
+    try {
+	var sibling = false;
+	try {
+	    if (parent_agencyid !== '0' && agencyid !== parent_agencyid) {
+		var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
+		q['bibliographicrecordid'] = bibliographicrecordid;
+		q['agencyid'] = parent_agencyid;
+		q.execute();
+		var r = q.fetch(); 
+		var c = r['count'];
+		if(c === 1)
+		    sibling = true;
+	    }
+	} catch (e) {
+            Log.error(id + " lookup sibling");
+            Log.error(e);
+            throw e;
+        }
 
-    var sibling = false;
-    if (parent_agencyid !== '0' && agencyid !== parent_agencyid) {
-	var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
-	q['bibliographicrecordid'] = bibliographicrecordid;
-	q['agencyid'] = parent_agencyid;
-	q.execute();
-	var r = q.fetch(); 
-	var c = r['count'];
-	if(c === 1)
-	    sibling = true;
+	if(sibling)
+	    Log.info(id + " is sibling");
+	
+	try {
+	    Log.info(id + " update if exists");
+	    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created::timestamp, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
+	    q['blob'] = blob;
+	    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
+	    q['created'] = y + "-" + m + "-" + d;
+	    q['trackingid'] = tracking_base + bibliographicrecordid;
+	    q['bibliographicrecordid'] = bibliographicrecordid;
+	    q['agencyid'] = agencyid;
+	    if (q.execute() === 0) {
+		Log.info(id + " create");
+		q.done();
+		q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified, trackingid) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created::timestamp, TIMEOFDAY()::TIMESTAMP, :trackingid)");
+		q['bibliographicrecordid'] = bibliographicrecordid;
+		q['agencyid'] = agencyid;
+		q['blob'] = blob;
+		q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
+		q['created'] = y + "-" + m + "-" + d;
+		q['trackingid'] = tracking_base + bibliographicrecordid;
+		q.execute();
+	    }
+	    q.done();
+	} catch (e) {
+            Log.error(id + " create record");
+            Log.error(e);
+            throw e;
+        }
+
+	db.commit();
+	print(sibling ? '+' : '·');
+    } catch (e) {
+        print("*");
+        db.rollback();
+        throw e;
     }
-    Log.info(id + " is sibling");
-
-    Log.info(id + " update if exists");
-    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created::timestamp, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
-    q['blob'] = blob;
-    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
-    q['created'] = y + "-" + m + "-" + d;
-    q['trackingid'] = tracking_base + bibliographicrecordid;
-    q['bibliographicrecordid'] = bibliographicrecordid;
-    q['agencyid'] = agencyid;
-    if (q.execute() === 0) {
-        Log.info(id + " create");
-        q.done();
-        q = db.prepare("INSERT INTO records(bibliographicrecordid, agencyid, content, mimetype, deleted, created, modified, trackingid) VALUES(:bibliographicrecordid, :agencyid, encode(:blob, 'BASE64'), :mimetype, FALSE, :created::timestamp, TIMEOFDAY()::TIMESTAMP, :trackingid)");
-        q['bibliographicrecordid'] = bibliographicrecordid;
-        q['agencyid'] = agencyid;
-        q['blob'] = blob;
-	q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
-        q['created'] = y + "-" + m + "-" + d;
-        q['trackingid'] = tracking_base + bibliographicrecordid;
-        q.execute();
-    }
-    q.done();
-
-    db.commit();
-    print(sibling ? '+' : '·');
 }
 
 function error(r) {
