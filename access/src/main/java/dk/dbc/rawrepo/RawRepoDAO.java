@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,8 +328,33 @@ public abstract class RawRepoDAO {
      * @return agency that has the wanted record
      * @throws RawRepoException if no agency could be found
      */
-    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
+    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException {
+        return agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, false);
+    }
+
+    /**
+     * Identify agency for a record, if agency doesn't have one self
+     *
+     * @param bibliographicRecordId record
+     * @param originalAgencyId      agency requesting record
+     * @param fetchDeleted          allow deleted records
+     * @param prioritizeSelf        If original agency has, take despite not
+     *                              first in openagency
+     * @return agency that has the wanted record
+     * @throws RawRepoException if no agency could be found
+     */
+    private int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
+        if (prioritizeSelf) {
+            if (allAgenciesWithRecord.contains(originalAgencyId)) {
+                if (fetchDeleted ?
+                    recordExistsMabyDeleted(bibliographicRecordId, originalAgencyId) :
+                    recordExists(bibliographicRecordId, originalAgencyId)) {
+                    return originalAgencyId;
+                }
+
+            }
+        }
         for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
             if (!allAgenciesWithRecord.contains(agencyId)) {
                 continue;
@@ -419,8 +443,27 @@ public abstract class RawRepoDAO {
      *                              found
      * @throws MarcXMergerException if we can't merge record
      */
-    public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws RawRepoException, MarcXMergerException {
-        int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted);
+    public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
+        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
+    }
+    public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
+        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true, true);
+    }
+
+    /**
+     * Fetch record for id, merging more common records with this
+     *
+     * @param bibliographicRecordId local id
+     * @param originalAgencyId      least to most common
+     * @param merger
+     * @param fetchDeleted          allow fetching of deleted records
+     * @return Record merged
+     * @throws RawRepoException     if there's a data error or record isn't
+     *                              found
+     * @throws MarcXMergerException if we can't merge record
+     */
+    private  Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
+        int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, prioritizeSelf);
         LinkedList<Record> records = new LinkedList<>();
         for (;;) {
             Record record = fetchRecord(bibliographicRecordId, agencyId);
@@ -448,11 +491,11 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                             merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
-                                             record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                             record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                             record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
-                                             enrichmentTrail.toString());
+                                                                    merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
+                                                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                                                    record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
+                                                                    enrichmentTrail.toString());
             }
         }
         return record;
@@ -773,13 +816,13 @@ public abstract class RawRepoDAO {
         }
         if (traverse) {
             Set<String> bi = children.stream()
-                        .filter(r -> agencies.contains(r.getAgencyId()))
-                        .map(r -> r.getBibliographicRecordId())
-                        .distinct()
-                        .collect(Collectors.toSet());
+                    .filter(r -> agencies.contains(r.getAgencyId()))
+                    .map(r -> r.getBibliographicRecordId())
+                    .distinct()
+                    .collect(Collectors.toSet());
             Set<RecordId> be = children.stream()
-                          .filter(r -> !agencies.contains(r.getAgencyId()))
-                          .collect(Collectors.toSet());
+                    .filter(r -> !agencies.contains(r.getAgencyId()))
+                    .collect(Collectors.toSet());
             for (String b : bi) {
                 changedRecord(provider, b, agencies, -1, traverse, true);
             }

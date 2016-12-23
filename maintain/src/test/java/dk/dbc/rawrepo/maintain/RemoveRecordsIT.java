@@ -20,11 +20,16 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoException;
+import java.io.IOException;
 import java.sql.SQLException;
+import javax.sql.DataSource;
+import javax.xml.transform.TransformerException;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
+import org.w3c.dom.DOMException;
+import org.xml.sax.SAXException;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
@@ -110,11 +115,12 @@ public class RemoveRecordsIT extends RawRepoTester {
         mock.removeRecord(870970, "40398899", "test", "track");
     }
 
-    private RemoveRecords makeRemoveRecords() throws RawRepoException, SQLException {
-        RemoveRecords mock = mock(RemoveRecords.class);
-        when(mock.getConnection()).thenReturn(pg.getConnection());
-        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).build());
-        doCallRealMethod().when(mock).removeRecord(anyInt(), anyString(), anyString(), anyString());
-        return mock;
+    private RemoveRecords makeRemoveRecords() throws RawRepoException, SQLException, MarcXMergerException, SAXException, TransformerException, DOMException, IOException {
+        DataSource dataSource = mock(DataSource.class);
+        when(dataSource.getConnection()).thenReturn(pg.getConnection());
+
+        OpenAgencyServiceFromURL openAgency = mock(OpenAgencyServiceFromURL.class);
+        return new RemoveRecords(dataSource, openAgency);
+
     }
 }

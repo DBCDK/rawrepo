@@ -31,22 +31,15 @@ import dk.dbc.rawrepo.maintain.transport.StandardResponse;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse.Result.Status;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -86,6 +79,13 @@ public class RemoveRecords extends RawRepoWorker {
         this.marcXMerger = new MarcXMerger();
     }
 
+    public RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
+        super(dataSource, openAgency, null);
+        this.documentBuilder = newDocumentBuilder();
+        this.transformer = newTransformer();
+        this.marcXMerger = new MarcXMerger();
+    }
+
     public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
         HashMap<String, ArrayList<String>> values = new HashMap<>();
 
@@ -116,7 +116,7 @@ public class RemoveRecords extends RawRepoWorker {
                     connection.commit();
                     success++;
                 } catch (RawRepoException | DOMException | IOException | MarcXMergerException |
-                        SAXException | TransformerException ex) {
+                         SAXException | TransformerException ex) {
                     failed++;
                     diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
                     Throwable cause = ex.getCause();
@@ -151,7 +151,7 @@ public class RemoveRecords extends RawRepoWorker {
     void removeRecord(Integer agencyId, String id, String provider, String trackingId) throws SQLException, RawRepoException, MarcXMergerException, SAXException, TransformerException, DOMException, IOException {
         RawRepoDAO dao = getDao();
 
-        Record record = dao.fetchMergedRecord(id, agencyId, marcXMerger, true);
+        Record record = dao.fetchRecordOrMergedRecord(id, agencyId, marcXMerger);
 
         if (record.isDeleted()) {
             throw new RawRepoException("Record already deleted");
@@ -186,7 +186,7 @@ public class RemoveRecords extends RawRepoWorker {
 
     }
 
-    byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {
+    private byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {
         Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
         Element marcx = dom.getDocumentElement();
         Node child = marcx.getFirstChild();
@@ -263,7 +263,7 @@ public class RemoveRecords extends RawRepoWorker {
      * @return
      * @throws ParserConfigurationException
      */
-    private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
+    static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
             synchronized (DocumentBuilderFactory.class) {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -286,7 +286,7 @@ public class RemoveRecords extends RawRepoWorker {
      * @throws TransformerFactoryConfigurationError
      * @throws IllegalArgumentException
      */
-    private static Transformer newTransformer() throws MarcXMergerException {
+    static Transformer newTransformer() throws MarcXMergerException {
         try {
             synchronized (TransformerFactory.class) {
                 TransformerFactory transformerFactory = TransformerFactory.newInstance();

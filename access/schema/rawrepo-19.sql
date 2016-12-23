@@ -1,5 +1,4 @@
 \set ON_ERROR_STOP
-\set ON_ERROR_STOP
 -- 
 -- dbc-rawrepo-access
 -- Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
