@@ -123,7 +123,7 @@ public class IndexerIT {
         record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
-        dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
+        dao.changedRecord(PROVIDER, record1.getId());
         connection.commit();
         Indexer indexer = createInstance();
         indexer.performWork();
@@ -153,7 +153,7 @@ public class IndexerIT {
         record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         record.setDeleted(true);
         dao.saveRecord(record);
-        dao.changedRecord(PROVIDER, record.getId(), record.getMimeType());
+        dao.changedRecord(PROVIDER, record.getId());
         assertTrue("Record exists", dao.recordExistsMabyDeleted(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
         assertFalse("Record is deleted", dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
@@ -177,7 +177,7 @@ public class IndexerIT {
         record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
-        dao.changedRecord(PROVIDER, record1.getId(), "text/marcxchange");
+        dao.changedRecord(PROVIDER, record1.getId());
         connection.commit();
 
         Indexer indexer = createInstance(solrServerUrl + "X");

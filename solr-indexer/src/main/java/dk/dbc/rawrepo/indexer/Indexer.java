@@ -53,9 +53,7 @@ import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.RelationHints;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
 import javax.validation.constraints.NotNull;
 import org.slf4j.MDC;
 
@@ -110,19 +108,19 @@ public class Indexer {
 
     private static final AgencySearchOrder AGENCY_SEARCH_ORDER = new AgencySearchOrder(null) {
 
-                                       @Override
-                                       public List<Integer> provide(Integer key) throws Exception {
-                                           return Arrays.asList(key);
-                                       }
-                                   };
+        @Override
+        public List<Integer> provide(Integer key) throws Exception {
+            return Arrays.asList(key);
+        }
+    };
 
     private static final RelationHints RELATION_HINTS = new RelationHints() {
 
-                                   @Override
-                                   public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-                                       return true;
-                                   }
-                               };
+        @Override
+        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+            return true;
+        }
+    };
 
     public Indexer() {
         this.solrServer = null;
@@ -218,6 +216,10 @@ public class Indexer {
         int library = jobId.getAgencyId();
         try {
             Record record = fetchRecord(dao, id, library);
+            if (record == null) {
+                log.info("record from {} does not exist, most likely queued by dependency", job);
+                return;
+            }
             MDC.put(TRACKING_ID, createTrackingId(job, record));
             if (record.isDeleted()) {
                 deleteSolrDocument(jobId);
@@ -247,6 +249,9 @@ public class Indexer {
     private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException, MarcXMergerException {
         MarcXMerger merger = null;
         try (Timer.Context time = fetchRecordTimer.time()) {
+            if (!dao.recordExistsMabyDeleted(id, library)) {
+                return null;
+            }
             merger = mergerPool.getMerger();
             return dao.fetchMergedRecord(id, library, merger, true);
         } finally {
