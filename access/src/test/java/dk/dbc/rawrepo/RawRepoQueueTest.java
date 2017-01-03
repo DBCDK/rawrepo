@@ -61,13 +61,13 @@ public class RawRepoQueueTest {
     public void testMock() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .relationHints(300100, "870970,300000")
-                   .doesNotUseCommon(999999)
-                   .addDeleted("999999:a-h1")
-                   .add("870970:a-h1").add("191919:a-h1:870970").add("300000:a-h1:870970")
-                   .add("870970:a-s1:870970:a-h1")
-                   .add("870971:anm#" + ARTICLE)
-                   .build();
+                .relationHints(300100, "870970,300000")
+                .doesNotUseCommon(999999)
+                .addDeleted("999999:a-h1")
+                .add("870970:a-h1").add("191919:a-h1:870970").add("300000:a-h1:870970")
+                .add("870970:a-s1:870970:a-h1")
+                .add("870971:anm#" + ARTICLE)
+                .build();
 
         recordSetIs(dao.getRelationsParents(recordFromString("870970:a-s1")),
                     "870970:a-h1");
@@ -91,8 +91,8 @@ public class RawRepoQueueTest {
     public void testEnqueueOne() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:R")
-                   .build();
+                .add("870970:R")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -103,8 +103,8 @@ public class RawRepoQueueTest {
     public void testEnqueueDeleted() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .addDeleted("870970:R")
-                   .build();
+                .addDeleted("870970:R")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -115,7 +115,7 @@ public class RawRepoQueueTest {
     public void testEnqueueMissing() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .build();
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -126,8 +126,8 @@ public class RawRepoQueueTest {
     public void testEnqueueMissingNoCommon() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .doesNotUseCommon(870970)
-                   .build();
+                .doesNotUseCommon(870970)
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
     }
@@ -136,9 +136,9 @@ public class RawRepoQueueTest {
     public void testEnqueueSibling() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .relationHints(300100, "870970,300000")
-                   .add("870970:R").add("191919:R:870970").add("300000:R:+").add("300100:R:+")
-                   .build();
+                .relationHints(300100, "870970,300000")
+                .add("870970:R").add("191919:R:870970").add("300000:R:+").add("300100:R:+")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -152,10 +152,10 @@ public class RawRepoQueueTest {
     public void testEnqueueChildren() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .build();
+                .add("870970:H")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -168,10 +168,10 @@ public class RawRepoQueueTest {
     public void testEnqueueChildrenParentHasSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("191919:H:870970")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .build();
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -187,10 +187,10 @@ public class RawRepoQueueTest {
     public void testEnqueueSectionParentHasSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("191919:H:870970")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .build();
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -204,10 +204,10 @@ public class RawRepoQueueTest {
     public void testEnqueueChildParentHasSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("191919:H:870970")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .build();
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:B"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -219,10 +219,10 @@ public class RawRepoQueueTest {
     public void testEnqueueForeignChildrenParentHasSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("191919:H:870970")
-                   .add("870970:S:870970:H").add("555555:S:870970:H")
-                   .add("870970:B:870970:S").add("555555:B:555555:S")
-                   .build();
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H").add("555555:S:870970:H")
+                .add("870970:B:870970:S").add("555555:B:555555:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -240,10 +240,10 @@ public class RawRepoQueueTest {
     public void testEnqueueForeignChildrenParentHasSiblingsPart2() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("191919:H:870970")
-                   .add("870970:S:870970:H").add("555555:S:870970:H")
-                   .add("870970:B:870970:S").add("555555:B:555555:S")
-                   .build();
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H").add("555555:S:870970:H")
+                .add("870970:B:870970:S").add("555555:B:555555:S")
+                .build();
         dao.changedRecord("PRO", recordFromString("555555:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -255,10 +255,10 @@ public class RawRepoQueueTest {
     public void testEnqueueSiblingWithEnrichment() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S:870970:H").add("300000:S:+")
-                   .add("870970:B:870970:S").add("300000:B:+").add("300100:B:+")
-                   .build();
+                .add("870970:H")
+                .add("870970:S:870970:H").add("300000:S:+")
+                .add("870970:B:870970:S").add("300000:B:+").add("300100:B:+")
+                .build();
         dao.changedRecord("PRO", recordFromString("300000:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -271,17 +271,17 @@ public class RawRepoQueueTest {
     public void testEnqueueSiblingWithEnrichment2() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S1:870970:H")
-                   .add("200000:S1:870970")
-                   .add("200100:S1:870970")
-                   .add("870970:B11:870970:S1")
-                   .add("870970:B12:870970:S1")
-                   .add("870970:S2:870970:H")
-                   .add("200000:S2:870970").add("200100:S2:+").add("200101:S2:+")
-                   .add("870970:B21:870970:S2")
-                   .add("870970:B22:870970:S2")
-                   .build();
+                .add("870970:H")
+                .add("870970:S1:870970:H")
+                .add("200000:S1:870970")
+                .add("200100:S1:870970")
+                .add("870970:B11:870970:S1")
+                .add("870970:B12:870970:S1")
+                .add("870970:S2:870970:H")
+                .add("200000:S2:870970").add("200100:S2:+").add("200101:S2:+")
+                .add("870970:B21:870970:S2")
+                .add("870970:B22:870970:S2")
+                .build();
         dao.changedRecord("PRO", recordFromString("200000:S1"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -294,16 +294,16 @@ public class RawRepoQueueTest {
     public void testEnqueueSiblingWithEnrichment3() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("200000:H:870970")
-                   .add("200100:H:870970")
-                   .add("870970:S1:870970:H")
-                   .add("870970:B11:870970:S1")
-                   .add("870970:B12:870970:S1")
-                   .add("870970:S2:870970:H")
-                   .add("870970:B21:870970:S2")
-                   .add("870970:B22:870970:S2")
-                   .build();
+                .add("870970:H")
+                .add("200000:H:870970")
+                .add("200100:H:870970")
+                .add("870970:S1:870970:H")
+                .add("870970:B11:870970:S1")
+                .add("870970:B12:870970:S1")
+                .add("870970:S2:870970:H")
+                .add("870970:B21:870970:S2")
+                .add("870970:B22:870970:S2")
+                .build();
         dao.changedRecord("PRO", recordFromString("200000:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -320,17 +320,17 @@ public class RawRepoQueueTest {
     public void testEnqueueSiblingWithEnrichment4() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("200000:H:870970")
-                   .add("870970:S1:870970:H")
-                   .add("200000:S1-200:200000:H")
-                   .add("870970:B11:870970:S1")
-                   .add("200000:B11-200:200000:S1-200")
-                   .add("870970:B12:870970:S1")
-                   .add("870970:S2:870970:H")
-                   .add("870970:B21:870970:S2")
-                   .add("870970:B22:870970:S2")
-                   .build();
+                .add("870970:H")
+                .add("200000:H:870970")
+                .add("870970:S1:870970:H")
+                .add("200000:S1-200:200000:H")
+                .add("870970:B11:870970:S1")
+                .add("200000:B11-200:200000:S1-200")
+                .add("870970:B12:870970:S1")
+                .add("870970:S2:870970:H")
+                .add("870970:B21:870970:S2")
+                .add("870970:B22:870970:S2")
+                .build();
         dao.changedRecord("PRO", recordFromString("200000:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -343,10 +343,10 @@ public class RawRepoQueueTest {
     public void testEnqueueSiblingWithParentSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H").add("300000:H:+").add("300100:H:+")
-                   .add("870970:S1:870970:H")
-                   .add("870970:B11:870970:S1").add("300000:B11:+")
-                   .build();
+                .add("870970:H").add("300000:H:+").add("300100:H:+")
+                .add("870970:S1:870970:H")
+                .add("870970:B11:870970:S1").add("300000:B11:+")
+                .build();
         dao.changedRecord("PRO", recordFromString("300000:B11"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -358,11 +358,11 @@ public class RawRepoQueueTest {
     public void testEnqueueChildrenArticle() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .add("870971:A:870970:B#" + ARTICLE)
-                   .build();
+                .add("870970:H")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .add("870971:A:870970:B#" + ARTICLE)
+                .build();
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -376,11 +376,11 @@ public class RawRepoQueueTest {
     public void testEnqueueArticle() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S:870970:H")
-                   .add("870970:B:870970:S")
-                   .add("870971:A:870970:B#" + ARTICLE)
-                   .build();
+                .add("870970:H")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .add("870971:A:870970:B#" + ARTICLE)
+                .build();
         dao.changedRecord("PRO", recordFromString("870971:A"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
@@ -391,16 +391,37 @@ public class RawRepoQueueTest {
     public void testEnqueueCircularRelation() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                   .add("870970:H")
-                   .add("870970:S1:870970:H,870970:B1")
-                   .add("870970:B1:870970:S1")
-                   .build(false);
+                .add("870970:H")
+                .add("870970:S1:870970:H,870970:B1")
+                .add("870970:B1:870970:S1")
+                .build(false);
         try {
             dao.changedRecord("PRO", recordFromString("870970:S1"));
             fail("expected RawRepoExceptionCircularDependency");
         } catch (RawRepoExceptionCircularDependency ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    @Test
+    public void testEnqueueCircularRelation2() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .add("870970:12345678")
+                .add("191919:12345678:870970:12345678")
+                .add("300000:12345678:870970:12345678")
+                .add("300101:12345678:300000:12345678")
+        .build();
+        dao.changedRecord("PRO", recordFromString("300101:12345678"));
+        System.out.println("enqueued = " + enqueued);
+        enqueuedIs(enqueued,
+                   "300101:12345678:CL");
+        enqueued.clear();
+        dao.changedRecord("PRO", recordFromString("300000:12345678"));
+        System.out.println("enqueued (2) = " + enqueued);
+        enqueuedIs(enqueued,
+                   "300000:12345678:CL",
+                   "300101:12345678:-L");
     }
 
     /*
@@ -418,7 +439,6 @@ public class RawRepoQueueTest {
             if (count.get() != 1) {
                 fail(string + " enqueued " + count + " times");
             }
-
         }
     }
 
@@ -447,7 +467,6 @@ public class RawRepoQueueTest {
     static void setIs(Set<String> set, String... values) {
         assertThat(set, IsCollectionContaining.hasItems(values));
         assertEquals(values.length, set.size());
-
     }
 
 }
@@ -740,9 +759,9 @@ class RawRepoMock {
         HashMap<String, String> output = new HashMap<>();
         while (!toParent.isEmpty()) {
             Optional<String> found = toParent.entrySet().stream()
-                             .filter(e -> e.getValue() == null)
-                             .map(e -> e.getKey())
-                             .findAny();
+                    .filter(e -> e.getValue() == null)
+                    .map(e -> e.getKey())
+                    .findAny();
             if (!found.isPresent()) {
                 throw new IllegalStateException("Cannot find leaf");
             }
@@ -762,9 +781,9 @@ class RawRepoMock {
 
     private void print(StringBuilder sb, HashMap<String, String> toParent, String key, String indent) {
         List<String> children = toParent.entrySet().stream()
-                     .filter(e -> key.equals(e.getValue()))
-                     .map(e -> e.getKey())
-                     .collect(toList());
+                .filter(e -> key.equals(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(toList());
         Collections.sort(children);
 
         sb.append(indent).append(key);
@@ -822,9 +841,9 @@ class RawRepoMock {
         toSibling.remove(agency);
         sb.append(" << ").append(agency);
         List<Integer> children = toSibling.entrySet().stream()
-                      .filter(e -> agency.equals(e.getValue()))
-                      .map(e -> e.getKey())
-                      .collect(toList());
+                .filter(e -> agency.equals(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(toList());
 
         if (!children.isEmpty()) {
             String align = spacify(" << " + agency);

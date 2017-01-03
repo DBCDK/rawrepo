@@ -446,6 +446,7 @@ public abstract class RawRepoDAO {
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
     }
+
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true, true);
     }
@@ -462,7 +463,7 @@ public abstract class RawRepoDAO {
      *                              found
      * @throws MarcXMergerException if we can't merge record
      */
-    private  Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
+    private Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
         int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, prioritizeSelf);
         LinkedList<Record> records = new LinkedList<>();
         for (;;) {
@@ -491,11 +492,11 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                                                    merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
-                                                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                                                    record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
-                                                                    enrichmentTrail.toString());
+                                             merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
+                                             record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                             record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                             record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
+                                             enrichmentTrail.toString());
             }
         }
         return record;
@@ -832,6 +833,14 @@ public abstract class RawRepoDAO {
         }
     }
 
+    /**
+     * Traverse sideways to major sibling and collect all agency ids.
+     *
+     * @param agencies              output collection
+     * @param bibliographicRecordId id of record
+     * @param agencyId              start agency
+     * @throws RawRepoException iv record doesn't exist or relations has errors
+     */
     private void findMajorSiblings(Set<Integer> agencies, String bibliographicRecordId, int agencyId) throws RawRepoException {
         Set<RecordId> siblings = getRelationsSiblingsFromMe(new RecordId(bibliographicRecordId, agencyId));
         for (RecordId sibling : siblings) {
@@ -871,27 +880,66 @@ public abstract class RawRepoDAO {
         }
     }
 
+    /**
+     *
+     * Traverse major sigblings, check for existence in loopTrack, adding loop
+     * detection references
+     *
+     * @param agencies              output of agencies seen
+     * @param bibliographicRecordId record to start from
+     * @param agencyId              agency to start from
+     * @param loopTrack             collection holding seen nodes, for loop
+     *                              detection
+     * @param loop                  loop detection prefix
+     * @throws RawRepoException if a loop occurs
+     */
+    private void findMajorSiblingsLoopDetect(HashSet<Integer> agencies, String bibliographicRecordId, int agencyId, HashMap<RecordId, String> loopTrack, String loop) throws RawRepoException {
+        RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
+        Set<RecordId> siblings = getRelationsSiblingsFromMe(recordId);
+        for (RecordId sibling : siblings) {
+            String pointingTo = checkCircularDependency(loop, sibling, loopTrack);
+            loopTrack.put(recordId, pointingTo);
+            agencies.add(sibling.getAgencyId());
+            findMajorSiblingsLoopDetect(agencies, bibliographicRecordId, sibling.getAgencyId(), loopTrack, pointingTo);
+        }
+    }
+
+    /**
+     * Traverse up in the stricture collectiong all major sibling agencies
+     *
+     * @param agencies              output of agencies seen
+     * @param bibliographicRecordId record to start from
+     * @param agencyId              agency to start from
+     * @param loopTrack             collection holding seen nodes, for loop
+     *                              detection
+     * @param loop                  loop detection prefix
+     * @param add                   add minor siblings?
+     * @throws RawRepoException if a loop occurs
+     */
     private void findParentsSiblingsTraverse(HashSet<Integer> agencies, String bibliographicRecordId, int agencyId, HashMap<RecordId, String> loopTrack, String loop, boolean add) throws RawRepoException {
         RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        loop = checkCircularDependency(loop, recordId, loopTrack);
         findMinorSiblingsAdd(agencies, bibliographicRecordId, agencyId, add);
 
         HashSet<Integer> major = new HashSet<>();
-        findMajorSiblings(major, bibliographicRecordId, agencyId);
+        findMajorSiblingsLoopDetect(major, bibliographicRecordId, agencyId, loopTrack, loop);
         for (Integer m : major) {
             findParentsSiblingsTraverse(agencies, bibliographicRecordId, m, loopTrack, loop, false);
         }
 
         for (RecordId parent : getRelationsParents(recordId)) {
             if (changedCanTraverseUp(recordId, parent)) {
-                findParentsSiblingsTraverse(agencies, parent.getBibliographicRecordId(), parent.getAgencyId(), loopTrack, loop, false);
+                int parentAgency = parent.getAgencyId();
+                String pointingTo = checkCircularDependency(loop, new RecordId(bibliographicRecordId, parentAgency), loopTrack);
+                loopTrack.put(recordId, pointingTo);
+                findParentsSiblingsTraverse(agencies, parent.getBibliographicRecordId(), parentAgency, loopTrack, loop, false);
             }
         }
     }
 
     private HashSet<Integer> findParentsSiblingsFilter(String bibliographicRecordId, int agencyId) throws RawRepoException {
         HashSet<Integer> agencies = new HashSet<>();
-        findParentsSiblingsTraverse(agencies, bibliographicRecordId, agencyId, new HashMap<>(), "*", true);
+        HashMap<RecordId, String> loopTrack = new HashMap<>();
+        findParentsSiblingsTraverse(agencies, bibliographicRecordId, agencyId, loopTrack, "", true);
         agencies.removeIf(a -> {
             try {
                 return a != agencyId && recordExistsMabyDeleted(bibliographicRecordId, a);
@@ -916,12 +964,19 @@ public abstract class RawRepoDAO {
     }
 
     private static String checkCircularDependency(String circDepPos, RecordId recordId, HashMap<RecordId, String> circDepTrack) throws RawRepoException {
-        String thisLoc = circDepPos + ">" + recordId.getAgencyId() + ":" + recordId.getBibliographicRecordId();
+        StringBuilder sb = new StringBuilder();
+        if (!circDepPos.isEmpty()) {
+            sb.append(circDepPos)
+                    .append(">");
+        }
+        sb.append(recordId.getAgencyId())
+                .append(":")
+                .append(recordId.getBibliographicRecordId());
+        String thisLoc = sb.toString();
         String loc = circDepTrack.get(recordId);
         if (loc != null) {
             throw new RawRepoExceptionCircularDependency("Circular dependency found: " + thisLoc);
         }
-        circDepTrack.put(recordId, circDepPos);
         return thisLoc;
     }
 
