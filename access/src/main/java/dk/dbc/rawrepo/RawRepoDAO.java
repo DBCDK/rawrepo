@@ -919,7 +919,7 @@ public abstract class RawRepoDAO {
         String thisLoc = circDepPos + ">" + recordId.getAgencyId() + ":" + recordId.getBibliographicRecordId();
         String loc = circDepTrack.get(recordId);
         if (loc != null) {
-            throw new RawRepoExceptionCircularDependency("Circular dependency found: " + thisLoc.substring(loc.length() == 0 ? 0 : loc.length() + 1));
+            throw new RawRepoExceptionCircularDependency("Circular dependency found: " + thisLoc);
         }
         circDepTrack.put(recordId, circDepPos);
         return thisLoc;
