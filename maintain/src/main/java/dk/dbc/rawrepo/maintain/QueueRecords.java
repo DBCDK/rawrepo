@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
@@ -110,10 +109,6 @@ public class QueueRecords extends RawRepoWorker {
     void queueRecord(Integer agencyId, String bibliographicRecordId, String provider) throws RawRepoException {
         RawRepoDAO dao = getDao();
 
-        String mimeType = MarcXChangeMimeType.MARCXCHANGE;
-        if (dao.recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
-            mimeType = dao.getMimeTypeOf(bibliographicRecordId, agencyId);
-        }
         dao.changedRecord(provider, new RecordId(bibliographicRecordId, agencyId));
     }
 }
