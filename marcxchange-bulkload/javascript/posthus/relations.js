@@ -10,8 +10,8 @@ var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 
 function begin() {
-    for(var i = 0 ; i < System.arguments.length ; i++)
-        Log.info("System.arguments[" + i + "] = " + System.arguments);
+    for (var i = 0; i < System.arguments.length; i++)
+        Log.info("System.arguments[" + i + "] = " + System.arguments[i]);
     Log.info("parent_agency = " + parent_agencyid);
 }
 
@@ -22,11 +22,19 @@ function end() {
 function work(r) {
     Log.trace('row=' + __row__);
     Log.trace(r);
+    var current_parent_agencyid = parent_agencyid;
     var xml = XmlUtil.fromString(r);
 
     var bibliographicrecordid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="a"]', xml);
     var agencyid = XPath.selectText('/marcx:record/marcx:datafield[@tag="001"]/marcx:subfield[@code="b"]', xml);
     var parent = XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="a"]', xml);
+    if (agencyid === "870971") {
+        if (XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="x"]', xml) === "ANM") {
+            current_parent_agencyid = "870970";
+        } else {
+            parent = "";
+        }
+    }
     var id = "(" + bibliographicrecordid + ":" + agencyid + ")";
 
     Log.info(id + " parent=" + parent);
@@ -47,12 +55,12 @@ function work(r) {
 
         var s = "·";
         var sibling = false;
-        if (parent_agencyid !== '0' && agencyid !== parent_agencyid) {
+        if (current_parent_agencyid !== '0' && agencyid !== current_parent_agencyid) {
             Log.debug(id + " might have sibling");
             try {
                 var q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
                 q['bibliographicrecordid'] = bibliographicrecordid;
-                q['agencyid'] = parent_agencyid;
+                q['agencyid'] = current_parent_agencyid;
                 q.execute();
                 var r = q.fetch();
                 var c = r['count'];
@@ -74,17 +82,17 @@ function work(r) {
                 q['bibliographicrecordid'] = bibliographicrecordid;
                 q['agencyid'] = agencyid;
                 q['refer_bibliographicrecordid'] = bibliographicrecordid;
-                q['refer_agencyid'] = parent_agencyid;
+                q['refer_agencyid'] = current_parent_agencyid;
                 q.execute();
                 q.done();
                 s = '«';
             } catch (e) {
-                Log.error("ERROR: Sibling for " + bibliographicrecordid + " from " + agencyid + " to " + parent_agencyid);
+                Log.error("ERROR: Sibling for " + bibliographicrecordid + " from " + agencyid + " to " + current_parent_agencyid);
                 Log.warn(e);
                 throw e;
             }
         } else if (parent !== "") {
-            var foreign = parent_agencyid === '0' ? [agencyid] : [parent_agencyid, agencyid];
+            var foreign = current_parent_agencyid === '0' ? [agencyid] : [current_parent_agencyid, agencyid];
             var refer_agencyid = null;
             q = db.prepare("SELECT COUNT(*)::integer AS count FROM records WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid");
             for (var i = 0; i < foreign.length && refer_agencyid === null; i++) {

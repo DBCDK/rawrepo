@@ -10,8 +10,8 @@ var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
 var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
 
 function begin() {
-    for(var i = 0 ; i < System.arguments.length ; i++)
-        Log.info("System.arguments[" + i + "] = " + System.arguments);
+    for (var i = 0; i < System.arguments.length; i++)
+        Log.info("System.arguments[" + i + "] = " + System.arguments[i]);
     Log.info("parent_agencyid = " + parent_agencyid);
     Log.info("provider = " + provider);
 }
@@ -82,53 +82,64 @@ function work(r) {
     Log.info(id)
     db.begin();
     try {
-    
-	// Inbound relations to this id (any agency)
-	var q = db.prepare("SELECT COUNT(*)::integer AS count FROM relations WHERE refer_bibliographicrecordid <> bibliographicrecordid AND refer_bibliographicrecordid = :bibliographicrecordid AND refer_agencyid IN (:common, :agencyid)");
-	q['bibliographicrecordid'] = bibliographicrecordid;
-	q['common'] = parent_agencyid === '0' ? agencyid : parent_agencyid;
-	q['agencyid'] = agencyid;
-	q.execute();
-	var r = q.fetch();
-	Log.info("r['count'] = " + r['count']);
-	//    var leaf = (0 + r['count']) === 0;
-	var leaf = r['count'] === 0;
-	q.done();
-	
-	// Outbound sibling relation
-	var q = db.prepare("SELECT COUNT(*)::integer AS count FROM relations WHERE bibliographicrecordid = :bibliographicrecordid AND agencyid = :agencyid AND refer_bibliographicrecordid = bibliographicrecordid");
-	q['bibliographicrecordid'] = bibliographicrecordid;
-	q['agencyid'] = agencyid;
-	q.execute();
-	var r = q.fetch();
-	var standAlone = r['count'] === 0;
-	q.done();
-	
-	q = db.prepare("SELECT * FROM enqueue(:bibliographicrecordid, CAST(:agencyid AS int), :mimetype, :provider, :changed, :leaf)");
-	q['bibliographicrecordid'] = bibliographicrecordid;
-	q['agencyid'] = agencyid;
-	q['mimetype'] = standAlone ? "text/marcxchange" : "text/enrichment+marcxchange";
-	q['provider'] = provider;
-	q['changed'] = "Y";
-	q['leaf'] = leaf ? "Y" : "N";
-	q.execute();
-	Log.info(id + " queued " + bibliographicrecordid + " with changed=Y & leaf=" + (leaf ? "Y" : "N"));
-	if (!leaf) {
-            var leaves = findLeaves(bibliographicrecordid, parent_agencyid === '0' ? [agencyid] : [agencyid, parent_agencyid]);
-            for (var i = 0; i < leaves.length; i++) {
-		q['bibliographicrecordid'] = leaves[i];
-		q['agencyid'] = agencyid;
-		q['mimetype'] = standAlone ? "text/marcxchange" : "text/enrichment+marcxchange";
-		q['provider'] = provider;
-		q['changed'] = "N";
-		q['leaf'] = "Y";
-		q.execute();
-		Log.info(id + " queued " + leaves[i] + " with changed=N & leaf=Y");
+        if (agencyid === "870971") {
+            /* 870971 reviews cannot have inbound relations */
+            q = db.prepare("SELECT * FROM enqueue(:bibliographicrecordid, CAST(:agencyid AS int), :provider, :changed, :leaf)");
+            q['bibliographicrecordid'] = bibliographicrecordid;
+            q['agencyid'] = agencyid;
+            q['provider'] = provider;
+            q['changed'] = "Y";
+            q['leaf'] = "Y";
+            q.execute();
+            Log.info(id + " queued " + bibliographicrecordid + " with changed=Y & leaf=Y");
+
+            if (XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="x"]', xml) === "ANM") {
+                q['bibliographicrecordid'] = XPath.selectText('/marcx:record/marcx:datafield[@tag="014"]/marcx:subfield[@code="a"]', xml);
+                q['agencyid'] = "870970";
+                q['provider'] = provider;
+                q['changed'] = "N";
+                q['leaf'] = "Y";
+                q.execute();
+                Log.info(id + " queued " + bibliographicrecordid + " with changed=N & leaf=Y");
             }
-	}
-	q.done();
-	db.commit();
-	print('·');
+            q.done();
+        } else {
+            // Inbound relations to this id (any agency)
+            var q = db.prepare("SELECT COUNT(*)::integer AS count FROM relations WHERE refer_bibliographicrecordid <> bibliographicrecordid AND refer_bibliographicrecordid = :bibliographicrecordid AND refer_agencyid IN (:common, :agencyid)");
+            q['bibliographicrecordid'] = bibliographicrecordid;
+            q['common'] = parent_agencyid === '0' ? agencyid : parent_agencyid;
+            q['agencyid'] = agencyid;
+            q.execute();
+            var r = q.fetch();
+            Log.info("r['count'] = " + r['count']);
+            //    var leaf = (0 + r['count']) === 0;
+            var leaf = r['count'] === 0;
+            q.done();
+
+            q = db.prepare("SELECT * FROM enqueue(:bibliographicrecordid, CAST(:agencyid AS int), :provider, :changed, :leaf)");
+            q['bibliographicrecordid'] = bibliographicrecordid;
+            q['agencyid'] = agencyid;
+            q['provider'] = provider;
+            q['changed'] = "Y";
+            q['leaf'] = leaf ? "Y" : "N";
+            q.execute();
+            Log.info(id + " queued " + bibliographicrecordid + " with changed=Y & leaf=" + (leaf ? "Y" : "N"));
+            if (!leaf) {
+                var leaves = findLeaves(bibliographicrecordid, parent_agencyid === '0' ? [agencyid] : [agencyid, parent_agencyid]);
+                for (var i = 0; i < leaves.length; i++) {
+                    q['bibliographicrecordid'] = leaves[i];
+                    q['agencyid'] = agencyid;
+                    q['provider'] = provider;
+                    q['changed'] = "N";
+                    q['leaf'] = "Y";
+                    q.execute();
+                    Log.info(id + " queued " + leaves[i] + " with changed=N & leaf=Y");
+                }
+            }
+            q.done();
+        }
+        db.commit();
+        print('·');
     } catch (e) {
         print("*");
         db.rollback();

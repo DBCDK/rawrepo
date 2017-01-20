@@ -9,10 +9,11 @@ use("DateUtil");
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : "0";
 var tracking_base = System.arguments.length > 2 ? System.arguments[2] : ("bulk-" + DateUtil.jsToYYYYmmddHHMMSS(DateUtil.now()) + "-");
+var base_mimetype = System.arguments.length > 3 ? System.arguments[3] : "text/marcxchange";
 
 function begin() {
     for(var i = 0 ; i < System.arguments.length ; i++)
-        Log.info("System.arguments[" + i + "] = " + System.arguments);
+        Log.info("System.arguments[" + i + "] = " + System.arguments[i]);
     Log.info("parent_agency = " + parent_agencyid);
 }
 
@@ -75,7 +76,7 @@ function work(r) {
 	    Log.info(id + " update if exists");
 	    var q = db.prepare("UPDATE records SET CONTENT=encode(:blob, 'BASE64'), mimetype=:mimetype, deleted=FALSE, created=:created::timestamp, modified=TIMEOFDAY()::TIMESTAMP, trackingid=:trackingid WHERE bibliographicrecordid=:bibliographicrecordid AND agencyid=:agencyid");
 	    q['blob'] = blob;
-	    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
+	    q['mimetype'] = sibling ? "text/enrichment+marcxchange" : base_mimetype;
 	    q['created'] = y + "-" + m + "-" + d;
 	    q['trackingid'] = tracking_base + bibliographicrecordid;
 	    q['bibliographicrecordid'] = bibliographicrecordid;
@@ -87,7 +88,7 @@ function work(r) {
 		q['bibliographicrecordid'] = bibliographicrecordid;
 		q['agencyid'] = agencyid;
 		q['blob'] = blob;
-		q['mimetype'] = sibling ? "text/enrichment+marcxchange" : "text/marcxchange";
+		q['mimetype'] = sibling ? "text/enrichment+marcxchange" : base_mimetype;
 		q['created'] = y + "-" + m + "-" + d;
 		q['trackingid'] = tracking_base + bibliographicrecordid;
 		q.execute();
