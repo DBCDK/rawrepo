@@ -269,6 +269,12 @@ class AgencyDelete {
         int no = 0;
         log.debug("Setting content of records to deleted");
         for (String id : ids) {
+            dao.deleteRelationsFrom(new RecordId(id, agencyid));
+            if (++no % 1000 == 0) {
+                log.info("Deleted relations: " + no);
+            }
+        }
+        for (String id : ids) {
             Record record = dao.fetchMergedRecord(id, agencyid, marcXMerger, true);
             if (record.getId().getAgencyId() != agencyid) {
                 log.debug("Creating record for: " + id);
@@ -280,11 +286,10 @@ class AgencyDelete {
             byte[] content = markMarcContentDeleted(record.getContent());
             record.setContent(content);
             record.setDeleted(true);
-            dao.deleteRelationsFrom(record.getId());
             dao.saveRecord(record);
 
             if (++no % 1000 == 0) {
-                log.info("Deleted: " + no);
+                log.info("Deleted record: " + no);
             }
         }
         log.info("Deleted: " + no);
