@@ -1028,6 +1028,23 @@ var Service = (function () {
         removeClass(status, 'selected');
     };
     
+    var showInfo = function () {
+        var soapRequest = new SoapRequest("pageContentRequest");
+        soapRequest.add("method", "showInfo");
+        soapRequest.send(function(res){
+            var entries = res.iter('result/values/entry');
+            for (var entry = entries(); entry !== null; entry = entries()) {
+                var key = res.text('key', entry);
+                if(key === 'name'){
+                    var name = res.iterText('value', entry).asArray()[0];
+                    var infoHeader = document.getElementById('info');
+                    infoHeader.innerHTML = "RawRepo Maintenance - " + name;
+                }
+                
+            }
+        });  
+    };
+    
     return {
         SoapRequest: SoapRequest,
         SoapResponse: SoapResponse,
@@ -1045,7 +1062,8 @@ var Service = (function () {
         switchToPage: switchToPage,
         toText: toText,
         traverse: traverse,
-        validateField: validateField
+        validateField: validateField,
+        showInfo: showInfo
     };
     
 })();

@@ -45,8 +45,8 @@
         </script>
         <script src="js/service.js"></script>
     </head>
-    <body onload="Service.constructContent();" onkeydown="Service.keydown(event);">
-        <h1 class="center">RawRepo Maintenance</h1>
+    <body onload="Service.constructContent();Service.showInfo();" onkeydown="Service.keydown(event);">
+        <h1 class="center" id="info">RawRepo Maintenance</h1>
         <div id="titles"></div>
         <div id="content">
             <div class="selected">

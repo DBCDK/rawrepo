@@ -73,6 +73,10 @@ public class Service {
     @Inject
     @EEConfig.Url
     String openAgencyUrl;
+    
+    @Inject
+    @EEConfig.Name(C.NAME)
+    String name;
 
     ExecutorService executorService;
 
@@ -132,6 +136,12 @@ public class Service {
                     try (RevertRecords revertRecords = new RevertRecords(rawrepo, getOpenAgency(), executorService)) {
                         valuesOut = revertRecords.getValues(valuesSet, leaving);
                     }
+                    break;
+                case "showInfo":
+                    valuesOut = new HashMap<>();
+                    ArrayList<String> nameList = new ArrayList<>();
+                    nameList.add(name);
+                    valuesOut.put("name", nameList);
                     break;
                 default:
                     throw new ResponseErrorException("Unknown module", ResponseError.Type.REQUEST_CONTENT_ERROR);
