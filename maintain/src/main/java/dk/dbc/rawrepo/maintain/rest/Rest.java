@@ -20,14 +20,21 @@
  */
 package dk.dbc.rawrepo.maintain.rest;
 
+import dk.dbc.rawrepo.maintain.QueueRules;
+import dk.dbc.rawrepo.maintain.QueueRules.Provider;
+import dk.dbc.rawrepo.maintain.QueueRules.Worker;
 import dk.dbc.rawrepo.maintain.transport.C;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +49,9 @@ public class Rest {
 
     @Resource(lookup = C.PROPERTIES)
     Properties properties;
+    
+    @Resource(lookup = C.DATASOURCE)
+    DataSource rawrepo;
 
     @GET
     @Path("/redirect/{name}")
@@ -60,4 +70,57 @@ public class Rest {
         }
 
     }
+    
+    @GET
+    @Path("queuerules")
+    @Produces("text/html")
+    public String getQueuerules() throws SQLException{
+        try(QueueRules q = new QueueRules(rawrepo)){
+            ArrayList<Provider> providers = q.getQueueRules();
+            log.debug("Found '{}' providers", providers.size());
+            StringBuilder sb = new StringBuilder();
+            sb.append("<!DOCTYPE html>");
+            sb.append("<html>");
+            sb.append("<head>");
+            sb.append("<meta charset=\"UTF-8\">");
+            sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/queuerules.css\">");
+            sb.append("</head>");
+            sb.append("<body>");
+            sb.append("<table>");
+            
+            sb.append("<tr><th>Provider</th><th>Worker</th><th>Description</th></tr>");
+            
+            for (Provider provider : providers) {
+                for (int i = 0; i < provider.getWorkers().size(); i++) {
+                    
+                    boolean first = i == 0;
+                    boolean last = i == provider.getWorkers().size()-1;
+                    
+                    Worker w = provider.getWorkers().get(i);
+                    
+                    if(last){
+                        sb.append("<tr class=\"last\">");
+                    }else{
+                        sb.append("<tr>");
+                    }
+                    
+                    if(first){
+                        sb.append("<td rowspan=\"").append(provider.getWorkers().size()).append("\">").append(provider.getProvider()).append("</td>");
+                    } 
+                    sb.append("<td>").append(w.getWorker()).append("</td>");
+                    sb.append("<td>").append(w.getDescription()).append("</td>");
+                    sb.append("</tr>"); 
+                }                  
+            }
+            
+            sb.append("</table>");            
+            sb.append("</body>");
+            sb.append("</html>");
+
+            return sb.toString();
+        }
+        
+    }
+    
+    
 }
