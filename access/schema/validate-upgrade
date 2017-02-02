@@ -1,5 +1,11 @@
 #!/bin/bash
 
+export -n PGUSER
+export -n PGPASSWORD
+export -n PGHOST
+export -n PGPORT
+export -n PGDATABASE
+
 cd "${0%/*}"
 
 name=rawrepo
