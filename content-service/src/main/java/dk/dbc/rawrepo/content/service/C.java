@@ -70,7 +70,7 @@ public class C {
     public static class SEARCHORDER {
 
         public static final String URL = "searchOrderUrl";
-        public static final String URL_DEFAULT = "http://openagency.addi.dk/2.20/";
+        public static final String URL_DEFAULT = "http://openagency.addi.dk/2.30/";
 
         public static final String CONNECT_TIMEOUT = "searchOrderConnectTimeout";
         public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
