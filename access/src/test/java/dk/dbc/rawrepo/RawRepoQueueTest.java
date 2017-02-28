@@ -373,6 +373,24 @@ public class RawRepoQueueTest {
     }
 
     @Test
+    public void testEnqueueChildrenArticleSection() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .add("870970:H")
+                .add("870970:S:870970:H")
+                .add("870971:A:870970:S#" + ARTICLE)
+                .add("870970:B:870970:S")
+                .build();
+        dao.changedRecord("PRO", recordFromString("870970:H"));
+        System.out.println("enqueued = " + enqueued);
+        enqueuedIs(enqueued,
+                   "870970:H:C-",
+                   "870970:S:--",
+                   "870970:B:-L",
+                   "870971:A:-L");
+    }
+
+    @Test
     public void testEnqueueArticle() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
