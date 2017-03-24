@@ -23,7 +23,9 @@ package dk.dbc.rawrepo.content.service;
 import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
+import javax.ejb.Lock;
+import javax.ejb.LockType;
+import javax.ejb.Singleton;
 import javax.inject.Inject;
 import javax.validation.constraints.Min;
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author DBC {@literal <dbc.dk>}
  */
-@Stateless
+@Singleton
 public class AgencySearchOrderEJB {
 
     private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderEJB.class);
@@ -70,6 +72,7 @@ public class AgencySearchOrderEJB {
         .build(searchOrderUrl);
     }
 
+    @Lock( LockType.READ )
     public OpenAgencyServiceFromURL getOpenAgencyService() {
         return openAgencyService;
     }
