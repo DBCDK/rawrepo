@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
+import javax.jms.JMSException;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -54,11 +55,11 @@ public class RecordLoadMain {
                 mimeType = (String) commandLine.getOption("mimetype");
             }
 
-            if (delete && relation
-                || set && add
-                || !( delete && arguments.size() == 2
-                      || relation && arguments.size() >= 2
-                      || !delete && !relation && arguments.size() == 3 )) {
+            if (delete && relation ||
+                set && add ||
+                !( delete && arguments.size() == 2 ||
+                   relation && arguments.size() >= 2 ||
+                   !delete && !relation && arguments.size() == 3 )) {
                 throw new IllegalArgumentException("Commandline syntax error");
             }
             int agencyId = Integer.parseInt(arguments.get(0), 10);
@@ -82,6 +83,9 @@ public class RecordLoadMain {
             } else {
                 setLogLevel("logback-info.xml");
             }
+            if (commandLine.hasOption("role") != commandLine.hasOption("mq")) {
+                throw new IllegalArgumentException("--role and --mq comes in pairs");
+            }
 
             try (RecordLoad recordLoad = new RecordLoad((String) commandLine.getOption("db"));) {
                 if (delete) {
@@ -91,16 +95,17 @@ public class RecordLoadMain {
                     recordLoad.relations(agencyId, bibliographicRecordId, add, relations);
                 } else {
                     recordLoad.save(agencyId, bibliographicRecordId, mimeType, content);
-                    if (commandLine.hasOption("role")) {
+                    if (commandLine.hasOption("role") && commandLine.hasOption("mq")) {
                         String role = (String) commandLine.getOption("role");
+                        String mq = (String) commandLine.getOption("mq");
                         if (role != null) {
-                            recordLoad.enqueue(agencyId, bibliographicRecordId, role, mimeType);
+                            recordLoad.enqueue(agencyId, bibliographicRecordId, role, mq);
                         }
                     }
                 }
                 recordLoad.commit();
             }
-        } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException e) {
+        } catch (JMSException | RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException e) {
             System.err.println(commandLine.usage());
             System.err.println("Cauth: " + e.getClass().getName() + ": " + e.getLocalizedMessage());
             System.exit(1);
@@ -134,6 +139,7 @@ public class RecordLoadMain {
         @Override
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
+            addOption("mq", "connect string for message queue (host:port)", false, false, string, null);
             addOption("role", "name of enqueue software (provider)", false, false, string, null);
             addOption("delete", "delete record", false, false, null, yes);
             addOption("mimetype", "record mimetype", false, false, string, null);

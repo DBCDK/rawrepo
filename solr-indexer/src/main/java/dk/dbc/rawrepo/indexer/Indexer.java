@@ -34,7 +34,6 @@ import java.sql.SQLException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import org.apache.solr.client.solrj.SolrServer;
@@ -54,14 +53,33 @@ import dk.dbc.rawrepo.RelationHints;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJBTransactionRolledbackException;
+import javax.ejb.MessageDriven;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.JMSProducer;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.Queue;
 import javax.validation.constraints.NotNull;
 import org.slf4j.MDC;
 
 /**
  *
  */
-@Stateless
-public class Indexer {
+@MessageDriven(
+        activationConfig = {
+            @ActivationConfigProperty(propertyName = "endpointExceptionRedeliveryAttempts", propertyValue = "5")
+            ,
+            @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue")
+            ,
+            @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "jms/rawrepoIndexer")
+            ,
+        @ActivationConfigProperty(propertyName = "connectionFactoryLookup", propertyValue = "jms/connectionFactory")
+        })
+public class Indexer implements MessageListener {
 
     private final static Logger log = LoggerFactory.getLogger(Indexer.class);
 
@@ -76,10 +94,11 @@ public class Indexer {
     DataSource dataSource;
 
     @Inject
-    @EEConfig.Name(C.WORKER_NAME)
-    @EEConfig.Default(C.WORKER_NAME_DEFAULT)
-    @NotNull
-    String workerName;
+    @JMSConnectionFactory("jms/indexerConnectionFactory")
+    JMSContext jmsContext;
+
+    @Resource(mappedName = "jms/rawrepoIndexerError")
+    private Queue errorQueue;
 
     @Inject
     MetricsRegistry registry;
@@ -154,45 +173,19 @@ public class Indexer {
         solrServer.shutdown();
     }
 
-    public void performWork() {
-        log.info("Indexing available jobs from worker '{}'", workerName);
+    @Override
+    public void onMessage(Message msg) {
+        try (Connection connection = getConnection()) {
+            RawRepoDAO dao = createDAO(connection);
 
-        boolean moreWork = true;
-        int processedJobs = 0;
-
-        while (moreWork) {
-
-            Timer.Context time = processJobTimer.time();
-            try (Connection connection = getConnection()) {
-                RawRepoDAO dao = createDAO(connection);
-                try {
-                    QueueJob job = dequeueJob(dao);
-
-                    if (job != null) {
-                        MDC.put(TRACKING_ID, createTrackingId(job));
-                        processJob(job, dao);
-                        commit(connection);
-                        processedJobs++;
-                        if (processedJobs % 1000 == 0) {
-                            log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
-                        }
-                        time.stop();
-                    } else {
-                        moreWork = false;
-                        log.trace("Queue is empty. Nothing to index");
-                    }
-                } catch (RawRepoException | IllegalArgumentException | MarcXMergerException | SQLException ex) {
-                    connection.rollback();
-                    throw ex;
-                }
-            } catch (MarcXMergerException | RawRepoException | SQLException | RuntimeException ex) {
-                moreWork = false;
-                log.error("Error getting job from database", ex);
-            } finally {
-                MDC.remove(TRACKING_ID);
-            }
+            QueueJob job = QueueJob.fromMessage(msg);
+            log.debug("job = " + job);
+            processJob(job, dao);
+        } catch (MarcXMergerException | SQLException | RawRepoException | JMSException ex) {
+            log.error("Exception: " + ex.getMessage());
+            log.debug("Exception:", ex);
+            throw new EJBTransactionRolledbackException("Got exception", ex);
         }
-        log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
     }
 
     protected Connection getConnection() throws SQLException {
@@ -209,7 +202,7 @@ public class Indexer {
         }
     }
 
-    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
+    void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
         log.info("Indexing {}", job);
         RecordId jobId = job.getJob();
         String id = jobId.getBibliographicRecordId();
@@ -230,20 +223,11 @@ public class Indexer {
             log.info("Indexed {}", job);
         } catch (RawRepoExceptionRecordNotFound ex) {
             log.error("Queued record does not exist {}", job);
-            queueFail(dao, job, ex.getMessage());
+            queueFail(job, ex.getMessage());
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
-            queueFail(dao, job, ex.getMessage());
+            queueFail(job, ex.getMessage());
         }
-    }
-
-    private QueueJob dequeueJob(final RawRepoDAO dao) throws RawRepoException {
-        Timer.Context time = dequeueJobTimer.time();
-        final QueueJob job = dao.dequeue(workerName);
-        if (job != null) {
-            time.stop();
-        }
-        return job;
     }
 
     private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException, MarcXMergerException {
@@ -315,16 +299,10 @@ public class Indexer {
         time.stop();
     }
 
-    private void queueFail(RawRepoDAO dao, QueueJob job, String error) throws RawRepoException {
-        Timer.Context time = queueFailTimer.time();
-        dao.queueFail(job, error);
-        time.stop();
-    }
-
-    private void commit(final Connection connection) throws SQLException {
-        Timer.Context time = commitTimer.time();
-        connection.commit();
-        time.stop();
+    private void queueFail(QueueJob job, String error) throws RawRepoException {
+        job.setError(error);
+        JMSProducer producer = jmsContext.createProducer();
+        producer.send(errorQueue, job);
     }
 
     private static String createTrackingId(QueueJob job) {

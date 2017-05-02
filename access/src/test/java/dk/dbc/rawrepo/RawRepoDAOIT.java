@@ -43,10 +43,8 @@ import static org.junit.Assert.*;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Assert;
 
 /**
  *
@@ -61,7 +59,7 @@ public class RawRepoDAOIT {
     public void setup() throws SQLException, ClassNotFoundException {
         postgres = new PostgresITConnection("rawrepo");
         connection = postgres.getConnection();
-            connection.prepareStatement("SET log_statement = 'all';").execute();
+        connection.prepareStatement("SET log_statement = 'all';").execute();
         resetDatabase();
     }
 
@@ -186,12 +184,12 @@ public class RawRepoDAOIT {
 
         MarcXMerger merger = new MarcXMerger() {
 
-                @Override
-                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
-                    return local;
-                }
+            @Override
+            public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                return local;
+            }
 
-            };
+        };
 
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 870970, merger)), "B:870970", "C:870970", "D:870970");
 
@@ -252,38 +250,41 @@ public class RawRepoDAOIT {
     @Test
     public void testQueueEntityWithout() throws SQLException, RawRepoException {
         setupData(100000, "A:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("A:870970"));
-        collectionIs(getQueue(),
-                     "A:870970:changed",
-                     "A:870970:leaf");
+        queue.is("A:870970:changed",
+                 "A:870970:leaf");
         connection.commit();
     }
 
     @Test
     public void testQueueEntityWith() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("A:870970"));
-        collectionIs(getQueue(),
-                     "A:870970:changed",
-                     "A:870970:leaf",
-                     "A:1:leaf",
-                     "A:2:leaf");
+        queue.is("A:870970:changed",
+                 "A:870970:leaf",
+                 "A:1:leaf",
+                 "A:2:leaf");
         connection.commit();
     }
 
     @Test
     public void testQueueEntityLocalData() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "A:1", "A:2");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("A:1"));
-        collectionIs(getQueue(),
-                     "A:1:changed",
-                     "A:1:leaf");
+        queue.is("A:1:changed",
+                 "A:1:leaf");
         connection.commit();
     }
 
@@ -296,13 +297,14 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("C:870970"));
-        collectionIs(getQueue(),
-                     "C:870970:changed", "C:870970:node", "C:1:node",
-                     "D:870970:leaf", "D:1:leaf",
-                     "E:870970:leaf", "E:1:leaf", "E:2:leaf");
+        queue.is("C:870970:changed", "C:870970:node", "C:1:node",
+                 "D:870970:leaf", "D:1:leaf",
+                 "E:870970:leaf", "E:1:leaf", "E:2:leaf");
         connection.commit();
     }
 
@@ -315,17 +317,18 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("B:870970"));
-        collectionIs(getQueue(),
-                     "B:870970:changed", "B:870970:node",
-                     "C:870970:node", "C:1:node",
-                     "D:870970:leaf", "D:1:leaf",
-                     "E:870970:leaf", "E:1:leaf", "E:2:leaf",
-                     "F:870970:node", "F:2:node",
-                     "G:870970:leaf", "G:1:leaf", "G:2:leaf",
-                     "H:870970:leaf", "H:2:leaf");
+        queue.is("B:870970:changed", "B:870970:node",
+                 "C:870970:node", "C:1:node",
+                 "D:870970:leaf", "D:1:leaf",
+                 "E:870970:leaf", "E:1:leaf", "E:2:leaf",
+                 "F:870970:node", "F:2:node",
+                 "G:870970:leaf", "G:1:leaf", "G:2:leaf",
+                 "H:870970:leaf", "H:2:leaf");
         connection.commit();
     }
 
@@ -338,12 +341,12 @@ public class RawRepoDAOIT {
                   "F:870970", "F:2", "F:999999", // SECTION
                   "G:870970", "G:1", // BIND
                   "H:870970");// BIND
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
+        queue.clear();
         dao.changedRecord("test", recordIdFromString("F:999999"));
-        System.out.println("getQueue() = " + getQueue());
-        collectionIs(getQueue(),
-                     "F:999999:changed", "F:999999:leaf");
+        queue.is("F:999999:changed", "F:999999:leaf");
         connection.commit();
     }
 
@@ -359,218 +362,29 @@ public class RawRepoDAOIT {
                 "S1:870970,H:870970", "S1:2,S1:870970", "S1:3,S1:2",
                 "B11:870970,S1:870970",
                 "B12:870970,S1:870970", "B12:4,B12:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        TestQueue queue = new TestQueue();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).queue(queue).build();
         connection.setAutoCommit(false);
-
-        clearQueue();
+        queue.clear();
         dao.changedRecord("test", new RecordId("S1", 870970));
-        collectionIs(getQueue(),
-                     "S1:870970:changed",
-                     "S1:870970:node", "S1:1:node", "S1:2:node", "S1:3:node",
-                     "B11:870970:leaf", "B11:1:leaf", "B11:2:leaf", "B11:3:leaf",
-                     "B12:870970:leaf", "B12:1:leaf", "B12:2:leaf", "B12:3:leaf", "B12:4:leaf");
+        queue.is("S1:870970:changed",
+                 "S1:870970:node", "S1:1:node", "S1:2:node", "S1:3:node",
+                 "B11:870970:leaf", "B11:1:leaf", "B11:2:leaf", "B11:3:leaf",
+                 "B12:870970:leaf", "B12:1:leaf", "B12:2:leaf", "B12:3:leaf", "B12:4:leaf");
 
-        clearQueue();
+        queue.clear();
         dao.changedRecord("test", new RecordId("S1", 2));
-        collectionIs(getQueue(),
-                     "S1:2:changed",
-                     "S1:2:node", "S1:3:node",
-                     "B11:2:leaf", "B11:3:leaf",
-                     "B12:2:leaf", "B12:3:leaf");
+        queue.is("S1:2:changed",
+                 "S1:2:node", "S1:3:node",
+                 "B11:2:leaf", "B11:3:leaf",
+                 "B12:2:leaf", "B12:3:leaf");
 
-        clearQueue();
+        queue.clear();
         dao.changedRecord("test", new RecordId("B12", 9));
-        collectionIs(getQueue(),
-                     "B12:9:changed",
-                     "B12:9:leaf");
+        queue.is("B12:9:changed",
+                 "B12:9:leaf");
 
         connection.commit();
-    }
-
-    @Test
-    public void testDeQueueWithSavepoint() throws SQLException, RawRepoException {
-        setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
-
-        try (Connection connection1 = postgres.getExtraConnection() ;
-             Connection connection2 = postgres.getExtraConnection() ;
-             Connection connection3 = postgres.getExtraConnection()) {
-
-            connection.setAutoCommit(false);
-
-            RawRepoDAO dao1 = RawRepoDAO.builder(connection1).relationHints(new MyRelationHints()).build();
-            connection1.setAutoCommit(false);
-
-            RawRepoDAO dao2 = RawRepoDAO.builder(connection2).relationHints(new MyRelationHints()).build();
-            connection2.setAutoCommit(false);
-
-            connection3.setAutoCommit(false);
-
-            System.out.println("QUEUE A:1");
-            dao.enqueue(new RecordId("A", 1), "test", true, true);
-            connection.commit();
-            collectionIs(getQueueState(),
-                         "A:1:changed:1", "A:1:leaf:1");
-
-            System.out.println("TAKE A:1");
-            QueueJob job1 = dao1.dequeueWithSavepoint("changed");
-
-            System.out.println("QUEUE A:1 again");
-            dao.enqueue(new RecordId("A", 1), "test", true, true);
-            connection.commit();
-
-            System.out.println("TEST");
-            collectionIs(getQueueState(),
-                         "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
-
-            System.out.println("TAKE NULL");
-            QueueJob job2 = dao2.dequeueWithSavepoint("changed");
-            assertNull(job2); // some in queue but one is processing
-
-            System.out.println("QUEUE B:2");
-            dao.enqueue(new RecordId("B", 2), "test", true, true); // 2 in queue
-            connection.commit();
-
-            System.out.println("TEST");
-            collectionIs(getQueueState(),
-                         "A:1:changed:2", "A:1:leaf:1",
-                         "B:2:changed:1", "B:2:leaf:1");
-
-            System.out.println("TAKE B:2");
-            job2 = dao2.dequeueWithSavepoint("changed");
-            assertNotNull(job2); //
-
-            System.out.println("DONE A:1");
-            dao1.queueFail(job1, "failure");
-            connection1.commit(); // Commit 1st changed;
-
-            System.out.println("DONE B:2");
-            connection2.commit(); // Commit 1st changed;
-
-            System.out.println("TEST");
-            collectionIs(getQueueState(),
-                         "A:1:changed:1",
-                         "A:1:leaf:1",
-                         "B:2:leaf:1");
-
-            System.out.println("TAKE A:1#2");
-            job1 = dao1.dequeueWithSavepoint("changed");
-            assertNotNull(job1);
-
-            System.out.println("DONE A:1#2");
-            dao1.queueFail(job1, "failure");
-            connection1.commit(); // Commit 1st changed;
-
-            System.out.println("TEST");
-            collectionIs(getQueueState(),
-                         "A:1:leaf:1",
-                         "B:2:leaf:1");
-        }
-        connection.commit();
-    }
-
-    @Test
-    public void testDeQueue() throws SQLException, RawRepoException {
-        setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
-        connection.setAutoCommit(false);
-
-        dao.enqueue(new RecordId("A", 1), "test", true, true);
-        connection.commit();
-        collectionIs(getQueueState(),
-                     "A:1:changed:1", "A:1:leaf:1");
-
-        QueueJob job = dao.dequeue("changed");
-        assertNotNull(job);
-    }
-
-    @Test
-    public void testQueueFail() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
-        connection.setAutoCommit(false);
-
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if (!resultSet.next() || resultSet.getInt(1) != 0) {
-                    Assert.fail("jobdiag is not empty before test");
-                }
-            }
-        }
-
-        QueueJob queueJob = new QueueJob("abcdefgh", 123456, "node", new Timestamp(0));
-        dao.queueFail(queueJob, "What!");
-
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if (!resultSet.next() || resultSet.getInt(1) != 1) {
-                    Assert.fail("jobdiag is not set after test");
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testDequeueBulk() throws SQLException, RawRepoException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
-        connection.setAutoCommit(false);
-        for (int i = 0 ; i < 10 ; i++) {
-            dao.enqueue(new RecordId("rec" + i, 123456), "test", false, false);
-        }
-        connection.commit();
-        connection.setAutoCommit(false);
-
-        collectionIs(getQueueState(),
-                     "rec0:123456:node:1",
-                     "rec1:123456:node:1",
-                     "rec2:123456:node:1",
-                     "rec3:123456:node:1",
-                     "rec4:123456:node:1",
-                     "rec5:123456:node:1",
-                     "rec6:123456:node:1",
-                     "rec7:123456:node:1",
-                     "rec8:123456:node:1",
-                     "rec9:123456:node:1");
-
-        dao.dequeue("node", 4);
-
-        collectionIs(getQueueState(),
-                     "rec4:123456:node:1",
-                     "rec5:123456:node:1",
-                     "rec6:123456:node:1",
-                     "rec7:123456:node:1",
-                     "rec8:123456:node:1",
-                     "rec9:123456:node:1");
-        connection.rollback();
-        collectionIs(getQueueState(),
-                     "rec0:123456:node:1",
-                     "rec1:123456:node:1",
-                     "rec2:123456:node:1",
-                     "rec3:123456:node:1",
-                     "rec4:123456:node:1",
-                     "rec5:123456:node:1",
-                     "rec6:123456:node:1",
-                     "rec7:123456:node:1",
-                     "rec8:123456:node:1",
-                     "rec9:123456:node:1");
-        connection.setAutoCommit(false);
-
-        dao.dequeue("node", 4);
-
-        collectionIs(getQueueState(),
-                     "rec4:123456:node:1",
-                     "rec5:123456:node:1",
-                     "rec6:123456:node:1",
-                     "rec7:123456:node:1",
-                     "rec8:123456:node:1",
-                     "rec9:123456:node:1");
-        connection.commit();
-        collectionIs(getQueueState(),
-                     "rec4:123456:node:1",
-                     "rec5:123456:node:1",
-                     "rec6:123456:node:1",
-                     "rec7:123456:node:1",
-                     "rec8:123456:node:1",
-                     "rec9:123456:node:1");
     }
 
     @Test
@@ -602,29 +416,43 @@ public class RawRepoDAOIT {
 // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 //              |_|
     void resetDatabase() throws SQLException {
-        postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
+        postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag", "messagequeuerules");
 
-        PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
-        stmt.setString(1, "changed");
-        stmt.execute();
-        stmt.setString(1, "leaf");
-        stmt.execute();
-        stmt.setString(1, "node");
-        stmt.execute();
+        try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)")) {
+            stmt.setString(1, "changed");
+            stmt.executeUpdate();
+            stmt.setString(1, "leaf");
+            stmt.executeUpdate();
+            stmt.setString(1, "node");
+            stmt.executeUpdate();
+        }
 
-        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES('test', ?, ?, ?)");
-        stmt.setString(1, "changed");
-        stmt.setString(2, "Y");
-        stmt.setString(3, "A");
-        stmt.execute();
-        stmt.setString(1, "leaf");
-        stmt.setString(2, "A");
-        stmt.setString(3, "Y");
-        stmt.execute();
-        stmt.setString(1, "node");
-        stmt.setString(2, "A");
-        stmt.setString(3, "N");
-        stmt.execute();
+        try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES('test', ?, ?, ?)")) {
+            stmt.setString(1, "changed");
+            stmt.setString(2, "Y");
+            stmt.setString(3, "A");
+            stmt.executeUpdate();
+            stmt.setString(1, "leaf");
+            stmt.setString(2, "A");
+            stmt.setString(3, "Y");
+            stmt.executeUpdate();
+            stmt.setString(1, "node");
+            stmt.setString(2, "A");
+            stmt.setString(3, "N");
+            stmt.executeUpdate();
+        }
+
+        try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO messagequeuerules(worker, queuename) VALUES(?, ?)")) {
+            stmt.setString(1, "changed");
+            stmt.setString(2, "changed");
+            stmt.executeUpdate();
+            stmt.setString(1, "leaf");
+            stmt.setString(2, "leaf");
+            stmt.executeUpdate();
+            stmt.setString(1, "node");
+            stmt.setString(2, "node");
+            stmt.executeUpdate();
+        }
     }
 
     void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
@@ -673,30 +501,6 @@ public class RawRepoDAOIT {
         stmt.execute();
     }
 
-    Collection<String> getQueue() throws SQLException {
-        Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker FROM QUEUE");
-        if (stmt.execute()) {
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3));
-            }
-        }
-        return result;
-    }
-
-    Collection<String> getQueueState() throws SQLException {
-        Set<String> result = new HashSet<>();
-        PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker");
-        if (stmt.execute()) {
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                result.add(resultSet.getString(1) + ":" + resultSet.getInt(2) + ":" + resultSet.getString(3) + ":" + resultSet.getInt(4));
-            }
-        }
-        return result;
-    }
-
     public Collection<String> idsFromCollection(Map<String, Record> records) {
         Collection<String> collection = new HashSet<>();
         for (Record record : records.values()) {
@@ -719,7 +523,7 @@ public class RawRepoDAOIT {
         extra.removeAll(missing);
         missing.removeAll(col);
         if (!extra.isEmpty() || !missing.isEmpty()) {
-            throw new RuntimeException("missing:" + missing.toString() + ", extra=" + extra.toString());
+            throw new RuntimeException("missing:" + missing.toString() + ", extra:" + extra.toString());
         }
     }
 
@@ -746,7 +550,7 @@ public class RawRepoDAOIT {
      * (b)   G
      * (b)   H
      */
-    private static final String[] RELATIONS = new String[]{
+    private static final String[] RELATIONS = new String[] {
         "A:1,A:870970",
         "A:2,A:870970",
         "B:1,B:870970",
@@ -796,5 +600,6 @@ public class RawRepoDAOIT {
         }
 
     }
+
 
 }

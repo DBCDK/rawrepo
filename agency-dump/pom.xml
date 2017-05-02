@@ -24,7 +24,7 @@
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.4-SNAPSHOT</version>
     </parent>
     <name>rawrepo-agency-dump</name>
     <artifactId>rawrepo-agency-dump</artifactId>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>dk.dbc</groupId>
             <artifactId>rawrepo-access</artifactId>
-            <version>1.2-SNAPSHOT</version>
+            <version>1.4-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

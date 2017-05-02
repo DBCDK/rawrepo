@@ -31,7 +31,7 @@
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.3-SNAPSHOT</version>
+        <version>1.4-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -145,7 +145,7 @@
                                 <artifactItem>
                                     <groupId>dk.dbc</groupId>
                                     <artifactId>rawrepo-access</artifactId>
-                                    <version>1.3-SNAPSHOT</version>
+                                    <version>1.4-SNAPSHOT</version>
                                     <overWrite>true</overWrite>
                                 </artifactItem>
                             </artifactItems>
@@ -340,7 +340,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rawrepo-access</artifactId>
-            <version>1.3-SNAPSHOT</version>
+            <version>1.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <artifactId>solr-solrj</artifactId>
@@ -385,6 +385,11 @@
         <dependency>
             <groupId>dk.dbc</groupId>
             <artifactId>dbc-commons-exception</artifactId>
+            <version>1.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc.commoms.testutils</groupId>
+            <artifactId>dbc-commons-testutil-postgres-connection</artifactId>
             <version>1.3-SNAPSHOT</version>
         </dependency>
         <dependency>

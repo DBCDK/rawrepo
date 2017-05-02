@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.jms.JMSException;
 import javax.xml.bind.DatatypeConverter;
 import org.slf4j.LoggerFactory;
 
@@ -579,6 +580,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         return collection;
     }
 
+    private final ConcurrentHashMap<String, List<String>> queueRules = new ConcurrentHashMap<>();
+
     /**
      * Put job(s) on the queue (in the database)
      *
@@ -588,178 +591,45 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
+    private static final String CALL_QUEUES = "SELECT * FROM queues(?, ?, ?)";
+    private List<String> computeQueueRules(String key) {
+
+        try (PreparedStatement stmt = connection.prepareStatement(CALL_QUEUES)) {
+            int pos = 1;
+            stmt.setString(pos++, key.substring(2));
+            stmt.setString(pos++, key.substring(0, 1));
+            stmt.setString(pos++, key.substring(1, 2));
+            try(ResultSet resultSet = stmt.executeQuery()) {
+                ArrayList<String> list = new ArrayList<>();
+                while(resultSet.next()) {
+                    list.add(resultSet.getString(1));
+                }
+                return list;
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
-        //        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
-        try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
-            int pos = 1;
-            stmt.setString(pos++, job.getBibliographicRecordId());
-            stmt.setInt(pos++, job.getAgencyId());
-//            stmt.setString(pos++, mimeType);
-            stmt.setString(pos++, provider);
-            stmt.setString(pos++, changed ? "Y" : "N");
-            stmt.setString(pos++, leaf ? "Y" : "N");
-            logQueue.debug("Enqueu: job = " + job +
-                           "; provider = " + provider +
-                           "; changed = " + changed + "; leaf = " + leaf);
-            try(ResultSet resultSet = stmt.executeQuery()) {
-                while(resultSet.next()) {
-                    if(resultSet.getBoolean(2)) {
-                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job);
-                    } else {
-                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job + "; skipped - already on queue");
-                    }
-                }
+        String key = ( changed ? "Y" : "N" ) + ( leaf ? "Y" : "N" ) + provider;
 
+        try {
+            List<String> queues = queueRules.computeIfAbsent(key, this::computeQueueRules);
+            QueueJob queueJob = new QueueJob(job);
+            queueTarget.send(queueJob, queues);
+        } catch (RuntimeException ex) {
+            if (ex.getCause() != null) {
+                throw new RawRepoException(ex.getCause());
+            } else {
+                throw new RawRepoException(ex);
             }
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error queueing job", ex);
+        } catch (JMSException ex) {
+            log.error("Exception: " + ex.getMessage());
+            log.debug("Exception:", ex);
+            throw new RawRepoException(ex);
         }
-    }
-
-    /**
-     * Pull a job from the queue with rollback to savepoint capability
-     *
-     * @param worker name of worker that want's to take a job
-     * @return job description
-     * @throws RawRepoException
-     */
-    @Override
-    public QueueJob dequeueWithSavepoint(String worker) throws RawRepoException {
-        try (PreparedStatement begin = connection.prepareStatement("BEGIN")) {
-            begin.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing job", ex);
-        }
-        QueueJob result = dequeue(worker);
-        try (PreparedStatement savepoint = connection.prepareStatement("SAVEPOINT DEQUEUED")) {
-            savepoint.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing job", ex);
-        }
-        return result;
-    }
-
-    /**
-     * Pull a job from the queue
-     *
-     * @param worker name of worker that want's to take a job
-     * @return job description
-     * @throws RawRepoException
-     */
-    @Override
-    public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
-        List<QueueJob> result = new ArrayList<>();
-        try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
-            int pos = 1;
-            stmt.setString(pos++, worker);
-            stmt.setInt(pos++, wanted);
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                while (resultSet.next()) {
-                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
-                                                resultSet.getInt("agencyid"),
-                                                resultSet.getString("worker"),
-                                                resultSet.getTimestamp("queued"));
-                    result.add(job);
-                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
-                }
-                return result;
-            }
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing jobs", ex);
-        }
-    }
-
-    /**
-     * Pull a job from the queue
-     *
-     * @param worker name of worker that want's to take a job
-     * @return job description
-     * @throws RawRepoException
-     */
-    @Override
-    public QueueJob dequeue(String worker) throws RawRepoException {
-        try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE)) {
-            stmt.setString(1, worker);
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if (resultSet.next()) {
-                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
-                                                resultSet.getInt("agencyid"),
-                                                resultSet.getString("worker"),
-                                                resultSet.getTimestamp("queued"));
-                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
-                    return job;
-                }
-                return null;
-            }
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing job", ex);
-        }
-    }
-
-    /**
-     * QueueJob has successfully been processed
-     *
-     * This is now the default when dequeuing
-     *
-     * @param queueJob job that has been processed
-     * @throws RawRepoException
-     */
-    @Override
-    @Deprecated
-    public void queueSuccess(QueueJob queueJob) throws RawRepoException {
-    }
-
-    /**
-     * QueueJob has failed, log to database
-     *
-     * @param queueJob job that failed
-     * @param error    what happened (empty string not allowed)
-     * @throws RawRepoException
-     */
-    @Override
-    public void queueFail(QueueJob queueJob, String error) throws RawRepoException {
-        if (error == null || error.equals("")) {
-            throw new RawRepoException("Error cannot be empty in queueFail");
-        }
-        try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
-            int pos = 1;
-            stmt.setString(pos++, queueJob.job.bibliographicRecordId);
-            stmt.setInt(pos++, queueJob.job.agencyId);
-            stmt.setString(pos++, queueJob.worker);
-            stmt.setString(pos++, error);
-            stmt.setTimestamp(pos++, queueJob.queued);
-            stmt.executeUpdate();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error reporting job status", ex);
-        }
-    }
-
-    /**
-     * QueueJob has failed
-     *
-     * @param queueJob job that failed
-     * @param error    what happened (empty string not allowed)
-     * @throws RawRepoException
-     */
-    @Override
-    public void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException {
-        if (error == null || error.equals("")) {
-            throw new RawRepoException("Error cannot be empty in queueFail");
-        }
-        try (PreparedStatement rollback = connection.prepareStatement("ROLLBACK TO DEQUEUED")) {
-            rollback.execute();
-        } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error rolling back", ex);
-        }
-        queueFail(queueJob, error);
     }
 
 }

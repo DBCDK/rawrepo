@@ -21,6 +21,7 @@
 package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import java.sql.Connection;
@@ -44,13 +45,15 @@ public class RawRepoWorker implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(RawRepoWorker.class);
 
     private final DataSource dataSource;
+    private final QueueTarget queueTarget;
     private final OpenAgencyServiceFromURL openAgency;
     private final ExecutorService executorService;
     private Connection connection;
     private RawRepoDAO dao;
 
-    public RawRepoWorker(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
+    public RawRepoWorker(DataSource dataSource, QueueTarget queueTarget, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
         this.dataSource = dataSource;
+        this.queueTarget = queueTarget;
         this.openAgency = openAgency;
         this.executorService = executorService;
         this.connection = null;
@@ -70,7 +73,9 @@ public class RawRepoWorker implements AutoCloseable {
         try {
             synchronized (this) {
                 if (dao == null) {
-                    dao = RawRepoDAO.builder(getConnection()).openAgency(openAgency, executorService).build();
+                    dao = RawRepoDAO.builder(getConnection())
+                            .queue(queueTarget)
+                            .openAgency(openAgency, executorService).build();
                 }
                 return dao;
             }

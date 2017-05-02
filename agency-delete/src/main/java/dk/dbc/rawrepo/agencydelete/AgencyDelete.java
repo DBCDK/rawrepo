@@ -20,11 +20,13 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import com.sun.messaging.ConnectionConfiguration;
+import com.sun.messaging.ConnectionFactory;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -53,6 +55,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.Session;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -82,13 +87,14 @@ class AgencyDelete {
 
     private final int agencyid;
     private final Connection connection;
-    private final RawRepoDAO dao;
+    final RawRepoDAO dao;
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
     private final MarcXMerger marcXMerger;
     private final List<Integer> commonAgencies;
+    private final JMSContext context;
 
-    public AgencyDelete(String db, int agencyid, String openAgency) throws Exception {
+    public AgencyDelete(String db, String mq, int retryInterval, int retryCount, int agencyid, String openAgency) throws Exception {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
@@ -117,6 +123,14 @@ class AgencyDelete {
             });
             this.commonAgencies = Collections.EMPTY_LIST;
         }
+        if (mq != null) {
+            ConnectionFactory connectionFactory = new ConnectionFactory();
+            connectionFactory.setProperty(ConnectionConfiguration.imqAddressList, mq);
+            this.context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
+            builder.queue(context, retryCount, retryInterval);
+        } else {
+            this.context = null;
+        }
 
         this.dao = builder.build();
         this.documentBuilder = newDocumentBuilder();
@@ -132,6 +146,7 @@ class AgencyDelete {
         this.transformer = newTransformer();
         this.marcXMerger = null;
         this.commonAgencies = null;
+        this.context = null;
     }
 
     static AgencyDelete unittestObject() throws Exception {
@@ -253,7 +268,7 @@ class AgencyDelete {
         return set;
     }
 
-    void queueRecords(Set<String> ids, String role) throws RawRepoException, IOException, SQLException {
+    void queueRecords(Set<String> ids, String role) throws RawRepoException, IOException, SQLException, JMSException {
         int no = 0;
 
         for (String id : ids) {
@@ -370,13 +385,22 @@ class AgencyDelete {
         connection.setAutoCommit(false);
     }
 
-    public void commit() throws SQLException {
+    public void commit() throws SQLException, JMSException {
         connection.commit();
+        dao.commitQueue();
+        if(context != null && context.getTransacted())
+            context.commit();
     }
 
     public void rollback() throws SQLException {
         connection.rollback();
     }
+
+    public void close() throws SQLException {
+        context.close();
+        connection.close();
+    }
+
 
     private static final Pattern urlPattern = Pattern.compile("^(jdbc:[^:]*://)?(?:([^:@]*)(?::([^@]*))?@)?((?:([^:/]*)(?::(\\d+))?)(?:/(.*))?)$");
     private static final String jdbcDefault = "jdbc:postgresql://";

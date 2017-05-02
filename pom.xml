@@ -38,7 +38,7 @@
 
   <groupId>dk.dbc</groupId>
   <artifactId>rawrepo</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>rawrepo</name>
   <url>http://oss.dbc.dk</url>
@@ -52,22 +52,17 @@
     <module>agency-load</module>
     <module>agency-purge</module>
     <module>content-service</module>
-    <module>content-service-deploy</module>
-    <module>introspect-deploy</module>
     <module>introspect</module>
     <module>maintain</module>
-    <module>maintain-deploy</module>
-    <module>notify</module>
-    <module>notify-deploy</module>
     <module>queue-bulkload</module>
     <module>record-inspector</module>
     <module>record-load</module>
     <module>roll-back</module>
     <module>solr-indexer</module>
-    <module>solr-indexer-deploy</module>
     <module>docker</module>
     <!-- This needs to be last, otherwise all following tools are not a part of the package --> 
     <module>debian</module>
+    <module>queue-bridge</module>
   </modules>
 
   <build>
@@ -75,6 +70,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>

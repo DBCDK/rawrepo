@@ -20,6 +20,9 @@
  */
 package dk.dbc.rawrepo.rollback;
 
+import com.sun.messaging.ConnectionConfiguration;
+import com.sun.messaging.ConnectionFactory;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import java.sql.Connection;
@@ -34,6 +37,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.Session;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -54,6 +60,9 @@ public class RollBackMain {
     private final static String usage = "java rawrepo-roll-back.jar <options> [specific record ids]";
 
     private static final String OPTION_DB = "db";
+    private static final String OPTION_MQ = "mq";
+    private static final String OPTION_MQ_RETRY_INTERVAL = "mq-retry-interval";
+    private static final String OPTION_MQ_RETRY_COUNT = "mq-retry-count";
     private static final String OPTION_LIBRARY = "library";
     private static final String OPTION_DEBUG = "debug";
     private static final String OPTION_ROLE = "role";
@@ -85,16 +94,19 @@ public class RollBackMain {
         }
 
         String dbUrl = options.getOptionValue( OPTION_DB );
+        String mqHost = options.getOptionValue( OPTION_MQ );
         String role = options.getOptionValue( OPTION_ROLE );
         int library = Integer.parseInt( options.getOptionValue( OPTION_LIBRARY ) );
         String match = options.getOptionValue( OPTION_MATCH, DateMatch.Match.BeforeOrEqual.name() );
         String state = options.getOptionValue( OPTION_STATE, RollBack.State.Keep.name() );
         String timestamp = options.getOptionValue( OPTION_TIMESTAMP );
         boolean dryrun = options.hasOption( OPTION_DRYRUN );
+        int retryInterval = Integer.parseInt( options.getOptionValue( OPTION_MQ_RETRY_INTERVAL, "10000" ) );
+        int retryCount = Integer.parseInt( options.getOptionValue( OPTION_MQ_RETRY_COUNT, "60" ) );
 
         String[] records = options.getArgs();
 
-        return rollBackRecords( dbUrl, library, records, timestamp, match, state, role, dryrun );
+        return rollBackRecords( dbUrl, mqHost, retryInterval, retryCount, library, records, timestamp, match, state, role, dryrun );
     }
 
     private static Connection getConnection( String url ) throws SQLException {
@@ -148,7 +160,7 @@ public class RollBackMain {
         throw new IllegalArgumentException( '\'' + s + "' is not a valid timestamp" );
     }
 
-    private boolean rollBackRecords( String dbUrl, int library, String[] records, String timestamp, String match, String state, String role, boolean dryrun ) {
+    private boolean rollBackRecords( String dbUrl, String mqHost, int retryInterval, int retryCount, int library, String[] records, String timestamp, String match, String state, String role, boolean dryrun ) {
 
         Date date = parseDate( timestamp );
         DateMatch.Match matchCriteria = DateMatch.Match.valueOf( match );
@@ -157,29 +169,34 @@ public class RollBackMain {
         Connection connection = null;
         try {
             connection = getConnection(dbUrl);
-            RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
-            if ( records.length > 0 ) {
-                log.debug( "Rolling back up to {} records to '{}', time matching rule: '{}', library {}, state modification option '{}', queue role '{}'",
-                        records.length, timestamp, match, library, state, role );
+            ConnectionFactory connectionFactory = new ConnectionFactory();
+            connectionFactory.setProperty(ConnectionConfiguration.imqAddressList, mqHost);
+            try (JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE)) {
+                RawRepoDAO dao = RawRepoDAO.builder( connection ).queue( context, retryCount, retryInterval ).build();
+                if ( records.length > 0 ) {
+                    log.debug( "Rolling back up to {} records to '{}', time matching rule: '{}', library {}, state modification option '{}', queue role '{}'",
+                           records.length, timestamp, match, library, state, role );
 
-                RollBack.rollbackRecords( library, Arrays.asList( records ), dao, date, matchCriteria, stateHandling );
-            }
-            else {
-                log.debug( "Rolling back all records to '{}', time matching rule '{}', library {}, state modification option '{}', queue role '{}'",
-                        timestamp, match, library, state, role );
+                    RollBack.rollbackRecords( library, Arrays.asList( records ), dao, date, matchCriteria, stateHandling, role );
+                }
+                else {
+                    log.debug( "Rolling back all records to '{}', time matching rule '{}', library {}, state modification option '{}', queue role '{}'",
+                           timestamp, match, library, state, role );
 
-                RollBack.rollbackAgency( connection, library, date, matchCriteria, stateHandling, role );
-            }
-            if ( dryrun ) {
-                log.info( "DRY RUN. Not comitting changes." );
-                connection.rollback();
-            } else {
-                log.info( "Comitting changes." );
-                connection.commit();
+                    RollBack.rollbackAgency( connection, dao, library, date, matchCriteria, stateHandling, role );
+                }
+                if ( dryrun ) {
+                    log.info( "DRY RUN. Not comitting changes." );
+                    connection.rollback();
+                } else {
+                    log.info( "Comitting changes." );
+                    connection.commit();
+                    dao.commitQueue();
+                }
             }
             return true;
         }
-        catch ( SQLException | RawRepoException ex ) {
+        catch ( JMSException | SQLException | RawRepoException ex ) {
             log.error( "Database error", ex );
             if ( connection != null ) {
                 try {
@@ -202,6 +219,23 @@ public class RollBackMain {
         Option db = OptionBuilder.withArgName( OPTION_DB ).hasArg().isRequired( true ).
                 withDescription( "connectstring for database" ).
                 withLongOpt( OPTION_DB ).create( "db" );
+
+        @SuppressWarnings( "static-access" )
+        Option mqHost = OptionBuilder.withArgName( OPTION_MQ ).hasArg().isRequired( true ).
+                withDescription( "address pg messagequeue host" ).
+                withLongOpt( OPTION_MQ ).create( "q" );
+
+        @SuppressWarnings( "static-access" )
+        Option mqRetryInterval = OptionBuilder.withArgName( OPTION_MQ_RETRY_INTERVAL ).hasArg().isRequired( false ).
+                withDescription( "how often to " ).
+                withType(Integer.class).
+                withLongOpt( OPTION_MQ_RETRY_INTERVAL ).create(  );
+
+        @SuppressWarnings( "static-access" )
+        Option mqRetryCount = OptionBuilder.withArgName( OPTION_MQ_RETRY_COUNT ).hasArg().isRequired( false ).
+                withDescription( "how often to " ).
+                withType(Integer.class).
+                withLongOpt( OPTION_MQ_RETRY_COUNT ).create(  );
 
         @SuppressWarnings( "static-access" )
         Option library = OptionBuilder.withArgName( OPTION_LIBRARY ).hasArg().isRequired( true ).
@@ -245,6 +279,9 @@ public class RollBackMain {
                 withLongOpt( OPTION_DRYRUN ).create();
 
         options.addOption( db );
+        options.addOption( mqHost );
+        options.addOption( mqRetryInterval );
+        options.addOption( mqRetryCount );
         options.addOption( help );
         options.addOption( library );
         options.addOption( date );

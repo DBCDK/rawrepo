@@ -68,3 +68,5 @@ INSERT INTO queuerules (provider, worker, changed, leaf) VALUES('fbs-update', 'b
 ---
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES('dataio-update', 'broend-sync', 'A', 'Y');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES('dataio-update', 'solr-sync', 'Y', 'A');
+
+INSERT INTO messagequeuerules (worker, queuename) SELECT worker, SUBSTR(LOWER(worker),1,1) || SUBSTR(REPLACE(INITCAP(worker),'-',''),2) FROM queueworkers;

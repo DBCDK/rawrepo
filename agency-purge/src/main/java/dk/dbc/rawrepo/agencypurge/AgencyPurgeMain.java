@@ -77,10 +77,6 @@ public class AgencyPurgeMain {
                 if (notDeleted > 0) {
                     System.out.print("Cannot purge agency " + agencyid + " " + notDeleted + " live (not deleted) records exists");
                 }
-                int queued = agencyPurge.countQueueEntries();
-                if (queued > 0) {
-                    System.out.print("Cannot purge agency " + agencyid + " " + queued + " records still on queue");
-                }
             }
 
             if (!commandLine.hasOption("batch")) {

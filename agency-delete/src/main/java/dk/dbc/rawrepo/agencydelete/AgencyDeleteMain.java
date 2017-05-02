@@ -32,6 +32,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static dk.dbc.rawrepo.agencydelete.CommandLine.integer;
+
 /**
  *
  * @author DBC {@literal <dbc.dk>}
@@ -39,6 +41,11 @@ import org.slf4j.LoggerFactory;
 public class AgencyDeleteMain {
 
     private static final Logger log = LoggerFactory.getLogger(AgencyDeleteMain.class);
+
+    private static final String ROLE = "role";
+    private static final String DB = "db";
+    private static final String MQ = "mq";
+    private static final String OPEN_AGENCY = "open-agency";
 
     public static void main(String[] args) {
         CommandLine commandLine = new AgencyDeleteCommandLine();
@@ -70,12 +77,16 @@ public class AgencyDeleteMain {
         }
 
         String openAgency = null;
-        if (commandLine.hasOption("openagency")) {
-            openAgency = (String) commandLine.getOption("openagency");
+        if (commandLine.hasOption(OPEN_AGENCY)) {
+            openAgency = (String) commandLine.getOption(OPEN_AGENCY);
         }
 
         try {
-            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, openAgency);
+            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption(DB),
+                                                         (String) commandLine.getOption(MQ),
+                                                         (Integer) commandLine.getOption("mq-retry-interval"),
+                                                         (Integer) commandLine.getOption("mq-retry-count"),
+                                                         agencyid, openAgency);
             Set<String> ids = agencyDelete.getIds();
             Set<String> siblingRelations = agencyDelete.getSiblingRelations();
             if (!siblingRelations.isEmpty()) {
@@ -85,17 +96,19 @@ public class AgencyDeleteMain {
             System.out.print("Are you sure you want to remove all(" + ids.size() + ") records for agency " + agencyid + " [y/N]? ");
             String line = new Scanner(System.in, "UTF-8").nextLine();
             if (line == null || !line.toLowerCase(Locale.ROOT).startsWith("y")) {
+                agencyDelete.close();
                 return;
             }
 
             agencyDelete.begin();
-            if (commandLine.hasOption("role")) {
-                String role = (String) commandLine.getOption("role");
+            if (commandLine.hasOption(ROLE)) {
+                String role = (String) commandLine.getOption(ROLE);
                 agencyDelete.queueRecords(ids, role);
             }
             agencyDelete.deleteRecords(ids);
 
             agencyDelete.commit();
+            agencyDelete.close();
         } catch (Exception ex) {
             log.error(ex.getMessage());
             System.exit(1);
@@ -117,9 +130,12 @@ public class AgencyDeleteMain {
 
         @Override
         void setOptions() {
-            addOption("db", "connectstring for database", true, false, string, null);
-            addOption("role", "name of enqueue software (provider: agency-delete)", false, false, string, null);
-            addOption("openagency", "url", false, false, string, null);
+            addOption(DB, "connectstring for database", true, false, string, null);
+            addOption(MQ, "connectstring for message queue", false, false, string, null);
+            addOption(ROLE, "name of enqueue software (provider: agency-delete)", false, false, string, null);
+            addOption(OPEN_AGENCY, "url", false, false, string, null);
+            addOption("mq-retry-interval", "ms", false, false, integer, new DefaultInteger(10000));
+            addOption("mq-retry-count", "cnt", false, false, integer, new DefaultInteger(60));
 
             addOption("debug", "turn on debug logging", false, false, null, yes);
         }

@@ -372,9 +372,9 @@
       -->
      <autoCommit>
        <!-- These default setting can be overwritten by deploy script -->
-       <maxTime>600000</maxTime>
-       <maxDocs>25000</maxDocs>
-       <openSearcher>true</openSearcher>
+       <maxTime>${dbc.autoCommit.maxTime:600000}</maxTime>
+       <maxDocs>${dbc.autoCommit.maxDocs:25000}</maxDocs>
+       <openSearcher>${dbc.autoCommit.openSearcher:true}</openSearcher>
      </autoCommit>
 
     <!-- softAutoCommit is like autoCommit except it causes a
@@ -384,7 +384,8 @@
       -->
 
      <autoSoftCommit>
-       <maxTime>${solr.autoSoftCommit.maxTime:-1}</maxTime>
+       <maxTime>${dbc.autoSoftCommit.maxTime:-1}</maxTime>
+       <maxDocs>${dbc.autoSoftCommit.maxDocs:-1}</maxDocs>
      </autoSoftCommit>
 
     <!-- Update Related Event Listeners

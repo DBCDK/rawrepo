@@ -21,6 +21,7 @@
 package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
@@ -43,8 +44,8 @@ public class QueueRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(QueueRecords.class);
 
-    public QueueRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
-        super(dataSource, openAgency, executorService);
+    public QueueRecords(DataSource dataSource, QueueTarget queueTarget, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
+        super(dataSource, queueTarget, openAgency, executorService);
     }
 
     public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {

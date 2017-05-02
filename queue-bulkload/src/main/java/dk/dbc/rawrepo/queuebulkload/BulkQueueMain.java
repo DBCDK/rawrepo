@@ -23,7 +23,6 @@ package dk.dbc.rawrepo.queuebulkload;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import java.io.FileNotFoundException;
@@ -36,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import javax.jms.JMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +73,11 @@ public class BulkQueueMain {
         Iterator<RecordId> iterator;
         AutoCloseable autoCloseable = null;
         String db;
+        String mq;
+        String openagency;
         String role;
         Integer commit;
         Integer library;
-        String fallbackMimeType;
         BulkQueue bulkQueue;
         try {
             commandLine.parse(args);
@@ -88,6 +89,12 @@ public class BulkQueueMain {
             }
 
             db = (String) commandLine.getOption("db");
+            mq = (String) commandLine.getOption("mq");
+            if (commandLine.hasOption("openagency")) {
+                openagency = (String) commandLine.getOption("openagency");
+            } else {
+                openagency = null;
+            }
             role = (String) commandLine.getOption("role");
 
             library = DEFAULT_LIBRARY;
@@ -95,17 +102,15 @@ public class BulkQueueMain {
                 library = (Integer) commandLine.getOption("library");
             }
             log.debug("library = " + library);
-            fallbackMimeType = MarcXChangeMimeType.MARCXCHANGE;
-            if (commandLine.hasOption("mimetype")) {
-                fallbackMimeType = (String) commandLine.getOption("mimetype");
-            }
-            log.debug("fallbackMimeType = " + fallbackMimeType);
-            commit = 1000;
+            commit = -1;
             if (commandLine.hasOption("commit")) {
                 commit = (Integer) commandLine.getOption("commit");
             }
             log.debug("commit = " + commit);
-            bulkQueue = new BulkQueue(db, commit, role);
+            bulkQueue = new BulkQueue(db, mq,
+                                      (Integer) commandLine.getOption("mq-retry-interval"),
+                                      (Integer) commandLine.getOption("mq-retry-count"),
+                                      openagency, commit, role);
 
             if (commandLine.hasOption("stdin")) {
                 if (!commandLine.getExtraArguments().isEmpty()) {
@@ -183,7 +188,7 @@ public class BulkQueueMain {
             } else {
                 throw new IllegalStateException("No record id source has been defined");
             }
-        } catch (SQLException | RawRepoException | IllegalStateException | FileNotFoundException e) {
+        } catch (JMSException | SQLException | RawRepoException | IllegalStateException | FileNotFoundException e) {
             String usage = commandLine.usage();
             System.out.println(usage);
             System.out.println(e.getLocalizedMessage());
@@ -194,9 +199,9 @@ public class BulkQueueMain {
         log.debug("DEBUG");
         log.info("INFO");
         if (commandLine.hasOption("skip-queue-rules")) {
-            bulkQueue.run(iterator);
+            bulkQueue.runNoRule(iterator);
         } else {
-            bulkQueue.run(iterator, fallbackMimeType);
+            bulkQueue.run(iterator);
         }
 
         try {
@@ -205,7 +210,7 @@ public class BulkQueueMain {
             }
         } catch (Exception ex) {
         }
-
+        bulkQueue.close();
     }
 
     private static void setLogLevel(String file) {
@@ -230,18 +235,21 @@ class CommandLineBulkQueue extends CommandLine {
     void setOptions() {
         addOption("role", "name of enqueue software (provider)", true, false, string, null);
         addOption("library", "which library to use (default=" + BulkQueueMain.DEFAULT_LIBRARY + ")", false, false, integer, null);
-        addOption("mimetype", "Fallback mimetype, if type cannot be resolved", false, false, string, null);
         addOption("stdin", "read ids from stdin", false, false, null, yes);
         addOption("all", "select all ids from the records table in the database", false, false, null, yes);
         addOption("leafs", "select all leaf-ids from the records table in the database", false, false, null, yes);
         addOption("nodes", "select all node-ids from the records table in the database", false, false, null, yes);
-        addOption("range", "select all ids from the records table in the database, "
-                           + "modified between argument 1 & 2 (yyyy-MM-dd hh:mm:ss.SSS)", false, false, null, yes);
+        addOption("range", "select all ids from the records table in the database, " +
+                           "modified between argument 1 & 2 (yyyy-MM-dd hh:mm:ss.SSS)", false, false, null, yes);
         addOption("file", "read ids from file", false, false, string, null);
-        addOption("db", "connectstring for database", true, false, string, null);
-        addOption("commit", "how often to commit (default=1000)", false, false, integer, null);
+        addOption("db", "connect string for database", true, false, string, null);
+        addOption("mq", "connect string for message queue (host:port)", true, false, string, null);
+        addOption("openagency", "url of openagency, needed if --skip-queue-rules isn't set", false, false, string, null);
+        addOption("commit", "how often to commit (default=all)", false, false, integer, null);
         addOption("debug", "turn on debug logging", false, false, null, yes);
-        addOption("skip-queue-rules", "provider is worker, and no dao action is taken (dangerous: can produce duplicates on queue)", false, false, null, yes);
+        addOption("skip-queue-rules", "provider is worker, and no dao action is taken", false, false, null, yes);
+        addOption("mq-retry-interval", "ms", false, false, integer, new DefaultInteger(10000));
+        addOption("mq-retry-count", "cnt", false, false, integer, new DefaultInteger(60));
     }
 
     @Override

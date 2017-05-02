@@ -68,17 +68,6 @@ class AgencyPurge {
         }
     }
 
-    public int countQueueEntries() throws SQLException {
-        try(PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue WHERE agencyid=?")) {
-            stmt.setInt(1, agencyid);
-            try(ResultSet resultSet = stmt.executeQuery()) {
-                if(resultSet.next())
-                    return resultSet.getInt(1);
-                throw new SQLException("No rows in query");
-            }
-        }
-    }
-
     public int purgeAgency() throws SQLException {
         try(PreparedStatement stmt = connection.prepareStatement("DELETE FROM records WHERE agencyid=?")) {
             stmt.setInt(1, agencyid);

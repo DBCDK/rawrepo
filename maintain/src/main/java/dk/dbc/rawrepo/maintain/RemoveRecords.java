@@ -24,6 +24,7 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -72,15 +73,15 @@ public class RemoveRecords extends RawRepoWorker {
     private final Transformer transformer;
     private final MarcXMerger marcXMerger;
 
-    public RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
-        super(dataSource, openAgency, executorService);
+    public RemoveRecords(DataSource dataSource, QueueTarget queueTarget, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
+        super(dataSource, queueTarget, openAgency, executorService);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
         this.marcXMerger = new MarcXMerger();
     }
 
-    public RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
-        super(dataSource, openAgency, null);
+    public RemoveRecords(DataSource dataSource, QueueTarget queueTarget, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
+        super(dataSource, queueTarget, openAgency, null);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
         this.marcXMerger = new MarcXMerger();

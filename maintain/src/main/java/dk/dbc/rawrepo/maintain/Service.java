@@ -26,6 +26,7 @@ import com.sun.xml.ws.developer.SchemaValidation;
 import dk.dbc.commons.webservice.WsdlValidationErrorHandler;
 import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.maintain.transport.PageContentResponse;
 import dk.dbc.rawrepo.maintain.transport.RecordIds;
 import dk.dbc.rawrepo.maintain.transport.TS;
@@ -39,6 +40,8 @@ import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -71,9 +74,13 @@ public class Service {
     DataSource rawrepo;
 
     @Inject
+    @JMSConnectionFactory(C.CONNECTION_FACTORY)
+    JMSContext jmsContext;
+
+    @Inject
     @EEConfig.Url
     String openAgencyUrl;
-    
+
     @Inject
     @EEConfig.Name(C.NAME)
     String name;
@@ -121,19 +128,21 @@ public class Service {
 
             HashMap<String, ArrayList<String>> valuesOut;
 
+            QueueTarget queueTarget = new QueueTarget.Mq(jmsContext);
+
             switch (method) {
                 case "queueRecords":
-                    try (QueueRecords queueRecords = new QueueRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (QueueRecords queueRecords = new QueueRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                         valuesOut = queueRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "removeRecords":
-                    try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                         valuesOut = removeRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "revertRecords":
-                    try (RevertRecords revertRecords = new RevertRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (RevertRecords revertRecords = new RevertRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                         valuesOut = revertRecords.getValues(valuesSet, leaving);
                     }
                     break;
@@ -146,6 +155,8 @@ public class Service {
                 default:
                     throw new ResponseErrorException("Unknown module", ResponseError.Type.REQUEST_CONTENT_ERROR);
             }
+
+            queueTarget.commit();
 
             ArrayList<ValueEntry> outList = new ArrayList<>();
             for (Map.Entry<String, ArrayList<String>> entry : valuesOut.entrySet()) {
@@ -177,8 +188,10 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (QueueRecords queueRecords = new QueueRecords(rawrepo, getOpenAgency(), executorService)) {
+            QueueTarget queueTarget = new QueueTarget.Mq(jmsContext);
+            try (QueueRecords queueRecords = new QueueRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                 out.value = queueRecords.queueRecords(agencyId, ids.list, provider, trackingId.value);
+                queueTarget.commit();
             }
         } catch (ResponseErrorException ex) {
             out.value = ex.getError();
@@ -202,8 +215,10 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, getOpenAgency(), executorService)) {
+            QueueTarget queueTarget = new QueueTarget.Mq(jmsContext);
+            try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                 out.value = removeRecords.removeRecords(agencyId, ids.list, provider, trackingId.value);
+                queueTarget.commit();
             }
         } catch (ResponseErrorException ex) {
             out.value = ex.getError();
@@ -228,8 +243,10 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RevertRecords revertRecords = new RevertRecords(rawrepo, getOpenAgency(), executorService)) {
+            QueueTarget queueTarget = new QueueTarget.Mq(jmsContext);
+            try (RevertRecords revertRecords = new RevertRecords(rawrepo, queueTarget, getOpenAgency(), executorService)) {
                 out.value = revertRecords.revertRecords(agencyId, ids.list, time.getMillis(), provider, trackingId.value);
+                queueTarget.commit();
             }
         } catch (ResponseErrorException ex) {
             out.value = ex.getError();

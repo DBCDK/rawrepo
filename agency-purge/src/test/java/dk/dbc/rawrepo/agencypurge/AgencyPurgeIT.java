@@ -94,23 +94,9 @@ public class AgencyPurgeIT {
         assertEquals(1, notDeleted);
     }
 
-
-    @Test
-    public void testCountQueue() throws Exception {
-        try(Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate("INSERT INTO queueworkers VALUES('test')");
-            stmt.executeUpdate("INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES('A', 888888, 'test')");
-        }
-        AgencyPurge agencyPurge = new AgencyPurge(jdbcUrl, 888888);
-        int queued = agencyPurge.countQueueEntries();
-        assertEquals(1, queued);
-    }
-
-
-
     private void setupRecords(String... args) throws SQLException, RawRepoException, UnsupportedEncodingException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .build();
+                .build();
         try {
             connection.setAutoCommit(false);
             for (String arg : args) {

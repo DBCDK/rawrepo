@@ -1,0 +1,36 @@
+worker:
+  queueServer: ${QUEUE_SERVER:-localhost:7676}
+  pollInterval: ${POLL_INTERVAL:-5}
+  dbToMqThreads: ${DB_TO_MQ_THREADS:-1}
+  mqToDbThreads: ${MQ_TO_DB_THREADS:-1}
+  dbToMqQueues: "${DB_TO_MQ_QUEUES:-solr-sync}"
+  mqToDbQueues: "${MQ_TO_DB_QUEUES:-solrSync}"
+
+
+database:
+  driverClass: org.postgresql.Driver
+  user: ${PGUSER:-duser}
+  password: ${PGPASSWORD:-dpass}
+  url: jdbc:postgresql://${PGHOST:-localhost}:${PGPORT:-5432}/${PGDATABASE:-data}
+  properties:
+    charSet: UTF-8
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyService Health Check */ SELECT 1"
+  validationQueryTimeout: 3s
+  initialSize: ${POSTGRES_POOL_MIN:-1}
+  minSize: ${POSTGRES_POOL_MIN:-1}
+  maxSize: ${POSTGRES_POOL_MAX:-8}
+  checkConnectionWhileIdle: false
+  evictionInterval: 10s
+  minIdleTime: 1 minute
+
+server:
+#  softNofileLimit: 1000
+#  hardNofileLimit: 1000
+  applicationConnectors:
+    - type: http
+      port: 8010
+  adminConnectors:
+    - type: http
+      port: 8011
+

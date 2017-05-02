@@ -25,7 +25,6 @@ import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
-import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -36,7 +35,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -72,7 +70,9 @@ public class AgencyDeleteIT {
     }
 
     static String getPath() {
-        return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
+        String path = wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
+        System.out.println("path = " + path);
+        return path;
     }
 
     private String jdbcUrl;
@@ -142,7 +142,9 @@ public class AgencyDeleteIT {
     @Test
     public void testBasics() throws Exception {
         System.out.println("testBasics()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + getPort() + "/openagency/");
+        TestQueue queue = new TestQueue();
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, null, -1, -1, 777777, "http://localhost:" + getPort() + "/openagency/");
+        agencyDelete.dao.setQueueTarget(queue);
 
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
@@ -154,24 +156,8 @@ public class AgencyDeleteIT {
         System.out.println("deleted records");
         agencyDelete.commit();
 
-        RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
-                   .build();
-
-        countQueued("leaf", 2);
-        HashSet<String> leafs = new HashSet<>();
-        for (QueueJob dequeue = dao.dequeue("leaf") ; dequeue != null ; dequeue = dao.dequeue("leaf")) {
-            leafs.add(dequeue.getJob().getBibliographicRecordId());
-        }
-        testArray(leafs, "leafs", "B", "E");
-
-        HashSet<String> nodes = new HashSet<>();
-        countQueued("node", 2);
-        System.out.println("nodes = " + nodes);
-        for (QueueJob dequeue = dao.dequeue("node") ; dequeue != null ; dequeue = dao.dequeue("node")) {
-            nodes.add(dequeue.getJob().getBibliographicRecordId());
-        }
-        testArray(nodes, "nodes", "H", "S");
+        System.out.println("queue = " + queue);
+        queue.is("B:777777:leaf", "E:777777:leaf", "H:777777:node", "S:777777:node");
         System.out.println("Done!");
         connection.commit();
     }
@@ -186,7 +172,10 @@ public class AgencyDeleteIT {
             setupRecord(dao, "S", 888888, "S:870970");
             connection.commit();
         }
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+        TestQueue queue = new TestQueue();
+        System.out.println("queue = " + queue);
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, null, -1, -1, 888888, "http://localhost:" + getPort() + "/openagency/");
+        agencyDelete.dao.setQueueTarget(queue);
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
 
@@ -194,9 +183,8 @@ public class AgencyDeleteIT {
         agencyDelete.deleteRecords(ids);
         agencyDelete.commit();
 
-        countQueued("node", 1);
-        countQueued("leaf", 1);
-
+        System.out.println("queue = " + queue);
+        queue.is("S:888888:node", "B:888888:leaf");
     }
 
     @Test
@@ -210,8 +198,9 @@ public class AgencyDeleteIT {
             setupRecord(dao, "E", 888888, "S:870970");
             connection.commit();
         }
-
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+        TestQueue queue = new TestQueue();
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, null, -1, -1, 888888, "http://localhost:" + getPort() + "/openagency/");
+        agencyDelete.dao.setQueueTarget(queue);
 
         Set<String> nodes = agencyDelete.getIds();
         System.out.println("nodes = " + nodes);
@@ -253,6 +242,7 @@ public class AgencyDeleteIT {
         connection.prepareStatement("DELETE FROM records").execute();
         connection.prepareStatement("DELETE FROM queue").execute();
         connection.prepareStatement("DELETE FROM queuerules").execute();
+        connection.prepareStatement("DELETE FROM messagequeuerules").execute();
         connection.prepareStatement("DELETE FROM queueworkers").execute();
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
@@ -260,6 +250,16 @@ public class AgencyDeleteIT {
         stmt.execute();
         stmt.setString(1, "node");
         stmt.execute();
+        stmt.close();
+
+        stmt = connection.prepareStatement("INSERT INTO messagequeuerules(worker, queuename) VALUES(?, ?)");
+        stmt.setString(1, "leaf");
+        stmt.setString(2, "leaf");
+        stmt.execute();
+        stmt.setString(1, "node");
+        stmt.setString(2, "node");
+        stmt.execute();
+        stmt.close();
 
         stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, 'A', ?)");
         stmt.setString(1, "provider");
@@ -270,6 +270,7 @@ public class AgencyDeleteIT {
         stmt.setString(2, "node");
         stmt.setString(3, "N");
         stmt.execute();
+        stmt.close();
 
         setupRecord(dao, "H", 870970);
         setupRecord(dao, "S", 870970, "H:870970");
@@ -308,15 +309,6 @@ public class AgencyDeleteIT {
         for (String string : strings) {
             assertTrue(message + " has " + string, ids.contains(string));
         }
-    }
-
-    private void countQueued(String queue, int count) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue WHERE worker=?");
-        stmt.setString(1, queue);
-        ResultSet resultSet = stmt.executeQuery();
-        resultSet.next();
-        int fromQueue = resultSet.getInt(1);
-        assertEquals("queue: " + queue, count, fromQueue);
     }
 
 }

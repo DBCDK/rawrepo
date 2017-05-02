@@ -20,6 +20,7 @@
  */
 package dk.dbc.rawrepo.maintain;
 
+import dk.dbc.rawrepo.QueueTarget;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,40 +40,40 @@ public class QueueRules extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(QueueRules.class);
 
-    public QueueRules(DataSource dataSource) {
-        super(dataSource, null, null);
+    public QueueRules(DataSource dataSource, QueueTarget queueTarget) {
+        super(dataSource, queueTarget, null, null);
     }
-    
+
     public ArrayList<Provider> getQueueRules() throws SQLException {
-        
+
         try (PreparedStatement stmt = getConnection().prepareStatement("SELECT provider,worker,changed,leaf FROM queuerules ORDER BY provider")) {
             try (ResultSet resultSet = stmt.executeQuery()) {
-                
+
                 HashMap<String, Provider> providerMap = new HashMap<>();
                 ArrayList<Provider> res = new ArrayList<>();
-        
+
                 while (resultSet.next()) {
                     int i = 0;
                     String provider = resultSet.getString(++i);
                     String worker = resultSet.getString(++i);
                     String changed = resultSet.getString(++i);
                     String leaf = resultSet.getString(++i);
-                    
+
                     Provider p = providerMap.get(provider);
                     if(p == null){
                         p = new Provider(provider);
                         providerMap.put(provider, p);
                         res.add(p);
                     }
-                    
+
                     p.getWorkers().add( new Worker(worker, changed, leaf));
-                    
+
                 }
                 return res;
             }
         }
     }
-    
+
     public static class Provider {
         private final String provider;
         private final List<Worker> workers;
@@ -94,11 +95,11 @@ public class QueueRules extends RawRepoWorker {
         public List<Worker> getWorkers() {
             return workers;
         }
-        
-        
+
+
     }
     public static class Worker {
-            
+
         private static final Map<String, String> descriptions;
         static
         {
@@ -114,7 +115,7 @@ public class QueueRules extends RawRepoWorker {
             descriptions.put("AY", "Alle Bind/Enkeltstående poster som er afhængige af den rørte post incl den rørte post");
             descriptions.put("AA", "Den rørte post og alle poster som er afhængige af den");
         }
-    
+
         private final String worker, changed, leaf;
         public Worker(String worker, String changed, String leaf){
             this.worker = worker;
@@ -142,11 +143,11 @@ public class QueueRules extends RawRepoWorker {
         public String getLeaf() {
             return leaf;
         }
-        
+
         public String getDescription() {
             return descriptions.get(this.changed.toUpperCase()+this.leaf.toUpperCase());
         }
     }
-    
-    
+
+
 }
