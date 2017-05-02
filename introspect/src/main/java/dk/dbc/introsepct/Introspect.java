@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.naming.Context;

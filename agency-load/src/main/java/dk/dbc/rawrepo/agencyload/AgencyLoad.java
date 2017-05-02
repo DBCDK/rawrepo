@@ -253,6 +253,7 @@ public class AgencyLoad implements AutoCloseable {
                         break;
                     case "004r":
                         isDeleted = data.equals("d");
+                        break;
                     default:
                         break;
                 }

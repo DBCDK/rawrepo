@@ -169,9 +169,9 @@ public class QueueJob implements Serializable {
             String str = JSON_CODES.get(c);
             if (str != null) {
                 sb.append(str);
-            } else if (( c >= '\u0000' && c <= '\u001F' ) ||
-                       ( c >= '\u007F' && c <= '\u009F' ) ||
-                       ( c >= '\u2000' && c <= '\u20FF' )) {
+            } else if (c >= '\u0000' && c <= '\u001F' ||
+                       c >= '\u007F' && c <= '\u009F' ||
+                       c >= '\u2000' && c <= '\u20FF') {
                 sb.append("\\u")
                         .append(HEX[( c >> 12 ) & 15])
                         .append(HEX[( c >> 8 ) & 15])

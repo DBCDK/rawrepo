@@ -26,7 +26,6 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
-import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -316,8 +315,8 @@ class AgencyDelete {
         Node child = marcx.getFirstChild();
         for (;;) {
             if (child == null ||
-                ( child.getNodeType() == Node.ELEMENT_NODE &&
-                  "datafield".equals(child.getLocalName()) )) {
+                child.getNodeType() == Node.ELEMENT_NODE &&
+                "datafield".equals(child.getLocalName())) {
                 int cmp = -1;
                 if (child != null) {
                     String tag = ( (Element) child ).getAttribute("tag");
@@ -336,8 +335,9 @@ class AgencyDelete {
                     for (;;) {
                         // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
                         // r is 1st field
-                        if (subChild == null || ( subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                                  "subfield".equals(subChild.getLocalName()) )) {
+                        if (subChild == null ||
+                            subChild.getNodeType() == Node.ELEMENT_NODE &&
+                            "subfield".equals(subChild.getLocalName())) {
                             boolean isR = false;
                             if (subChild != null) {
                                 String code = ( (Element) subChild ).getAttribute("code");
@@ -388,8 +388,9 @@ class AgencyDelete {
     public void commit() throws SQLException, JMSException {
         connection.commit();
         dao.commitQueue();
-        if(context != null && context.getTransacted())
+        if (context != null && context.getTransacted()) {
             context.commit();
+        }
     }
 
     public void rollback() throws SQLException {
@@ -400,7 +401,6 @@ class AgencyDelete {
         context.close();
         connection.close();
     }
-
 
     private static final Pattern urlPattern = Pattern.compile("^(jdbc:[^:]*://)?(?:([^:@]*)(?::([^@]*))?@)?((?:([^:/]*)(?::(\\d+))?)(?:/(.*))?)$");
     private static final String jdbcDefault = "jdbc:postgresql://";

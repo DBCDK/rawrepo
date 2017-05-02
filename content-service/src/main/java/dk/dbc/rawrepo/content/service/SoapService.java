@@ -39,7 +39,6 @@ import org.xml.sax.SAXParseException;
 @WebService(serviceName = C.SERVICE, targetNamespace = C.NS, portName = C.PORT)
 @SchemaValidation(handler = WsdlValidationErrorHandler.class)
 public class SoapService extends Service {
-    private static final Logger log = LoggerFactory.getLogger(SoapService.class);
 
     @Resource
     private WebServiceContext webServiceContext;

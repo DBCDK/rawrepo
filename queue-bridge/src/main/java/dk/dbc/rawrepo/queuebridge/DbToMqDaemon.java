@@ -163,7 +163,6 @@ public class DbToMqDaemon extends HealthCheck {
                                     String bibliographicRecordId = resultSet.getString(1);
                                     int agencyId = resultSet.getInt(2);
                                     String worker = resultSet.getString(3);
-                                    Timestamp queued = resultSet.getTimestamp(4);
                                     Object ctid = resultSet.getObject(5);
 
                                     delete.setObject(1, ctid);
@@ -198,7 +197,7 @@ public class DbToMqDaemon extends HealthCheck {
 
                 }
 
-            } catch (Exception ex) {
+            } catch (InterruptedException | RuntimeException | SQLException | JMSException ex) {
                 log.error("Error in worker thread: " + ex.getMessage());
                 log.debug("Error in worker thread:", ex);
             }

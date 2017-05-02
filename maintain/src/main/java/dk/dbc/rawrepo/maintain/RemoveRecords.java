@@ -116,8 +116,8 @@ public class RemoveRecords extends RawRepoWorker {
                     removeRecord(agencyId, id, provider, trackingId);
                     connection.commit();
                     success++;
-                } catch (RawRepoException | DOMException | IOException | MarcXMergerException |
-                         SAXException | TransformerException ex) {
+                } catch (RawRepoException | DOMException | IOException | MarcXMergerException
+                         | SAXException | TransformerException ex) {
                     failed++;
                     diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
                     Throwable cause = ex.getCause();
@@ -193,8 +193,7 @@ public class RemoveRecords extends RawRepoWorker {
         Node child = marcx.getFirstChild();
         for (;;) {
             if (child == null ||
-                ( child.getNodeType() == Node.ELEMENT_NODE &&
-                  "datafield".equals(child.getLocalName()) )) {
+                child.getNodeType() == Node.ELEMENT_NODE && "datafield".equals(child.getLocalName())) {
                 int cmp = -1;
                 if (child != null) {
                     String tag = ( (Element) child ).getAttribute("tag");
@@ -213,8 +212,8 @@ public class RemoveRecords extends RawRepoWorker {
                     for (;;) {
                         // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
                         // r is 1st field
-                        if (subChild == null || ( subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                                  "subfield".equals(subChild.getLocalName()) )) {
+                        if (subChild == null ||
+                            subChild.getNodeType() == Node.ELEMENT_NODE && "subfield".equals(subChild.getLocalName())) {
                             boolean isR = false;
                             if (subChild != null) {
                                 String code = ( (Element) subChild ).getAttribute("code");

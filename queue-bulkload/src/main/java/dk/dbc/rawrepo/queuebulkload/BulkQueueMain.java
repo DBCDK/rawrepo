@@ -209,6 +209,7 @@ public class BulkQueueMain {
                 autoCloseable.close();
             }
         } catch (Exception ex) {
+            log.debug("Error closing: " + ex.getMessage());
         }
         bulkQueue.close();
     }

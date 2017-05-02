@@ -868,9 +868,9 @@ public abstract class RawRepoDAO {
                     .map(r -> r.getBibliographicRecordId())
                     .distinct()
                     .collect(Collectors.toSet());
-            Set<RecordId> be = children.stream()
-                    .filter(r -> !agencies.contains(r.getAgencyId()))
-                    .collect(Collectors.toSet());
+//            Set<RecordId> be = children.stream()
+//                    .filter(r -> !agencies.contains(r.getAgencyId()))
+//                    .collect(Collectors.toSet());
             for (String b : bi) {
                 changedRecord(provider, b, agencies, -1, traverse, true);
             }

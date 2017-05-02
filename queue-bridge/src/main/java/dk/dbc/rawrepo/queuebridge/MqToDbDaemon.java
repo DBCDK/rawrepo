@@ -42,7 +42,6 @@ import javax.jms.JMSContext;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
-import javax.jms.TextMessage;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,7 +200,7 @@ public class MqToDbDaemon extends HealthCheck {
                     }
                 }
 
-            } catch (Exception ex) {
+            } catch (InterruptedException | SQLException | JMSException | RuntimeException ex) {
                 log.error("Error in worker thread: " + ex.getMessage());
                 log.debug("Error in worker thread:", ex);
             }

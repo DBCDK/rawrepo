@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo.rollback;
 
-import com.sun.messaging.ConnectionConfiguration;
-import com.sun.messaging.ConnectionFactory;
 import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
@@ -34,15 +32,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Session;
 import org.slf4j.LoggerFactory;
 
 /**

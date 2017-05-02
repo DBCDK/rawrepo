@@ -75,10 +75,8 @@ public class AllCollection implements Iterable<RecordId>, AutoCloseable {
             @Override
             public boolean hasNext() {
                 try {
-                    if (!hasNextCache) {
-                        if (resultsetNext) {
-                            hasNextCache = resultsetNext = resultSet.next();
-                        }
+                    if (!hasNextCache && resultsetNext) {
+                        hasNextCache = resultsetNext = resultSet.next();
                     }
                 } catch (SQLException ex) {
                     hasNextCache = false;

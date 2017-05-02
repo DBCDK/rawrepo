@@ -109,7 +109,6 @@ public abstract class Service {
     @Inject
     Timer fetchCollection;
 
-
     @Inject
     @EEConfig.Name(C.X_FORWARDED_FOR)
     @EEConfig.Default("")
@@ -407,10 +406,10 @@ class IPRange {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Not a valid ip range: " + range);
         }
-        long num1 = ( Long.parseLong(matcher.group(1)) << 24 ) +
-                    ( Long.parseLong(matcher.group(2)) << 16 ) +
-                    ( Long.parseLong(matcher.group(3)) << 8 ) +
-                    ( Long.parseLong(matcher.group(4)) );
+        long num1 = ( Long.parseUnsignedLong(matcher.group(1)) << 24 ) |
+                    ( Long.parseUnsignedLong(matcher.group(2)) << 16 ) |
+                    ( Long.parseUnsignedLong(matcher.group(3)) << 8 ) |
+                    ( Long.parseUnsignedLong(matcher.group(4)) );
         long minCalc = num1;
         long maxCalc = num1;
         if (matcher.group(5) != null) {
@@ -420,10 +419,10 @@ class IPRange {
             maxCalc |= ~mask;
         }
         if (matcher.group(6) != null) {
-            long num2 = ( Long.parseLong(matcher.group(6)) << 24 ) +
-                        ( Long.parseLong(matcher.group(7)) << 16 ) +
-                        ( Long.parseLong(matcher.group(8)) << 8 ) +
-                        ( Long.parseLong(matcher.group(9)) );
+            long num2 = ( Long.parseUnsignedLong(matcher.group(6)) << 24 ) |
+                        ( Long.parseUnsignedLong(matcher.group(7)) << 16 ) |
+                        ( Long.parseUnsignedLong(matcher.group(8)) << 8 ) |
+                        ( Long.parseUnsignedLong(matcher.group(9)) );
             maxCalc = Math.max(num1, num2);
             minCalc = Math.min(num1, num2);
         }
@@ -439,10 +438,10 @@ class IPRange {
     boolean inRange(String ip) {
         Matcher matcher = IPV4_PATTERN.matcher(ip);
         if (matcher.matches()) {
-            return inRange(( Long.parseLong(matcher.group(1)) << 24 ) +
-                           ( Long.parseLong(matcher.group(2)) << 16 ) +
-                           ( Long.parseLong(matcher.group(3)) << 8 ) +
-                           ( Long.parseLong(matcher.group(4)) ));
+            return inRange(( Long.parseUnsignedLong(matcher.group(1)) << 24 ) |
+                           ( Long.parseUnsignedLong(matcher.group(2)) << 16 ) |
+                           ( Long.parseUnsignedLong(matcher.group(3)) << 8 ) |
+                           ( Long.parseUnsignedLong(matcher.group(4)) ));
         }
         return false;
     }

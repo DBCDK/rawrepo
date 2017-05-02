@@ -29,16 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author DBC {@literal <dbc.dk>}
  */
 public class QueueRules extends RawRepoWorker {
-
-    private static final Logger log = LoggerFactory.getLogger(QueueRules.class);
 
     public QueueRules(DataSource dataSource, QueueTarget queueTarget) {
         super(dataSource, queueTarget, null, null);
@@ -60,13 +56,13 @@ public class QueueRules extends RawRepoWorker {
                     String leaf = resultSet.getString(++i);
 
                     Provider p = providerMap.get(provider);
-                    if(p == null){
+                    if (p == null) {
                         p = new Provider(provider);
                         providerMap.put(provider, p);
                         res.add(p);
                     }
 
-                    p.getWorkers().add( new Worker(worker, changed, leaf));
+                    p.getWorkers().add(new Worker(worker, changed, leaf));
 
                 }
                 return res;
@@ -75,9 +71,11 @@ public class QueueRules extends RawRepoWorker {
     }
 
     public static class Provider {
+
         private final String provider;
         private final List<Worker> workers;
-        public Provider(String provider){
+
+        public Provider(String provider) {
             this.provider = provider;
             workers = new ArrayList<>();
         }
@@ -96,13 +94,13 @@ public class QueueRules extends RawRepoWorker {
             return workers;
         }
 
-
     }
+
     public static class Worker {
 
         private static final Map<String, String> descriptions;
-        static
-        {
+
+        static {
             // Key is 'changed+leaf'
             descriptions = new HashMap<>();
             descriptions.put("NN", "Hoved/Sektionsposter som er afhængige af den rørte post og ikke er rørt");
@@ -117,7 +115,8 @@ public class QueueRules extends RawRepoWorker {
         }
 
         private final String worker, changed, leaf;
-        public Worker(String worker, String changed, String leaf){
+
+        public Worker(String worker, String changed, String leaf) {
             this.worker = worker;
             this.changed = changed;
             this.leaf = leaf;
@@ -145,9 +144,8 @@ public class QueueRules extends RawRepoWorker {
         }
 
         public String getDescription() {
-            return descriptions.get(this.changed.toUpperCase()+this.leaf.toUpperCase());
+            return descriptions.get(this.changed.toUpperCase() + this.leaf.toUpperCase());
         }
     }
-
 
 }

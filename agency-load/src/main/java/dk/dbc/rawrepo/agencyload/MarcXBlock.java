@@ -23,8 +23,6 @@ package dk.dbc.rawrepo.agencyload;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 
 /**
@@ -32,8 +30,6 @@ import org.xml.sax.Attributes;
  * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXBlock {
-
-    private static final Logger log = LoggerFactory.getLogger(MarcXBlock.class);
 
     private StringBuilder sb;
     private String opening;
@@ -104,7 +100,6 @@ public class MarcXBlock {
         }
     }
 
-
     public void characters(String data) {
         if (pos.length() == 4) {
             processor.marcxContent(pos, data);
@@ -114,7 +109,7 @@ public class MarcXBlock {
 
     private void writeEscaped(String data, boolean textEscape) {
         for (char c : data.toCharArray()) {
-            if (textEscape || (c >= 0x20 && c <= 0x7F)) {
+            if (textEscape || c >= 0x20 && c <= 0x7F) {
                 if (c == '&') {
                     sb.append("&amp;");
                 } else if (c == '<') {

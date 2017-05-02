@@ -25,8 +25,6 @@ import java.io.InputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -38,7 +36,6 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class MarcXParser extends DefaultHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(MarcXParser.class);
     private static final SAXParserFactory parserFactory = makeParserFactory();
 
     private int depth;
@@ -110,21 +107,6 @@ public class MarcXParser extends DefaultHandler {
         if (depth != -1) {
             throw new SAXException("This is not closed properly");
         }
-    }
-
-    @Override
-    public void fatalError(SAXParseException e) throws SAXException {
-        super.fatalError(e); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void error(SAXParseException e) throws SAXException {
-        super.error(e); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void warning(SAXParseException e) throws SAXException {
-        super.warning(e); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
