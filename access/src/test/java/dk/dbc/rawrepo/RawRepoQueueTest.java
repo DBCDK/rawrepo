@@ -61,7 +61,7 @@ public class RawRepoQueueTest {
     public void testMock() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .relationHints(300100, "870970,300000")
+                .relationHints(300100, 870970, 300000)
                 .doesNotUseCommon(999999)
                 .addDeleted("999999:a-h1")
                 .add("870970:a-h1").add("191919:a-h1:870970").add("300000:a-h1:870970")
@@ -136,7 +136,7 @@ public class RawRepoQueueTest {
     public void testEnqueueSibling() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .relationHints(300100, "870970,300000")
+                .relationHints(300100, 870970, 300000)
                 .add("870970:R").add("191919:R:870970").add("300000:R:+").add("300100:R:+")
                 .build();
         dao.changedRecord("PRO", recordFromString("870970:R"));
@@ -405,43 +405,6 @@ public class RawRepoQueueTest {
                    "870971:A:CL");
     }
 
-    @Test
-    public void testEnqueueCircularRelation() throws Exception {
-        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
-        RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .add("870970:H")
-                .add("870970:S1:870970:H,870970:B1")
-                .add("870970:B1:870970:S1")
-                .build(false);
-        try {
-            dao.changedRecord("PRO", recordFromString("870970:S1"));
-            fail("expected RawRepoExceptionCircularDependency");
-        } catch (RawRepoExceptionCircularDependency ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-
-    @Test
-    public void testEnqueueCircularRelation2() throws Exception {
-        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
-        RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .add("870970:12345678")
-                .add("191919:12345678:870970:12345678")
-                .add("300000:12345678:870970:12345678")
-                .add("300101:12345678:300000:12345678")
-        .build();
-        dao.changedRecord("PRO", recordFromString("300101:12345678"));
-        System.out.println("enqueued = " + enqueued);
-        enqueuedIs(enqueued,
-                   "300101:12345678:CL");
-        enqueued.clear();
-        dao.changedRecord("PRO", recordFromString("300000:12345678"));
-        System.out.println("enqueued (2) = " + enqueued);
-        enqueuedIs(enqueued,
-                   "300000:12345678:CL",
-                   "300101:12345678:-L");
-    }
-
     /*
      *     ______          __
      *    /_  __/__  _____/ /_
@@ -527,9 +490,8 @@ class RawRepoMock {
         return new RawRepoMock(enqueued);
     }
 
-    RawRepoMock relationHints(int agencyId, String order) {
-        List<Integer> orderList = Arrays.stream(order.split(",")).map(s -> Integer.parseInt(s)).collect(toList());
-        relationHints.put(agencyId, orderList);
+    RawRepoMock relationHints(int agencyId, Integer... order) {
+        relationHints.put(agencyId, Arrays.asList(order));
         return this;
     }
 
