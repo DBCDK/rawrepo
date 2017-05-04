@@ -30,8 +30,6 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -41,15 +39,12 @@ import org.slf4j.LoggerFactory;
 @Startup
 public class MetricsRegistry {
 
-    private static final Logger log = LoggerFactory.getLogger(MetricsRegistry.class);
-    private MetricRegistry metrics;
+    private final MetricRegistry metrics = new MetricRegistry();
 
     private JmxReporter reporter;
 
     @PostConstruct
     public void create() {
-        log.debug("Create MetricsRegistry");
-        metrics = new MetricRegistry();
         reporter = JmxReporter.forRegistry(metrics).build();
         reporter.start();
     }
