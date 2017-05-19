@@ -20,19 +20,16 @@
  */
 package dk.dbc.rawrepo;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import org.slf4j.LoggerFactory;
+
+import javax.jms.JMSException;
+import javax.xml.bind.DatatypeConverter;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.jms.JMSException;
-import javax.xml.bind.DatatypeConverter;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -45,7 +42,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 18;
+    private static final int SCHEMA_VERSION = 20;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
