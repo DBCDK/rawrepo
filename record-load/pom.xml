@@ -24,6 +24,7 @@
     <artifactId>rawrepo-record-load</artifactId>
     <packaging>jar</packaging>
     <name>rawrepo-record-load</name>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

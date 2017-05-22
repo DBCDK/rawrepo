@@ -26,6 +26,7 @@
     <artifactId>rawrepo-content-service</artifactId>
     <packaging>war</packaging>
     <name>rawrepo-content-service</name>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

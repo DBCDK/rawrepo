@@ -27,6 +27,7 @@
     <artifactId>rawrepo-solr-indexer</artifactId>
     <name>rawrepo-solr-indexer</name>
     <packaging>war</packaging>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

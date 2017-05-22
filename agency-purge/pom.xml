@@ -26,6 +26,7 @@
     <artifactId>agency-purge</artifactId>
     <packaging>jar</packaging>
     <name>${project.parent.artifactId}-${project.artifactId}</name>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

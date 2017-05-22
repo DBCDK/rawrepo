@@ -25,6 +25,7 @@
     <artifactId>rawrepo-introspect</artifactId>
     <packaging>war</packaging>
     <name>rawrepo-introspect</name>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

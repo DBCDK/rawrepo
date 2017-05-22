@@ -32,6 +32,7 @@
     <name>rawrepo-agency-dump</name>
     <artifactId>rawrepo-agency-dump</artifactId>
     <packaging>jar</packaging>
+    <version>1.5-SNAPSHOT</version>
 
     <dependencies>
         <dependency>

@@ -25,6 +25,7 @@
     <artifactId>rawrepo-record-inspector</artifactId>
     <packaging>jar</packaging>
     <name>rawrepo-record-inspector</name>
+    <version>1.5-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>

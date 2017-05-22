@@ -29,6 +29,7 @@
 
     <artifactId>rawrepo-maintain</artifactId>
     <packaging>war</packaging>
+    <version>1.5-SNAPSHOT</version>
 
     <name>rawrepo-maintain</name>
 

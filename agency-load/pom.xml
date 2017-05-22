@@ -31,6 +31,7 @@
     <name>rawrepo-agency-load</name>
     <artifactId>rawrepo-agency-load</artifactId>
     <packaging>jar</packaging>
+    <version>1.5-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
