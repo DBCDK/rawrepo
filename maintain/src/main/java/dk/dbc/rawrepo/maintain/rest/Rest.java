@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo.maintain.rest;
 
-import dk.dbc.rawrepo.QueueTarget;
 import dk.dbc.rawrepo.maintain.QueueRules;
 import dk.dbc.rawrepo.maintain.QueueRules.Provider;
 import dk.dbc.rawrepo.maintain.QueueRules.Worker;
@@ -76,7 +75,7 @@ public class Rest {
     @Path("queuerules")
     @Produces("text/html")
     public String getQueuerules() throws SQLException{
-        try(QueueRules q = new QueueRules(rawrepo, new QueueTarget.Default())){
+        try(QueueRules q = new QueueRules(rawrepo)){
             ArrayList<Provider> providers = q.getQueueRules();
             log.debug("Found '{}' providers", providers.size());
             StringBuilder sb = new StringBuilder();
@@ -110,7 +109,7 @@ public class Rest {
                     }
                     sb.append("<td>").append(w.getWorker()).append("</td>");
                     sb.append("<td>").append(w.getDescription()).append("</td>");
-                    sb.append("</tr>"); 
+                    sb.append("</tr>");
                 }
             }
 

@@ -22,17 +22,14 @@ package dk.dbc.rawrepo;
 
 import org.slf4j.LoggerFactory;
 
-import javax.jms.JMSException;
 import javax.xml.bind.DatatypeConverter;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
@@ -42,7 +39,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 20;
+    private static final int SCHEMA_VERSION = 21;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -53,16 +50,16 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
 
     private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?" +
-                                                    " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
-                                                    " ORDER BY modified DESC";
+            " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
+            " ORDER BY modified DESC";
     private static final String HISTORIC_CONTENT = "SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?" +
-                                                   " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
+            " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?";
 
     private static final String TRACKING_IDS_SINCE = "SELECT trackingid, modified FROM records" +
-                                                     " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
-                                                     " UNION SELECT trackingid, modified FROM records_archive" +
-                                                     " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
-                                                     " ORDER BY modified DESC;";
+            " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+            " UNION SELECT trackingid, modified FROM records_archive" +
+            " WHERE agencyid=? AND bibliographicrecordid = ? AND modified >= ?" +
+            " ORDER BY modified DESC;";
 
     private static final String SELECT_RELATIONS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RELATIONS_PARENTS = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid <> bibliographicrecordid";
@@ -119,7 +116,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     /**
      * Fetch a record from the database
-     *
+     * <p>
      * Create one if none exists in the database
      *
      * @param bibliographicRecordId String with record bibliographicRecordId
@@ -232,8 +229,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                         final String base64Content = resultSet.getString(1);
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
                         return new RecordImpl(bibliographicRecordId, agencyId, recordMetaData.isDeleted(),
-                                              recordMetaData.getMimeType(), content,
-                                              recordMetaData.getCreated(), recordMetaData.getModified(), recordMetaData.getTrackingId(), false);
+                                recordMetaData.getMimeType(), content,
+                                recordMetaData.getCreated(), recordMetaData.getModified(), recordMetaData.getTrackingId(), false);
                     }
                 }
             }
@@ -287,11 +284,12 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error purging record", ex);
         }
     }
+
     private static final String LOG_DATABASE_ERROR = "Error accessing database";
 
     /**
      * Save a record to database after it has been modified
-     *
+     * <p>
      * Will try to update, otherwise insert
      *
      * @param record record to be saved
@@ -335,7 +333,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             throw new RawRepoException("Error saving record", ex);
         }
         if (record instanceof RecordImpl) {
-            ( (RecordImpl) record ).original = false;
+            ((RecordImpl) record).original = false;
         }
     }
 
@@ -454,7 +452,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param recordId recordid to find relations to
      * @return collection of recordids that list bibliographicRecordId at
-     *         relation
+     * relation
      * @throws RawRepoException
      */
     @Override
@@ -504,7 +502,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     *
      * @param recordId
      * @return
      * @throws RawRepoException
@@ -529,7 +526,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     *
      * @param recordId
      * @return
      * @throws RawRepoException
@@ -577,8 +573,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         return collection;
     }
 
-    private final ConcurrentHashMap<String, List<String>> queueRules = new ConcurrentHashMap<>();
-
     /**
      * Put job(s) on the queue (in the database)
      *
@@ -588,45 +582,178 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
      */
-    private static final String CALL_QUEUES = "SELECT * FROM queues(?, ?, ?)";
-    private List<String> computeQueueRules(String key) {
-
-        try (PreparedStatement stmt = connection.prepareStatement(CALL_QUEUES)) {
+    @Override
+    public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
+        //        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
+        try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
-            stmt.setString(pos++, key.substring(2));
-            stmt.setString(pos++, key.substring(0, 1));
-            stmt.setString(pos++, key.substring(1, 2));
-            try(ResultSet resultSet = stmt.executeQuery()) {
-                ArrayList<String> list = new ArrayList<>();
-                while(resultSet.next()) {
-                    list.add(resultSet.getString(1));
+            stmt.setString(pos++, job.getBibliographicRecordId());
+            stmt.setInt(pos++, job.getAgencyId());
+//            stmt.setString(pos++, mimeType);
+            stmt.setString(pos++, provider);
+            stmt.setString(pos++, changed ? "Y" : "N");
+            stmt.setString(pos++, leaf ? "Y" : "N");
+            logQueue.debug("Enqueu: job = " + job +
+                    "; provider = " + provider +
+                    "; changed = " + changed + "; leaf = " + leaf);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    if (resultSet.getBoolean(2)) {
+                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job);
+                    } else {
+                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job + "; skipped - already on queue");
+                    }
                 }
-                return list;
+
             }
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error queueing job", ex);
         }
     }
 
+    /**
+     * Pull a job from the queue with rollback to savepoint capability
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
     @Override
-    public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
-        String key = ( changed ? "Y" : "N" ) + ( leaf ? "Y" : "N" ) + provider;
-
-        try {
-            List<String> queues = queueRules.computeIfAbsent(key, this::computeQueueRules);
-            QueueJob queueJob = new QueueJob(job);
-            queueTarget.send(queueJob, queues);
-        } catch (RuntimeException ex) {
-            if (ex.getCause() != null) {
-                throw new RawRepoException(ex.getCause());
-            } else {
-                throw new RawRepoException(ex);
-            }
-        } catch (JMSException ex) {
-            log.error("Exception: " + ex.getMessage());
-            log.debug("Exception:", ex);
-            throw new RawRepoException(ex);
+    public QueueJob dequeueWithSavepoint(String worker) throws RawRepoException {
+        try (PreparedStatement begin = connection.prepareStatement("BEGIN")) {
+            begin.execute();
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error dequeueing job", ex);
         }
+        QueueJob result = dequeue(worker);
+        try (PreparedStatement savepoint = connection.prepareStatement("SAVEPOINT DEQUEUED")) {
+            savepoint.execute();
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error dequeueing job", ex);
+        }
+        return result;
+    }
+
+    /**
+     * Pull a job from the queue
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
+    @Override
+    public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
+        List<QueueJob> result = new ArrayList<>();
+        try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
+            int pos = 1;
+            stmt.setString(pos++, worker);
+            stmt.setInt(pos++, wanted);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                            resultSet.getInt("agencyid"),
+                            resultSet.getString("worker"),
+                            resultSet.getTimestamp("queued"));
+                    result.add(job);
+                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
+                }
+                return result;
+            }
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error dequeueing jobs", ex);
+        }
+    }
+
+    /**
+     * Pull a job from the queue
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
+    @Override
+    public QueueJob dequeue(String worker) throws RawRepoException {
+        try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE)) {
+            stmt.setString(1, worker);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
+                            resultSet.getInt("agencyid"),
+                            resultSet.getString("worker"),
+                            resultSet.getTimestamp("queued"));
+                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
+                    return job;
+                }
+                return null;
+            }
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error dequeueing job", ex);
+        }
+    }
+
+    /**
+     * QueueJob has successfully been processed
+     * <p>
+     * This is now the default when dequeuing
+     *
+     * @param queueJob job that has been processed
+     * @throws RawRepoException
+     */
+    @Override
+    @Deprecated
+    public void queueSuccess(QueueJob queueJob) throws RawRepoException {
+    }
+
+    /**
+     * QueueJob has failed, log to database
+     *
+     * @param queueJob job that failed
+     * @param error    what happened (empty string not allowed)
+     * @throws RawRepoException
+     */
+    @Override
+    public void queueFail(QueueJob queueJob, String error) throws RawRepoException {
+        if (error == null || error.equals("")) {
+            throw new RawRepoException("Error cannot be empty in queueFail");
+        }
+        try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
+            int pos = 1;
+            stmt.setString(pos++, queueJob.job.bibliographicRecordId);
+            stmt.setInt(pos++, queueJob.job.agencyId);
+            stmt.setString(pos++, queueJob.worker);
+            stmt.setString(pos++, error);
+            stmt.setTimestamp(pos++, queueJob.queued);
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error reporting job status", ex);
+        }
+    }
+
+    /**
+     * QueueJob has failed
+     *
+     * @param queueJob job that failed
+     * @param error    what happened (empty string not allowed)
+     * @throws RawRepoException
+     */
+    @Override
+    public void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException {
+        if (error == null || error.equals("")) {
+            throw new RawRepoException("Error cannot be empty in queueFail");
+        }
+        try (PreparedStatement rollback = connection.prepareStatement("ROLLBACK TO DEQUEUED")) {
+            rollback.execute();
+        } catch (SQLException ex) {
+            log.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error rolling back", ex);
+        }
+        queueFail(queueJob, error);
     }
 
 }

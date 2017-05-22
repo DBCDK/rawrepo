@@ -41,9 +41,9 @@ public class QueueRecordsIT extends RawRepoTester {
 
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, testQueue.size());
+        assertEquals("Queue is empty", 0, count("queue"));
         mock.queueRecord(191919, "40398910", "test");
-        assertEquals("Queue size", 2, testQueue.size());
+        assertEquals("Queue size", 2, count("queue"));
     }
 
     @Test
@@ -52,9 +52,9 @@ public class QueueRecordsIT extends RawRepoTester {
 
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, testQueue.size());
+        assertEquals("Queue is empty", 0, count("queue"));
         mock.queueRecord(870970, "40398910", "test");
-        assertEquals("Queue size", 3, testQueue.size());
+        assertEquals("Queue size", 3, count("queue"));
     }
 
     @Test
@@ -63,9 +63,9 @@ public class QueueRecordsIT extends RawRepoTester {
 
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, testQueue.size());
+        assertEquals("Queue is empty", 0, count("queue"));
         mock.queueRecord(191919, "40254641", "test");
-        assertEquals("Queue size", 5, testQueue.size());
+        assertEquals("Queue size", 5, count("queue"));
     }
 
     @Test
@@ -74,15 +74,15 @@ public class QueueRecordsIT extends RawRepoTester {
 
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, testQueue.size());
+        assertEquals("Queue is empty", 0, count("queue"));
         mock.queueRecord(870970, "40254641", "test");
-        assertEquals("Queue size", 9, testQueue.size());
+        assertEquals("Queue size", 9, count("queue"));
     }
 
     private QueueRecords makeQueueRecords() throws RawRepoException, SQLException {
         QueueRecords mock = mock(QueueRecords.class);
         when(mock.getConnection()).thenReturn(pg.getConnection());
-        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).queue(testQueue).build());
+        when(mock.getDao()).thenAnswer((InvocationOnMock invocation) -> RawRepoDAO.builder(pg.getConnection()).build());
         doCallRealMethod().when(mock).queueRecord(anyInt(), anyString(), anyString());
         return mock;
     }

@@ -20,25 +20,17 @@
  */
 package dk.dbc.rawrepo.queuebulkload;
 
-import com.sun.messaging.ConnectionConfiguration;
-import com.sun.messaging.ConnectionFactory;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,59 +42,37 @@ public class BulkQueue {
 
     private static final Logger log = LoggerFactory.getLogger(BulkQueue.class);
 
-    final String db;
-    final Integer commit;
-    final String role;
-    final Connection connection;
-    final RawRepoDAO dao;
-    final JMSContext context;
+    String db;
+    Integer commit;
+    String role;
+    Connection connection;
+    RawRepoDAO dao;
 
-    public BulkQueue(String db, String mq, int retryInterval, int retryCount, String openagency, Integer commit, String role) throws SQLException, RawRepoException, JMSException {
+    public BulkQueue(String db, Integer commit, String role) throws SQLException, RawRepoException {
         this.db = db;
         this.commit = commit;
         this.role = role;
-        this.connection = openDatabase(db);
-        RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
-
-        if (openagency != null) {
-            OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder()
-                    .build(openagency);
-            builder.openAgency(service, null);
-        }
-
-        if (mq != null) {
-            ConnectionFactory connectionFactory = new ConnectionFactory();
-            connectionFactory.setProperty(ConnectionConfiguration.imqAddressList, mq);
-            this.context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
-            builder.queue(context, retryCount, retryInterval);
-        } else {
-            this.context = null;
-        }
-        this.dao = builder
-                .build();
+        dao = openDatabase(db);
     }
 
-    public void close() {
-        if (context != null) {
-            context.close();
-        }
-    }
-
-    public void run(Iterator<RecordId> iterator) {
+    public void run(Iterator<RecordId> iterator, String fallbackMimeType) {
         try {
             int row = 0;
+            connection.setAutoCommit(false);
             while (iterator.hasNext()) {
                 if (row == commit) {
-                    dao.commitQueue();
+                    log.debug("commit");
+                    connection.commit();
+                    connection.setAutoCommit(false);
                     row = 0;
                 }
                 row++;
                 RecordId id = iterator.next();
                 log.debug("id = " + id);
-                dao.changedRecord(role, id);
+                dao.changedRecord(role, id, fallbackMimeType);
             }
-            dao.commitQueue();
-        } catch (RawRepoException | JMSException ex) {
+            connection.commit();
+        } catch (Exception ex) {
             log.error("Caught exception:", ex);
             try {
                 connection.rollback();
@@ -112,24 +82,34 @@ public class BulkQueue {
         }
     }
 
-    public void runNoRule(Iterator<RecordId> iterator) {
+    public void run(Iterator<RecordId> iterator) {
         try {
-            List<String> queues = Arrays.asList(role);
-            int row = 0;
-            while (iterator.hasNext()) {
-                if (row == commit) {
-                    log.debug("commit");
-                    dao.commitQueue();
-                    row = 0;
+            connection.setAutoCommit(false);
+            try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queue (bibliographicrecordid, agencyid, worker) VALUES(?, ?, ?)")) {
+                stmt.setString(3, role);
+                int row = 0;
+                while (iterator.hasNext()) {
+                    if (row == commit) {
+                        log.debug("commit");
+                        connection.commit();
+                        connection.setAutoCommit(false);
+                        row = 0;
+                    }
+                    row++;
+                    RecordId next = iterator.next();
+                    stmt.setString(1, next.getBibliographicRecordId());
+                    stmt.setInt(2, next.getAgencyId());
+                    stmt.execute();
                 }
-                row++;
-                RecordId next = iterator.next();
-                dao.queue(new QueueJob(next.getBibliographicRecordId(), next.getAgencyId()), queues);
+                connection.commit();
             }
-            dao.commitQueue();
-        } catch (JMSException ex) {
-            log.error("Caught jms exception: " + ex.getMessage());
-            log.debug("Caught jms exception:", ex);
+        } catch (SQLException ex) {
+            log.error("Caught exception:", ex);
+            try {
+                connection.rollback();
+            } catch (SQLException ex1) {
+                log.error("Rolling back - Caught exception:", ex1);
+            }
         }
     }
 
@@ -140,7 +120,7 @@ public class BulkQueue {
     private static final int urlPatternPassword = 3;
     private static final int urlPatternHostPortDb = 4;
 
-    private static Connection openDatabase(String url) throws SQLException, RawRepoException {
+    private RawRepoDAO openDatabase(String url) throws SQLException, RawRepoException {
         Matcher matcher = urlPattern.matcher(url);
         if (!matcher.find()) {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
@@ -158,8 +138,8 @@ public class BulkQueue {
         }
 
         log.debug("Connecting");
-        Connection con = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
+        connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return con;
+        return RawRepoDAO.builder(connection).build();
     }
 }

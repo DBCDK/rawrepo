@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.jms.JMSException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +45,7 @@ public class AgencyLoadMain {
 
     private static final Logger log = LoggerFactory.getLogger(AgencyLoadMain.class);
 
-    private static final String MQ = "mq";
-    private static final String DB = "db";
-    private static final String OPEN_AGENCY = "open-agency";
     private static final String PARENT_AGENCIES = "parent-agencies";
-    private static final String ALLOWFAIL = "allow-fail";
-    private static final String DEBUG = "debug";
-    private static final String ROLE = "role";
-    private static final String COMMON = "common";
 
     public static void main(String[] args) {
         CommandLine commandLine = new AgencyDumpCommandLine();
@@ -80,15 +72,15 @@ public class AgencyLoadMain {
                     commonAgency = agencyid;
                 }
             }
-            if (commandLine.hasOption(COMMON)) {
-                commonAgency = (Integer) commandLine.getOption(COMMON);
+            if (commandLine.hasOption("common")) {
+                commonAgency = (Integer) commandLine.getOption("common");
             }
 
-            if (commandLine.hasOption(ROLE)) {
-                role = (String) commandLine.getOption(ROLE);
+            if (commandLine.hasOption("role")) {
+                role = (String) commandLine.getOption("role");
             }
 
-            if (commandLine.hasOption(DEBUG)) {
+            if (commandLine.hasOption("debug")) {
                 setLogLevel("logback-debug.xml");
             } else {
                 setLogLevel("logback-info.xml");
@@ -105,24 +97,16 @@ public class AgencyLoadMain {
             return;
         }
 
-        boolean useTransaction = !commandLine.hasOption(ALLOWFAIL);
-        try (AgencyLoad agencyLoad = new AgencyLoad((String) commandLine.getOption(DB),
-                                                    (String) commandLine.getOption(MQ),
-                                                    (Integer) commandLine.getOption("mq-retry-interval"),
-                                                    (Integer) commandLine.getOption("mq-retry-count"),
-                                                    (String) commandLine.getOption(OPEN_AGENCY),
+        boolean useTransaction = !commandLine.hasOption("allow-fail");
+        try (AgencyLoad agencyLoad = new AgencyLoad((String) commandLine.getOption("db"),
                                                     list, commonAgency, role, useTransaction)) {
             agencyLoad.timingStart();
             boolean success = true;
             success = agencyLoad.load(in) && success;
             success = agencyLoad.buildParentRelations() && success;
             success = agencyLoad.queue() && success;
-            if (useTransaction) {
-                if (success) {
-                    agencyLoad.commit();
-                }
-            } else {
-                agencyLoad.commitQueue();
+            if (success && useTransaction) {
+                agencyLoad.commit();
             }
             agencyLoad.close();
             log.info("Done");
@@ -130,7 +114,7 @@ public class AgencyLoadMain {
             agencyLoad.status();
 
             System.exit(success ? 0 : 1);
-        } catch (RawRepoException | SQLException | ParserConfigurationException | SAXException | IOException | JMSException ex) {
+        } catch (RawRepoException | SQLException | ParserConfigurationException | SAXException | IOException ex) {
             log.error("Got fatal error: " + ex.getMessage());
         }
     }
@@ -150,17 +134,13 @@ public class AgencyLoadMain {
 
         @Override
         void setOptions() {
-            addOption(DB, "connectstring for database", true, false, string, null);
-            addOption(MQ, "connectstring for message queue", false, false, string, null);
-            addOption(OPEN_AGENCY, "url og openAgency web service", false, false, string, null);
+            addOption("db", "connectstring for database", true, false, string, null);
             addOption(PARENT_AGENCIES, "list of parent-agencied (could be 300000,191919)", false, false, string, null);
-            addOption(COMMON, "most common agency (implied by --" + PARENT_AGENCIES + " to last from list). \n" +
-                              "\tThis agency holds parent-relations, if record/agency exists", false, false, integer, null);
-            addOption(ROLE, "who to put on queue as (could be agency-maintain)", false, false, string, null);
-            addOption(DEBUG, "turn on debug logging", false, false, null, yes);
-            addOption(ALLOWFAIL, "commit even if something fails", false, false, null, yes);
-            addOption("mq-retry-interval", "ms", false, false, integer, new DefaultInteger(10000));
-            addOption("mq-retry-count", "cnt", false, false, integer, new DefaultInteger(60));
+            addOption("common", "most common agency (implied by --" + PARENT_AGENCIES + " to last from list). \n" +
+                                "\tThis agency holds parent-relations, if record/agency exists", false, false, integer, null);
+            addOption("role", "who to put on queue as (could be agency-maintain)", false, false, string, null);
+            addOption("debug", "turn on debug logging", false, false, null, yes);
+            addOption("allow-fail", "commit even if something fails", false, false, null, yes);
         }
 
         @Override
@@ -168,4 +148,5 @@ public class AgencyLoadMain {
             return "prog [ options ] [ file ]";
         }
     }
+
 }

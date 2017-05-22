@@ -41,8 +41,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +52,6 @@ public abstract class RawRepoDAO {
 
     private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
 
-    protected QueueTarget queueTarget;
-    private static final QueueTarget.Default DEFAULT_QUEUE_TARGET = new QueueTarget.Default();
     AgencySearchOrder agencySearchOrder;
     RelationHints relationHints;
 
@@ -68,13 +64,11 @@ public abstract class RawRepoDAO {
         private final Connection connection;
         private AgencySearchOrder agencySearchOrder;
         private RelationHints relationHints;
-        private QueueTarget queueTarget;
 
         private Builder(Connection connection) {
             this.connection = connection;
             this.agencySearchOrder = null;
             this.relationHints = null;
-            this.queueTarget = null;
         }
 
         /**
@@ -153,45 +147,6 @@ public abstract class RawRepoDAO {
         }
 
         /**
-         * Set queue context
-         *
-         * @param context jms context for queues
-         * @return self
-         * @throws JMSException if context is unable to create a producer
-         */
-        public Builder queue(JMSContext context) throws JMSException {
-            this.queueTarget = new QueueTarget.Mq(context);
-            return this;
-        }
-
-        /**
-         * Set queue context
-         *
-         * This requires "org.glassfish.mq.imq=5.1" on classpath
-         *
-         * @param context      jms context for queues
-         * @param retryCount   Number or retries
-         * @param retryDelayMs delay between retries
-         * @return self
-         * @throws JMSException if context is unable to create a producer
-         */
-        public Builder queue(JMSContext context, int retryCount, int retryDelayMs) throws JMSException {
-            this.queueTarget = new QueueTarget.OpenMq(context, retryCount, retryDelayMs);
-            return this;
-        }
-
-        /**
-         * Set queue target - Mostly for testing purposes
-         *
-         * @param queueTarget target
-         * @return self
-         */
-        public Builder queue(QueueTarget queueTarget) {
-            this.queueTarget = queueTarget;
-            return this;
-        }
-
-        /**
          * Construct a dao from the builder
          *
          * @return {@link RawRepoDAO} dao with default services, if none has
@@ -230,11 +185,6 @@ public abstract class RawRepoDAO {
                 }
                 dao.relationHints = relationHints;
 
-                if (queueTarget == null) {
-                    queueTarget = DEFAULT_QUEUE_TARGET;
-                }
-                dao.queueTarget = queueTarget;
-
                 return dao;
             } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                 log.error("Caught exception trying to instantiate dao", ex);
@@ -253,70 +203,7 @@ public abstract class RawRepoDAO {
         return new Builder(connection);
     }
 
-    public RawRepoDAO() {
-        queueTarget = DEFAULT_QUEUE_TARGET;
-    }
-
     protected void validateConnection() throws RawRepoException {
-    }
-
-    /**
-     * Set a queue target to a jms context
-     *
-     * @param context      Message queue
-     * @param retryCount   Number of retries
-     * @param retryDelayMs How often to retry
-     * @return self for chaining
-     * @throws JMSException
-     */
-    public RawRepoDAO setQueueTarget(JMSContext context, int retryCount, int retryDelayMs) throws JMSException {
-        this.queueTarget = new QueueTarget.OpenMq(context, retryCount, retryDelayMs);
-        return this;
-    }
-
-    /**
-     * Set a queue target to a jms context
-     *
-     * @param context Message queue
-     * @return self for chaining
-     * @throws JMSException
-     */
-    public RawRepoDAO setQueueTarget(JMSContext context) throws JMSException {
-        this.queueTarget = new QueueTarget.Mq(context);
-        return this;
-    }
-
-    /**
-     * Set queue target implementation. Most useful for testing.
-     *
-     * @param queueTarget Target implementation
-     * @return self for chaining
-     */
-    public RawRepoDAO setQueueTarget(QueueTarget queueTarget) {
-        this.queueTarget = queueTarget;
-        return this;
-    }
-
-    /**
-     * Not a good thing to call... But if you have to bypass the queue rules
-     *
-     * @param job    Job to queue
-     * @param queues Where to queue it
-     * @throws JMSException If anything fails
-     */
-    public void queue(QueueJob job, List<String> queues) throws JMSException {
-        this.queueTarget.send(job, queues);
-    }
-
-    /**
-     * Commit, the queue (if queue implementation supports it)
-     *
-     * pass through to {@link QueueTarget#commit()}
-     *
-     * @throws JMSException in case of error
-     */
-    public void commitQueue() throws JMSException {
-        queueTarget.commit();
     }
 
     /**
@@ -559,7 +446,6 @@ public abstract class RawRepoDAO {
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
     }
-
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true, true);
     }
@@ -576,7 +462,7 @@ public abstract class RawRepoDAO {
      *                              found
      * @throws MarcXMergerException if we can't merge record
      */
-    private Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
+    private  Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
         int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, prioritizeSelf);
         LinkedList<Record> records = new LinkedList<>();
         for (;;) {
@@ -605,11 +491,11 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                             merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
-                                             record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                             record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                             record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
-                                             enrichmentTrail.toString());
+                                                                    merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
+                                                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                                                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                                                                    record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
+                                                                    enrichmentTrail.toString());
             }
         }
         return record;
@@ -761,6 +647,71 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException
      */
     abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
+
+    /**
+     * Pull a job from the queue
+     *
+     * Note: a queue should be dequeued either with this or
+     * {@link #dequeue(java.lang.String, int) dequeue}, but not both. It could
+     * break for long queues.
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
+    public abstract QueueJob dequeue(String worker) throws RawRepoException;
+
+    /**
+     * Pull jobs from the queue
+     *
+     * Note: a queue should be dequeued either with this or
+     * {@link #dequeue(java.lang.String) dequeue}, but not both. It could break
+     * for long queues.
+     *
+     * @param worker name of worker that want's to take a job
+     * @param wanted number of jobs to dequeue
+     * @return job description list
+     * @throws RawRepoException
+     */
+    public abstract List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException;
+
+    /**
+     * Pull a job from the queue with rollback to savepoint capability
+     *
+     * @param worker name of worker that want's to take a job
+     * @return job description
+     * @throws RawRepoException
+     */
+    public abstract QueueJob dequeueWithSavepoint(String worker) throws RawRepoException;
+
+    /**
+     * QueueJob has successfully been processed
+     *
+     * This is now the default when dequeuing
+     *
+     * @param queueJob job that has been processed
+     * @throws RawRepoException
+     */
+    @Deprecated
+    public abstract void queueSuccess(QueueJob queueJob) throws RawRepoException;
+
+    /**
+     * QueueJob has failed
+     *
+     * @param queueJob job that failed
+     * @param error    what happened (empty string not allowed)
+     * @throws RawRepoException
+     */
+    public abstract void queueFail(QueueJob queueJob, String error) throws RawRepoException;
+
+    /**
+     * QueueJob has failed
+     *
+     * @param queueJob job that failed
+     * @param error    what happened (empty string not allowed)
+     * @throws RawRepoException
+     */
+    public abstract void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException;
 
     /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change

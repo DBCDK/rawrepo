@@ -36,12 +36,12 @@ public class C {
 
     public static final String DATASOURCE = "jdbc/rawrepomaintain/rawrepo";
     public static final String PROPERTIES = "rawrepo-maintain";
-    public static final String CONNECTION_FACTORY = "jms/connectionFactory";
 
     public static final String OPERATION_PAGE_CONTENT = "pageContent";
     public static final String OPERATION_QUEUE_RECORDS = "queueRecords";
     public static final String OPERATION_REMOVE_RECORDS = "removeRecords";
     public static final String OPERATION_REVERT_RECORDS = "revertRecords";
     public static final String OPEN_AGENCY_URL = "openAgencyUrl";
+
 
 }

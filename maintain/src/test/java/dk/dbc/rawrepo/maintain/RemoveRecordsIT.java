@@ -22,12 +22,9 @@ package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
-import javax.jms.JMSException;
 import javax.sql.DataSource;
 import javax.xml.transform.TransformerException;
 import org.junit.Test;
@@ -50,12 +47,12 @@ public class RemoveRecordsIT extends RawRepoTester {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, testQueue.size());
+        assertEquals("Empty Queue:", 0, count("queue"));
 
         mock.removeRecord(191919, "40254692", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        assertEquals("Queue size:", 2, testQueue.size());
+        assertEquals("Queue size:", 2, count("queue"));
     }
 
     @Test
@@ -65,12 +62,12 @@ public class RemoveRecordsIT extends RawRepoTester {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, testQueue.size());
+        assertEquals("Empty Queue:", 0, count("queue"));
 
         mock.removeRecord(191919, "40254641", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        assertEquals("Queue size:", 5, testQueue.size());
+        assertEquals("Queue size:", 5, count("queue"));
     }
 
     @Test(expected = RawRepoException.class)
@@ -80,13 +77,12 @@ public class RemoveRecordsIT extends RawRepoTester {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, testQueue.size());
+        assertEquals("Empty Queue:", 0, count("queue"));
 
         mock.removeRecord(191919, "40254692", "test", "track");
 
         assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        System.out.println("testQueue = " + testQueue);
-        assertEquals("Queue size:", 2, testQueue.size());
+        assertEquals("Queue size:", 2, count("queue"));
 
         mock.removeRecord(191919, "40254692", "test", "track");
 
@@ -124,7 +120,7 @@ public class RemoveRecordsIT extends RawRepoTester {
         when(dataSource.getConnection()).thenReturn(pg.getConnection());
 
         OpenAgencyServiceFromURL openAgency = mock(OpenAgencyServiceFromURL.class);
-        return new RemoveRecords(dataSource, testQueue, openAgency);
+        return new RemoveRecords(dataSource, openAgency);
 
     }
 }

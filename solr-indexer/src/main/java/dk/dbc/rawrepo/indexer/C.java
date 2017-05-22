@@ -25,7 +25,16 @@ package dk.dbc.rawrepo.indexer;
 public class C {
     public static final String PROPERTIES_LOOKUP = "rawrepo-indexer";
 
+    public static final String WORKER_NAME = "workerName";
+    public static final String WORKER_NAME_DEFAULT = "solr-sync";
+
     public static final String SOLR_URL = "solrUrlRawrepo";
+
+    public static final String TIMEOUT = "timeout";
+    public static final String TIMEOUT_DEFAULT = "5";
+
+    public static final String MAX_CONCURRENT = "maxConcurrent";
+    public static final String MAX_CONCURRENT_DEFAULT = "2";
 
     public static final String DATASOURCE = "jdbc/rawrepoindexer/rawrepo";
 }

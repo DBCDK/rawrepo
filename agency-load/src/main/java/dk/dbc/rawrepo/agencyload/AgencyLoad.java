@@ -24,10 +24,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.sun.messaging.ConnectionConfiguration;
-import com.sun.messaging.ConnectionFactory;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -45,9 +42,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Session;
 import javax.xml.parsers.ParserConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +78,6 @@ public class AgencyLoad implements AutoCloseable {
     private Timer recordExists;
     private Timer saveRecord;
     private Timer fetchRecord;
-    private JMSContext context;
 
     public void timingStart() {
         reporter.start();
@@ -94,22 +87,12 @@ public class AgencyLoad implements AutoCloseable {
         reporter.stop();
     }
 
-    AgencyLoad(String db, String mq, int retryInterval, int retryCount, String openAgencyUrl, List<Integer> agencies, Integer commonAgency, String role, boolean useTransaction) throws RawRepoException, SQLException, JMSException {
+    AgencyLoad(String db, List<Integer> agencies, Integer commonAgency, String role, boolean useTransaction) throws RawRepoException, SQLException {
         this.connection = getConnection(db);
         if (useTransaction) {
             this.connection.setAutoCommit(false);
         }
-        OpenAgencyServiceFromURL openAgency = OpenAgencyServiceFromURL.builder()
-                .build(openAgencyUrl);
-        this.dao = RawRepoDAO.builder(connection)
-                .openAgency(openAgency, null)
-                .build();
-        if (mq != null) {
-            ConnectionFactory connectionFactory = new ConnectionFactory();
-            connectionFactory.setProperty(ConnectionConfiguration.imqAddressList, mq);
-            this.context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
-            this.dao.setQueueTarget(context, retryCount, retryInterval);
-        }
+        this.dao = RawRepoDAO.builder(connection).build();
         this.agencies = agencies;
         this.commonAgency = commonAgency;
         this.role = role;
@@ -140,7 +123,6 @@ public class AgencyLoad implements AutoCloseable {
 
     @Override
     public void close() {
-        context.close();
         try {
             if (!connection.getAutoCommit()) {
                 connection.rollback();
@@ -227,56 +209,55 @@ public class AgencyLoad implements AutoCloseable {
     boolean load(InputStream is) throws ParserConfigurationException, SAXException, IOException {
         MarcXProcessor marcXProcessor = new MarcXProcessor() {
 
-            String bibliographicRecordId;
-            int agencyId;
-            String parentBibliographicRecordId;
-            boolean isDeleted;
+                   String bibliographicRecordId;
+                   int agencyId;
+                   String parentBibliographicRecordId;
+                   boolean isDeleted;
 
-            void reset() {
-                bibliographicRecordId = null;
-                agencyId = -1;
-                parentBibliographicRecordId = null;
-                isDeleted = false;
-            }
+                   void reset() {
+                       bibliographicRecordId = null;
+                       agencyId = -1;
+                       parentBibliographicRecordId = null;
+                       isDeleted = false;
+                   }
 
-            @Override
-            public void marcxContent(String pos, String data) {
-                switch (pos) {
-                    case "001a":
-                        bibliographicRecordId = data;
-                        break;
-                    case "001b":
-                        agencyId = Integer.parseInt(data, 10);
-                        break;
-                    case "014a":
-                        parentBibliographicRecordId = data;
-                        break;
-                    case "004r":
-                        isDeleted = data.equals("d");
-                        break;
-                    default:
-                        break;
-                }
-            }
+                   @Override
+                   public void marcxContent(String pos, String data) {
+                       switch (pos) {
+                           case "001a":
+                               bibliographicRecordId = data;
+                               break;
+                           case "001b":
+                               agencyId = Integer.parseInt(data, 10);
+                               break;
+                           case "014a":
+                               parentBibliographicRecordId = data;
+                               break;
+                           case "004r":
+                               isDeleted = data.equals("d");
+                           default:
+                               break;
+                       }
+                   }
 
-            @Override
-            public void marcxXml(final byte[] xml) {
-                log.trace("agencyId = " + agencyId);
-                log.trace("bibliographicRecordId = " + bibliographicRecordId);
-                log.trace("parentBibliographicRecordId = " + parentBibliographicRecordId);
-                log.trace("isDeleted = " + isDeleted);
-                store(xml, agencyId, bibliographicRecordId, parentBibliographicRecordId, isDeleted);
-            }
+                   @Override
+                   public void marcxXml(final byte[] xml) {
+                       log.trace("agencyId = " + agencyId);
+                       log.trace("bibliographicRecordId = " + bibliographicRecordId);
+                       log.trace("parentBibliographicRecordId = " + parentBibliographicRecordId);
+                       log.trace("isDeleted = " + isDeleted);
+                       store(xml, agencyId, bibliographicRecordId, parentBibliographicRecordId, isDeleted);
+                   }
 
-            @Override
-            public MarcXBlock makeMarcXBlock() {
-                reset();
-                MarcXBlock marcXBlock = new MarcXBlock(this);
-                marcXBlock.addPrefix("marcx", "info:lc/xmlns/marcxchange-v1");
-                return marcXBlock;
-            }
+                   @Override
+                   public MarcXBlock makeMarcXBlock() {
+                       reset();
+                       MarcXBlock marcXBlock = new MarcXBlock(this);
+                       marcXBlock.addPrefix("marcx", "info:lc/xmlns/marcxchange-v1");
+                       return marcXBlock;
+                   }
 
-        };
+               };
 
         MarcXParser.parse(is, marcXProcessor);
         return errorRecords.getCount() == 0;
@@ -335,7 +316,7 @@ public class AgencyLoad implements AutoCloseable {
                         log.info("Queueing: " + cnt);
                     }
                     try {
-                        dao.changedRecord(role, recordId);
+                        dao.changedRecord(role, recordId, MarcXChangeMimeType.MARCXCHANGE);
                     } catch (RawRepoException ex) {
                         log.error("Error queueing record: " + recordId.getBibliographicRecordId() +
                                   " from " + recordId.getAgencyId() + " got: " + ex.getMessage());
@@ -344,13 +325,6 @@ public class AgencyLoad implements AutoCloseable {
                     }
                 }
                 log.info("Queued " + cnt);
-            }
-            try {
-                dao.commitQueue();
-            } catch (JMSException ex) {
-                log.error("Error committin jms queue: " + ex.getMessage());
-                log.debug("Error committin jms queue:", ex);
-                return false;
             }
         }
         return success;
@@ -365,16 +339,9 @@ public class AgencyLoad implements AutoCloseable {
         log.info("Queue errors: " + queueErrors.getCount());
     }
 
-    void commit() throws SQLException, JMSException {
-        if (connection.getAutoCommit()) {
-            connection.commit();
-        }
-        commitQueue();
+    void commit() throws SQLException {
+        connection.commit();
         log.debug("Transcation committed");
-    }
-    void commitQueue() throws JMSException {
-        dao.commitQueue();
-        log.debug("Queue committed");
     }
 
     /*

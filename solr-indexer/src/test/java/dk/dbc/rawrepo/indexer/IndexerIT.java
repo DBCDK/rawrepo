@@ -20,36 +20,27 @@
  */
 package dk.dbc.rawrepo.indexer;
 
-import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import dk.dbc.rawrepo.QueueJob;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
-import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Date;
-import javax.jms.JMSContext;
-import javax.jms.JMSProducer;
-import javax.sql.DataSource;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.junit.After;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
+import org.postgresql.ds.PGSimpleDataSource;
 
 /**
- *I
+ *
  */
 public class IndexerIT {
 
@@ -64,12 +55,12 @@ public class IndexerIT {
 
     SolrServer solrServer;
     String solrServerUrl;
-    PostgresITConnection pgConnection;
 
     @Before
     public void setUp() throws Exception {
-        this.pgConnection = new PostgresITConnection("rawrepo");
-        connection = pgConnection.getConnection();
+        String port = System.getProperty("postgresql.port");
+        jdbcUrl = "jdbc:postgresql://localhost:" + port + "/rawrepo";
+        connection = DriverManager.getConnection(jdbcUrl);
         connection.setAutoCommit(false);
         resetDatabase();
 
@@ -82,7 +73,6 @@ public class IndexerIT {
         solrServer.deleteByQuery("*:*", 0);
         solrServer.commit(true, true);
         connection.close();
-        pgConnection.close();
     }
 
     void resetDatabase() throws SQLException {
@@ -90,20 +80,17 @@ public class IndexerIT {
         connection.prepareStatement("DELETE FROM records").execute();
         connection.prepareStatement("DELETE FROM queue").execute();
         connection.prepareStatement("DELETE FROM queuerules").execute();
-        connection.prepareStatement("DELETE FROM messagequeuerules").execute();
         connection.prepareStatement("DELETE FROM queueworkers").execute();
 
-        try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)")) {
-            stmt.setString(1, WORKER);
-            stmt.execute();
-        }
+        PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
+        stmt.setString(1, WORKER);
+        stmt.execute();
 
-        try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES('" + PROVIDER + "', ?, ?, ?)")) {
-            stmt.setString(1, WORKER);
-            stmt.setString(2, "Y");
-            stmt.setString(3, BIBLIOGRAPHIC_RECORD_ID);
-            stmt.execute();
-        }
+        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES('" + PROVIDER + "', ?, ?, ?)");
+        stmt.setString(1, WORKER);
+        stmt.setString(2, "Y");
+        stmt.setString(3, BIBLIOGRAPHIC_RECORD_ID);
+        stmt.execute();
     }
 
     private Indexer createInstance() throws SQLException {
@@ -115,14 +102,12 @@ public class IndexerIT {
     private Indexer createInstance(String solrUrl) throws SQLException {
         Indexer indexer = new Indexer();
         indexer.mergerPool = new MergerPool();
-//        PGSimpleDataSource dataSource = new PGSimpleDataSource();
-//        dataSource.setUrl(pgConnection.getUrl());
-//        indexer.dataSource = dataSource;
-        DataSource dataSource1 = mock(DataSource.class);
-        when(dataSource1.getConnection()).then((InvocationOnMock invocation) -> pgConnection.getExtraConnection());
-        indexer.dataSource = dataSource1;
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setUrl(jdbcUrl);
+        indexer.dataSource = dataSource;
 
         indexer.solrUrl = solrUrl;
+        indexer.workerName = WORKER;
         indexer.registry = new MetricsRegistry();
         indexer.create();
         return indexer;
@@ -138,9 +123,10 @@ public class IndexerIT {
         record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
-
+        dao.changedRecord(PROVIDER, record1.getId());
+        connection.commit();
         Indexer indexer = createInstance();
-        indexer.processJob(new QueueJob(record1.getId()), dao);
+        indexer.performWork();
         solrServer.commit(true, true);
 
         QueryResponse response = solrServer.query(new SolrQuery("rec.agencyId:" + AGENCY_ID));
@@ -167,14 +153,14 @@ public class IndexerIT {
         record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         record.setDeleted(true);
         dao.saveRecord(record);
-//        dao.changedRecord(PROVIDER, record.getId());
+        dao.changedRecord(PROVIDER, record.getId());
         assertTrue("Record exists", dao.recordExistsMabyDeleted(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
         assertFalse("Record is deleted", dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         connection.commit();
 
         Indexer indexer = createInstance();
-        indexer.processJob(new QueueJob(record.getId()), dao);
+        indexer.performWork();
         solrServer.commit(true, true);
 
         QueryResponse response = solrServer.query(new SolrQuery("id:" + BIBLIOGRAPHIC_RECORD_ID + "\\:" + AGENCY_ID));
@@ -183,8 +169,7 @@ public class IndexerIT {
 
     @Test
     public void createRecordWhenIndexingFails() throws Exception {
-        TestQueue testQueue = new TestQueue();
-        RawRepoDAO dao = RawRepoDAO.builder(connection).queue(testQueue).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
@@ -192,22 +177,11 @@ public class IndexerIT {
         record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.saveRecord(record1);
         assertTrue(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
-//        dao.changedRecord(PROVIDER, record1.getId());
+        dao.changedRecord(PROVIDER, record1.getId());
         connection.commit();
 
         Indexer indexer = createInstance(solrServerUrl + "X");
-        indexer.jmsContext = mock(JMSContext.class);
-        JMSProducer producer = mock(JMSProducer.class);
-        when(indexer.jmsContext.createProducer()).thenReturn(producer);
-        when(producer.send(anyObject(), any(Serializable.class))).then(new Answer<JMSProducer>() {
-            @Override
-            public JMSProducer answer(InvocationOnMock invocation) throws Throwable {
-                System.out.println("message = " + invocation.getArguments()[1]);
-                return producer;
-            }
-        });
-
-        indexer.processJob(new QueueJob(record1.getId()), dao);
+        indexer.performWork();
         solrServer.commit(true, true);
 
         QueryResponse response;

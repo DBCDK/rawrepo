@@ -41,15 +41,13 @@ import static org.mockito.Mockito.*;
 class RawRepoTester {
 
     protected PostgresITConnection pg;
-    protected TestQueue testQueue;
 
     @Before
     public void setUp() throws SQLException, FileNotFoundException {
         pg = new PostgresITConnection("rawrepo");
-        testQueue = new TestQueue();
 
-        pg.clearTables("records", "records_archive", "relations", "queueworkers", "queuerules", "messagequeuerules");
-        pg.loadTables("records", "records_archive", "relations", "queueworkers", "queuerules", "messagequeuerules");
+        pg.clearTables("records", "records_archive", "relations", "queueworkers", "queuerules");
+        pg.loadTables("records", "records_archive", "relations", "queueworkers", "queuerules");
     }
 
     @SuppressFBWarnings(value = {"UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
@@ -71,6 +69,7 @@ class RawRepoTester {
         RelationHints relationHints = mock(RelationHints.class);
         when(relationHints.get(anyInt())).thenReturn(Arrays.asList());
         when(relationHints.usesCommonAgency(anyInt())).thenReturn(Boolean.FALSE);
+
 
         return RawRepoDAO.builder(pg.getConnection()).relationHints(relationHints).build();
     }

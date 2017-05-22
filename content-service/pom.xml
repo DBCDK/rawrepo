@@ -19,18 +19,18 @@
  You should have received a copy of the GNU Affero General Public License
  along with dbc-rawrepo-content-service.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>dk.dbc</groupId>
+
     <artifactId>rawrepo-content-service</artifactId>
-    <version>1.4-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>rawrepo-content-service</name>
 
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.4-SNAPSHOT</version>
+        <version>1.5-SNAPSHOT</version>
     </parent>
 
     <repositories>
@@ -51,13 +51,9 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-ext</artifactId>
         </dependency>
-	<dependency>
+        <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>3.1</version>
@@ -65,7 +61,7 @@
         <dependency>
             <groupId>dk.dbc</groupId>
             <artifactId>rawrepo-access</artifactId>
-            <version>1.4-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.metro</groupId>
@@ -136,7 +132,8 @@
                                     <artifactId>glassfish-soap-jsp-client</artifactId>
                                     <version>1.0-SNAPSHOT</version>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/${project.build.finalName}</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/${project.build.finalName}
+                                    </outputDirectory>
                                     <includes>*</includes>
                                 </artifactItem>
                             </artifactItems>
@@ -145,7 +142,7 @@
                 </executions>
             </plugin>
 
-            <!--Generate WSDL--> 
+            <!--Generate WSDL-->
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-java2ws-plugin</artifactId>
@@ -167,7 +164,7 @@
                     <attachWsdl>false</attachWsdl>
                 </configuration>
             </plugin>
-            <!--Validate generated WSDL--> 
+            <!--Validate generated WSDL-->
             <plugin>
                 <groupId>dk.dbc.xmldiff</groupId>
                 <artifactId>xmldiff-maven-plugin</artifactId>

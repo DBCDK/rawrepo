@@ -20,14 +20,13 @@
  */
 package dk.dbc.rawrepo;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  *
  * @author DBC {@literal <dbc.dk>}
  */
-public class RecordId implements Serializable {
+public class RecordId {
 
     protected String bibliographicRecordId;
     protected int agencyId;

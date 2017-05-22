@@ -35,11 +35,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
-import javax.jms.JMSException;
 import org.junit.After;
-
 import static org.junit.Assert.assertEquals;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -109,9 +106,8 @@ public class RollBackIT {
 
     @Test
     public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
-        TestQueue testQueue = new TestQueue();
 
-        RawRepoDAO dao = RawRepoDAO.builder( connection ).queue( testQueue ).build();
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
         connection.setAutoCommit( false );
         Record record;
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
@@ -146,13 +142,13 @@ public class RollBackIT {
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
         assertEquals( "Version 3", new String ( record.getContent(), StandardCharsets.UTF_8) );
 
-        RollBack.rollbackRecord(connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null, testQueue );
+        RollBack.rollbackRecord( connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null );
         connection.commit();
 
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
         assertEquals( "Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
 
-        RollBack.rollbackRecord(connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.After, RollBack.State.Rollback, null, testQueue );
+        RollBack.rollbackRecord( connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.After, RollBack.State.Rollback, null );
         connection.commit();
 
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
@@ -160,10 +156,9 @@ public class RollBackIT {
     }
 
     @Test
-    public void testBulkAgency_with2Records() throws SQLException, ClassNotFoundException, RawRepoException, JMSException {
-        TestQueue testQueue = new TestQueue();
+    public void testBulkAgency_with2Records() throws SQLException, ClassNotFoundException, RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.builder( connection ).queue( testQueue ).build();
+        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
         connection.setAutoCommit( false );
         Record record;
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
@@ -212,7 +207,7 @@ public class RollBackIT {
         record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
         assertEquals( "Rec 2 Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
 
-        RollBack.rollbackAgency( connection, dao, AGENCY_ID, DAY_3, DateMatch.Match.Before, RollBack.State.Rollback, null );
+        RollBack.rollbackAgency( connection, AGENCY_ID, DAY_3, DateMatch.Match.Before, RollBack.State.Rollback, null );
         connection.commit();
 
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
@@ -221,7 +216,7 @@ public class RollBackIT {
         record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
         assertEquals( "Second record is not rolled back", "Rec 2 Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
 
-        RollBack.rollbackAgency( connection, dao, AGENCY_ID, DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null );
+        RollBack.rollbackAgency( connection, AGENCY_ID, DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null );
         connection.commit();
 
         record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );

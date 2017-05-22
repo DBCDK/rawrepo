@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo.recordload;
 
-import com.sun.messaging.ConnectionConfiguration;
-import com.sun.messaging.ConnectionFactory;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
@@ -39,9 +37,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,31 +81,25 @@ public class RecordLoad implements Closeable {
         dao.saveRecord(record);
     }
 
-    public void enqueue(int agencyId, String bibliographicRecordId, String role, String mq) throws RawRepoException, JMSException {
+    public void enqueue(int agencyId, String bibliographicRecordId, String role, String mimetype) throws RawRepoException {
         RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setProperty(ConnectionConfiguration.imqAddressList, mq);
-        try (JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE)) {
-            dao.setQueueTarget(context);
-            dao.changedRecord(role, recordId);
-            dao.commitQueue();
-        }
+        dao.changedRecord(role, recordId, mimetype);
     }
 
     public void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
         Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
         record.setDeleted(true);
-        record.setContent(( "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                            "<marcx:record xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\" format=\"danMARC2\" type=\"Bibliographic\">\n" +
-                            "    <marcx:leader>00000d    2200000   4500</marcx:leader>\n" +
-                            "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"001\">\n" +
-                            "        <marcx:subfield code=\"a\">" + bibliographicRecordId + "</marcx:subfield>\n" +
-                            "        <marcx:subfield code=\"b\">" + agencyId + "</marcx:subfield>\n" +
-                            "    </marcx:datafield>\n" +
-                            "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"004\">\n" +
-                            "        <marcx:subfield code=\"r\">d</marcx:subfield>\n" +
-                            "    </marcx:datafield>\n" +
-                            "</marcx:record>" ).getBytes(StandardCharsets.UTF_8));
+        record.setContent(( "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                            + "<marcx:record xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\" format=\"danMARC2\" type=\"Bibliographic\">\n"
+                            + "    <marcx:leader>00000d    2200000   4500</marcx:leader>\n"
+                            + "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"001\">\n"
+                            + "        <marcx:subfield code=\"a\">" + bibliographicRecordId + "</marcx:subfield>\n"
+                            + "        <marcx:subfield code=\"b\">" + agencyId + "</marcx:subfield>\n"
+                            + "    </marcx:datafield>\n"
+                            + "    <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"004\">\n"
+                            + "        <marcx:subfield code=\"r\">d</marcx:subfield>\n"
+                            + "    </marcx:datafield>\n"
+                            + "</marcx:record>" ).getBytes(StandardCharsets.UTF_8));
         record.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
         dao.deleteRelationsFrom(record.getId());
         dao.saveRecord(record);
