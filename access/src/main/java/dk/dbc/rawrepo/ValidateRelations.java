@@ -21,12 +21,13 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -122,6 +123,7 @@ public class ValidateRelations {
                 } else if (siblingMimeTypes.size() > 0) {
                     siblingMimeTypes.remove(MarcXChangeMimeType.ENRICHMENT);
                     siblingMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                    siblingMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
                     if (!siblingMimeTypes.isEmpty()) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");
