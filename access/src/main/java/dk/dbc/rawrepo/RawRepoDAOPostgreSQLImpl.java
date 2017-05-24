@@ -40,6 +40,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private final Connection connection;
 
     private static final int SCHEMA_VERSION = 21;
+    private static final int SCHEMA_VERSION_COMPATIBLE = 19;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -97,6 +98,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
                 stmt.setInt(1, SCHEMA_VERSION);
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        String warning = resultSet.getString(1);
+                        if (warning != null) {
+                            log.warn(warning);
+                        }
+                        return;
+                    }
+                }
+            }
+            try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
+                stmt.setInt(1, SCHEMA_VERSION_COMPATIBLE);
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
                         String warning = resultSet.getString(1);
