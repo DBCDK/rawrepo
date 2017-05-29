@@ -123,7 +123,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             log.error("Validating schema", ex);
         }
-        log.error("Incompatible database schema software=" + SCHEMA_VERSION);
+        log.error("Incompatible database schema software: {}", SCHEMA_VERSION);
         throw new RawRepoException("Incompatible database schema");
     }
 
@@ -278,13 +278,14 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
     }
 
-    @Deprecated
+
     /**
      * Purge a record from the database
      *
      * @param recordId complex key for record
      * @throws RawRepoException
      */
+    @Deprecated
     @Override
     public void purgeRecord(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(PURGE_RECORD)) {
@@ -597,24 +598,21 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
-        //        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_MIMETYPE)) {
+        logQueue.debug("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}", job, provider, changed, leaf);
+
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
             stmt.setString(pos++, job.getBibliographicRecordId());
             stmt.setInt(pos++, job.getAgencyId());
-//            stmt.setString(pos++, mimeType);
             stmt.setString(pos++, provider);
             stmt.setString(pos++, changed ? "Y" : "N");
             stmt.setString(pos++, leaf ? "Y" : "N");
-            logQueue.debug("Enqueu: job = " + job +
-                    "; provider = " + provider +
-                    "; changed = " + changed + "; leaf = " + leaf);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     if (resultSet.getBoolean(2)) {
-                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job);
+                        log.info("Queued: worker = {}; job = {}", resultSet.getString(1), job);
                     } else {
-                        log.info("Queued: worker = " + resultSet.getString(1) + "; job = " + job + "; skipped - already on queue");
+                        log.info("Queued: worker = {}; job = {}; skipped - already on queue", resultSet.getString(1), job);
                     }
                 }
 
@@ -671,7 +669,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                             resultSet.getString("worker"),
                             resultSet.getTimestamp("queued"));
                     result.add(job);
-                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
+                    logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
                 }
                 return result;
             }
@@ -698,7 +696,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                             resultSet.getInt("agencyid"),
                             resultSet.getString("worker"),
                             resultSet.getTimestamp("queued"));
-                    logQueue.debug("Dequeued job = " + job + "; worker = " + worker);
+                    logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
                     return job;
                 }
                 return null;
