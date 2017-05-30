@@ -20,45 +20,24 @@
  */
 package dk.dbc.marcxmerge;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.junit.Rule;
+import org.junit.*;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -128,6 +107,26 @@ public class MarcXMergerTest {
         byte[] merge = marcxMerger.merge(common, local, isFinal);
         marcXCompare.compare(result, merge);
     }
+
+    @Test
+    public void testCanMerge() throws MarcXMergerException {
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), true);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), true);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ENRICHMENT), false);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ARTICLE), false);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.MARCXCHANGE), false);
+    }
+
+    @Test
+    public void testMergedMimetype() throws MarcXMergerException {
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+
+        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MARCXCHANGE);
+        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.ARTICLE);
+    }
+
 
     //  _   _      _                   _____                 _   _
     // | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___

@@ -21,34 +21,22 @@
 package dk.dbc.marcxmerge;
 
 import dk.dbc.marcxmerge.FieldRules.MarcXFixup;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ListIterator;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -107,6 +95,12 @@ public class MarcXMerger {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return true;
                 }
+
+            case MarcXChangeMimeType.ARTICLE:
+                switch (enrichmentMimeType) {
+                    case MarcXChangeMimeType.ENRICHMENT:
+                        return true;
+                }
         }
         return false;
     }
@@ -117,6 +111,12 @@ public class MarcXMerger {
                 switch (enrichmentMimeType) {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return MarcXChangeMimeType.MARCXCHANGE;
+                }
+
+            case MarcXChangeMimeType.ARTICLE:
+                switch (enrichmentMimeType) {
+                    case MarcXChangeMimeType.ENRICHMENT:
+                        return MarcXChangeMimeType.ARTICLE;
                 }
         }
         throw new IllegalStateException("Cannot figure out mimetype of: " + originalMimeType + "&" + enrichmentMimeType);
