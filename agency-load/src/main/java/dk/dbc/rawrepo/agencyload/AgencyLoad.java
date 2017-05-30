@@ -29,23 +29,19 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.parsers.ParserConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -235,6 +231,7 @@ public class AgencyLoad implements AutoCloseable {
                                break;
                            case "004r":
                                isDeleted = data.equals("d");
+                               break;
                            default:
                                break;
                        }
