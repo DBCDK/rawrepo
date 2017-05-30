@@ -86,6 +86,7 @@ function work(r) {
                 q.execute();
                 q.done();
                 s = '«';
+                Log.info("Created relation for ", id, " as sibling of ", bibliographicrecordid, ":", current_parent_agencyid)
             } catch (e) {
                 Log.error("ERROR: Sibling for " + bibliographicrecordid + " from " + agencyid + " to " + current_parent_agencyid);
                 Log.warn(e);
@@ -121,6 +122,7 @@ function work(r) {
                 q.execute();
                 q.done();
                 s = "^";
+                Log.info("Created relation from ", id, " to parent ", parent, ":" + refer_agencyid)
             } catch (e) {
                 Log.error("Parent " + parent + " for " + id);
                 Log.warn(e);
