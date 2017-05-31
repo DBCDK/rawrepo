@@ -84,7 +84,7 @@ public class ValidateRelations {
                     parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (parentMimeTypes.size() > 0) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");
+                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VMX");
                     }
                 }
             }
@@ -131,7 +131,7 @@ public class ValidateRelations {
                     parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (!parentMimeTypes.isEmpty()) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");
+                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE1");
                     }
                 } else if (parentMimeTypes.size() > 0) {
                     int marcxCount = parentMimeTypes.size();
@@ -144,7 +144,7 @@ public class ValidateRelations {
                     parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (parentMimeTypes.size() > 0) {
                         log.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype");
+                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE2");
                     }
                 }
             }
