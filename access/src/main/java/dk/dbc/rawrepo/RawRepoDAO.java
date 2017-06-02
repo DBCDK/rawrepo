@@ -26,23 +26,18 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -232,7 +227,7 @@ public abstract class RawRepoDAO {
     public abstract String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     public String getMimeTypeOfSafe(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        if (recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
+        if (recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             return getMimeTypeOf(bibliographicRecordId, agencyId);
         }
         return MarcXChangeMimeType.UNKNOWN;
@@ -249,6 +244,22 @@ public abstract class RawRepoDAO {
     public abstract boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
+     * *** DEPRECATED ***
+     * Use recordExistsMaybeDeleted instead
+     *
+     * Check for existence of a record (possibly deleted)
+     * @deprecated use {@link #recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId)} instead.
+     * @param bibliographicRecordId String with record id
+     * @param agencyId              library number
+     * @return truth value for the existence of the record
+     * @throws RawRepoException
+     */
+    @Deprecated
+    public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
+        return recordExistsMaybeDeleted(bibliographicRecordId, agencyId);
+    }
+
+    /**
      * Check for existence of a record (possibly deleted)
      *
      * @param bibliographicRecordId String with record id
@@ -256,7 +267,7 @@ public abstract class RawRepoDAO {
      * @return truth value for the existence of the record
      * @throws RawRepoException
      */
-    public abstract boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException;
+    public abstract boolean recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
      * Get a collection of all the records, that are that are related to this
@@ -348,7 +359,7 @@ public abstract class RawRepoDAO {
         if (prioritizeSelf) {
             if (allAgenciesWithRecord.contains(originalAgencyId)) {
                 if (fetchDeleted ?
-                    recordExistsMabyDeleted(bibliographicRecordId, originalAgencyId) :
+                    recordExistsMaybeDeleted(bibliographicRecordId, originalAgencyId) :
                     recordExists(bibliographicRecordId, originalAgencyId)) {
                     return originalAgencyId;
                 }
@@ -360,7 +371,7 @@ public abstract class RawRepoDAO {
                 continue;
             }
             if (fetchDeleted ?
-                recordExistsMabyDeleted(bibliographicRecordId, agencyId) :
+                recordExistsMaybeDeleted(bibliographicRecordId, agencyId) :
                 recordExists(bibliographicRecordId, agencyId)) {
                 return agencyId;
             }
@@ -741,7 +752,7 @@ public abstract class RawRepoDAO {
     private void changedRecord(String provider, RecordId recordId, int originalAgencyId, boolean changed) throws RawRepoException {
         String bibliographicRecordId = recordId.getBibliographicRecordId();
         int agencyId = recordId.getAgencyId();
-        if (recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
+        if (recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) {
                 HashSet<Integer> agenciIds = findParentsSiblingsFilter(bibliographicRecordId, agencyId);
                 changedRecord(provider, bibliographicRecordId, agenciIds, originalAgencyId, true, changed);
@@ -936,7 +947,7 @@ public abstract class RawRepoDAO {
         findParentsSiblingsTraverse(agencies, bibliographicRecordId, agencyId, true);
         agencies.removeIf(a -> {
             try {
-                return a != agencyId && recordExistsMabyDeleted(bibliographicRecordId, a);
+                return a != agencyId && recordExistsMaybeDeleted(bibliographicRecordId, a);
             } catch (RawRepoException ex) {
             }
             return false;

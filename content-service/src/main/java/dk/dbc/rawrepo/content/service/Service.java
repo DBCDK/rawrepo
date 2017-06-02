@@ -31,22 +31,11 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
-import dk.dbc.rawrepo.content.service.transport.FetchRequestRecord;
-import dk.dbc.rawrepo.content.service.transport.FetchResponseError;
-import dk.dbc.rawrepo.content.service.transport.FetchResponseRecord;
-import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
-import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import dk.dbc.rawrepo.content.service.transport.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXParseException;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
@@ -57,9 +46,16 @@ import javax.xml.ws.Action;
 import javax.xml.ws.Holder;
 import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXParseException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -178,7 +174,7 @@ public abstract class Service {
                         switch (requestRecord.mode) {
                             case RAW:
                                 if (allowDeleted ?
-                                    !dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId) :
+                                    !dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId) :
                                     !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                                     throw new RawRepoExceptionRecordNotFound();
                                 }
@@ -308,7 +304,7 @@ public abstract class Service {
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             if (requestRecord.allowDeleted &&
                 !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId) &&
-                dao.recordExistsMabyDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                 Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                 collection = new HashMap<>();
                 collection.put(requestRecord.bibliographicRecordId, rawRecord);

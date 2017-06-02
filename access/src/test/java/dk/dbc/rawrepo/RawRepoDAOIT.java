@@ -23,30 +23,18 @@ package dk.dbc.rawrepo;
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.gracefulcache.CacheTimeoutException;
 import dk.dbc.gracefulcache.CacheValueException;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.marcxmerge.MarcXMerger;
+import dk.dbc.marcxmerge.MarcXMergerException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
 import static org.junit.Assert.*;
-
-import dk.dbc.marcxmerge.MarcXMerger;
-import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.Assert;
 
 /**
  *
@@ -233,7 +221,7 @@ public class RawRepoDAOIT {
         recA.setDeleted(true);
         dao.saveRecord(recA);
 
-        assertTrue(dao.recordExistsMabyDeleted("A", 870970));
+        assertTrue(dao.recordExistsMaybeDeleted("A", 870970));
         assertFalse(dao.recordExists("A", 870970));
 
         recA = dao.fetchRecord("A", 870970);

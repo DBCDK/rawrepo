@@ -20,27 +20,18 @@
  */
 package dk.dbc.rawrepo;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import java.sql.SQLException;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 
@@ -274,7 +265,7 @@ public class RawRepoDAOTest {
             when(access.getRelationsSiblingsToMe(recordId)).thenReturn(siblingsToMe);
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
             when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
-            when(access.recordExistsMabyDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
+            when(access.recordExistsMaybeDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
         }
         HashMap<String, HashSet<Integer>> allAgenciesFor = new HashMap<>();
         for (String record : filter) {

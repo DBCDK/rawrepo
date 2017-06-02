@@ -23,21 +23,23 @@ package dk.dbc.rawrepo.indexer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Date;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.junit.After;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.postgresql.ds.PGSimpleDataSource;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Date;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -154,7 +156,7 @@ public class IndexerIT {
         record.setDeleted(true);
         dao.saveRecord(record);
         dao.changedRecord(PROVIDER, record.getId());
-        assertTrue("Record exists", dao.recordExistsMabyDeleted(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
+        assertTrue("Record exists", dao.recordExistsMaybeDeleted(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
         assertFalse("Record is deleted", dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         connection.commit();

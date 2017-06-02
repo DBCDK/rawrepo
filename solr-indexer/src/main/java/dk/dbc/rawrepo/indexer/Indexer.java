@@ -24,19 +24,10 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import dk.dbc.eeconfig.EEConfig;
-import dk.dbc.rawrepo.QueueJob;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RecordId;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.sql.DataSource;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.marcxmerge.MarcXMerger;
+import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.rawrepo.*;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -44,18 +35,21 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import dk.dbc.marcxmerge.MarcXMerger;
-import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.AgencySearchOrder;
-import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
-import dk.dbc.rawrepo.RelationHints;
+import org.slf4j.MDC;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import org.slf4j.MDC;
 
 /**
  *
@@ -249,7 +243,7 @@ public class Indexer {
     private Record fetchRecord(RawRepoDAO dao, String id, int library) throws RawRepoException, MarcXMergerException {
         MarcXMerger merger = null;
         try (Timer.Context time = fetchRecordTimer.time()) {
-            if (!dao.recordExistsMabyDeleted(id, library)) {
+            if (!dao.recordExistsMaybeDeleted(id, library)) {
                 return null;
             }
             merger = mergerPool.getMerger();

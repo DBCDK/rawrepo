@@ -189,7 +189,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @throws RawRepoException
      */
     @Override
-    public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
+    public boolean recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
         Boolean recordDeleted = isRecordDeleted(bibliographicRecordId, agencyId);
         return recordDeleted != null;
     }

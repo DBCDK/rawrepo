@@ -23,28 +23,20 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.marcx.MarcXParser;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RecordMetaDataHistory;
+import dk.dbc.rawrepo.*;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import javax.sql.DataSource;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
-import javax.sql.DataSource;
-import javax.xml.parsers.ParserConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -121,7 +113,7 @@ public class RevertRecords extends RawRepoWorker {
     void revertRecord(Integer agencyId, String bibliographicRecordId, long millis, String provider, String trackingId) throws RawRepoException {
         RawRepoDAO dao = getDao();
         log.trace("millis = " + millis);
-        if (!dao.recordExistsMabyDeleted(bibliographicRecordId, agencyId)) {
+        if (!dao.recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             throw new RawRepoException("Record does not exist");
         }
 

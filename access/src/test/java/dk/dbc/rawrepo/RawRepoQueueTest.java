@@ -23,29 +23,24 @@ package dk.dbc.rawrepo;
 import dk.dbc.gracefulcache.CacheTimeoutException;
 import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 import org.hamcrest.core.IsCollectionContaining;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
-
 import org.mockito.stubbing.Answer;
 
-import static dk.dbc.marcxmerge.MarcXChangeMimeType.*;
-import static java.util.stream.Collectors.toSet;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+
+import static dk.dbc.marcxmerge.MarcXChangeMimeType.ARTICLE;
+import static dk.dbc.marcxmerge.MarcXChangeMimeType.ENRICHMENT;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -566,7 +561,7 @@ class RawRepoMock {
                 return recordExists.contains(agencyId + ":" + bibliographicRecordId);
             }
         });
-        when(rawrepo.recordExistsMabyDeleted(anyString(), anyInt())).then(new Answer<Boolean>() {
+        when(rawrepo.recordExistsMaybeDeleted(anyString(), anyInt())).then(new Answer<Boolean>() {
             @Override
             public Boolean answer(InvocationOnMock invocation) throws Throwable {
                 String bibliographicRecordId = (String) invocation.getArguments()[0];
