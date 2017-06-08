@@ -22,15 +22,16 @@ package dk.dbc.rawrepo;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.Arrays;
+import java.util.List;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -83,7 +84,7 @@ public class RelationHintsOpenAgencyTest {
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertEquals(Arrays.asList(870970), agencies);
+        assertEquals(Arrays.asList(870970, 870971), agencies);
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
         assertEquals(false, usesCommonAgency);

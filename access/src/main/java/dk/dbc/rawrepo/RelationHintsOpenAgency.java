@@ -23,6 +23,7 @@ package dk.dbc.rawrepo;
 import dk.dbc.openagency.client.LibraryRuleHandler;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -56,7 +57,7 @@ public class RelationHintsOpenAgency extends RelationHints {
     @Override
     public List<Integer> provide(Integer agencyId) throws Exception {
         if (usesCommonAgency(agencyId)) {
-            return Arrays.asList(870970);
+            return Arrays.asList(870970, 870971);
         }
         return Arrays.asList(agencyId);
     }
