@@ -44,7 +44,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RawRepoQueueTest {
@@ -56,25 +55,27 @@ public class RawRepoQueueTest {
     public void testMock() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .relationHints(300100, 870970, 300000)
+                .relationHints(300100, 300000, 870970)
                 .doesNotUseCommon(999999)
                 .addDeleted("999999:a-h1")
-                .add("870970:a-h1").add("191919:a-h1:870970").add("300000:a-h1:870970")
+                .add("870970:a-h1")
+                .add("191919:a-h1:870970")
+                .add("300000:a-h1:870970")
                 .add("870970:a-s1:870970:a-h1")
                 .add("870971:anm#" + ARTICLE)
                 .build();
 
         recordSetIs(dao.getRelationsParents(recordFromString("870970:a-s1")),
-                    "870970:a-h1");
+                "870970:a-h1");
 
         recordSetIs(dao.getRelationsChildren(recordFromString("870970:a-h1")),
-                    "870970:a-s1");
+                "870970:a-s1");
 
         recordSetIs(dao.getRelationsSiblingsToMe(recordFromString("870970:a-h1")),
-                    "191919:a-h1", "300000:a-h1");
+                "191919:a-h1", "300000:a-h1");
 
         recordSetIs(dao.getRelationsSiblingsFromMe(recordFromString("191919:a-h1")),
-                    "870970:a-h1");
+                "870970:a-h1");
 
         assertEquals(ENRICHMENT, dao.getMimeTypeOf("a-h1", 191919));
         assertEquals(ARTICLE, dao.getMimeTypeOf("anm", 870971));
@@ -91,7 +92,7 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:R:CL");
+                "870970:R:CL");
     }
 
     @Test
@@ -103,7 +104,7 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:R:CL");
+                "870970:R:CL");
     }
 
     @Test
@@ -114,7 +115,7 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:R:CL");
+                "870970:R:CL");
     }
 
     @Test(expected = RawRepoExceptionRecordNotFound.class)
@@ -137,10 +138,10 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:R"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:R:CL",
-                   "191919:R:-L",
-                   "300000:R:-L",
-                   "300100:R:-L");
+                "870970:R:CL",
+                "191919:R:-L",
+                "300000:R:-L",
+                "300100:R:-L");
     }
 
     @Test
@@ -154,9 +155,9 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:H:C-",
-                   "870970:S:--",
-                   "870970:B:-L");
+                "870970:H:C-",
+                "870970:S:--",
+                "870970:B:-L");
     }
 
     @Test
@@ -170,12 +171,12 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:H:C-",
-                   "191919:H:--",
-                   "870970:S:--",
-                   "191919:S:--",
-                   "870970:B:-L",
-                   "191919:B:-L");
+                "870970:H:C-",
+                "191919:H:--",
+                "870970:S:--",
+                "191919:S:--",
+                "870970:B:-L",
+                "191919:B:-L");
     }
 
     @Test
@@ -189,10 +190,10 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:S:C-",
-                   "191919:S:--",
-                   "870970:B:-L",
-                   "191919:B:-L");
+                "870970:S:C-",
+                "191919:S:--",
+                "870970:B:-L",
+                "191919:B:-L");
     }
 
     @Test
@@ -206,8 +207,8 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:B"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:B:CL",
-                   "191919:B:-L");
+                "870970:B:CL",
+                "191919:B:-L");
     }
 
     @Test
@@ -221,14 +222,14 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:H:C-",
-                   "191919:H:--",
-                   "870970:S:--",
-                   "191919:S:--",
-                   "870970:B:-L",
-                   "191919:B:-L",
-                   "555555:S:--",
-                   "555555:B:-L");
+                "870970:H:C-",
+                "191919:H:--",
+                "870970:S:--",
+                "191919:S:--",
+                "870970:B:-L",
+                "191919:B:-L",
+                "555555:S:--",
+                "555555:B:-L");
     }
 
     @Test
@@ -242,8 +243,8 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("555555:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "555555:S:C-",
-                   "555555:B:-L");
+                "555555:S:C-",
+                "555555:B:-L");
     }
 
     @Test
@@ -257,9 +258,9 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("300000:S"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "300000:S:C-",
-                   "300100:B:-L",
-                   "300000:B:-L");
+                "300000:S:C-",
+                "300100:B:-L",
+                "300000:B:-L");
     }
 
     @Test
@@ -280,9 +281,9 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("200000:S1"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "200000:S1:C-",
-                   "200000:B11:-L",
-                   "200000:B12:-L");
+                "200000:S1:C-",
+                "200000:B11:-L",
+                "200000:B12:-L");
     }
 
     @Test
@@ -302,13 +303,13 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("200000:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "200000:H:C-",
-                   "200000:S1:--",
-                   "200000:B11:-L",
-                   "200000:B12:-L",
-                   "200000:S2:--",
-                   "200000:B21:-L",
-                   "200000:B22:-L");
+                "200000:H:C-",
+                "200000:S1:--",
+                "200000:B11:-L",
+                "200000:B12:-L",
+                "200000:S2:--",
+                "200000:B21:-L",
+                "200000:B22:-L");
     }
 
     @Test
@@ -329,9 +330,9 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("200000:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "200000:H:C-",
-                   "200000:S1-200:--",
-                   "200000:B11-200:-L");
+                "200000:H:C-",
+                "200000:S1-200:--",
+                "200000:B11-200:-L");
     }
 
     @Test
@@ -345,8 +346,8 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("300000:B11"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "300000:B11:CL",
-                   "300100:B11:-L");
+                "300000:B11:CL",
+                "300100:B11:-L");
     }
 
     @Test
@@ -361,10 +362,10 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:H:C-",
-                   "870970:S:--",
-                   "870970:B:-L",
-                   "870971:A:-L");
+                "870970:H:C-",
+                "870970:S:--",
+                "870970:B:-L",
+                "870971:A:-L");
     }
 
     @Test
@@ -379,10 +380,10 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870970:H"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870970:H:C-",
-                   "870970:S:--",
-                   "870970:B:-L",
-                   "870971:A:-L");
+                "870970:H:C-",
+                "870970:S:--",
+                "870970:B:-L",
+                "870971:A:-L");
     }
 
     @Test
@@ -397,7 +398,7 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("870971:A"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                   "870971:A:CL");
+                "870971:A:CL");
     }
 
     /*
@@ -567,7 +568,7 @@ class RawRepoMock {
                 String bibliographicRecordId = (String) invocation.getArguments()[0];
                 int agencyId = (int) invocation.getArguments()[1];
                 return recordExists.contains(agencyId + ":" + bibliographicRecordId) ||
-                       recordExistsMabyDeleted.contains(agencyId + ":" + bibliographicRecordId);
+                        recordExistsMabyDeleted.contains(agencyId + ":" + bibliographicRecordId);
             }
         });
         when(rawrepo.getRelationsChildren(anyObject())).thenAnswer(new Answer<Set<RecordId>>() {
@@ -769,7 +770,7 @@ class RawRepoMock {
         }
         printAgency(sb, key, indent);
         sb.append("\n");
-        for (Iterator<String> iterator = children.iterator() ; iterator.hasNext() ;) {
+        for (Iterator<String> iterator = children.iterator(); iterator.hasNext(); ) {
             String child = iterator.next();
             if (iterator.hasNext()) {
                 print(sb, toParent, child, indent + INDENT_MORE);
@@ -823,7 +824,7 @@ class RawRepoMock {
         if (!children.isEmpty()) {
             String align = spacify(" << " + agency);
             Collections.sort(children);
-            for (Iterator<Integer> iterator = children.iterator() ; iterator.hasNext() ;) {
+            for (Iterator<Integer> iterator = children.iterator(); iterator.hasNext(); ) {
                 Integer child = iterator.next();
                 printAgency(sb, toSibling, child, indent + align);
                 if (iterator.hasNext()) {

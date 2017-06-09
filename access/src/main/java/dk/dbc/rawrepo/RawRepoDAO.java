@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public abstract class RawRepoDAO {
@@ -52,7 +51,6 @@ public abstract class RawRepoDAO {
 
     /**
      * Builder Pattern from RawRepoDAO
-     *
      */
     public static class Builder {
 
@@ -100,10 +98,10 @@ public abstract class RawRepoDAO {
 
         /**
          * Construct all services that uses openagency webservice
-         *
+         * <p>
          * use {@link  #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL, java.util.concurrent.ExecutorService)
          * } instead.
-         *
+         * <p>
          * This produces 2 threadpools, mostly often not used at all
          *
          * @param service
@@ -145,7 +143,7 @@ public abstract class RawRepoDAO {
          * Construct a dao from the builder
          *
          * @return {@link RawRepoDAO} dao with default services, if none has
-         *         been provided.
+         * been provided.
          * @throws RawRepoException
          */
         public RawRepoDAO build() throws RawRepoException {
@@ -186,7 +184,9 @@ public abstract class RawRepoDAO {
                 throw new RawRepoException("Unable to load driver", ex);
             }
         }
-    };
+    }
+
+    ;
 
     /**
      * Make a dao builder
@@ -203,7 +203,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Fetch a record from the database
-     *
+     * <p>
      * Create one if none exists in the database
      * <p>
      * Remember, a record could exist, that is tagged deleted, call undelete()
@@ -246,13 +246,14 @@ public abstract class RawRepoDAO {
     /**
      * *** DEPRECATED ***
      * Use recordExistsMaybeDeleted instead
-     *
+     * <p>
      * Check for existence of a record (possibly deleted)
-     * @deprecated use {@link #recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId)} instead.
+     *
      * @param bibliographicRecordId String with record id
      * @param agencyId              library number
      * @return truth value for the existence of the record
      * @throws RawRepoException
+     * @deprecated use {@link #recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId)} instead.
      */
     @Deprecated
     public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -320,10 +321,9 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     if there's a data error or record isn't
      *                              found
      * @throws MarcXMergerException if we can't merge record
-     *
-     * USE:
-     * {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger, boolean)}
-     *
+     *                              <p>
+     *                              USE:
+     *                              {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger, boolean)}
      */
     @Deprecated
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
@@ -359,8 +359,8 @@ public abstract class RawRepoDAO {
         if (prioritizeSelf) {
             if (allAgenciesWithRecord.contains(originalAgencyId)) {
                 if (fetchDeleted ?
-                    recordExistsMaybeDeleted(bibliographicRecordId, originalAgencyId) :
-                    recordExists(bibliographicRecordId, originalAgencyId)) {
+                        recordExistsMaybeDeleted(bibliographicRecordId, originalAgencyId) :
+                        recordExists(bibliographicRecordId, originalAgencyId)) {
                     return originalAgencyId;
                 }
 
@@ -371,8 +371,8 @@ public abstract class RawRepoDAO {
                 continue;
             }
             if (fetchDeleted ?
-                recordExistsMaybeDeleted(bibliographicRecordId, agencyId) :
-                recordExists(bibliographicRecordId, agencyId)) {
+                    recordExistsMaybeDeleted(bibliographicRecordId, agencyId) :
+                    recordExists(bibliographicRecordId, agencyId)) {
                 return agencyId;
             }
         }
@@ -422,9 +422,10 @@ public abstract class RawRepoDAO {
             if (relationHints.usesCommonAgency(originalAgencyId)) {
                 List<Integer> list = relationHints.get(originalAgencyId);
                 if (!list.isEmpty()) {
-                    int agencyId = list.get(list.size() - 1);
-                    if (recordExists(bibliographicRecordId, agencyId)) {
-                        return agencyId;
+                    for (Integer agencyId : list) {
+                        if (recordExists(bibliographicRecordId, agencyId)) {
+                            return agencyId;
+                        }
                     }
                 }
             }
@@ -457,6 +458,7 @@ public abstract class RawRepoDAO {
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
     }
+
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true, true);
     }
@@ -473,10 +475,10 @@ public abstract class RawRepoDAO {
      *                              found
      * @throws MarcXMergerException if we can't merge record
      */
-    private  Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
+    private Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException, MarcXMergerException {
         int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, prioritizeSelf);
         LinkedList<Record> records = new LinkedList<>();
-        for (;;) {
+        for (; ; ) {
             Record record = fetchRecord(bibliographicRecordId, agencyId);
             records.addFirst(record);
             Set<RecordId> siblings = getRelationsSiblingsFromMe(record.getId());
@@ -502,11 +504,11 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                                                                    merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
-                                                                    record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                                                                    record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                                                                    record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
-                                                                    enrichmentTrail.toString());
+                        merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
+                        record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
+                        record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
+                        record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
+                        enrichmentTrail.toString());
             }
         }
         return record;
@@ -514,7 +516,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Retrieve all trackingids for a record since a specific time
-     *
+     * <p>
      * This is useful for logging when multiple record updates result in one
      * queue entry
      *
@@ -527,7 +529,6 @@ public abstract class RawRepoDAO {
     public abstract List<String> getTrackingIdsSince(String bibliographicRecordId, int agencyId, Timestamp timestamp) throws RawRepoException;
 
     /**
-     *
      * Create a list of all versions of a record
      *
      * @param bibliographicRecordId
@@ -557,7 +558,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Save a record to database after it has been modified
-     *
+     * <p>
      * Will try to update, otherwise insert
      *
      * @param record record to be saved
@@ -593,7 +594,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Get all record relations from me with a different localid
-     *
+     * <p>
      * What "point upwards" from me
      *
      * @param recordId recordid to find relations to
@@ -604,7 +605,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Get all record relations to me with a different localid
-     *
+     * <p>
      * What "points upwards" to me
      *
      * @param recordId recordid to find relations to
@@ -616,7 +617,7 @@ public abstract class RawRepoDAO {
     /**
      * Get all records that points to me with same localid (less common
      * siblings)
-     *
+     * <p>
      * What "points sideways" to me
      *
      * @param recordId recordid to find relations to
@@ -628,7 +629,7 @@ public abstract class RawRepoDAO {
     /**
      * Get all records that points from me with same localid (more common
      * siblings)
-     *
+     * <p>
      * What "points sideways" from me
      *
      * @param recordId recordid to find relations to
@@ -639,7 +640,6 @@ public abstract class RawRepoDAO {
 
     /**
      * Get all libraries that has id
-     *
      *
      * @param bibliographicRecordId local id
      * @return Collection of libraries that has localid
@@ -661,7 +661,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Pull a job from the queue
-     *
+     * <p>
      * Note: a queue should be dequeued either with this or
      * {@link #dequeue(java.lang.String, int) dequeue}, but not both. It could
      * break for long queues.
@@ -674,7 +674,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Pull jobs from the queue
-     *
+     * <p>
      * Note: a queue should be dequeued either with this or
      * {@link #dequeue(java.lang.String) dequeue}, but not both. It could break
      * for long queues.
@@ -697,7 +697,7 @@ public abstract class RawRepoDAO {
 
     /**
      * QueueJob has successfully been processed
-     *
+     * <p>
      * This is now the default when dequeuing
      *
      * @param queueJob job that has been processed
@@ -864,10 +864,9 @@ public abstract class RawRepoDAO {
 
     /**
      * Traverse to minor siblings, collecting agencyids
-     *
+     * <p>
      * If an agency is traversed that already is in agencies, then add all minor
      * siblings to this agency
-     *
      *
      * @param agencies              output of agencies seen
      * @param bibliographicRecordId record to start from
@@ -891,7 +890,6 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     *
      * Traverse major sigblings, check for existence in loopTrack, adding loop
      * detection references
      *
@@ -970,7 +968,7 @@ public abstract class RawRepoDAO {
         if (MarcXChangeMimeType.isArticle(current)) {
             return MarcXChangeMimeType.isArticle(parent);
         } else if (MarcXChangeMimeType.isMarcXChange(current) ||
-                   MarcXChangeMimeType.isEnrichment(current)) {
+                MarcXChangeMimeType.isEnrichment(current)) {
             return true;
         }
         return false;
