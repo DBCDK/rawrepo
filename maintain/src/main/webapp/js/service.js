@@ -40,7 +40,7 @@ var Service = (function () {
             return [value];
         },
         agencyidnotdbc: function (value) {
-            if (value.match(/^191919|870970|870971$/) !== null)
+            if (value.match(/^191919|870970|870971|870973|870974|870975|870976|870978|870979|000002|000004|000007|000008$/) !== null)
                 throw Error("Agencyid " + value + " is not allowed");
             if (value.match(/^[0-9]{6}$/) === null)
                 throw Error("Agencyid are required");
