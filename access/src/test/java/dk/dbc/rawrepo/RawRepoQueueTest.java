@@ -212,6 +212,22 @@ public class RawRepoQueueTest {
     }
 
     @Test
+    public void testEnqueueParentsSibling() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .add("870970:H").add("191919:H:870970")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .build();
+        dao.changedRecord("PRO", recordFromString("191919:H"));
+        System.out.println("enqueued = " + enqueued);
+        enqueuedIs(enqueued,
+                "191919:H:C-",
+                "191919:S:--",
+                "191919:B:-L");
+    }
+
+    @Test
     public void testEnqueueForeignChildrenParentHasSiblings() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
