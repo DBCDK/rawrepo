@@ -84,7 +84,7 @@ public class ValidateRelations {
                     if (parentMimeTypes.size() > 0) {
                         logger.error("Validate constraint: " + recordId + " -> " + refers);
                         logger.error("Mimetypes: " + parentMimeTypes.toString());
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VMX fghdgfh");
+                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VMX");
                     }
                 }
             }
