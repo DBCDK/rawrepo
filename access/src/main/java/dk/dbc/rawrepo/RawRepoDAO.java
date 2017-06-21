@@ -26,8 +26,8 @@ import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  */
 public abstract class RawRepoDAO {
 
-    private static final Logger log = LoggerFactory.getLogger(RawRepoDAO.class);
+    private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAO.class);
 
     AgencySearchOrder agencySearchOrder;
     RelationHints relationHints;
@@ -160,7 +160,7 @@ public abstract class RawRepoDAO {
                         String className = daoName + databaseProductName + "Impl";
                         Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
                         if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
-                            log.error("Class found is not an instance of RawRepoDAO");
+                            logger.error("Class found is not an instance of RawRepoDAO");
                             throw new RawRepoException("Unable to load driver");
                         }
                         Constructor<?> constructor = clazz.getConstructor(Connection.class);
@@ -180,7 +180,7 @@ public abstract class RawRepoDAO {
 
                 return dao;
             } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                log.error("Caught exception trying to instantiate dao", ex);
+                logger.error("Caught exception trying to instantiate dao", ex);
                 throw new RawRepoException("Unable to load driver", ex);
             }
         }
@@ -281,6 +281,7 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException
      */
     public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        logger.info("fetchRecordCollection 1 for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> ret = new HashMap<>();
         fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger);
         return ret;
@@ -292,7 +293,6 @@ public abstract class RawRepoDAO {
      * @param collection
      * @param bibliographicRecordId
      * @param agencyId
-     * @param agencyIds
      * @param merger
      * @throws RawRepoException
      * @throws MarcXMergerException
@@ -399,10 +399,10 @@ public abstract class RawRepoDAO {
                 }
             }
         } catch (CacheException ex) {
-            log.error("Could not access cache: " + ex.getMessage());
+            logger.error("Could not access cache: " + ex.getMessage());
             Throwable cause = ex.getCause();
             if (cause != null) {
-                log.error("Cause: " + cause.getMessage());
+                logger.error("Cause: " + cause.getMessage());
             }
             throw new RawRepoException("Error accessing relation hints", ex);
         }
@@ -433,10 +433,10 @@ public abstract class RawRepoDAO {
                 return originalAgencyId;
             }
         } catch (CacheException ex) {
-            log.error("Could not access cache: " + ex.getMessage());
+            logger.error("Could not access cache: " + ex.getMessage());
             Throwable cause = ex.getCause();
             if (cause != null) {
-                log.error("Cause: " + cause.getMessage());
+                logger.error("Cause: " + cause.getMessage());
             }
             throw new RawRepoException("Error accessing relation hints", ex);
         }
@@ -496,7 +496,7 @@ public abstract class RawRepoDAO {
             while (iterator.hasNext()) {
                 Record next = iterator.next();
                 if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
-                    log.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
+                    logger.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                     throw new MarcXMergerException("Cannot merge enrichment");
                 }
 
@@ -652,7 +652,6 @@ public abstract class RawRepoDAO {
      *
      * @param job      job description
      * @param provider change initiator
-     * @param mimeType mimeType of the current record
      * @param changed  is job for a record that has been changed
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException
@@ -760,7 +759,7 @@ public abstract class RawRepoDAO {
                 enqueue(recordId, provider, true, true);
             }
         } else if (relationHints.usesCommonAgency(agencyId)) {
-            log.info("Queued non-existent record: " + agencyId + ":" + bibliographicRecordId);
+            logger.info("Queued non-existent record: " + agencyId + ":" + bibliographicRecordId);
             enqueue(recordId, provider, true, true);
         } else {
             throw new RawRepoExceptionRecordNotFound("Could not find record: " + agencyId + ":" + bibliographicRecordId);
@@ -780,9 +779,9 @@ public abstract class RawRepoDAO {
                 try {
                     searchChildrenAgencies.add(findSiblingRelationAgency(bibliographicRecordId, agency));
                 } catch (RawRepoExceptionRecordNotFound ex) {
-                    log.warn("When trying to queue: " + bibliographicRecordId + " for " + agency + " cound not find record");
-                    log.debug("realtion hints showed no record");
-                    log.debug(ex.getMessage());
+                    logger.warn("When trying to queue: " + bibliographicRecordId + " for " + agency + " cound not find record");
+                    logger.debug("realtion hints showed no record");
+                    logger.debug(ex.getMessage());
                 }
             }
         }
@@ -896,9 +895,6 @@ public abstract class RawRepoDAO {
      * @param agencies              output of agencies seen
      * @param bibliographicRecordId record to start from
      * @param agencyId              agency to start from
-     * @param loopTrack             collection holding seen nodes, for loop
-     *                              detection
-     * @param loop                  loop detection prefix
      * @throws RawRepoException if a loop occurs
      */
     private void findMajorSiblings(HashSet<Integer> agencies, String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -916,9 +912,6 @@ public abstract class RawRepoDAO {
      * @param agencies              output of agencies seen
      * @param bibliographicRecordId record to start from
      * @param agencyId              agency to start from
-     * @param loopTrack             collection holding seen nodes, for loop
-     *                              detection
-     * @param loop                  loop detection prefix
      * @param add                   add minor siblings?
      * @throws RawRepoException if a loop occurs
      */

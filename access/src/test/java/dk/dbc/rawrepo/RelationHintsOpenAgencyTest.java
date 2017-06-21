@@ -84,7 +84,7 @@ public class RelationHintsOpenAgencyTest {
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertEquals(Arrays.asList(870970, 870971), agencies);
+        assertEquals(Arrays.asList(870970, 870971, 870979), agencies);
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
         assertEquals(false, usesCommonAgency);

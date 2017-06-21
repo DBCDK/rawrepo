@@ -21,6 +21,8 @@
 package dk.dbc.rawrepo;
 
 import org.slf4j.LoggerFactory;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
 import java.sql.*;
@@ -34,7 +36,7 @@ import java.util.Set;
  */
 public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(RawRepoDAOPostgreSQLImpl.class);
+    private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAOPostgreSQLImpl.class);
     private static final org.slf4j.Logger logQueue = LoggerFactory.getLogger("dk.dbc.rawrepo.RawRepoDAO#queue");
 
     private final Connection connection;
@@ -93,7 +95,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (PreparedStatement stmt = connection.prepareStatement(TIME_ZONE)) {
                 stmt.executeUpdate();
             } catch (SQLException ex) {
-                log.error(TIME_ZONE + " error", ex);
+                logger.error(TIME_ZONE + " error", ex);
                 throw new RawRepoException("Unable to force timezone");
             }
             try (PreparedStatement stmt = connection.prepareStatement(VALIDATE_SCHEMA)) {
@@ -102,7 +104,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     if (resultSet.next()) {
                         String warning = resultSet.getString(1);
                         if (warning != null) {
-                            log.warn(warning);
+                            logger.warn(warning);
                         }
                         return;
                     }
@@ -114,16 +116,16 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     if (resultSet.next()) {
                         String warning = resultSet.getString(1);
                         if (warning != null) {
-                            log.warn(warning);
+                            logger.warn(warning);
                         }
                         return;
                     }
                 }
             }
         } catch (SQLException ex) {
-            log.error("Validating schema", ex);
+            logger.error("Validating schema", ex);
         }
-        log.error("Incompatible database schema software: {}", SCHEMA_VERSION);
+        logger.error("Incompatible database schema software: {}", SCHEMA_VERSION);
         throw new RawRepoException("Incompatible database schema");
     }
 
@@ -160,7 +162,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         }
         return new RecordImpl(new RecordId(bibliographicRecordId, agencyId));
@@ -294,7 +296,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setInt(pos++, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error purging record", ex);
         }
     }
@@ -328,7 +330,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 return;
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error updating record", ex);
         }
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
@@ -343,7 +345,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos++, record.getTrackingId());
             stmt.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error saving record", ex);
         }
         if (record instanceof RecordImpl) {
@@ -364,7 +366,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
             throw new RawRepoExceptionRecordNotFound("Trying to find mimetype");
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching mimetype", ex);
         }
     }
@@ -381,7 +383,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
             return null;
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching deleted state", ex);
         }
     }
@@ -407,7 +409,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -427,7 +429,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setInt(pos++, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting relations", ex);
         }
     }
@@ -455,7 +457,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 stmt.execute();
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error setting relations", ex);
         }
     }
@@ -482,7 +484,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -509,7 +511,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -533,7 +535,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -557,7 +559,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -581,7 +583,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 }
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching relations", ex);
         }
         return collection;
@@ -610,15 +612,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     if (resultSet.getBoolean(2)) {
-                        log.info("Queued: worker = {}; job = {}", resultSet.getString(1), job);
+                        logger.info("Queued: worker = {}; job = {}", resultSet.getString(1), job);
                     } else {
-                        log.info("Queued: worker = {}; job = {}; skipped - already on queue", resultSet.getString(1), job);
+                        logger.info("Queued: worker = {}; job = {}; skipped - already on queue", resultSet.getString(1), job);
                     }
                 }
 
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
         }
     }
@@ -635,14 +637,14 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement begin = connection.prepareStatement("BEGIN")) {
             begin.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         }
         QueueJob result = dequeue(worker);
         try (PreparedStatement savepoint = connection.prepareStatement("SAVEPOINT DEQUEUED")) {
             savepoint.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         }
         return result;
@@ -674,7 +676,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 return result;
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing jobs", ex);
         }
     }
@@ -702,7 +704,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 return null;
             }
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         }
     }
@@ -741,7 +743,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setTimestamp(pos++, queueJob.queued);
             stmt.executeUpdate();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error reporting job status", ex);
         }
     }
@@ -761,7 +763,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement rollback = connection.prepareStatement("ROLLBACK TO DEQUEUED")) {
             rollback.execute();
         } catch (SQLException ex) {
-            log.error(LOG_DATABASE_ERROR, ex);
+            logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error rolling back", ex);
         }
         queueFail(queueJob, error);
