@@ -124,6 +124,7 @@ public class ValidateRelations {
                     siblingMimeTypes.remove(MarcXChangeMimeType.ENRICHMENT);
                     siblingMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
                     siblingMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
+                    siblingMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
                     if (!siblingMimeTypes.isEmpty()) {
                         logger.error("Validate constraint: " + recordId + " -> " + refers);
                         throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");
