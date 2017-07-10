@@ -149,7 +149,6 @@ public class Indexer {
     }
 
     public void performWork() {
-        log.info("Indexing available jobs from worker '{}'", workerName);
 
         boolean moreWork = true;
         int processedJobs = 0;
@@ -186,7 +185,9 @@ public class Indexer {
                 MDC.remove(TRACKING_ID);
             }
         }
-        log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
+        if (processedJobs > 0) {
+            log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
+        }
     }
 
     protected Connection getConnection() throws SQLException {
@@ -247,6 +248,7 @@ public class Indexer {
                 return null;
             }
             merger = mergerPool.getMerger();
+            time.stop();
             return dao.fetchMergedRecord(id, library, merger, true);
         } finally {
             if (merger != null) {
