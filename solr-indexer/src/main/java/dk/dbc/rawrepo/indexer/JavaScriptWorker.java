@@ -61,13 +61,13 @@ public class JavaScriptWorker {
         "classpath:javascript/jscommon/xml/"
     };
 
-    private final Environment environment;
-    private final Environment environment1;
+    private final Environment internal_indexes_env;
+    private final Environment dbc_indexes_env;
 
     public JavaScriptWorker() {
         try {
-            environment = new Environment();
-            environment1 = new Environment();
+            internal_indexes_env = new Environment();
+            dbc_indexes_env = new Environment();
             ModuleHandler mh = new ModuleHandler();
             mh.registerNonCompilableModule("Tables"); // Unlikely we need this module.
 
@@ -85,19 +85,19 @@ public class JavaScriptWorker {
     //      mh.registerHandler("file", new FileSchemeHandler(root)); // Don'tuse filesystem
 
             // Use system
-            environment.registerUseFunction(mh);
-            environment1.registerUseFunction(mh);
+            internal_indexes_env.registerUseFunction(mh);
+            dbc_indexes_env.registerUseFunction(mh);
 
             // Evaluate script
             InputStream stream = getClass().getClassLoader().getResourceAsStream(INDEXER_SCRIPT);
             InputStreamReader inputStreamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         
-            environment.eval(inputStreamReader, INDEXER_SCRIPT);
+            internal_indexes_env.eval(inputStreamReader, INDEXER_SCRIPT);
 
             InputStream stream1 = getClass().getClassLoader().getResourceAsStream(DBC_INDEXER_SCRIPT);
             InputStreamReader inputStreamReader1 = new InputStreamReader(stream1, StandardCharsets.UTF_8);
 
-            environment1.eval(inputStreamReader1, DBC_INDEXER_SCRIPT);
+            dbc_indexes_env.eval(inputStreamReader1, DBC_INDEXER_SCRIPT);
 
         } catch (Exception ex) {
             log.error("Error initializing javascript", ex);
@@ -132,8 +132,8 @@ public class JavaScriptWorker {
     void addFields(SolrInputDocument solrInputDocument, String content, String mimetype) throws Exception {
         this.solrInputDocument = solrInputDocument;
 
-        environment.callMethod(INDEXER_METHOD, new Object[]{content, mimetype});
-        environment1.callMethod(DBC_INDEXER_METHOD, new Object[]{content, mimetype});
+        internal_indexes_env.callMethod(INDEXER_METHOD, new Object[]{content, mimetype});
+        dbc_indexes_env.callMethod(DBC_INDEXER_METHOD, new Object[]{content, mimetype});
     }
 
 }
