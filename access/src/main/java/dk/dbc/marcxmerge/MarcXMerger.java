@@ -44,15 +44,6 @@ import java.util.ListIterator;
 public class MarcXMerger {
     private static final XLogger logger = XLoggerFactory.getXLogger(MarcXMerger.class);
 
-    public enum DataFieldAction {
-        Immutable,
-        Append,
-        Overwrite,
-        Remove
-    }
-
-    ;
-
     private static final String MARCX_NS = "info:lc/xmlns/marcxchange-v1";
     private static final String ATTRIBUTE_TAG = "tag";
     private static final String ELEMENT_RECORD = "record";
