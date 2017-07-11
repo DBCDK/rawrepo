@@ -26,7 +26,6 @@ use("XmlUtil");
 use("XmlNamespaces");
 use("NodeTypes");
 use("Log");
-// SEE MEE PLEEZEE PLEEZE IKK ? JOODA
 
 function add(obj, field) {
     if (obj[field] === undefined)
