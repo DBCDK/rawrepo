@@ -24,6 +24,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.forsrights.client.ForsRightsException;
+import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -32,8 +33,8 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.content.service.transport.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 import org.xml.sax.SAXParseException;
 
 import javax.annotation.PostConstruct;
@@ -58,10 +59,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public abstract class Service {
+    private static final XLogger logger = XLoggerFactory.getXLogger(Service.class);
 
     @Resource(lookup = C.RAWREPO.DATASOURCE)
     DataSource rawrepo;
@@ -103,6 +104,9 @@ public abstract class Service {
     Timer fetchMerged;
 
     @Inject
+    Timer fetchMergedDBCKat;
+
+    @Inject
     Timer fetchCollection;
 
     @Inject
@@ -110,23 +114,21 @@ public abstract class Service {
     @EEConfig.Default("")
     String xForwardedFor;
 
-    private static final Logger log = LoggerFactory.getLogger(Service.class);
-
     List<IPRange> ipRanges;
 
     ExecutorService executorService;
 
     @PostConstruct
     public void init() {
-        log.info("init()");
+        logger.info("init()");
         ipRanges = new ArrayList<>();
         if (!xForwardedFor.isEmpty()) {
             for (String range : xForwardedFor.split("[,;:\\s]+")) {
                 try {
                     ipRanges.add(new IPRange(range));
                 } catch (RuntimeException ex) {
-                    log.warn("ipRange init - " + ex.getMessage());
-                    log.debug(ex.getMessage(), ex);
+                    logger.warn("ipRange init - " + ex.getMessage());
+                    logger.debug(ex.getMessage(), ex);
                 }
             }
         }
@@ -141,7 +143,7 @@ public abstract class Service {
                       @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.IN, name = "records") List<FetchRequestRecord> requestRecords,
                       @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "error") Holder<Object> out) {
         try (Timer.Context time1 = requests.time()) {
-            log.debug("fetch()");
+            logger.debug("fetch()");
             Exception exception = getException();
             if (exception != null) {
                 requestSyntaxError.inc();
@@ -174,8 +176,8 @@ public abstract class Service {
                         switch (requestRecord.mode) {
                             case RAW:
                                 if (allowDeleted ?
-                                    !dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId) :
-                                    !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                                        !dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId) :
+                                        !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                                     throw new RawRepoExceptionRecordNotFound();
                                 }
                                 record.content = fetchRaw(dao, requestRecord);
@@ -183,12 +185,15 @@ public abstract class Service {
                             case MERGED:
                                 record.content = fetchMerged(dao, requestRecord);
                                 break;
+                            case MERGED_DBCKAT:
+                                record.content = fetchMergedDBCKat(dao, requestRecord);
+                                break;
                             case COLLECTION:
                                 record.content = fetchCollection(dao, requestRecord);
                                 break;
                         }
                     } catch (RawRepoExceptionRecordNotFound ex) {
-                        log.warn("No such record: " + requestRecord.bibliographicRecordId + ";" + requestRecord.agencyId + ";" + requestRecord.mode);
+                        logger.warn("No such record: " + requestRecord.bibliographicRecordId + ";" + requestRecord.agencyId + ";" + requestRecord.mode);
                         record.content = "No such record";
                     }
                     fetchResponseRecords.records.add(record);
@@ -197,32 +202,32 @@ public abstract class Service {
             }
         } catch (MarcXMergerException ex) {
             requestErrors.inc();
-            log.error("MarcXMergerException Error: " + ex.getMessage());
-            log.debug("MarcXMergerException Error", ex);
+            logger.error("MarcXMergerException Error: " + ex.getMessage());
+            logger.debug("MarcXMergerException Error", ex);
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (RawRepoException ex) {
             requestErrors.inc();
-            log.error("RawRepo Error: " + ex.getMessage());
-            log.debug("RawRepo Error", ex);
+            logger.error("RawRepo Error: " + ex.getMessage());
+            logger.debug("RawRepo Error", ex);
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (SQLException ex) {
             requestErrors.inc();
-            log.error("SQL Error: " + ex.getMessage());
-            log.debug("SQL Error", ex);
+            logger.error("SQL Error: " + ex.getMessage());
+            logger.debug("SQL Error", ex);
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (ForsRightsException ex) {
             authenticationErrors.inc();
-            log.error("Error Validating User: " + ex.getMessage());
-            log.debug("Error Validating User", ex);
+            logger.error("Error Validating User: " + ex.getMessage());
+            logger.debug("Error Validating User", ex);
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (ErrorException e) {
             requestErrors.inc();
             out.value = e.getError();
         } catch (RuntimeException ex) {
             requestErrors.inc();
-            log.error("Runtime Exception: " + ex.getMessage());
-            log.debug("Runtime Exception", ex);
-            log.debug("Runtime Exception", ex.getCause());
+            logger.error("Runtime Exception: " + ex.getMessage());
+            logger.debug("Runtime Exception", ex);
+            logger.debug("Runtime Exception", ex.getCause());
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         }
     }
@@ -273,7 +278,7 @@ public abstract class Service {
         }
         byte[] content = rawRecord.getContent();
         if (isMarcXChange(rawRecord.getMimeType()) &&
-            ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+                (requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate)) {
             content = filterContent(content);
         }
         return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
@@ -281,7 +286,7 @@ public abstract class Service {
 
     private FetchResponseRecordContent fetchMerged(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
         Record rawRecord;
-        try (Timer.Context time = fetchMerged.time() ;
+        try (Timer.Context time = fetchMerged.time();
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
@@ -292,7 +297,33 @@ public abstract class Service {
         }
         byte[] content = rawRecord.getContent();
         if (isMarcXChange(rawRecord.getMimeType()) &&
-            ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+                (requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate)) {
+            content = filterContent(content);
+        }
+        return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
+    }
+
+    private FetchResponseRecordContent fetchMergedDBCKat(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
+        logger.entry(requestRecord);
+        Record rawRecord;
+
+        try (Timer.Context time = fetchMergedDBCKat.time()) {
+            String immutable = "001;010;020;990;991;996";
+            String overwrite = "004;005;013;014;017;035;036;240;243;247;300;008 009 038 039 100 110 239 245 652 654";
+
+            FieldRules customFieldRules = new FieldRules(immutable, overwrite, FieldRules.INVALID_DEFAULT, FieldRules.VALID_REGEX_DANMARC2);
+            MarcXMerger merger = new MarcXMerger(customFieldRules);
+
+            boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+            rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, merger, allowDeleted);
+        } catch (RawRepoException | MarcXMergerException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        byte[] content = rawRecord.getContent();
+        if (isMarcXChange(rawRecord.getMimeType()) &&
+                (requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate)) {
             content = filterContent(content);
         }
         return new FetchResponseRecordContent(rawRecord.getMimeType(), content);
@@ -300,11 +331,11 @@ public abstract class Service {
 
     private Object fetchCollection(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
         Map<String, Record> collection;
-        try (Timer.Context time = fetchCollection.time() ;
+        try (Timer.Context time = fetchCollection.time();
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             if (requestRecord.allowDeleted &&
-                !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId) &&
-                dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                    !dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId) &&
+                    dao.recordExistsMaybeDeleted(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
                 Record rawRecord = dao.fetchRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                 collection = new HashMap<>();
                 collection.put(requestRecord.bibliographicRecordId, rawRecord);
@@ -327,7 +358,7 @@ public abstract class Service {
                 }
                 byte[] content = rawRecord.getContent();
                 if (isMarcXChange(rawRecord.getMimeType()) &&
-                    ( requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate )) {
+                        (requestRecord.includeAgencyPrivate == null || !requestRecord.includeAgencyPrivate)) {
                     content = filterContent(content);
                 }
                 combined.add(content);
@@ -388,57 +419,4 @@ public abstract class Service {
     }
 }
 
-class IPRange {
 
-    private static final String N255 = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])";
-    private static final String IPV4 = N255 + "\\." + N255 + "\\." + N255 + "\\." + N255;
-    private static final Pattern IPV4_PATTERN = Pattern.compile("^" + IPV4 + "$", Pattern.DOTALL);
-    private static final Pattern IPV4_RANGE_PATTERN = Pattern.compile("^" + IPV4 + "(?:/(3[0-2]|[12]?[0-9])|-" + IPV4 + ")?$", Pattern.DOTALL);
-
-    private final long min, max;
-
-    IPRange(String range) {
-        Matcher matcher = IPV4_RANGE_PATTERN.matcher(range);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("Not a valid ip range: " + range);
-        }
-        long num1 = ( Long.parseUnsignedLong(matcher.group(1)) << 24 ) |
-                    ( Long.parseUnsignedLong(matcher.group(2)) << 16 ) |
-                    ( Long.parseUnsignedLong(matcher.group(3)) << 8 ) |
-                    ( Long.parseUnsignedLong(matcher.group(4)) );
-        long minCalc = num1;
-        long maxCalc = num1;
-        if (matcher.group(5) != null) {
-            long prefix = Long.parseLong(matcher.group(5));
-            long mask = -1 << ( 32 - prefix );
-            maxCalc = minCalc = num1 & mask;
-            maxCalc |= ~mask;
-        }
-        if (matcher.group(6) != null) {
-            long num2 = ( Long.parseUnsignedLong(matcher.group(6)) << 24 ) |
-                        ( Long.parseUnsignedLong(matcher.group(7)) << 16 ) |
-                        ( Long.parseUnsignedLong(matcher.group(8)) << 8 ) |
-                        ( Long.parseUnsignedLong(matcher.group(9)) );
-            maxCalc = Math.max(num1, num2);
-            minCalc = Math.min(num1, num2);
-        }
-
-        this.min = minCalc;
-        this.max = maxCalc;
-    }
-
-    boolean inRange(long ip) {
-        return ip >= min && ip <= max;
-    }
-
-    boolean inRange(String ip) {
-        Matcher matcher = IPV4_PATTERN.matcher(ip);
-        if (matcher.matches()) {
-            return inRange(( Long.parseUnsignedLong(matcher.group(1)) << 24 ) |
-                           ( Long.parseUnsignedLong(matcher.group(2)) << 16 ) |
-                           ( Long.parseUnsignedLong(matcher.group(3)) << 8 ) |
-                           ( Long.parseUnsignedLong(matcher.group(4)) ));
-        }
-        return false;
-    }
-}

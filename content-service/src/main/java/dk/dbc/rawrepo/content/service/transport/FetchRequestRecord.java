@@ -21,13 +21,13 @@
 package dk.dbc.rawrepo.content.service.transport;
 
 import dk.dbc.rawrepo.content.service.C;
+
 import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS)
@@ -50,10 +50,10 @@ public class FetchRequestRecord {
     public Boolean includeAgencyPrivate;
 
     @XmlType(namespace = C.NS, name = "fetchRequestRecordMode")
-    public static enum Mode {
-
+    public enum Mode {
         RAW,
         MERGED,
+        MERGED_DBCKAT,
         COLLECTION
     }
 

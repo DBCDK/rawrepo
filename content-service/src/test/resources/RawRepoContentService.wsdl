@@ -19,7 +19,10 @@
  You should have received a copy of the GNU Affero General Public License
  along with dbc-rawrepo-content-service.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<wsdl:definitions name="RawRepoContentService" targetNamespace="http://oss.dbc.dk/ns/rawreposervice" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://oss.dbc.dk/ns/rawreposervice" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata">
+<wsdl:definitions name="RawRepoContentService" targetNamespace="http://oss.dbc.dk/ns/rawreposervice"
+                  xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:tns="http://oss.dbc.dk/ns/rawreposervice" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata">
   <wsdl:types>
 <xs:schema xmlns:tns="http://oss.dbc.dk/ns/rawreposervice" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://oss.dbc.dk/ns/rawreposervice" version="1.0">
 
@@ -100,6 +103,7 @@
     <xs:restriction base="xs:string">
       <xs:enumeration value="RAW"/>
       <xs:enumeration value="MERGED"/>
+      <xs:enumeration value="MERGED_DBCKAT"/>
       <xs:enumeration value="COLLECTION"/>
     </xs:restriction>
   </xs:simpleType>

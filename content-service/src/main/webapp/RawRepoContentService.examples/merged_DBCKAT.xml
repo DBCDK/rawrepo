@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
+  ~  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
+  -->
+
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+    <S:Body>
+        <fetchRequest xmlns="http://oss.dbc.dk/ns/rawreposervice">
+            <!-- Optional -->
+            <authentication>
+                <user></user>
+                <group></group>
+                <password></password>
+            </authentication>
+            <records>
+                <!-- 1 or more -->
+                <record>
+                    <bibliographicRecordId>4 557 839 9</bibliographicRecordId>
+                    <agencyId>191919</agencyId>
+                    <mode>MERGED_DBCKAT</mode>
+                    <allowDeleted>true</allowDeleted>
+                    <includeAgencyPrivate>true</includeAgencyPrivate>
+                </record>
+            </records>
+        </fetchRequest>
+    </S:Body>
+</S:Envelope>

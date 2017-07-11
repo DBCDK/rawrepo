@@ -21,8 +21,8 @@
 package dk.dbc.marcxmerge;
 
 import dk.dbc.marcxmerge.FieldRules.MarcXFixup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -39,20 +39,19 @@ import java.util.Comparator;
 import java.util.ListIterator;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXMerger {
-
-    private static final Logger log = LoggerFactory.getLogger(MarcXMerger.class);
+    private static final XLogger logger = XLoggerFactory.getXLogger(MarcXMerger.class);
 
     public enum DataFieldAction {
-
         Immutable,
         Append,
         Overwrite,
         Remove
-    };
+    }
+
+    ;
 
     private static final String MARCX_NS = "info:lc/xmlns/marcxchange-v1";
     private static final String ATTRIBUTE_TAG = "tag";
@@ -138,7 +137,7 @@ public class MarcXMerger {
                 return documentBuilderFactory.newDocumentBuilder();
             }
         } catch (ParserConfigurationException ex) {
-            log.error("Cannot create parser part of xml merger", ex);
+            logger.error("Cannot create parser part of xml merger", ex);
             throw new MarcXMergerException("Cannot init record merger", ex);
         }
     }
@@ -163,7 +162,7 @@ public class MarcXMerger {
                 return transformer;
             }
         } catch (TransformerFactoryConfigurationError | TransformerConfigurationException | IllegalArgumentException ex) {
-            log.error("Cannot create writer part of xml merger", ex);
+            logger.error("Cannot create writer part of xml merger", ex);
             throw new MarcXMergerException("Cannot init record merger", ex);
         }
     }
@@ -186,23 +185,24 @@ public class MarcXMerger {
             Element localRootElement = localDom.getDocumentElement();
 
             if (!commonRootElement.getLocalName().equals(ELEMENT_RECORD)
-                || !commonRootElement.getNamespaceURI().equals(MARCX_NS)) {
+                    || !commonRootElement.getNamespaceURI().equals(MARCX_NS)) {
                 throw new MarcXMergerException("Outermost tag in common record: "
-                                               + "{" + commonRootElement.getNamespaceURI() + "}" + commonRootElement.getLocalName()
-                                               + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
+                        + "{" + commonRootElement.getNamespaceURI() + "}" + commonRootElement.getLocalName()
+                        + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
             }
 
             if (!localRootElement.getLocalName().equals(ELEMENT_RECORD)
-                || !localRootElement.getNamespaceURI().equals(MARCX_NS)) {
+                    || !localRootElement.getNamespaceURI().equals(MARCX_NS)) {
                 throw new MarcXMergerException("Outermost tag in local record: "
-                                               + "{" + localRootElement.getNamespaceURI() + "}" + localRootElement.getLocalName()
-                                               + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
+                        + "{" + localRootElement.getNamespaceURI() + "}" + localRootElement.getLocalName()
+                        + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
             }
 
             Document targetDom = commonDom; // reuse common dom's leader
             Element targetRootElement = commonRootElement;
 
             FieldRules.RuleSet ruleSet = fieldRulesIntermediate.newRuleSet();
+            logger.info("ruleSet before: {}", ruleSet.toString());
 
             removeEmptyText(commonDom.getDocumentElement()); // cleanup nodes
             removeEmptyText(localDom.getDocumentElement()); // cleanup nodes
@@ -212,6 +212,7 @@ public class MarcXMerger {
 
             removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom, includeAllFields); // sets up which common fields, that should be removed
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
+            logger.info("ruleSet after: {}", ruleSet.toString());
 
             mergeCommonAndLocalIntoTarget(localFields, commonFields, targetRootElement);
 
@@ -221,7 +222,7 @@ public class MarcXMerger {
 
             return documentToBytes(targetDom);
         } catch (SAXException | IOException | TransformerException ex) {
-            log.error("Cannot merge records", ex);
+            logger.error("Cannot merge records", ex);
             throw new MarcXMergerException("Record merge error", ex);
         }
     }
@@ -252,11 +253,11 @@ public class MarcXMerger {
 
     /**
      * removes unwanted nodes from localFields
-     *
+     * <p>
      * removes nodes from localDom
-     *
+     * <p>
      * imports nodes into targetDom
-     *
+     * <p>
      * registers tags in ruleSet, selecting which to remove from commonFields
      *
      * @param localFields
@@ -265,7 +266,7 @@ public class MarcXMerger {
      * @throws DOMException
      */
     private static void removeRegisterAndImportLocalFields(ArrayList<Node> localFields, FieldRules.RuleSet ruleSet, Document targetDom, boolean includeAllFields) throws DOMException {
-        for (ListIterator<Node> it = localFields.listIterator() ; it.hasNext() ;) {
+        for (ListIterator<Node> it = localFields.listIterator(); it.hasNext(); ) {
             Element element = (Element) it.next();
             String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
@@ -280,9 +281,9 @@ public class MarcXMerger {
 
     /**
      * removes nodes from commonFields according to ruleSet
-     *
+     * <p>
      * imports nodes into targetDom
-     *
+     * <p>
      * removes nodes from commonDom
      *
      * @param commonFields
@@ -291,7 +292,7 @@ public class MarcXMerger {
      * @throws DOMException
      */
     private static void removeAndImportCommonFields(ArrayList<Node> commonFields, FieldRules.RuleSet ruleSet, Document targetDom) throws DOMException {
-        for (ListIterator<Node> it = commonFields.listIterator() ; it.hasNext() ;) {
+        for (ListIterator<Node> it = commonFields.listIterator(); it.hasNext(); ) {
             Element element = (Element) it.next();
             String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
@@ -304,7 +305,6 @@ public class MarcXMerger {
     }
 
     /**
-     *
      * @param localFields
      * @param commonFields
      * @param targetElement
@@ -344,11 +344,11 @@ public class MarcXMerger {
         @Override
         public int compare(Node o1, Node o2) {
             if (o1.getNodeType() == Node.ELEMENT_NODE
-                && o2.getNodeType() == Node.ELEMENT_NODE
-                && ( (Element) o1 ).hasAttribute(ATTRIBUTE_TAG)
-                && ( (Element) o2 ).hasAttribute(ATTRIBUTE_TAG)) {
-                String o1Tag = ( (Element) o1 ).getAttribute(ATTRIBUTE_TAG);
-                String o2Tag = ( (Element) o2 ).getAttribute(ATTRIBUTE_TAG);
+                    && o2.getNodeType() == Node.ELEMENT_NODE
+                    && ((Element) o1).hasAttribute(ATTRIBUTE_TAG)
+                    && ((Element) o2).hasAttribute(ATTRIBUTE_TAG)) {
+                String o1Tag = ((Element) o1).getAttribute(ATTRIBUTE_TAG);
+                String o2Tag = ((Element) o2).getAttribute(ATTRIBUTE_TAG);
                 return o1Tag.compareTo(o2Tag);
             } else {
                 return o2.hashCode() - o1.hashCode();
@@ -365,7 +365,7 @@ public class MarcXMerger {
     private static ArrayList<Node> getDatafields(Element element) {
         NodeList nodeList = element.getElementsByTagNameNS(MARCX_NS, ELEMENT_DATAFIELD);
         ArrayList<Node> ret = new ArrayList<>(nodeList.getLength());
-        for (int i = 0 ; i < nodeList.getLength() ; i++) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
             ret.add(nodeList.item(i));
         }
         Collections.sort(ret, NODE_TAG_COMPARE);
@@ -383,7 +383,7 @@ public class MarcXMerger {
     private byte[] documentToBytes(Document dom) throws UnsupportedEncodingException, TransformerException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         transformer.transform(new DOMSource(dom),
-                              new StreamResult(new OutputStreamWriter(os, UTF8)));
+                new StreamResult(new OutputStreamWriter(os, UTF8)));
         return os.toByteArray();
     }
 }

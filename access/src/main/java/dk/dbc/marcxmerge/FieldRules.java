@@ -20,28 +20,24 @@
  */
 package dk.dbc.marcxmerge;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import java.util.*;
+import java.util.regex.Pattern;
+
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class FieldRules {
+    private static final XLogger logger = XLoggerFactory.getXLogger(FieldRules.class);
 
     public static final String INVALID_DEFAULT = "";
     public static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247;300"
-                                                   + ";008 009 038 039 100 110 239 245 652 654"; // Opstillingsdata
+            + ";008 009 038 039 100 110 239 245 652 654"; // Opstillingsdata
     public static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
     public static final String VALID_REGEX_DANMARC2 = "\\d{3}";
 
@@ -78,7 +74,7 @@ public class FieldRules {
 
     /**
      * class for ruleset for an individual marcx merge
-     *
+     * <p>
      * needs to have called
      * {@link #registerLocalField(java.lang.String) registerLocalField} for
      * every field to know if a
@@ -137,6 +133,14 @@ public class FieldRules {
         public boolean immutableField(String field) {
             return immutable.contains(field);
         }
+
+        @Override
+        public String toString() {
+            return "RuleSet{" +
+                    "immutable=" + immutable +
+                    ", remove=" + remove +
+                    '}';
+        }
     }
 
     /**
@@ -152,7 +156,6 @@ public class FieldRules {
     }
 
     /**
-     *
      * @param immutable  fields that can't be modified
      * @param overwrite  fields that are replacing (groups (of tags separated by
      *                   space) separated by ;)
@@ -169,7 +172,6 @@ public class FieldRules {
     }
 
     /**
-     *
      * @param immutable  fields that can't be modified
      * @param overwrite  fields that are replacing (groups (of tags separated by
      *                   space) separated by ;)
@@ -187,7 +189,6 @@ public class FieldRules {
     }
 
     /**
-     *
      * @return
      */
     public RuleSet newRuleSet() {
@@ -195,7 +196,6 @@ public class FieldRules {
     }
 
     /**
-     *
      * @return
      */
     public List<MarcXFixup> getFixups() {
@@ -204,14 +204,14 @@ public class FieldRules {
 
     static Element findFirstSubField(Document doc, String field, String subField) {
         Element root = doc.getDocumentElement();
-        for (Node datafield = root.getFirstChild() ; datafield != null ; datafield = datafield.getNextSibling()) {
+        for (Node datafield = root.getFirstChild(); datafield != null; datafield = datafield.getNextSibling()) {
             if (datafield.getNodeType() == Node.ELEMENT_NODE
-                && "datafield".equals(datafield.getLocalName())
-                && field.equals(( (Element) datafield ).getAttribute("tag"))) {
-                for (Node subfield = datafield.getFirstChild() ; subfield != null ; subfield = subfield.getNextSibling()) {
+                    && "datafield".equals(datafield.getLocalName())
+                    && field.equals(((Element) datafield).getAttribute("tag"))) {
+                for (Node subfield = datafield.getFirstChild(); subfield != null; subfield = subfield.getNextSibling()) {
                     if (subfield.getNodeType() == Node.ELEMENT_NODE
-                        && "subfield".equals(subfield.getLocalName())
-                        && subField.equals(( (Element) subfield ).getAttribute("code"))) {
+                            && "subfield".equals(subfield.getLocalName())
+                            && subField.equals(((Element) subfield).getAttribute("code"))) {
                         return (Element) subfield;
                     }
                 }
@@ -223,7 +223,6 @@ public class FieldRules {
     public interface MarcXFixup {
 
         /**
-         *
          * @param target
          * @param common
          * @param enrich
@@ -232,26 +231,26 @@ public class FieldRules {
     }
 
     private static final MarcXFixup DEFAULT_FIXUPS[] = {
-        // danMARC2: 001 *c
-        new MarcXFixup() {
-            @Override
-            public void fix(Document target, Document common, Document enrich) {
-                if ("danMARC2".equals(target.getDocumentElement().getAttribute("format"))) {
-                    Element target001cNode = findFirstSubField(target, "001", "c");
-                    Element common001cNode = findFirstSubField(common, "001", "c");
-                    Element enrich001cNode = findFirstSubField(enrich, "001", "c");
-                    if (target001cNode != null && common001cNode != null && enrich001cNode != null) {
-                        String common001c = common001cNode.getTextContent();
-                        String enrich001c = enrich001cNode.getTextContent();
-                        if (Long.parseLong(common001c, 10) > Long.parseLong(enrich001c, 10)) {
-                            target001cNode.setTextContent(common001c);
-                        } else {
-                            target001cNode.setTextContent(enrich001c);
+            // danMARC2: 001 *c
+            new MarcXFixup() {
+                @Override
+                public void fix(Document target, Document common, Document enrich) {
+                    if ("danMARC2".equals(target.getDocumentElement().getAttribute("format"))) {
+                        Element target001cNode = findFirstSubField(target, "001", "c");
+                        Element common001cNode = findFirstSubField(common, "001", "c");
+                        Element enrich001cNode = findFirstSubField(enrich, "001", "c");
+                        if (target001cNode != null && common001cNode != null && enrich001cNode != null) {
+                            String common001c = common001cNode.getTextContent();
+                            String enrich001c = enrich001cNode.getTextContent();
+                            if (Long.parseLong(common001c, 10) > Long.parseLong(enrich001c, 10)) {
+                                target001cNode.setTextContent(common001c);
+                            } else {
+                                target001cNode.setTextContent(enrich001c);
+                            }
                         }
                     }
                 }
-            }
-        },
+            },
 
     };
 }
