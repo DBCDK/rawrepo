@@ -133,7 +133,7 @@ public class JavaScriptWorker {
         this.solrInputDocument = solrInputDocument;
 
         internal_indexes_env.callMethod(INDEXER_METHOD, new Object[]{content, mimetype});
-        dbc_indexes_env.callMethod(DBC_INDEXER_METHOD, new Object[]{content, mimetype});
+        // DO NOT ACTIVATE THIS - IT WILL BE MERGED IN FROM THE INDEX_DEVELOPMENT BRANCH WHEN THAT IS READY dbc_indexes_env.callMethod(DBC_INDEXER_METHOD, new Object[]{content, mimetype});
     }
 
 }

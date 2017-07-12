@@ -62,6 +62,8 @@ setup_danmarc_field( );
 // content: string containing the rawrepo marcxml document to be indexed
 // minetype:
 var dbc_index = function ( content, mimetype ) {
+    return;
+    // DO NOT ACTIVATE THIS - IT WILL BE MERGED IN FROM THE INDEX_DEVELOPMENT BRANCH WHEN THAT IS READY
 
     Log.info( "Entering dbc_index" );
     Log.info( "Content = " + content );
