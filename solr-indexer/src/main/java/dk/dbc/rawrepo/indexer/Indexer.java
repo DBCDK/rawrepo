@@ -248,7 +248,6 @@ public class Indexer {
                 return null;
             }
             merger = mergerPool.getMerger();
-            time.stop();
             return dao.fetchMergedRecord(id, library, merger, true);
         } finally {
             if (merger != null) {
