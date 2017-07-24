@@ -70,6 +70,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_ALL_AGENCIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
+    private static final String SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED = "SELECT agencyid FROM records WHERE bibliographicrecordid=? and deleted='f'";
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
@@ -588,6 +589,31 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
         return collection;
     }
+
+    /**
+     * Get all libraries that has local data to bibliographicRecordId that is not Marked deleted
+     *
+     * @param bibliographicRecordId record bibliographicRecordId
+     * @return Collection of libraries that has localData for this record
+     * @throws RawRepoException
+     */
+    @Override
+    public Set<Integer> allAgenciesForBibliographicRecordIdSkipDeleted(String bibliographicRecordId) throws RawRepoException {
+        Set<Integer> collection = new HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED)) {
+            stmt.setString(1, bibliographicRecordId);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    collection.add(resultSet.getInt(1));
+                }
+            }
+        } catch (SQLException ex) {
+            logger.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error fetching relations", ex);
+        }
+        return collection;
+    }
+
 
     /**
      * Put job(s) on the queue (in the database)

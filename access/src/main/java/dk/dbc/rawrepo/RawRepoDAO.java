@@ -647,6 +647,8 @@ public abstract class RawRepoDAO {
      */
     public abstract Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException;
 
+    public abstract Set<Integer> allAgenciesForBibliographicRecordIdSkipDeleted(String bibliographicRecordId) throws RawRepoException;
+
     /**
      * Put job(s) on the queue (in the database)
      *

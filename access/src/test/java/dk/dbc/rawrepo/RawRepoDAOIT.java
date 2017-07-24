@@ -1,6 +1,6 @@
 /*
  * dbc-rawrepo-access
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
+ * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Bderup,
  * Denmark. CVR: 15149043
  *
  * This file is part of dbc-rawrepo-access.
@@ -26,6 +26,7 @@ import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -602,6 +603,20 @@ public class RawRepoDAOIT {
         assertTrue("Archived records", resultSet.getInt(1) > 0);
     }
 
+    @Test
+    public void testGetAllAgencies() throws Exception {
+        setupData(100000,
+                "A:870970,101-deleted,102",
+                "B:870970-deleted,200");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        
+        assertThat("lookup A", dao.allAgenciesForBibliographicRecordId("A"), containsInAnyOrder(870970,101,102));
+        assertThat("lookup B", dao.allAgenciesForBibliographicRecordId("B"), containsInAnyOrder(870970,200));
+        assertThat("lookup A skip Deleted", dao.allAgenciesForBibliographicRecordIdSkipDeleted("A"), containsInAnyOrder(870970,102));
+        assertThat("lookup B skip Deleted", dao.allAgenciesForBibliographicRecordIdSkipDeleted("B"), containsInAnyOrder(200));
+    }
+
     //  _   _      _                   _____                 _   _
 // | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
 // | |_| |/ _ \ | '_ \ / _ \ '__| | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
@@ -634,6 +649,14 @@ public class RawRepoDAOIT {
         stmt.execute();
     }
 
+    /**
+     *
+     * Create Test Data
+     * @param maxEnrichmentLibrary Record with AgencyLower records Get mimeType ENRICHMENT
+     * @param ids Setof Ids of the form [BibliographicId:Agency,Agency] The Agency Can have a -delete attatch for creating records with deleted='t' 
+     * @throws RawRepoException on Dao Errors
+     * @throws SQLException Errors from Commits
+     */
     void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
         connection.setAutoCommit(false);
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
@@ -647,6 +670,11 @@ public class RawRepoDAOIT {
             String[] split1 = id.split(":");
             String[] split2 = split1[1].split(",");
             for (String lib : split2) {
+                boolean isDeleted=false;
+                if( lib.endsWith("-deleted") ) {
+                    isDeleted=true;
+                    lib=lib.replace("-deleted","");
+                }                 
                 RecordId recordId = new RecordId(split1[0], Integer.parseInt(lib));
                 Record record = dao.fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
                 String mimeType;
@@ -661,6 +689,7 @@ public class RawRepoDAOIT {
                 }
                 record.setMimeType(mimeType);
                 record.setContent(id.getBytes());
+                record.setDeleted(isDeleted);
                 dao.saveRecord(record);
             }
         }
