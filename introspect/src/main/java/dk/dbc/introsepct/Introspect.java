@@ -27,6 +27,20 @@ import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import javax.annotation.Resource;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
@@ -36,24 +50,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NameClassPair;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.xml.xpath.XPathExpressionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -77,9 +73,10 @@ public class Introspect {
     private static final String KEY_PARENTS = "parents";
     private static final String KEY_CHILDREN = "children";
 
-    Context context;
 
-    private final String jdbcResourceBase = "jdbc/rawrepointrospect";
+
+    @Resource( name="env/uiName", lookup = "java:app/env/uiName")
+    String uiName = "";
 
     @Inject
     Merger merger;
@@ -87,55 +84,23 @@ public class Introspect {
     @Inject
     JSONStreamer streamer;
 
-    /**
-     * @param resource
-     * @return the dataSource
-     */
-    DataSource getDataSource(String resource) {
-        try {
-            return (DataSource) context.lookup(jdbcResourceBase + "/" + resource);
-        } catch (NamingException ex) {
-            throw new RuntimeException("Cannot get container resource", ex);
-        }
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-        try {
-            context = new InitialContext();
-        } catch (NamingException ex) {
-            throw new RuntimeException("Cannot get container resources", ex);
-        }
-    }
+    @Resource(mappedName = "java:global/jdbc/rawrepointrospect/basistest-rawrepo")
+    DataSource globalDataSource;
 
     @GET
     @Path("dbs")
     public Response getDBs() {
-        try {
-            ArrayList<String> response = new ArrayList<>();
-            NamingEnumeration<NameClassPair> list = context.list(jdbcResourceBase);
-            while (list.hasMoreElements()) {
-                NameClassPair element = list.nextElement();
-                if (element.isRelative() && element.getName().matches("^[-a-z0-9]+$")) {
-                    Object obj = context.lookup(jdbcResourceBase + "/" + element.getName());
-                    if (DataSource.class.isAssignableFrom(obj.getClass())) {
-                        response.add(element.getName());
-                    }
-                }
-            }
-            Collections.sort(response);
-            return ok(response);
-        } catch (Exception ex) {
-            log.error("Caught", ex);
-            return fail("Internal Error " + ex);
-        }
+        ArrayList<String> response = new ArrayList<>();
+        response.add(uiName);
+        Collections.sort(response);
+        return ok(response);
     }
 
     @GET
     @Path("agencies-with/{db : [^/]+}/{id : .+}")
     public Response getAgenciesWith(@PathParam("db") String resource,
                                     @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);
             ArrayList<Integer> response = new ArrayList<>(agencies);
@@ -153,7 +118,7 @@ public class Introspect {
     public Response getRecordMerged(@PathParam("db") String resource,
                                     @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
                    @Override
                    public List<Integer> provide(Integer key) throws Exception {
@@ -177,7 +142,7 @@ public class Introspect {
                                       @PathParam("agency") Integer agencyId,
                                       @PathParam("id") String bibliographicRecordId,
                                       @PathParam("version") Integer version) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record record = dao.getHistoricRecord(recordHistory.get(version));
@@ -198,7 +163,7 @@ public class Introspect {
                                   @PathParam("id") String bibliographicRecordId,
                                   @PathParam("left") Integer left,
                                   @PathParam("right") Integer right) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             Record leftRecord = dao.getHistoricRecord(recordHistory.get(left));
@@ -218,7 +183,7 @@ public class Introspect {
     public Response getRecordHistory(@PathParam("db") String resource,
                                      @PathParam("agency") Integer agencyId,
                                      @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(bibliographicRecordId, agencyId);
             ArrayList<Object> response = new ArrayList<>();
@@ -239,7 +204,7 @@ public class Introspect {
     public Response getRelations(@PathParam("db") String resource,
                                  @PathParam("agency") Integer agencyId,
                                  @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = getDataSource(resource).getConnection()) {
+        try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
             HashMap<String, Object> response = new HashMap();
@@ -304,7 +269,7 @@ public class Introspect {
         return Response.ok(streamer.stream(data)).type(MediaType.APPLICATION_JSON_TYPE).build();
     }
 
-    private static Response fail(String message) {
+    private Response fail(String message) {
         return Response.serverError().entity(message).build();
     }
 
