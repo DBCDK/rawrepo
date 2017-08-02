@@ -26,6 +26,10 @@ INPUT.ui-button#record-key {
     margin-top: -0.9em;
     margin-bottom: .9em;
 }
+INPUT.ui-button#lineformatter {
+    margin-top: -0.9em;
+    margin-bottom: .9em;
+}
 .ui-selectmenu-button SPAN.ui-selectmenu-text {
     text-align: center;
 }

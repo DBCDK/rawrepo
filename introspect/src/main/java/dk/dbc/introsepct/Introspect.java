@@ -20,11 +20,10 @@
  */
 package dk.dbc.introsepct;
 
-import dk.dbc.rawrepo.AgencySearchOrder;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RecordMetaDataHistory;
+import dk.dbc.iscrum.records.MarcConverter;
+import dk.dbc.iscrum.records.MarcRecord;
+import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.rawrepo.*;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffWriter;
 import org.slf4j.Logger;
@@ -44,6 +43,7 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,28 +113,58 @@ public class Introspect {
         }
     }
 
+    private Record recordMergedFetcher( Integer agencyId, String bibliographicRecordId) throws RawRepoException, XPathExpressionException, SAXException, IOException, MarcXMergerException, SQLException, RawRepoException, SQLException, MarcXMergerException {
+        log.trace("Entering recordMergedFetcher");
+        Record record = null;
+        try (Connection connection = globalDataSource.getConnection()) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
+                @Override
+                public List<Integer> provide(Integer key) throws Exception {
+                    return Arrays.asList(key);
+                }
+            }).build();
+            return record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
+        } finally {
+            log.trace("Exit recordMergedFetcher : " + record );
+        }
+    }
+
+
+    @GET
+    @Path("lineformatter/{db : [^/]+}/{agency : \\d+}/{id : .+}")
+    public Response convertToLineFormat(@PathParam("db") String resource,
+                                        @PathParam("agency") Integer agencyId,
+                                        @PathParam("id") String bibliographicRecordId) {
+        log.error("mvs hest entering convertToLineFormat");
+        log.info("Enter -> convertToLineFormat");
+        try {
+            Record record = recordMergedFetcher ( agencyId, bibliographicRecordId );
+            MarcRecord mcr = MarcConverter.convertFromMarcXChange(new String(record.getContent(),  "UTF-8"));
+            return ok(Arrays.asList(mcr.toString()));
+        } catch (Exception ex) {
+            log.error("Caught", ex);
+            return fail("Internal Error " + ex);
+        } finally {
+            log.info("Exit -> convertToLineFormat : ");
+        }
+    }
+
+
     @GET
     @Path("record-merged/{db : [^/]+}/{agency : \\d+}/{id : .+}")
     public Response getRecordMerged(@PathParam("db") String resource,
                                     @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
-        try (Connection connection = globalDataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
-                   @Override
-                   public List<Integer> provide(Integer key) throws Exception {
-                       return Arrays.asList(key);
-                   }
-               }).build();
-            Record record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
-
+        try {
+            Record record = recordMergedFetcher (agencyId, bibliographicRecordId );
             ArrayList<Object> response = xmlDiff(record, record);
-
             return ok(response);
         } catch (Exception ex) {
             log.error("Caught", ex);
             return fail("Internal Error " + ex);
         }
     }
+
 
     @GET
     @Path("record-historic/{db : [^/]+}/{agency : \\d+}/{id : .+}/{version : \\d+}")

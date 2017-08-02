@@ -22,7 +22,7 @@ $('document').ready(function () {
 
     /**
      * Fallback for console.log
-     * 
+     *
      * @returns {undefined}
      */
     var LOG = function () {
@@ -35,7 +35,7 @@ $('document').ready(function () {
 
     /**
      * Show error for 3 sek on page
-     * 
+     *
      * @param {type} text
      * @returns {undefined}
      */
@@ -49,7 +49,7 @@ $('document').ready(function () {
     };
 
     /**
-     * 
+     *
      * @returns {Function}
      */
     var ajaxBuilder = function () {
@@ -76,34 +76,43 @@ $('document').ready(function () {
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         ERROR(errorThrown);
-                    }});
+                    }
+                });
             }
         };
     };
     /**
      * Caching ajax call with callback queue
-     * 
+     *
      * @param {string} url
      * @param {function} callback
      * @type Function
      */
     var ajax = ajaxBuilder();
 
-    var clearCache = function() {
+    var clearCache = function () {
         ajax = ajaxBuilder();
     };
+
+    /**
+     * Caching ajax call with callback queue
+     *
+     * @param {string} url
+     * @param {function} callback
+     * @type Function
+     */
 
 
     /**
      * DisplayPane Class
-     * 
+     *
      * @type Function|DisplayPane
      */
     var DisplayPane = (function () {
 
         /**
          * Constructor
-         * 
+         *
          * @returns {take2_L65.DisplayPane}
          */
         var DisplayPane = function () {
@@ -112,18 +121,47 @@ $('document').ready(function () {
             this.versionSelect = $('#version');
             this.otherVersionSelect = $('#other-version');
             this.content = $('#content');
+
             var versionSelected = this.versionSelected.bind(this);
             this.versionSelect.selectmenu({select: versionSelected});
             this.otherVersionSelect.selectmenu({select: versionSelected});
 
+            this.lineformatter = $('#lineformatter');
+            this.lineformatter.button();
+            this.lineformatter.on('click', this.lineformat.bind(this));
             $(window).on('resize', this.resize.bind(this));
 
             return this;
         };
 
+        DisplayPane.prototype.lineformat = function () {
+            var key = this.idInput.val();
+            var arg = key.split(",", 3);
+            if (arg.length !== 3)
+                return;
+            var agencyid = arg[1];
+            var bibliographicrecordid = arg[2];
+
+            ajax("resources/lineformatter/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                this.lineformatterFunction.bind(this));
+        }
+
+        DisplayPane.prototype.lineformatterFunction = function (data) {
+            this.content.contents().remove();
+            var that = this;
+            var dataHtml = $('<span class="' + "data" + '"/>');
+            if (data.size < 1) {
+                dataHtml.text("Could not find data for recordid ");
+            } else {
+                dataHtml.text(data[0])
+            }
+            that.content.append(dataHtml);
+            this.resize();
+        };
+
         /**
          * Internal when a version or other version, has been selected
-         * 
+         *
          * @param {type} event
          * @param {type} ui
          * @returns {undefined}
@@ -142,22 +180,23 @@ $('document').ready(function () {
             if (thisVersion === '-1') {
                 this.otherVersionSelect.selectmenu('disable');
                 ajax("resources/record-merged/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
-                        this.displayRecord.bind(this));
+                    this.displayRecord.bind(this));
             } else {
                 this.otherVersionSelect.selectmenu('enable');
                 if (otherVersion === '') {
                     ajax("resources/record-historic/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion,
-                            this.displayRecord.bind(this));
+                        this.displayRecord.bind(this));
                 } else {
                     ajax("resources/record-diff/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion + "/" + otherVersion,
-                            this.displayRecord.bind(this));
+                        this.displayRecord.bind(this));
                 }
             }
         };
 
+
         /**
          * Set an Id (Key) for the pane
-         * 
+         *
          * @param {type} val
          * @returns {undefined}
          */
@@ -172,15 +211,15 @@ $('document').ready(function () {
                 var bibliographicrecordid = arg[2];
                 this.clear();
                 ajax("resources/record-history/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
-                        this.historyRead.bind(this));
+                    this.historyRead.bind(this));
                 ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
-                        this.relationsRead.bind(this));
+                    this.relationsRead.bind(this));
             }
         };
 
         /**
          * Internal: Clean content of version(s)
-         * 
+         *
          * @returns {undefined}
          */
         DisplayPane.prototype.clear = function () {
@@ -195,7 +234,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Callback for history ajax call
-         * 
+         *
          * @param {type} data
          * @returns {undefined}
          */
@@ -218,7 +257,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Callback for relations ajax call
-         * 
+         *
          * @param {type} data
          * @returns {undefined}
          */
@@ -231,7 +270,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Callback for document fetched ajax call
-         * 
+         *
          * @param {type} data
          * @returns {undefined}
          */
@@ -248,7 +287,7 @@ $('document').ready(function () {
 
         /**
          * Resize content area to fit screen
-         * 
+         *
          * @returns {undefined}
          */
         DisplayPane.prototype.resize = function () {
@@ -269,14 +308,14 @@ $('document').ready(function () {
 
     /**
      * RelationPane Class
-     * 
+     *
      * @type RelationPane Constructor
      */
     var RelationPane = (function () {
 
         /**
          * Constants
-         * 
+         *
          * @type type
          */
         var LINKDISTANCE = {
@@ -294,9 +333,10 @@ $('document').ready(function () {
             unknown: 'white'
         };
 
+
         /**
          * Constructor
-         * 
+         *
          * @returns {take2_L237.RelationPane}
          */
         var RelationPane = function () {
@@ -316,25 +356,25 @@ $('document').ready(function () {
             this.height = 300;
             this.domParent = d3.select('#svg-container');
             this.svg = this.domParent
-                    .append("svg")
-                    .attr("width", this.width)
-                    .attr("height", this.height);
+                .append("svg")
+                .attr("width", this.width)
+                .attr("height", this.height);
             this.canvas = this.svg.append('g');
             this.force = d3.layout.force()
-                    .size([this.width, this.height])
-                    .distance(function (d) { // proportional to relation type & combined number of relations
-                        var weight = 1;
-                        if (d.source.content !== null)
-                            weight = weight + d.source.content.weight;
-                        if (d.target.content !== null)
-                            weight = weight + d.target.content.weight;
-                        var factor = Math.pow(1.025, weight) + 1;
-                        return Math.min(this.width * 0.3, this.height * 0.3, (LINKDISTANCE[d.type]) * factor);
-                    }.bind(this))
-                    .friction(.3)
-                    .gravity(0.00)
-                    .charge(-500)
-                    .on("tick", this.tick.bind(this));
+                .size([this.width, this.height])
+                .distance(function (d) { // proportional to relation type & combined number of relations
+                    var weight = 1;
+                    if (d.source.content !== null)
+                        weight = weight + d.source.content.weight;
+                    if (d.target.content !== null)
+                        weight = weight + d.target.content.weight;
+                    var factor = Math.pow(1.025, weight) + 1;
+                    return Math.min(this.width * 0.3, this.height * 0.3, (LINKDISTANCE[d.type]) * factor);
+                }.bind(this))
+                .friction(.3)
+                .gravity(0.00)
+                .charge(-500)
+                .on("tick", this.tick.bind(this));
 
             var resize = this.resize.bind(this);
             $(window).on('resize', resize);
@@ -345,7 +385,7 @@ $('document').ready(function () {
 
         /**
          * Clears widgets
-         * 
+         *
          * @returns {undefined}
          */
         RelationPane.prototype.clear = function () {
@@ -355,7 +395,7 @@ $('document').ready(function () {
 
         /**
          * Set id (key) and render svg accordingly
-         * 
+         *
          * @param {type} key
          * @returns {undefined}
          */
@@ -378,7 +418,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Fetch relations for id (key)
-         * 
+         *
          * @param {type} key
          * @returns {undefined}
          */
@@ -391,12 +431,12 @@ $('document').ready(function () {
             var agencyid = arg[1];
             var bibliographicrecordid = arg[2];
             ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
-                    this.relationsFetched.bind(this));
+                this.relationsFetched.bind(this));
         };
 
         /**
          * Internal: Callback for relations ajax call
-         * 
+         *
          * @param {type} record
          * @returns {undefined}
          */
@@ -404,11 +444,11 @@ $('document').ready(function () {
             var key = this.db + "," + record['me'].agencyid + "," + record['me'].bibliographicrecordid;
             record.key = key;
             record.weight = (
-                    Object.keys(record['parents']).length +
-                    Object.keys(record['children']).length +
-                    Object.keys(record['siblings-in']).length +
-                    Object.keys(record['siblings-out']).length
-                    );
+                Object.keys(record['parents']).length +
+                Object.keys(record['children']).length +
+                Object.keys(record['siblings-in']).length +
+                Object.keys(record['siblings-out']).length
+            );
             if (!(key in this.collection)) {
                 var d = {key: key, content: record, relations: {}};
                 this.collection[key] = d;
@@ -437,7 +477,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Ensure all relations exists as node objects
-         * 
+         *
          * @param {type} rels
          * @returns {undefined}
          */
@@ -455,7 +495,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Ensure a link exists as a link object
-         * 
+         *
          * @param {type} source
          * @param {type} target
          * @param {type} type
@@ -470,7 +510,7 @@ $('document').ready(function () {
 
         /**
          * Internal: refresh noded/links, used when nodes has been added
-         * 
+         *
          * @returns {undefined}
          */
         RelationPane.prototype.refresh = function () {
@@ -479,77 +519,77 @@ $('document').ready(function () {
             }
 
             this.force
-                    .nodes(this.nodes)
-                    .links(this.links)
-                    .start();
+                .nodes(this.nodes)
+                .links(this.links)
+                .start();
 
             this.canvas.selectAll('.link')
-                    .data(this.force.links())
-                    .enter()
-                    .append('path')
-                    .attr('class', 'link')
-                    .style('fill', function (d) {
-                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
-                                d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
-                                COLOR.unknown;
-                    }.bind(this))
-                    .style('stroke', function (d) {
-                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
-                                d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
-                                COLOR.unknown;
-                    }.bind(this))
-                    .style('stroke-width', function (d) {
-                        return d.source.key === this.selected ? 2.0 : 1.25;
-                    }.bind(this));
+                .data(this.force.links())
+                .enter()
+                .append('path')
+                .attr('class', 'link')
+                .style('fill', function (d) {
+                    return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                        d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                            COLOR.unknown;
+                }.bind(this))
+                .style('stroke', function (d) {
+                    return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                        d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                            COLOR.unknown;
+                }.bind(this))
+                .style('stroke-width', function (d) {
+                    return d.source.key === this.selected ? 2.0 : 1.25;
+                }.bind(this));
 
             this.canvas.selectAll('.node')
-                    .data(this.force.nodes())
-                    .enter()
-                    .append('circle')
-                    .attr('class', 'node')
-                    .each(function (d, i) {
-                        d.node = d3.select(this);
-                    })
-                    .attr('r', 5)
-                    .style('stroke', 'black')
-                    .style('fill', function (d) {
-                        return d.content === null ? COLOR.nodeUnexpanded :
-                                COLOR.nodeDeselected;
-                    }.bind(this))
-                    .on('mouseover', function (d) {
-                        if (this.onSelect !== null && this.selected === d.key)
-                            return;
-                        this.hoverWidget.val(d.key);
-                        if (this.onHover !== null)
-                            this.onHover(d.key);
-                    }.bind(this))
-                    .on('mouseout', function (d) {
-                        this.hoverWidget.val('');
-                        if (this.onHover !== null)
-                            this.onHover(null);
-                    }.bind(this))
-                    .on('mousedown', function (d) {
-                        if (this.selected !== null && this.selected !== d.key) {
-                            this.collection[this.selected].fixed = false;
-                        }
-                    }.bind(this))
-                    .on('click', function (d) {
-                        if (d3.event.defaultPrevented)
-                            return; // ignore drag
-                        if (d.content === null) {
-                            this.fetchRelations(d.key);
-                            d.fixed = true;
-                        }
-                        this.setHighlight(d.key);
-                    }.bind(this))
-                    .on('dblclick', function (d) {
-                        if (this.onClick !== null)
-                            this.onClick(d.key);
-                    }.bind(this))
-                    .call(this.force.drag);
+                .data(this.force.nodes())
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .each(function (d, i) {
+                    d.node = d3.select(this);
+                })
+                .attr('r', 5)
+                .style('stroke', 'black')
+                .style('fill', function (d) {
+                    return d.content === null ? COLOR.nodeUnexpanded :
+                        COLOR.nodeDeselected;
+                }.bind(this))
+                .on('mouseover', function (d) {
+                    if (this.onSelect !== null && this.selected === d.key)
+                        return;
+                    this.hoverWidget.val(d.key);
+                    if (this.onHover !== null)
+                        this.onHover(d.key);
+                }.bind(this))
+                .on('mouseout', function (d) {
+                    this.hoverWidget.val('');
+                    if (this.onHover !== null)
+                        this.onHover(null);
+                }.bind(this))
+                .on('mousedown', function (d) {
+                    if (this.selected !== null && this.selected !== d.key) {
+                        this.collection[this.selected].fixed = false;
+                    }
+                }.bind(this))
+                .on('click', function (d) {
+                    if (d3.event.defaultPrevented)
+                        return; // ignore drag
+                    if (d.content === null) {
+                        this.fetchRelations(d.key);
+                        d.fixed = true;
+                    }
+                    this.setHighlight(d.key);
+                }.bind(this))
+                .on('dblclick', function (d) {
+                    if (this.onClick !== null)
+                        this.onClick(d.key);
+                }.bind(this))
+                .call(this.force.drag);
 
             if (this.selected === null &&
-                    this.nodes.length > 0) {
+                this.nodes.length > 0) {
                 this.setHighlight(this.nodes[0].key);
             }
 
@@ -563,15 +603,15 @@ $('document').ready(function () {
                 var y = this.height / 2;
                 this.force.stop();
                 this.canvas
-                        .selectAll('.node')
-                        .data(this.nodes)
-                        .each(function (d) {
-                            d.fixed = d === obj;
-                            if (d.fixed) {
-                                d.px = x;
-                                d.py = y;
-                            }
-                        });
+                    .selectAll('.node')
+                    .data(this.nodes)
+                    .each(function (d) {
+                        d.fixed = d === obj;
+                        if (d.fixed) {
+                            d.px = x;
+                            d.py = y;
+                        }
+                    });
                 this.force.start();
             }
         };
@@ -579,7 +619,7 @@ $('document').ready(function () {
 
         /**
          * Resize canvas according to parent size
-         * 
+         *
          * @returns {undefined}
          */
 
@@ -599,7 +639,7 @@ $('document').ready(function () {
             this.height = height;
             this.width = width;
             this.svg.attr("width", this.width)
-                    .attr("height", this.height);
+                .attr("height", this.height);
             this.force.size([this.width, this.height]);
             this.force.start();
         };
@@ -607,7 +647,7 @@ $('document').ready(function () {
 
         /**
          * Internal: highlight node that is selected
-         * 
+         *
          * @param {type} selected
          * @returns {undefined}
          */
@@ -624,37 +664,37 @@ $('document').ready(function () {
                 this.selected = selected;
 
                 var t = d3.transition()
-                        .duration(1000);
+                    .duration(1000);
                 t.selectAll('.node')
-                        .style('fill', function (d, i) {
-                            return d.key === this.current ? COLOR.nodeSelected :
-                                    d.content === null && d.key !== this.selected ? COLOR.nodeUnexpanded :
-                                    COLOR.nodeDeselected;
-                        }.bind(this))
-                        .attr('r', function (d) {
-                            return d.key === this.selected ? 10 : 5;
-                        }.bind(this));
+                    .style('fill', function (d, i) {
+                        return d.key === this.current ? COLOR.nodeSelected :
+                            d.content === null && d.key !== this.selected ? COLOR.nodeUnexpanded :
+                                COLOR.nodeDeselected;
+                    }.bind(this))
+                    .attr('r', function (d) {
+                        return d.key === this.selected ? 10 : 5;
+                    }.bind(this));
                 t.selectAll('.link')
-                        .style('fill', function (d) {
-                            return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
-                                    d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
-                                    COLOR.unknown;
-                        }.bind(this))
-                        .style('stroke', function (d) {
-                            return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
-                                    d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
-                                    COLOR.unknown;
-                        }.bind(this))
-                        .style('stroke-width', function (d) {
-                            return d.source.key === this.selected ? 2.0 : 1.25;
-                        }.bind(this))
-                        .call(this.force.start);
+                    .style('fill', function (d) {
+                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                            d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                                COLOR.unknown;
+                    }.bind(this))
+                    .style('stroke', function (d) {
+                        return d.type === 'parent' ? (d.source.key === this.selected ? COLOR.linkParentOutbound : COLOR.linkParent) :
+                            d.type === 'sibling' ? (d.source.key === this.selected ? COLOR.linkSiblingOutbound : COLOR.linkSibling) :
+                                COLOR.unknown;
+                    }.bind(this))
+                    .style('stroke-width', function (d) {
+                        return d.source.key === this.selected ? 2.0 : 1.25;
+                    }.bind(this))
+                    .call(this.force.start);
             }
         };
 
         /**
          * Set callback
-         * 
+         *
          * @param {type} onSelect
          * @returns {undefined}
          */
@@ -664,7 +704,7 @@ $('document').ready(function () {
 
         /**
          * Set callback
-         * 
+         *
          * @param {type} onHover
          * @returns {undefined}
          */
@@ -674,7 +714,7 @@ $('document').ready(function () {
 
         /**
          * Set callback
-         * 
+         *
          * @param {type} onClick
          * @returns {undefined}
          */
@@ -684,7 +724,7 @@ $('document').ready(function () {
 
         /**
          * Start animation
-         * 
+         *
          * @returns {undefined}
          */
         RelationPane.prototype.start = function () {
@@ -693,7 +733,7 @@ $('document').ready(function () {
 
         /**
          * Stop animation
-         * 
+         *
          * @returns {undefined}
          */
         RelationPane.prototype.stop = function () {
@@ -702,35 +742,35 @@ $('document').ready(function () {
 
         /**
          * Internal: Describe svg links
-         * 
+         *
          * @param {type} d
          * @returns {String}
          */
         RelationPane.prototype.d = function (d) {
             var dxa = d.target.x - d.source.x,
-                    dya = d.target.y - d.source.y,
-                    dra = Math.sqrt(dxa * dxa + dya * dya),
-                    sr = d.source.node.attr('r'),
-                    tr = d.target.node.attr('r'),
-                    sx = d.source.x + (dxa * sr / dra),
-                    sy = d.source.y + (dya * sr / dra),
-                    tx = d.target.x - (dxa * tr / dra),
-                    ty = d.target.y - (dya * tr / dra),
-                    dx = tx - sx,
-                    dy = ty - sy,
-                    theta = Math.atan2(dy, dx),
-                    d90 = Math.PI / 2,
-                    dtxs = tx - 3 * Math.cos(theta),
-                    dtys = ty - 3 * Math.sin(theta),
-                    l = 8,
-                    w = 2.5
-                    ;
+                dya = d.target.y - d.source.y,
+                dra = Math.sqrt(dxa * dxa + dya * dya),
+                sr = d.source.node.attr('r'),
+                tr = d.target.node.attr('r'),
+                sx = d.source.x + (dxa * sr / dra),
+                sy = d.source.y + (dya * sr / dra),
+                tx = d.target.x - (dxa * tr / dra),
+                ty = d.target.y - (dya * tr / dra),
+                dx = tx - sx,
+                dy = ty - sy,
+                theta = Math.atan2(dy, dx),
+                d90 = Math.PI / 2,
+                dtxs = tx - 3 * Math.cos(theta),
+                dtys = ty - 3 * Math.sin(theta),
+                l = 8,
+                w = 2.5
+                ;
             return "M" + sx + "," + sy +
-                    "L" + tx + "," + ty +
-                    "M" + dtxs + "," + dtys +
-                    "l" + (w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (-w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
-                    "L" + (dtxs - w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (dtys + w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
-                    "z";
+                "L" + tx + "," + ty +
+                "M" + dtxs + "," + dtys +
+                "l" + (w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (-w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
+                "L" + (dtxs - w * Math.cos(d90 - theta) - l * Math.cos(theta)) + "," + (dtys + w * Math.sin(d90 - theta) - l * Math.sin(theta)) +
+                "z";
         };
 
         /**
@@ -739,14 +779,14 @@ $('document').ready(function () {
          */
         RelationPane.prototype.tick = function () {
             this.canvas.selectAll('.node')
-                    .attr("cx", function (d) {
-                        return d.x;
-                    })
-                    .attr("cy", function (d) {
-                        return d.y;
-                    });
+                .attr("cx", function (d) {
+                    return d.x;
+                })
+                .attr("cy", function (d) {
+                    return d.y;
+                });
             this.canvas.selectAll('.link')
-                    .attr("d", this.d);
+                .attr("d", this.d);
         };
 
         return RelationPane;
@@ -760,18 +800,19 @@ $('document').ready(function () {
 
         /**
          * Constructor
-         * 
+         *
          * @returns {PageOptions}
          */
         var PageOptions = function () {
+
             this.dbSelect = $("#db");
             this.db = null;
             this.clearcacheInput = $('#clearcache');
+
             this.bibliographicrecordidInput = $('#bibliographicrecordid');
             this.nextBibliographicrecordid = null;
             this.agencyidSelect = $('#agencyid');
             this.nextAgencyid = null;
-
             this.onIdSelected = null;
 
             this.dbSelect.selectmenu({
@@ -779,9 +820,11 @@ $('document').ready(function () {
             });
 
             this.clearcacheInput.button();
+
             this.bibliographicrecordidInput.button();
 
             this.clearcacheInput.on('click', clearCache);
+
             this.bibliographicrecordidInput.on('change', this.bibliographicRecordIdChanged.bind(this));
             this.agencyidSelect.selectmenu({
                 select: this.agencyidSelected.bind(this)
@@ -792,7 +835,7 @@ $('document').ready(function () {
 
         /**
          * Clear widget content
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.clear = function () {
@@ -805,15 +848,15 @@ $('document').ready(function () {
 
         /**
          * Set Id (key) for page
-         * 
+         *
          * @param {type} key
          * @returns {undefined}
          */
         PageOptions.prototype.setId = function (key) {
             var arg = key.split(",", 3);
             if (this.dbSelect.val() !== arg[0] ||
-                    this.bibliographicrecordidInput.val() !== arg[2] ||
-                    this.agencyidSelect.val() !== arg[1]) {
+                this.bibliographicrecordidInput.val() !== arg[2] ||
+                this.agencyidSelect.val() !== arg[1]) {
                 this.nextDb = arg[0];
                 this.nextBibliographicRecordId = arg[2];
                 this.nextAgencyid = arg[1];
@@ -885,7 +928,7 @@ $('document').ready(function () {
         };
         /**
          * Internal: Callback, for changed record
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.bibliographicRecordIdClear = function () {
@@ -893,7 +936,7 @@ $('document').ready(function () {
         };
         /**
          * Internal: Callback, for changed record
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.bibliographicRecordIdAutoChange = function () {
@@ -904,7 +947,7 @@ $('document').ready(function () {
         };
         /**
          * Internal: Callback, for changed record
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.bibliographicRecordIdChanged = function () {
@@ -914,13 +957,13 @@ $('document').ready(function () {
             this.agencyidClear();
             if (bibliographicrecordid !== '') {
                 ajax("resources/agencies-with/" + this.db + "/" + bibliographicrecordid,
-                        this.agencyidFetched.bind(this));
+                    this.agencyidFetched.bind(this));
             }
         };
 
         /**
          * Internal: Callback for agencies-with ajax call
-         * 
+         *
          * @param {type} data
          * @returns {undefined}
          */
@@ -951,7 +994,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Clear agencies select
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.agencyidClear = function () {
@@ -964,7 +1007,7 @@ $('document').ready(function () {
 
         /**
          * Internal: Callback for agency selected
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.agencyidSelected = function () {
@@ -980,7 +1023,7 @@ $('document').ready(function () {
 
         /**
          * Set callback
-         * 
+         *
          * @param {type} onIdSelected
          * @returns {undefined}
          */
@@ -990,7 +1033,7 @@ $('document').ready(function () {
 
         /**
          * Internal: when window hash changes
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.hashChanged = function () {
@@ -1002,7 +1045,7 @@ $('document').ready(function () {
 
         /**
          * Start GlobalOptions logic
-         * 
+         *
          * @returns {undefined}
          */
         PageOptions.prototype.start = function () {
@@ -1013,12 +1056,14 @@ $('document').ready(function () {
     })();
 
 
-    // Business logic object
+// Business logic object
     var displayPane = new DisplayPane();
     var relationPane = new RelationPane();
     var pageOptions = new PageOptions();
 
-    // Business logic relations
+// displayPane.content.
+
+// Business logic relations
     relationPane.setOnSelect(displayPane.setId.bind(displayPane));
     relationPane.setOnClick(pageOptions.setId.bind(pageOptions));
     pageOptions.setOnIdSelected(function (key) {
@@ -1026,7 +1071,7 @@ $('document').ready(function () {
         relationPane.setId(key);
     });
 
-    // Tabs logic
+// Tabs logic
     $("#recordTabs").tabs({
         beforeActivate: function (event, ui) {
             if (ui.oldTab.context.hash === '#recordTabs-relations') {
@@ -1044,10 +1089,11 @@ $('document').ready(function () {
         }
     });
 
-    // Start
+// Start
     displayPane.setId('');
     relationPane.setId('');
     displayPane.resize();
     pageOptions.clear();
     pageOptions.start();
-});
+})
+;
