@@ -28,6 +28,8 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.exception.SolrIndexerRawRepoException;
+import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -148,13 +150,19 @@ public class Indexer {
         solrServer.shutdown();
     }
 
-    public void performWork() {
+    public void performWork() throws SolrIndexerRawRepoException, SolrIndexerSolrException {
 
         boolean moreWork = true;
         int processedJobs = 0;
 
-        while (moreWork) {
+        // Test connection and return proper error if there is a problem
+        try {
+            solrServer.ping();
+        } catch (SolrServerException | IOException | HttpSolrServer.RemoteSolrException ex) {
+            throw new SolrIndexerSolrException("Could not connect to the solr server. " + ex.getMessage(), ex);
+        }
 
+        while (moreWork) {
             Timer.Context time = processJobTimer.time();
             try (Connection connection = getConnection()) {
                 RawRepoDAO dao = createDAO(connection);
@@ -178,9 +186,13 @@ public class Indexer {
                     connection.rollback();
                     throw ex;
                 }
-            } catch (MarcXMergerException | RawRepoException | SQLException | RuntimeException ex) {
-                moreWork = false;
+            } catch (SQLException ex) {
+                // If we get a SQLException there is something wrong which we can't do anything about.
+                log.error("SQLException: ", ex);
+                throw new SolrIndexerRawRepoException("SQL exception from rawrepo:" + ex.toString(), ex);
+            } catch (MarcXMergerException | RawRepoException | RuntimeException ex) {
                 log.error("Error getting job from database", ex);
+                moreWork = false;
             } finally {
                 MDC.remove(TRACKING_ID);
             }
@@ -204,7 +216,7 @@ public class Indexer {
         }
     }
 
-    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException {
+    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException, SolrIndexerSolrException {
         log.info("Indexing {}", job);
         RecordId jobId = job.getJob();
         String id = jobId.getBibliographicRecordId();
@@ -225,6 +237,13 @@ public class Indexer {
             log.info("Indexed {}", job);
         } catch (RawRepoExceptionRecordNotFound ex) {
             log.error("Queued record does not exist {}", job);
+            queueFail(dao, job, ex.getMessage());
+        } catch (HttpSolrServer.RemoteSolrException ex) {
+            // Index is missing on the solr server so we need to stop now
+            if (ex.getMessage().contains("unknown field")) {
+                throw new SolrIndexerSolrException("Missing index: " + ex.getMessage(), ex);
+            }
+            log.error("Error processing {}", job, ex);
             queueFail(dao, job, ex.getMessage());
         } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);

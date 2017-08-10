@@ -23,6 +23,7 @@ package dk.dbc.rawrepo.indexer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -41,9 +42,7 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-/**
- *
- */
+
 public class IndexerIT {
 
     private static final String PROVIDER = "test";
@@ -169,7 +168,7 @@ public class IndexerIT {
         assertEquals("Document can not be found using id. Must have been deleted", 0, response.getResults().getNumFound());
     }
 
-    @Test
+    @Test(expected = SolrIndexerSolrException.class)
     public void createRecordWhenIndexingFails() throws Exception {
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
@@ -185,9 +184,5 @@ public class IndexerIT {
         Indexer indexer = createInstance(solrServerUrl + "X");
         indexer.performWork();
         solrServer.commit(true, true);
-
-        QueryResponse response;
-        response = solrServer.query(new SolrQuery("marc.001b:" + AGENCY_ID));
-        assertEquals("Document can not be found using library no.", 0, response.getResults().getNumFound());
     }
 }

@@ -21,6 +21,8 @@
 package dk.dbc.rawrepo.indexer;
 
 import dk.dbc.eeconfig.EEConfig;
+import dk.dbc.rawrepo.exception.SolrIndexerRawRepoException;
+import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +73,8 @@ public class Dispatcher {
     private final TimerConfig timerConfig = new TimerConfig();
     private Timer timer = null;
 
+    private boolean stopExecution = false;
+
     /**
      * Stops the @Timeout timer
      */
@@ -81,7 +85,7 @@ public class Dispatcher {
                 timer.cancel();
                 timer = null;
             } else {
-                log.warn("IllegalState. timer doesn't exists ant stopTimer() was called");
+                log.warn("IllegalState. Timer doesn't exists and stopTimer() was called");
             }
         }
     }
@@ -89,21 +93,21 @@ public class Dispatcher {
     /**
      * Starts the @Timeout timer
      */
-    void startTimer(int initialdelaySeconds) {
-        log.debug("startTimer() with {} seconds initial delay and {} seconds timeout", initialdelaySeconds, timeout);
+    void startTimer(int initialDelaySeconds) {
+        log.debug("startTimer() with {} seconds initial delay and {} seconds timeout", initialDelaySeconds, timeout);
         synchronized (timerConfig) {
             if (timer != null) {
-                log.warn("IllegalState. timer exists but startTimer() was called");
+                log.warn("IllegalState. Timer exists but startTimer() was called");
                 timer.cancel();
                 timer = null;
             }
-            timer = timerService.createIntervalTimer(initialdelaySeconds*1000, timeout * 1000, timerConfig);
+            timer = timerService.createIntervalTimer(initialDelaySeconds * 1000, timeout * 1000, timerConfig);
         }
     }
 
     /**
      * Adds the runnable to the collection if currently running runnables
-     *
+     * <p>
      * If the collection has become full, stop the timer
      *
      * @param runnable
@@ -121,7 +125,7 @@ public class Dispatcher {
 
     /**
      * Removes the runnable from the collection of currently running runnables
-     *
+     * <p>
      * If the collection isn't full anymore start the timer
      *
      * @param runnable
@@ -132,6 +136,12 @@ public class Dispatcher {
             boolean wasFull = runnables.size() == maxConcurrent;
             runnables.remove(runnable);
             boolean isFull = runnables.size() == maxConcurrent;
+
+            if (stopExecution) {
+                log.error("FATAL: Indexer has encountered and unrecoverable error and will now exit the program. Please fix the problem (see message above) and restart the indexer");
+                System.exit(1);
+            }
+
             if (!isFull && wasFull) {
                 startTimer(timeout);
             }
@@ -143,7 +153,7 @@ public class Dispatcher {
      */
     void cleanFutures() {
         log.debug("Cleaning up remaining workers");
-        for (Iterator<Future> i = futures.iterator(); i.hasNext();) {
+        for (Iterator<Future> i = futures.iterator(); i.hasNext(); ) {
             Future future = i.next();
             if (future.isDone()) {
                 i.remove();
@@ -212,7 +222,17 @@ public class Dispatcher {
      * @return
      */
     void performWork() {
-        indexer.performWork();
+        try {
+            indexer.performWork();
+        } catch (SolrIndexerRawRepoException ex) {
+            log.error("RawRepoException exception caught");
+            log.error(ex.getMessage());
+            stopExecution = true;
+        } catch (SolrIndexerSolrException ex) {
+            log.error("SolrException exception caught");
+            log.error(ex.getMessage());
+            stopExecution = true;
+        }
     }
 
 }
