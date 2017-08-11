@@ -73,7 +73,7 @@ public class Dispatcher {
     private final TimerConfig timerConfig = new TimerConfig();
     private Timer timer = null;
 
-    private boolean stopExecution = false;
+    private boolean executionError = false;
 
     /**
      * Stops the @Timeout timer
@@ -137,7 +137,7 @@ public class Dispatcher {
             runnables.remove(runnable);
             boolean isFull = runnables.size() == maxConcurrent;
 
-            if (stopExecution) {
+            if (executionError) {
                 log.error("FATAL: Indexer has encountered and unrecoverable error and will now exit the program. Please fix the problem (see message above) and restart the indexer");
                 System.exit(1);
             }
@@ -225,13 +225,13 @@ public class Dispatcher {
         try {
             indexer.performWork();
         } catch (SolrIndexerRawRepoException ex) {
-            log.error("RawRepoException exception caught");
+            log.error("SolrIndexerRawRepoException exception caught");
             log.error(ex.getMessage());
-            stopExecution = true;
+            executionError = true;
         } catch (SolrIndexerSolrException ex) {
-            log.error("SolrException exception caught");
+            log.error("SolrIndexerSolrException exception caught");
             log.error(ex.getMessage());
-            stopExecution = true;
+            executionError = true;
         }
     }
 
