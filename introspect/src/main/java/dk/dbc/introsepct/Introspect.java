@@ -23,7 +23,12 @@ package dk.dbc.introsepct;
 import dk.dbc.iscrum.records.MarcConverter;
 import dk.dbc.iscrum.records.MarcRecord;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.AgencySearchOrder;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffWriter;
 import org.slf4j.Logger;
@@ -72,11 +77,9 @@ public class Introspect {
     private static final String KEY_SIBLINGS_OUT = "siblings-out";
     private static final String KEY_PARENTS = "parents";
     private static final String KEY_CHILDREN = "children";
-
-
-
-    @Resource( name="env/uiName", lookup = "java:app/env/uiName")
-    String uiName = "";
+    
+    @Resource( name="env/InstanceName", lookup = "java:app/env/InstanceName")
+    String InstanceName = "";
 
     @Inject
     Merger merger;
@@ -84,14 +87,18 @@ public class Introspect {
     @Inject
     JSONStreamer streamer;
 
-    @Resource(mappedName = "java:global/jdbc/rawrepointrospect/basistest-rawrepo")
+    @Resource(lookup = "jdbc/rr")
     DataSource globalDataSource;
 
     @GET
     @Path("dbs")
     public Response getDBs() {
+        if( InstanceName.equalsIgnoreCase("${ENV=INSTANCE_NAME}") ) {
+            InstanceName="Missing InstanceName Environment";
+        }
+
         ArrayList<String> response = new ArrayList<>();
-        response.add(uiName);
+        response.add(InstanceName);
         Collections.sort(response);
         return ok(response);
     }
@@ -113,7 +120,7 @@ public class Introspect {
         }
     }
 
-    private Record recordMergedFetcher( Integer agencyId, String bibliographicRecordId) throws RawRepoException, XPathExpressionException, SAXException, IOException, MarcXMergerException, SQLException, RawRepoException, SQLException, MarcXMergerException {
+    private Record recordMergedFetcher( Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
         log.trace("Entering recordMergedFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
