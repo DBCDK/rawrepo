@@ -25,7 +25,7 @@ pipeline {
 
         stage('build Debian package') {
             steps {
-                sh "svn upgrade && mvn -pl debian install"
+                sh "echo 'svn upgrade && mvn -pl debian install ignored'"
             }
         }
     }
