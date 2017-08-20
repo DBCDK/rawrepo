@@ -16,7 +16,7 @@ pipeline {
 
         stage('mvn build') {
             steps {
-                sh "mvn install pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false -Djetty.port=${JETTY_PORT} -pl '!debian'"
+                sh "mvn install pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
             }
         }
 
