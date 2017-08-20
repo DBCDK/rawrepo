@@ -3,8 +3,8 @@ pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '20'))
         disableConcurrentBuilds()
-        timeout(time: 1, unit: 'HOURS') }
-        options { timestamps() }
+        timeout(time: 1, unit: 'HOURS')
+        timestamps()
     }
 
     stages {
@@ -33,8 +33,7 @@ pipeline {
             warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'Java Compiler (javac)']], defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
             archiveArtifacts 'access/schema/*.sql, access/schema/*.md5, **/target/*.jar, **/target/*.war, **/target/*.zip, **/target/*.md5, docs/RR-documentation.pdf'
         }
-        
+
     }
-
-
+    
 }
