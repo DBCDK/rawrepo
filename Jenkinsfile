@@ -6,6 +6,9 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
         timestamps()
     }
+    tools {
+        maven 'maven 3.5'
+    }
 
     stages {
         stage('checkout ') {
