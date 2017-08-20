@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('checkout ') {
             steps {
-                checkout scm
+                sh "echo checkout scm properly not needed"
             }
         }
 
