@@ -14,6 +14,9 @@ pipeline {
         stage('checkout ') {
             steps {
                 sh "echo checkout scm properly not needed"
+                println("---------------------------------------------------------")
+                println(JOB_BASE_NAME)
+                println("---------------------------------------------------------")
             }
         }
 
