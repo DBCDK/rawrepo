@@ -27,9 +27,9 @@ public class ExpandCommonMarcRecord {
      * @param records map containing a common record and x amount of authority records
      * @return a single common record expanded with authority data
      * @throws UnsupportedEncodingException if the records can't be decoded
-     * @throws RawRepoException              if the collection doesn't contain the necessary records
+     * @throws RawRepoException             if the collection doesn't contain the necessary records
      */
-    public static MarcRecord expand(Map<String, MarcRecord> records) throws UnsupportedEncodingException, RawRepoException {
+    public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records) throws UnsupportedEncodingException, RawRepoException {
         MarcRecord expandedRecord = new MarcRecord();
         MarcRecord commonRecord = null;
         Map<String, MarcRecord> authorityRecords = new HashMap<>();

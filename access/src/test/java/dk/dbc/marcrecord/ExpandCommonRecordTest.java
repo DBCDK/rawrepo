@@ -90,7 +90,7 @@ public class ExpandCommonRecordTest {
         collection.put("19024709", auth1);
         collection.put("19024687", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class ExpandCommonRecordTest {
         collection.put("69328776", auth2);
         collection.put("19043800", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -124,7 +124,7 @@ public class ExpandCommonRecordTest {
         collection.put("68098203", auth2);
         collection.put("19064689", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -144,7 +144,7 @@ public class ExpandCommonRecordTest {
         collection.put("68900719", auth3);
         collection.put("68560985", auth4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -159,7 +159,7 @@ public class ExpandCommonRecordTest {
         collection.put("68895650", auth1);
         collection.put("19130452", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -178,7 +178,7 @@ public class ExpandCommonRecordTest {
         collection.put("68472806", auth3);
         collection.put("68585627", auth4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class ExpandCommonRecordTest {
         collection.put("53214827", raw);
         collection.put("68570492", auth1);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test
@@ -206,14 +206,14 @@ public class ExpandCommonRecordTest {
         collection.put("68712742", auth1);
         collection.put("69294685", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(expanded));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(expanded));
     }
 
     @Test(expected = RawRepoException.class)
     public void noCommonRecord() throws Exception {
         Map<String, MarcRecord> collection = new HashMap<>();
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(null));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(null));
     }
 
     @Test(expected = RawRepoException.class)
@@ -223,7 +223,7 @@ public class ExpandCommonRecordTest {
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("90004158", record);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(null));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(null));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class ExpandCommonRecordTest {
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("20611529", record);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expand(collection)), equalTo(record));
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection)), equalTo(record));
     }
 
     private MarcRecord sortRecord(MarcRecord record) {
