@@ -84,7 +84,7 @@ pipeline {
                 expression { BRANCH_NAME ==~ /master|trunk/ }
             }
             steps {
-                sh "echo 'svn upgrade && mvn -pl debian install ignored'"
+                sh "svn upgrade && mvn -pl debian install"
                 sh "mvn -pl access deploy"
             }
         }
