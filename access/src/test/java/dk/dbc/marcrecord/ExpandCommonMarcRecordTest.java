@@ -9,23 +9,28 @@ package dk.dbc.marcrecord;
 import dk.dbc.common.records.MarcField;
 import dk.dbc.common.records.MarcRecord;
 import dk.dbc.common.records.MarcRecordFactory;
+import dk.dbc.common.records.MarcRecordReader;
 import dk.dbc.common.records.utils.IOUtils;
+import dk.dbc.common.records.utils.RecordContentTransformer;
+import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 
-public class ExpandCommonRecordTest {
+public class ExpandCommonMarcRecordTest {
+    private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecordTest.class);
 
     private static final String AUT_RAW_52846943 = "authority/raw-52846943.marc";
     private static final String AUT_RAW_53025757 = "authority/raw-53025757.marc";
@@ -68,8 +73,8 @@ public class ExpandCommonRecordTest {
 
     private static final String COMMON_SINGLE_RECORD_RESOURCE = "authority/common_enrichment.marc";
 
-    private static MarcRecord loadRecord(String filename) throws IOException {
-        InputStream is = ExpandCommonRecordTest.class.getResourceAsStream("/" + filename);
+    private static MarcRecord loadMarcRecord(String filename) throws IOException {
+        InputStream is = ExpandCommonMarcRecordTest.class.getResourceAsStream("/" + filename);
         return MarcRecordFactory.readRecord(IOUtils.readAll(is, "UTF-8"));
     }
 
@@ -80,10 +85,10 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_52846943() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_52846943);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_52846943);
-        MarcRecord auth1 = loadRecord(AUTHORITY_19024709);
-        MarcRecord auth2 = loadRecord(AUTHORITY_19024687);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_52846943);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_52846943);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_19024709);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_19024687);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("52846943", raw);
@@ -95,11 +100,11 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53025757() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53025757);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53025757);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68432359);
-        MarcRecord auth2 = loadRecord(AUTHORITY_69328776);
-        MarcRecord auth3 = loadRecord(AUTHORITY_19043800);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53025757);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53025757);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68432359);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_69328776);
+        MarcRecord auth3 = loadMarcRecord(AUTHORITY_19043800);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53025757", raw);
@@ -112,11 +117,11 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53161510() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53161510);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53161510);
-        MarcRecord auth1 = loadRecord(AUTHORITY_69094139);
-        MarcRecord auth2 = loadRecord(AUTHORITY_68098203);
-        MarcRecord auth3 = loadRecord(AUTHORITY_19064689);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53161510);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53161510);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_69094139);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_68098203);
+        MarcRecord auth3 = loadMarcRecord(AUTHORITY_19064689);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53161510", raw);
@@ -129,13 +134,12 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53180485() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53180485);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53180485);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68839734);
-        MarcRecord auth2 = loadRecord(AUTHORITY_68584566);
-        MarcRecord auth3 = loadRecord(AUTHORITY_68900719);
-        MarcRecord auth4 = loadRecord(AUTHORITY_68560985);
-
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53180485);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53180485);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68839734);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_68584566);
+        MarcRecord auth3 = loadMarcRecord(AUTHORITY_68900719);
+        MarcRecord auth4 = loadMarcRecord(AUTHORITY_68560985);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53180485", raw);
@@ -149,10 +153,10 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53213642() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53213642);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53213642);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68895650);
-        MarcRecord auth2 = loadRecord(AUTHORITY_19130452);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53213642);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53213642);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68895650);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_19130452);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53213642", raw);
@@ -164,12 +168,12 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53214592() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53214592);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53214592);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68354153);
-        MarcRecord auth2 = loadRecord(AUTHORITY_68354153);
-        MarcRecord auth3 = loadRecord(AUTHORITY_68472806);
-        MarcRecord auth4 = loadRecord(AUTHORITY_68585627);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53214592);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214592);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68354153);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_68354153);
+        MarcRecord auth3 = loadMarcRecord(AUTHORITY_68472806);
+        MarcRecord auth4 = loadMarcRecord(AUTHORITY_68585627);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53214592", raw);
@@ -183,9 +187,9 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_53214827() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_53214827);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_53214827);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68570492);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_53214827);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214827);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68570492);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("53214827", raw);
@@ -196,10 +200,10 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordOk_90004158() throws Exception {
-        MarcRecord raw = loadRecord(AUT_RAW_90004158);
-        MarcRecord expanded = loadRecord(AUT_EXPANDED_90004158);
-        MarcRecord auth1 = loadRecord(AUTHORITY_68712742);
-        MarcRecord auth2 = loadRecord(AUTHORITY_69294685);
+        MarcRecord raw = loadMarcRecord(AUT_RAW_90004158);
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_90004158);
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_68712742);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_69294685);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("90004158", raw);
@@ -218,7 +222,7 @@ public class ExpandCommonRecordTest {
 
     @Test(expected = RawRepoException.class)
     public void missingAuthorityRecords() throws Exception {
-        MarcRecord record = loadRecord(AUT_RAW_90004158);
+        MarcRecord record = loadMarcRecord(AUT_RAW_90004158);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("90004158", record);
@@ -228,7 +232,7 @@ public class ExpandCommonRecordTest {
 
     @Test
     public void expandCommonRecordWithoutAuthorityFields() throws Exception {
-        MarcRecord record = loadRecord(COMMON_SINGLE_RECORD_RESOURCE);
+        MarcRecord record = loadMarcRecord(COMMON_SINGLE_RECORD_RESOURCE);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("20611529", record);
@@ -246,4 +250,138 @@ public class ExpandCommonRecordTest {
         return record;
     }
 
+    private static Record recordFromContent(final MarcRecord marcRecord) throws Exception {
+        final MarcRecordReader reader = new MarcRecordReader(marcRecord);
+        final String id = reader.getRecordId();
+        final int agencyId = reader.getAgencyIdAsInteger();
+
+        return new Record() {
+            boolean deleted = false;
+            boolean enriched = false;
+            byte[] content = RecordContentTransformer.encodeRecord(marcRecord);
+            String trackingId = "Track-" + id + ":" + Integer.toString(agencyId);
+            String mimeType = findMimeType();
+
+            private String findMimeType() {
+                if (agencyId == 870970)
+                    return MarcXChangeMimeType.MARCXCHANGE;
+                else if (agencyId == 870971)
+                    return MarcXChangeMimeType.ARTICLE;
+                else if (agencyId == 870979)
+                    return MarcXChangeMimeType.AUTHORITY;
+                else
+                    return MarcXChangeMimeType.ENRICHMENT;
+            }
+
+            @Override
+            public byte[] getContent() {
+                return content;
+            }
+
+            @Override
+            public boolean isDeleted() {
+                return deleted;
+            }
+
+            @Override
+            public void setDeleted(boolean deleted) {
+                this.deleted = deleted;
+            }
+
+            @Override
+            public void setContent(byte[] content) {
+                this.content = content;
+            }
+
+            @Override
+            public String getMimeType() {
+
+                return mimeType;
+            }
+
+            @Override
+            public void setMimeType(String mimeType) {
+                this.mimeType = mimeType;
+            }
+
+            @Override
+            public Date getCreated() {
+                return new Date();
+            }
+
+            @Override
+            public void setCreated(Date created) {
+            }
+
+            @Override
+            public RecordId getId() {
+                return new RecordId(id, agencyId);
+            }
+
+            @Override
+            public Date getModified() {
+                return new Date();
+            }
+
+            @Override
+            public void setModified(Date modified) {
+            }
+
+            @Override
+            public boolean isOriginal() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public String toString() {
+                return "{" + content + '}';
+            }
+
+            @Override
+            public boolean isEnriched() {
+                return enriched;
+            }
+
+            @Override
+            public void setEnriched(boolean enriched) {
+                this.enriched = enriched;
+            }
+
+            @Override
+            public String getEnrichmentTrail() {
+                return String.valueOf(agencyId);
+            }
+
+            @Override
+            public String getTrackingId() {
+                return trackingId;
+            }
+
+            @Override
+            public void setTrackingId(String trackingId) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+    }
+
+    @Test
+    public void testExpandRecord_1() throws Exception {
+        Record raw = recordFromContent(loadMarcRecord(AUT_RAW_52846943));
+        Record expanded = recordFromContent(loadMarcRecord(AUT_EXPANDED_52846943));
+        Record auth1 = recordFromContent(loadMarcRecord(AUTHORITY_19024709));
+        Record auth2 = recordFromContent(loadMarcRecord(AUTHORITY_19024687));
+
+        Map<String, Record> collection = new HashMap<>();
+
+        collection.put("19024709", auth1);
+        collection.put("19024687", auth2);
+
+        ExpandCommonMarcRecord.expandRecord(raw, collection);
+
+        assertThat(RecordContentTransformer.decodeRecord(raw.getContent()), equalTo(RecordContentTransformer.decodeRecord(expanded.getContent())));
+        assertThat(raw.getId(), equalTo(expanded.getId()));
+        assertThat(raw.getMimeType(), equalTo(expanded.getMimeType()));
+        assertThat(raw.getTrackingId(), equalTo(expanded.getTrackingId()));
+        assertThat(raw.getCreated(), equalTo(expanded.getCreated()));
+    }
 }

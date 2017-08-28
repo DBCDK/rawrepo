@@ -7,19 +7,47 @@ package dk.dbc.marcrecord;
 
 
 import dk.dbc.common.records.*;
+import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
+import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
     private static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "700");
+
+    /**
+     * This function performs authority expansion on a rawrepo Record.
+     *
+     * @param commonRecord The record which should be expanded
+     * @param authorityRecords List of authority records to be used for expanding
+     * @throws UnsupportedEncodingException When the Record can't be marshalled to MarcRecord
+     * @throws RawRepoException When expansion fails (usually due to missing authority record)
+     * @throws JAXBException When the Record can't be marshalled to MarcRecord
+     */
+    public static void expandRecord(Record commonRecord, Map<String, Record> authorityRecords) throws RawRepoException, JAXBException, UnsupportedEncodingException {
+        if (commonRecord == null) {
+            throw new RawRepoException("The common record cannot be null");
+        }
+
+        MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(commonRecord.getContent());
+
+        Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
+        for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
+            authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue().getContent()));
+        }
+
+        MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords);
+
+        sortFields(expandedMarcRecord);
+
+        commonRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
+    }
 
     /**
      * The function takes a set of  records and return a common marc record expanded with authority fields (if any)
@@ -30,7 +58,6 @@ public class ExpandCommonMarcRecord {
      * @throws RawRepoException             if the collection doesn't contain the necessary records
      */
     public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records) throws UnsupportedEncodingException, RawRepoException {
-        MarcRecord expandedRecord = new MarcRecord();
         MarcRecord commonRecord = null;
         Map<String, MarcRecord> authorityRecords = new HashMap<>();
 
@@ -52,6 +79,12 @@ public class ExpandCommonMarcRecord {
             throw new RawRepoException("The record collection doesn't contain a common record");
         }
 
+        return doExpand(commonRecord, authorityRecords);
+    }
+
+
+    private static MarcRecord doExpand(MarcRecord commonRecord, Map<String, MarcRecord> authorityRecords) throws RawRepoException {
+        MarcRecord expandedRecord = new MarcRecord();
         /*
          * Okay, here are (some) of the rules for expanding with auth records:
          * Fields that can contain AUT are: 100, 600, 700
@@ -66,7 +99,6 @@ public class ExpandCommonMarcRecord {
          * Add all subfields from AUT record field 100 at the same location as *5
          * If AUT record contains field 400 or 500 then add that field as well to the expanded record but as field 900
          */
-
         MarcRecordReader reader = new MarcRecordReader(commonRecord);
         handleNonRepeatableField(reader.getField("100"), expandedRecord, authorityRecords);
         handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords);
@@ -187,4 +219,25 @@ public class ExpandCommonMarcRecord {
             record.getFields().add(additionalField);
         }
     }
+
+    private static void sortFields(MarcRecord record) {
+        // First sort by field name then sort by subfield å
+        Collections.sort(record.getFields(), new Comparator<MarcField>() {
+            public int compare(MarcField m1, MarcField m2) {
+                if (m1.getName().equals(m2.getName())) {
+                    MarcFieldReader fr1 = new MarcFieldReader(m1);
+                    MarcFieldReader fr2 = new MarcFieldReader(m2);
+
+                    String aa1 = fr1.hasSubfield("å") ? fr1.getValue("å") : "";
+                    String aa2 = fr2.hasSubfield("å") ? fr2.getValue("å") : "";
+
+                    return aa1.compareTo(aa2);
+                }
+
+                return m1.getName().compareTo(m2.getName());
+            }
+        });
+    }
+
+
 }
