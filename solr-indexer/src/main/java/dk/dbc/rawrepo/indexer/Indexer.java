@@ -288,6 +288,7 @@ public class Indexer {
         String mimeType = record.getMimeType();
         switch (mimeType) {
             case MarcXChangeMimeType.MARCXCHANGE:
+            case MarcXChangeMimeType.ARTICLE:
             case MarcXChangeMimeType.AUTHORITY:
             case MarcXChangeMimeType.ENRICHMENT:
                 log.debug("Indexing content of {} with mimetype {}", recordId, mimeType);

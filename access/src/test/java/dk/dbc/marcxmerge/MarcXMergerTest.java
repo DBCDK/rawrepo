@@ -117,7 +117,7 @@ public class MarcXMergerTest {
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ENRICHMENT), false);
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ARTICLE), false);
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.MARCXCHANGE), false);
-        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), false);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), true);
     }
 
     @Test
@@ -126,6 +126,7 @@ public class MarcXMergerTest {
 
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MARCXCHANGE);
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.ARTICLE);
+        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.AUTHORITY);
     }
 
 
