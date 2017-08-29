@@ -290,29 +290,41 @@ public abstract class Service {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
 
-            RecordId recordId = new RecordId(requestRecord.bibliographicRecordId, requestRecord.agencyId);
-            RecordId commonRecordId = new RecordId(requestRecord.bibliographicRecordId, 870970);
             // Only get record collection if the record exist (there are no relations if the record doesn't exist or is deleted)
-            // Only 870970 records can have authority records so authority is only relevant if the 870970 record exists as well
-            // The agency in the request will never be 870970 so it is not necessary to check if requestRecord.agencyId is 870970
-            if (dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId) &&
-                    dao.getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
-                logger.info("Record exists - continuing expanding");
-                // Only 870970 records can have authority fields, so it is only relevant to look at that agency
-                Set<RecordId> autParents = dao.getRelationsParents(commonRecordId);
-                logger.info("Found {} parents to the common record", autParents.size());
+            // Only 870970 and 870971 records can have authority records so authority is only relevant if the 870970 or 870971
+            // record exists as well
+            // The agency in the request will never be 870970/870971 so it is not necessary to check if requestRecord.agencyId is 870970/870971
+            if (dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
+                logger.info("Record exists - checking if there is a 870970/870971 record");
+                RecordId recordId = new RecordId(requestRecord.bibliographicRecordId, requestRecord.agencyId);
+                RecordId commonRecordId = new RecordId(requestRecord.bibliographicRecordId, 870970);
+                RecordId articleRecordId = new RecordId(requestRecord.bibliographicRecordId, 870971);
+                RecordId expandableRecordId = null;
 
-                Map<String, Record> autRecords = new HashMap<>();
-                for (RecordId parentId : autParents) {
-                    if ("870979".equals(Integer.toString(parentId.getAgencyId()))) {
-                        logger.info("Found parent authority record: {}", parentId.toString());
-                        autRecords.put(parentId.getBibliographicRecordId(), dao.fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
-                    }
+                if (dao.getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
+                    expandableRecordId = commonRecordId;
+                } else if (dao.getRelationsSiblingsFromMe(recordId).contains(articleRecordId)) {
+                    expandableRecordId = articleRecordId;
                 }
-                logger.info("Amount of authority records to the common record: {}", autRecords.size());
-                if (autRecords.size() > 0) {
-                    logger.info("Found one or more authority records - expanding record");
-                    ExpandCommonMarcRecord.expandRecord(rawRecord, autRecords);
+
+                if (expandableRecordId != null) {
+                    logger.info("Expandable record found ({}) - continuing expanding", expandableRecordId.toString());
+
+                    Set<RecordId> autParents = dao.getRelationsParents(expandableRecordId);
+                    logger.info("Found {} parents to the expandable record", autParents.size());
+
+                    Map<String, Record> autRecords = new HashMap<>();
+                    for (RecordId parentId : autParents) {
+                        if ("870979".equals(Integer.toString(parentId.getAgencyId()))) {
+                            logger.info("Found parent authority record: {}", parentId.toString());
+                            autRecords.put(parentId.getBibliographicRecordId(), dao.fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
+                        }
+                    }
+                    logger.info("Amount of authority records to the common record: {}", autRecords.size());
+                    if (autRecords.size() > 0) {
+                        logger.info("Found one or more authority records - expanding record");
+                        ExpandCommonMarcRecord.expandRecord(rawRecord, autRecords);
+                    }
                 }
             }
         } catch (RawRepoException | MarcXMergerException ex) {

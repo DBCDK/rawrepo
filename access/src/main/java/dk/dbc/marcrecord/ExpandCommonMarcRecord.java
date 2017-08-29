@@ -24,18 +24,14 @@ public class ExpandCommonMarcRecord {
     /**
      * This function performs authority expansion on a rawrepo Record.
      *
-     * @param commonRecord The record which should be expanded
+     * @param expandableRecord The record which should be expanded
      * @param authorityRecords List of authority records to be used for expanding
-     * @throws UnsupportedEncodingException When the Record can't be marshalled to MarcRecord
+     * @throws UnsupportedEncodingException When there is encoding problem during marshalling
      * @throws RawRepoException When expansion fails (usually due to missing authority record)
      * @throws JAXBException When the Record can't be marshalled to MarcRecord
      */
-    public static void expandRecord(Record commonRecord, Map<String, Record> authorityRecords) throws RawRepoException, JAXBException, UnsupportedEncodingException {
-        if (commonRecord == null) {
-            throw new RawRepoException("The common record cannot be null");
-        }
-
-        MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(commonRecord.getContent());
+    public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords) throws RawRepoException, JAXBException, UnsupportedEncodingException {
+        MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(expandableRecord.getContent());
 
         Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
         for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
@@ -46,7 +42,7 @@ public class ExpandCommonMarcRecord {
 
         sortFields(expandedMarcRecord);
 
-        commonRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
+        expandableRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
     }
 
     /**
@@ -68,7 +64,7 @@ public class ExpandCommonMarcRecord {
             String recordId = entry.getKey();
             String agencyId = reader.getAgencyId();
             logger.info("{}:{}", recordId, agencyId);
-            if ("870970".equals(agencyId)) {
+            if (Arrays.asList("870970", "870971").contains(agencyId)) {
                 commonRecord = new MarcRecord(entry.getValue());
             } else if ("870979".equals(agencyId)) {
                 authorityRecords.put(recordId, new MarcRecord(entry.getValue()));
