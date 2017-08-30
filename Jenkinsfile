@@ -30,7 +30,8 @@ pipeline {
                             findbugsPublisher(disabled: true),
                             openTasksPublisher(highPriorityTaskIdentifiers: 'todo', ignoreCase: true, lowPriorityTaskIdentifiers: 'review', normalPriorityTaskIdentifiers: 'fixme,fix')
                     ]) {
-                        sh "mvn install pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
+                        sh "mvn clean"
+                        sh "mvn install pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian,!docker,!docker/introspect,!docker/content-service,!docker/maintain,!docker/postgres,!docker/solr,!docker/solr-indexer'"
                     }
                 }
                 println("---------------------------------------------------------")
