@@ -121,6 +121,7 @@ $('document').ready(function () {
             this.versionSelect = $('#version');
             this.otherVersionSelect = $('#other-version');
             this.content = $('#content');
+            this.history = $('#history');
 
             var versionSelected = this.versionSelected.bind(this);
             this.versionSelect.selectmenu({select: versionSelected});
@@ -144,7 +145,7 @@ $('document').ready(function () {
 
             ajax("resources/lineformatter/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
                 this.lineformatterFunction.bind(this));
-        }
+        };
 
         DisplayPane.prototype.lineformatterFunction = function (data) {
             this.content.contents().remove();
@@ -230,6 +231,7 @@ $('document').ready(function () {
                 });
             });
             this.content.contents().remove();
+            this.history.contents().remove();
         };
 
         /**
@@ -246,13 +248,15 @@ $('document').ready(function () {
                 });
                 data.forEach(function (e, i) {
                     var option = $('<option/>');
-                    option.attr({value: i}).text(e['modified'] + " (" + e['mimetype'] + ")");
+                    var deleted = e['deleted'] ? 'DELETED' : '';
+                    option.attr({value: i}).text(e['modified'] + " (" + e['mimetype'] + ") " + deleted);
                     $('#version').append(option);
                     tag.append(option);
                 });
                 tag.selectmenu('refresh');
                 tag.selectmenu('enable');
             });
+            this.displayHistory(data);
         };
 
         /**
@@ -285,21 +289,43 @@ $('document').ready(function () {
             this.resize();
         };
 
+        DisplayPane.prototype.displayHistory = function (data) {
+            var that = this;
+            this.history.contents().remove();
+            data.forEach(function (e) {
+                var deleted = e['deleted'] ? 'DELETED' : '';
+                var f = $('<span />');
+                f.text(e['modified'] + " (" + e['mimetype'] + ") " + deleted);
+                f.append('<br>');
+                that.history.append(f);
+            });
+            this.resize();
+        };
+
+
         /**
          * Resize content area to fit screen
          *
          * @returns {undefined}
          */
         DisplayPane.prototype.resize = function () {
-            var container = document.getElementById('content-container');
+            var containerContent = document.getElementById('content-container');
+            var containerHistory = document.getElementById('history-container');
+            var parentContainer = document.getElementById('recordTabs-content');
             var bodyHeight = parseInt(window.getComputedStyle(document.body).height);
+            var bodyWidth = parseInt(window.getComputedStyle(document.body).width);
             var windowHeight = window.innerHeight;
+            var windowsWidth = window.innerWidth;
             if (bodyHeight > windowHeight || windowHeight - bodyHeight > 20) {
-                var height = parseInt(window.getComputedStyle(container).height);
+                var height = parseInt(window.getComputedStyle(containerContent).height);
+                var width = parseInt(window.getComputedStyle(parentContainer).width);
                 height = Math.max(height - (bodyHeight - windowHeight), 300);
                 height = height - 25;
-                container.style.height = height + "px";
-                container.style.width = "100%";
+                containerContent.style.height = height + "px";
+                containerHistory.style.height = height + "px";
+                width = Math.max(width - (bodyWidth - windowsWidth), 300);
+                containerHistory.style.width = "450px";
+                containerContent.style.width = width - 490 + "px";
             }
         };
 
@@ -764,7 +790,7 @@ $('document').ready(function () {
                 dtys = ty - 3 * Math.sin(theta),
                 l = 8,
                 w = 2.5
-                ;
+            ;
             return "M" + sx + "," + sy +
                 "L" + tx + "," + ty +
                 "M" + dtxs + "," + dtys +

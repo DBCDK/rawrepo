@@ -4,8 +4,8 @@
 
 #errors {
     position: absolute;
-    right: 0px;
-    top: 0px;
+    right: 0;
+    top: 0;
     z-index: 100;
 }
 #errors DIV {
@@ -20,15 +20,15 @@
     min-width: 300px;
 }
 INPUT.ui-button {
-    padding: 0.4em 0em;
+    padding: 0.4em 0;
 }
 INPUT.ui-button#record-key {
     margin-top: -0.9em;
-    margin-bottom: .9em;
+    margin-bottom: 0.9em;
 }
 INPUT.ui-button#lineformatter {
     margin-top: -0.9em;
-    margin-bottom: .9em;
+    margin-bottom: 0.9em;
 }
 .ui-selectmenu-button SPAN.ui-selectmenu-text {
     text-align: center;
@@ -40,8 +40,9 @@ INPUT.ui-button#lineformatter {
 #content-container {
     min-width: 300px;
     min-height: 300px;
-    border: 1px;
-    border-style: solid;
+    border: 1px solid;
+    width: 75%;
+    float: left;
 }
 #content {
     position: relative;
@@ -51,7 +52,22 @@ INPUT.ui-button#lineformatter {
     background-color: lightgray;
 }
 
-#contet SPAN {
+#history-container {
+    min-width: 300px;
+    min-height: 300px;
+    border: 1px solid;
+    width: 20%;
+    float:right;
+}
+#history {
+    position: relative;
+    height: 100%;
+    overflow: auto;
+    white-space: pre-wrap;
+    background-color: lightgray;
+}
+
+#content SPAN {
     display: inline;
 }
 #content SPAN.both {
@@ -79,14 +95,14 @@ INPUT.ui-button#lineformatter {
 }
 svg {
     position: relative;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     overflow: hidden;
     background-color: gray;
 }
 .legend {
     position: absolute;
     right: 0.2em;
-    bottom: 0px;
+    bottom: 0;
     z-index: 100;
 }
