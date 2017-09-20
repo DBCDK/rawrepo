@@ -10,7 +10,7 @@ Find and write out a record from a RR
 -s <service>    name of the contentservice - default devel8:10042/RawRepoContentService
 -f <file>       output file for fetched records - output will be appended - default output will be written to file agency.recordid
 -i <file>       file with agency:recordid lines - output will be treated according to -f
--v <verbose>    more info if true - defalult false
+-v <verbose>    more info if true - default false
 
 F.eks:
 
@@ -23,7 +23,7 @@ Sending update requests to a updateservice
 -s <service>    name of the updateservice - default updateservice.url from /home/mib/.ocb-tools/testrun.properties
 -f <file>       name of file containing the record
 -p <path>       path to a folder containing files with names <agencyid>.<recordid> - all such files in the folder will be sent
--v <verbose>    more info if true - defalult false
+-v <verbose>    more info if true - default false
 
 ../bin/rr_upload.sh -p /home/mib/iscrum/rawrepo/solr-indexer/index_development/data
 
@@ -39,7 +39,7 @@ Når man blot vil se hvad der sker når nogle poster indexeres med eksisterende 
 
 Hvis man vil modificere et index :
 
-		Ret rawrepo/solr-indexer/src/main/reources indexer.js eller dbc_indexer.js (første indeholder systemrettede indexer mens anden er DATA indexer)
+		Ret rawrepo/solr-indexer/src/main/resources indexer.js eller dbc_indexer.js (første indeholder systemrettede indexer mens anden er DATA indexer)
 		Kør scriptet /rawrepo/docker/bin/start_solr_indexer_dev.sh - genstarter indexeren med rettelserne
 		Læg poster ind i rr via updateservicen vha rr_upload.sh
 
