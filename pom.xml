@@ -51,6 +51,7 @@
         <module>agency-purge</module>
         <module>content-service</module>
         <module>introspect</module>
+        <module>hydra</module>
         <module>maintain</module>
         <module>queue-bulkload</module>
         <module>record-inspector</module>

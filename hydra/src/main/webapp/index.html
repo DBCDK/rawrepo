@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
+  ~  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
+  -->
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Hydra</title>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/3.6.0/superagent.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.js"></script>
+</head>
+<body>
+<div id="webapp" class="container-fluid">
+    <script>
+        const e = React.createElement;
+
+        class RestCall extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    mode: undefined,
+                    catalogingTemplateSets: [],
+                    providers: [],
+                    selectedCatalogingTemplateSet: undefined,
+                    selectedAgencies: '',
+                    selectedProvider: undefined,
+                    includeDeleted: false
+                };
+                this.getCatalogingTemplateTypes = this.getCatalogingTemplateTypes.bind(this);
+                this.getLibrariesByCatalogingTemplateSet = this.getLibrariesByCatalogingTemplateSet.bind(this);
+                this.getRRProviders = this.getRRProviders.bind(this);
+                this.enqueue = this.enqueue.bind(this);
+                this.setQueuePage = this.setQueuePage.bind(this);
+                this.setIntrospectPage = this.setIntrospectPage.bind(this);
+                this.setUpdatePage = this.setUpdatePage.bind(this);
+                this.drawSubPage = this.drawSubPage.bind(this);
+                this.drawQueuePage = this.drawQueuePage.bind(this);
+                this.onChangeCatalogingTemplateSet = this.onChangeCatalogingTemplateSet.bind(this);
+                this.onChangeProvider = this.onChangeProvider.bind(this);
+                this.onChangeIncludeDeleted = this.onChangeIncludeDeleted.bind(this);
+                this.onChangeAgencies = this.onChangeAgencies.bind(this);
+                this.setDefaultValues = this.setDefaultValues.bind(this);
+            }
+
+            getCatalogingTemplateTypes() {
+                superagent.get("api/library/catalogingTemplateSets").end((err, res) => {
+                    this.setState({catalogingTemplateSets: JSON.parse(res.text).values}, this.setDefaultValues);
+                });
+            }
+
+            getLibrariesByCatalogingTemplateSet(value) {
+                this.state.catalogingTemplateSet = value;
+                superagent.get("api/library/catalogingTemplateSet/" + catalogingTemplateSet).end((err, res) => {
+                    this.setState({allowedLibraries: JSON.parse(res.text).values});
+                });
+            }
+
+            getRRProviders() {
+                superagent.get('api/queue/providers').end((err, res) => {
+                    this.setState({providers: JSON.parse(res.text).providers}, this.setDefaultValues);
+                });
+            }
+
+            enqueue(event) {
+                let data = JSON.stringify({
+                    provider: this.state.selectedProvider,
+                    catalogingTemplateSet: this.state.selectedCatalogingTemplateSet,
+                    includeDeleted: this.state.includeDeleted,
+                    agencyText: this.state.selectedAgencies
+                });
+                superagent
+                    .post('api/queue/enqueue')
+                    .send(data)
+                    .type('json')
+                    .set('Accept', 'application/json')
+                    .then((res) => {
+                        let validated = JSON.parse(res.text).validated;
+
+                        if (validated) {
+                            alert('Køpålæggelsen lykkedes! \n' +
+                                'Det totale antal poster for de angivne biblioteker: ' + JSON.parse(res.text).recordCount + "\n" +
+                                "Af de i alt " + JSON.parse(res.text).queueTotal + ' forsøgte køpålæggelser lykkedes i alt ' + JSON.parse(res.text).wasEnqueued);
+                        } else {
+                            alert('VALIDERING FEJLEDE: ' + JSON.parse(res.text).message);
+                        }
+                    })
+                    .catch((error) => {
+                        alert('FEJL! ' + error);
+                    });
+                event.preventDefault();
+            }
+
+            onChangeCatalogingTemplateSet(event) {
+                this.setState({selectedCatalogingTemplateSet: event.target.value});
+            }
+
+            onChangeProvider(event) {
+                this.setState({selectedProvider: event.target.value});
+            }
+
+            onChangeIncludeDeleted(event) {
+                this.setState({includeDeleted: event.target.value});
+            }
+
+            onChangeAgencies(event) {
+                this.setState({selectedAgencies: event.target.value});
+            }
+
+            setDefaultValues() {
+                if (this.state.selectedProvider === undefined && this.state.providers.length > 0) {
+                    this.setState({selectedProvider: this.state.providers[0]})
+                }
+
+                if (this.state.selectedCatalogingTemplateSet === undefined && this.state.catalogingTemplateSets.length > 0) {
+                    this.setState({selectedCatalogingTemplateSet: this.state.catalogingTemplateSets[0]})
+                }
+            }
+
+            setQueuePage() {
+                this.setState({mode: 'QUEUE'});
+
+                this.getCatalogingTemplateTypes();
+                this.getRRProviders();
+                this.setDefaultValues();
+            }
+
+            setIntrospectPage() {
+                this.state.mode = 'INTRO';
+            }
+
+            setUpdatePage() {
+                this.state.mode = 'UPDATE';
+            }
+
+            drawSubPage() {
+                if (this.state.mode === 'QUEUE') {
+                    return this.drawQueuePage();
+                }
+            }
+
+            drawQueuePage() {
+                return e('div', {className: 'container'},
+                    e('h2', null, 'Queue'),
+                    e('form', {className: 'form-horizontal', onSubmit: this.enqueue},
+                        e('div', {className: "form-group"},
+                            e('label', {
+                                htmlFor: 'select-cataloging-template-set',
+                                className: 'control-label col-sm-2'
+                            }, 'Vælg bibliotektstype:'),
+                            e('div', {className: 'col-sm-8'},
+                                e('select', {
+                                        id: 'select-cataloging-template-set',
+                                        className: 'form-control',
+                                        name: 'select-cataloging-template-set',
+                                        onChange: this.onChangeCatalogingTemplateSet,
+                                        value: this.state.selectedCatalogingTemplateSet,
+                                        required: true
+                                    },
+                                    this.state.catalogingTemplateSets.map(function (name, index) {
+                                            return e('option', {key: index, value: name}, name);
+                                        }
+                                    )
+                                )
+                            )
+                        ),
+                        e('div', {className: "form-group"},
+                            e('label', {
+                                htmlFor: 'select-provider',
+                                className: 'control-label col-sm-2'
+                            }, 'Vælg provider:'),
+                            e('div', {className: 'col-sm-8'},
+                                e('select', {
+                                        id: 'select-provider',
+                                        className: 'form-control',
+                                        name: 'select-provider',
+                                        onChange: this.onChangeProvider,
+                                        value: this.state.selectedProvider,
+                                        required: true
+                                    },
+                                    this.state.providers.map(function (name, index) {
+                                            return e('option', {key: index, value: name}, name);
+                                        }
+                                    )
+                                )
+                            ),
+                            e('a', {className: "toDoc", href: "providers.html", target: "_blank"}, "Forklaring")
+                        ),
+                        e('div', {className: "form-group"},
+                            e('label', {
+                                htmlFor: 'select-deleted',
+                                className: 'control-label col-sm-2'
+                            }, 'Inkluder slettede poster?'),
+                            e('div', {className: 'col-sm-8'},
+                                e('select', {
+                                        id: 'select-deleted',
+                                        className: 'form-control',
+                                        name: 'select-deleted',
+                                        value: this.state.includeDeleted,
+                                        onChange: this.onChangeIncludeDeleted,
+                                        required: true
+                                    },
+                                    [e('option', {key: 'delete-yes', value: true}, 'Ja'),
+                                        e('option', {key: 'delete-no', value: false}, 'Nej')]
+                                )
+                            )
+                        ),
+                        e('div', {className: "form-group"},
+                            e('label', {
+                                htmlFor: 'agencies-to-queue',
+                                className: 'control-label col-sm-2'
+                            }, 'Indtast biblioteksnumrene:'),
+                            e('div', {className: 'col-sm-8'},
+                                e('textarea', {
+                                    className: 'form-control',
+                                    name: 'agencies-to-queue',
+                                    id: 'agencies-to-queue',
+                                    rows: 15,
+                                    onChange: this.onChangeAgencies,
+                                    value: this.state.selectedAgencies,
+                                    required: true
+                                }, null)
+                            )
+                        ),
+                        e('div', {className: 'form-group'},
+                            e('div', {className: 'col-sm-offset-2 col-sm-10'},
+                                e('button', {type: 'submit'}, 'Udfør')
+                            )
+                        )
+                    )
+                );
+            }
+
+            render() {
+                return e('div', null,
+                    e('h1', {
+                        id: 'h1-div-headline',
+                        title: 'Hydra: Multi headed monster guarding the entrance to the Underworld'
+                    }, 'RawRepo HYDRA'),
+                    e('hr'),
+                    e('div', null, 'Vælg venligst en funktion:'),
+                    e('button', {
+                        id: 'btn-queue',
+                        className: "btn btn-success",
+                        style: {margin: "10px", display: 'inline-block'},
+                        onClick: () => {
+                            this.setQueuePage()
+                        }
+                    }, 'Queue'),
+                    e('button', {
+                        id: 'btn-introspect',
+                        className: "btn btn-success",
+                        style: {margin: "10px", display: 'inline-block'},
+                        disabled: true,
+                        onClick: () => {
+                            this.setIntrospectPage()
+                        }
+                    }, 'Introspect'),
+                    e('button', {
+                        id: 'btn-update',
+                        className: "btn btn-success",
+                        style: {margin: "10px", display: 'inline-block'},
+                        disabled: true,
+                        onClick: () => {
+                            this.setUpdatePage()
+                        }
+                    }, 'Update'),
+                    e('hr'),
+                    this.drawSubPage());
+            }
+        }
+
+
+        ReactDOM.render(
+            e(RestCall),
+            document.getElementById('webapp')
+        );
+    </script>
+</div>
+</body>
+</html>

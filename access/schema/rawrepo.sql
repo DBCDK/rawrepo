@@ -227,7 +227,7 @@ DECLARE
   row    QUEUERULES;
   exists QUEUE;
   rows   INT;
-  r      enqueueResult%ROWTYPE;
+  r      ENQUEUERESULT%ROWTYPE;
 BEGIN
   FOR row IN SELECT *
              FROM queuerules
@@ -318,6 +318,38 @@ BEGIN
     ELSE
     -- nothing
     END CASE;
+  END LOOP;
+END
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION enqueue_bulk(bibliographicrecordid_ VARCHAR(64) [],
+                                        agencyid_              NUMERIC(6) [],
+                                        provider_              VARCHAR(32) [],
+                                        changed_               VARCHAR(1) [],
+                                        leaf_                  VARCHAR(1) [])
+  RETURNS TABLE(bibliographicrecordid VARCHAR(64), agencyid NUMERIC(6), worker VARCHAR(32), queued BOOLEAN) AS $$ -- V21
+DECLARE
+  elements_max     INTEGER := array_length(bibliographicrecordid_, 1);
+  elements_current INTEGER := 1;
+BEGIN
+  WHILE elements_current <= elements_max LOOP
+    FOR worker, queued IN
+    SELECT
+      e.worker,
+      e.queued
+    FROM enqueue(bibliographicrecordid_ [elements_current],
+                 agencyid_ [elements_current],
+                 provider_ [elements_current],
+                 changed_ [elements_current],
+                 leaf_ [elements_current]) AS e
+    LOOP
+      bibliographicrecordid = bibliographicrecordid_ [elements_current];
+      agencyid = agencyid_ [elements_current];
+      RETURN NEXT;
+    END LOOP;
+
+    elements_current = elements_current + 1;
   END LOOP;
 END
 $$ LANGUAGE plpgsql;

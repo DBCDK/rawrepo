@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
+  ~  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>rawrepo-hydra</artifactId>
+    <packaging>war</packaging>
+    <name>rawrepo-hydra</name>
+    <version>1.5-SNAPSHOT</version>
+
+    <parent>
+        <groupId>dk.dbc</groupId>
+        <artifactId>rawrepo</artifactId>
+        <version>1.5-SNAPSHOT</version>
+    </parent>
+
+    <repositories>
+        <repository>
+            <id>mavenrepo.dbc.dk</id>
+            <url>http://mavenrepo.dbc.dk/content/groups/public</url>
+        </repository>
+    </repositories>
+
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+        <javax.json>1.0.4</javax.json>
+        <jaxb.runtime>2.2.11</jaxb.runtime>
+        <jersey.version>2.22.2</jersey.version>
+        <maven.install.plugin.version>2.5.2</maven.install.plugin.version>
+        <maven.javadoc.plugin>2.10.1</maven.javadoc.plugin>
+        <perf4j.version>0.9.16</perf4j.version>
+        <skip.install>true</skip.install>
+        <apache.commons.version>4.0</apache.commons.version>
+        <org.bouncycastle.provider.version>1.57</org.bouncycastle.provider.version>
+        <org.bouncycastle.mail.version>1.57</org.bouncycastle.mail.version>
+        <org.apache.email>1.5</org.apache.email>
+        <openagency.ws.client.version>2.32-SNAPSHOT</openagency.ws.client.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.perf4j</groupId>
+            <artifactId>perf4j</artifactId>
+            <version>${perf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>rawrepo-access</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc.xmldiff</groupId>
+            <artifactId>xmldiff-core</artifactId>
+            <version>1.2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>common-records</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>openagency-ws-client</artifactId>
+            <version>${openagency.ws.client.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
