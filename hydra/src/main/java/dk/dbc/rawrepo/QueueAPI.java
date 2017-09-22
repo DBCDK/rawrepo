@@ -33,10 +33,10 @@ public class QueueAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(QueueAPI.class);
 
     @EJB
-    OpenAgencyDAO openAgency;
+    private OpenAgencyDAO openAgency;
 
     @EJB
-    RawRepoDAO rawrepo;
+    private RawRepoDAO rawrepo;
 
     @Stopwatch
     @GET
@@ -180,7 +180,7 @@ public class QueueAPI {
 
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
-            LOGGER.error("Something happend:", e);
+            LOGGER.error("Something happened:", e);
             return Response.serverError().build();
         } finally {
             LOGGER.exit(res);

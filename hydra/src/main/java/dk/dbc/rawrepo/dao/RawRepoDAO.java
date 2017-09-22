@@ -33,7 +33,7 @@ public class RawRepoDAO {
     private static Connection connection;
 
     @EJB
-    OpenAgencyDAO openAgencyDAO;
+    private OpenAgencyDAO openAgencyDAO;
 
     @PostConstruct
     public void postConstruct() {
