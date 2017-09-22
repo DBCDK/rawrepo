@@ -110,10 +110,8 @@ public class QueueAPI {
 
             List<String> cleanedAgencyList = new ArrayList<>();
             for (String agency : agencies) {
-                LOGGER.info("cleaning {}", agency);
                 String cleanedAgency = agency.trim();
                 if (!cleanedAgency.isEmpty()) {
-                    LOGGER.info("{} was added to cleaned list", cleanedAgency);
                     cleanedAgencyList.add(cleanedAgency);
                 }
             }
@@ -127,8 +125,6 @@ public class QueueAPI {
 
             List<Integer> agencyList = new ArrayList<>();
             for (String agency : cleanedAgencyList) {
-                LOGGER.info(agency);
-                LOGGER.info("" + p.matcher(agency).find());
                 if (!p.matcher(agency).find()) {
                     LOGGER.error("'{}' is not a valid six digit number, so returning HTTP 400", agency);
                     return returnValidateFailResponse("Værdien '" + agency + "' har ikke et gyldigt format for et biblioteksnummer");
@@ -137,11 +133,13 @@ public class QueueAPI {
                     LOGGER.error("Agency '{}' is not a valid {} agency, so returning HTTP 400", agency, catalogingTemplateSet);
                     return returnValidateFailResponse("Biblioteksnummeret " + agency + " tilhører ikke biblioteksgruppen " + catalogingTemplateSet);
                 }
+                LOGGER.info("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
             }
 
+            LOGGER.info("A total of {} agencies was found in input. Looking for records...", agencyList.size());
             List<RecordId> recordIds = rawrepo.getFFURecords(agencyList, includeDeleted);
-            LOGGER.info("Found the following RecordIds: {}", recordIds);
+            LOGGER.info("Found a total of {} records", recordIds.size());
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
             List<Integer> agencyListBulk = new ArrayList<>();
@@ -164,7 +162,7 @@ public class QueueAPI {
             Integer wasEnqueued = 0;
 
             for (RawRepoDAO.EnqueueBulkResult bulkResult : enqueueBulkResults) {
-                LOGGER.info("Enqueue of {}:{} on worker {}. Enqueued? {}", bulkResult.recordId, bulkResult.agencyId, bulkResult.worker, bulkResult.queued);
+                //LOGGER.info("Enqueue of {}:{} on worker {}. Enqueued? {}", bulkResult.recordId, bulkResult.agencyId, bulkResult.worker, bulkResult.queued);
                 if (bulkResult.queued) {
                     wasEnqueued++;
                 }
