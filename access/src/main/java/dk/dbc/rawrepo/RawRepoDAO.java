@@ -21,6 +21,7 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.gracefulcache.CacheException;
+import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -29,6 +30,8 @@ import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
+import javax.xml.bind.JAXBException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -441,6 +444,57 @@ public abstract class RawRepoDAO {
             throw new RawRepoException("Error accessing relation hints", ex);
         }
         throw new RawRepoExceptionRecordNotFound("Could not find (parent) relation agency for " + bibliographicRecordId + " from " + originalAgencyId);
+    }
+
+    /**
+     * This function takes a Record and expands the content with aut data (if the record has any aut references)
+     *
+     * @param record The record to expand
+     * @param keepAutField Determines whether or not to keep the *5 and *6 subfields
+     * @throws RawRepoException
+     * @throws JAXBException
+     * @throws UnsupportedEncodingException
+     */
+    public void expandRecord(Record record, boolean keepAutField) throws RawRepoException, JAXBException, UnsupportedEncodingException {
+        RecordId recordId = record.getId();
+        String bibliographicRecordId = recordId.getBibliographicRecordId();
+        Integer agencyId = recordId.getAgencyId();
+
+        // Only get record collection if the record exist (there are no relations if the record doesn't exist or is deleted)
+        // Only 870970 and 870971 records can have authority records so authority is only relevant if the 870970 or 870971
+        // The agency in the request will never be 870970/870971 so it is not necessary to check if requestRecord.agencyId is 870970/870971
+        if (recordExists(bibliographicRecordId, agencyId)) {
+            logger.info("Record exists - checking if there is a 870970/870971 record");
+            RecordId commonRecordId = new RecordId(bibliographicRecordId, 870970);
+            RecordId articleRecordId = new RecordId(bibliographicRecordId, 870971);
+            RecordId expandableRecordId = null;
+
+            if (getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
+                expandableRecordId = commonRecordId;
+            } else if (getRelationsSiblingsFromMe(recordId).contains(articleRecordId)) {
+                expandableRecordId = articleRecordId;
+            }
+
+            if (expandableRecordId != null) {
+                logger.info("Expandable record found ({}) - continuing expanding", expandableRecordId.toString());
+
+                Set<RecordId> autParents = getRelationsParents(expandableRecordId);
+                logger.info("Found {} parents to the expandable record", autParents.size());
+
+                Map<String, Record> autRecords = new HashMap<>();
+                for (RecordId parentId : autParents) {
+                    if ("870979".equals(Integer.toString(parentId.getAgencyId()))) {
+                        logger.info("Found parent authority record: {}", parentId.toString());
+                        autRecords.put(parentId.getBibliographicRecordId(), fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
+                    }
+                }
+                logger.info("Amount of authority records to the common record: {}", autRecords.size());
+                if (autRecords.size() > 0) {
+                    logger.info("Found one or more authority records - expanding record");
+                    ExpandCommonMarcRecord.expandRecord(record, autRecords, keepAutField);
+                }
+            }
+        }
     }
 
     /**

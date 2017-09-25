@@ -24,12 +24,14 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.forsrights.client.ForsRightsException;
-import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
+import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.content.service.transport.*;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -47,7 +49,10 @@ import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -290,43 +295,7 @@ public abstract class Service {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
 
-            // Only get record collection if the record exist (there are no relations if the record doesn't exist or is deleted)
-            // Only 870970 and 870971 records can have authority records so authority is only relevant if the 870970 or 870971
-            // record exists as well
-            // The agency in the request will never be 870970/870971 so it is not necessary to check if requestRecord.agencyId is 870970/870971
-            if (dao.recordExists(requestRecord.bibliographicRecordId, requestRecord.agencyId)) {
-                logger.info("Record exists - checking if there is a 870970/870971 record");
-                RecordId recordId = new RecordId(requestRecord.bibliographicRecordId, requestRecord.agencyId);
-                RecordId commonRecordId = new RecordId(requestRecord.bibliographicRecordId, 870970);
-                RecordId articleRecordId = new RecordId(requestRecord.bibliographicRecordId, 870971);
-                RecordId expandableRecordId = null;
-
-                if (dao.getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
-                    expandableRecordId = commonRecordId;
-                } else if (dao.getRelationsSiblingsFromMe(recordId).contains(articleRecordId)) {
-                    expandableRecordId = articleRecordId;
-                }
-
-                if (expandableRecordId != null) {
-                    logger.info("Expandable record found ({}) - continuing expanding", expandableRecordId.toString());
-
-                    Set<RecordId> autParents = dao.getRelationsParents(expandableRecordId);
-                    logger.info("Found {} parents to the expandable record", autParents.size());
-
-                    Map<String, Record> autRecords = new HashMap<>();
-                    for (RecordId parentId : autParents) {
-                        if ("870979".equals(Integer.toString(parentId.getAgencyId()))) {
-                            logger.info("Found parent authority record: {}", parentId.toString());
-                            autRecords.put(parentId.getBibliographicRecordId(), dao.fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
-                        }
-                    }
-                    logger.info("Amount of authority records to the common record: {}", autRecords.size());
-                    if (autRecords.size() > 0) {
-                        logger.info("Found one or more authority records - expanding record");
-                        ExpandCommonMarcRecord.expandRecord(rawRecord, autRecords);
-                    }
-                }
-            }
+            dao.expandRecord(rawRecord, false);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
         } catch (Exception ex) {
