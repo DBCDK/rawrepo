@@ -32,22 +32,22 @@ import java.util.Set;
  */
 public class AgencySearchOrderFallback extends AgencySearchOrder {
 
-    private final List<Integer> searchOrder;
+    private final List<Integer> searchOrderList;
     private final Set<Integer> agenciesInSearchOrder;
 
     public AgencySearchOrderFallback(String agencies) throws NumberFormatException {
         super(null);
-        this.searchOrder = new ArrayList<>();
+        this.searchOrderList = new ArrayList<>();
         for (String agency : agencies.split("[^0-9]+")) {
-            this.searchOrder.add(Integer.parseInt(agency));
+            this.searchOrderList.add(Integer.parseInt(agency));
         }
-        this.agenciesInSearchOrder = new HashSet<>(searchOrder);
+        this.agenciesInSearchOrder = new HashSet<>(searchOrderList);
     }
 
     public AgencySearchOrderFallback() {
         super(null);
-        this.searchOrder = initSearchOrderList();
-        this.agenciesInSearchOrder = new HashSet<>(searchOrder);
+        this.searchOrderList = initSearchOrderList();
+        this.agenciesInSearchOrder = new HashSet<>(searchOrderList);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class AgencySearchOrderFallback extends AgencySearchOrder {
         if (!agenciesInSearchOrder.contains(agencyId)) {
             list.add(agencyId);
         }
-        list.addAll(searchOrder);
+        list.addAll(searchOrderList);
         return list;
     }
 
