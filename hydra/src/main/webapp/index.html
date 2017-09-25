@@ -31,7 +31,8 @@
                     selectedCatalogingTemplateSet: undefined,
                     selectedAgencies: '',
                     selectedProvider: undefined,
-                    includeDeleted: false
+                    includeDeleted: false,
+                    disableButtons: false
                 };
                 this.getCatalogingTemplateTypes = this.getCatalogingTemplateTypes.bind(this);
                 this.getLibrariesByCatalogingTemplateSet = this.getLibrariesByCatalogingTemplateSet.bind(this);
@@ -47,6 +48,7 @@
                 this.onChangeIncludeDeleted = this.onChangeIncludeDeleted.bind(this);
                 this.onChangeAgencies = this.onChangeAgencies.bind(this);
                 this.setDefaultValues = this.setDefaultValues.bind(this);
+                this.getProvidersLink = this.getProvidersLink.bind(this);
             }
 
             getCatalogingTemplateTypes() {
@@ -69,6 +71,7 @@
             }
 
             enqueue(event) {
+                this.setState({disableButtons: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
                     catalogingTemplateSet: this.state.selectedCatalogingTemplateSet,
@@ -90,9 +93,11 @@
                         } else {
                             alert('VALIDERING FEJLEDE: ' + JSON.parse(res.text).message);
                         }
+                        this.setState({disableButtons: false});
                     })
                     .catch((error) => {
                         alert('FEJL! ' + error);
+                        this.setState({disableButtons: false});
                     });
                 event.preventDefault();
             }
@@ -145,6 +150,14 @@
                 }
             }
 
+            getProvidersLink() {
+                if (!this.state.disableButtons) {
+                    return e('a', {className: "toDoc", href: "providers.html", target: "_blank"}, "Forklaring");
+                } else {
+                    return e('p', null, "Forklaring");
+                }
+            }
+
             drawQueuePage() {
                 return e('div', {className: 'container'},
                     e('h2', null, 'Queue'),
@@ -190,7 +203,7 @@
                                     )
                                 )
                             ),
-                            e('a', {className: "toDoc", href: "providers.html", target: "_blank"}, "Forklaring")
+                            this.getProvidersLink()
                         ),
                         e('div', {className: "form-group"},
                             e('label', {
@@ -230,7 +243,7 @@
                         ),
                         e('div', {className: 'form-group'},
                             e('div', {className: 'col-sm-offset-2 col-sm-10'},
-                                e('button', {type: 'submit'}, 'Udfør')
+                                e('button', {className: 'btn',type: 'submit', disabled: this.state.disableButtons}, 'Udfør')
                             )
                         )
                     )
@@ -241,7 +254,7 @@
                 return e('div', null,
                     e('h1', {
                         id: 'h1-div-headline',
-                        title: 'Hydra: Multi headed monster guarding the entrance to the Underworld'
+                        title: 'Hydra: Multi headed beast guarding the entrance to the Underworld'
                     }, 'RawRepo HYDRA'),
                     e('hr'),
                     e('div', null, 'Vælg venligst en funktion:'),
