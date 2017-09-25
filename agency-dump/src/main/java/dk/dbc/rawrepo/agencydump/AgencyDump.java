@@ -53,12 +53,12 @@ public class AgencyDump implements AutoCloseable {
     private final Connection connection;
     final RawRepoDAO dao;
 
-    AgencyDump(String db, int agencyid, String openAgency) throws RawRepoException, SQLException {
+    AgencyDump(String db, int agencyid, String openAgencyUrl) throws RawRepoException, SQLException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
-        if(openAgency != null) {
-            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgency), null);
+        if(openAgencyUrl != null) {
+            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgencyUrl), null);
         }
         this.dao = builder.build();
     }
