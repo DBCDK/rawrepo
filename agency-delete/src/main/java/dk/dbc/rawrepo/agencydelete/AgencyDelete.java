@@ -88,12 +88,12 @@ class AgencyDelete {
     private final MarcXMerger marcXMerger;
     private final List<Integer> commonAgencies;
 
-    public AgencyDelete(String db, int agencyid, String openAgency) throws Exception {
+    public AgencyDelete(String db, int agencyid, String openAgencyURL) throws Exception {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
-        if (openAgency != null) {
-            OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build(openAgency);
+        if (openAgencyURL != null) {
+            OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build(openAgencyURL);
             builder.openAgency(service, null);
             RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
             if (relationHints.usesCommonAgency(agencyid)) {
