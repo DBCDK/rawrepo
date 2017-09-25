@@ -69,13 +69,13 @@ public class AgencyDeleteMain {
             return;
         }
 
-        String openAgency = null;
+        String openAgencyURL = null;
         if (commandLine.hasOption("openagency")) {
-            openAgency = (String) commandLine.getOption("openagency");
+            openAgencyURL = (String) commandLine.getOption("openagency");
         }
 
         try {
-            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, openAgency);
+            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, openAgencyURL);
             Set<String> ids = agencyDelete.getIds();
             Set<String> siblingRelations = agencyDelete.getSiblingRelations();
             if (!siblingRelations.isEmpty()) {
