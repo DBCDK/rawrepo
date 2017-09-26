@@ -43,12 +43,13 @@ public class LibraryAPI {
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_LIBRARY_CATALOGING_TEMPLATE_SET + "/{template}")
     public Response getCatalogingTemplateSet(@PathParam("template") String template) {
-        LOGGER.entry();
+        LOGGER.entry(template);
+        String res = "";
         try {
             try {
                 Set<String> libraries = openAgency.getLibrariesByCatalogingTemplateSet(template);
 
-                String res = "";
+
                 JsonObjectBuilder outerJSON = Json.createObjectBuilder();
                 JsonArrayBuilder innerJSON = Json.createArrayBuilder();
                 for (String set : libraries) {
@@ -64,7 +65,7 @@ public class LibraryAPI {
                 return Response.serverError().build();
             }
         } finally {
-            LOGGER.exit();
+            LOGGER.exit(res);
         }
     }
 

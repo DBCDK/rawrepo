@@ -49,6 +49,7 @@
                 this.onChangeAgencies = this.onChangeAgencies.bind(this);
                 this.setDefaultValues = this.setDefaultValues.bind(this);
                 this.getProvidersLink = this.getProvidersLink.bind(this);
+                this.getSubmitButtonLabel = this.getSubmitButtonLabel.bind(this);
             }
 
             getCatalogingTemplateTypes() {
@@ -158,6 +159,14 @@
                 }
             }
 
+            getSubmitButtonLabel() {
+                if (!this.state.disableButtons) {
+                    return 'Udfør';
+                } else {
+                    return 'Arbejder...'
+                }
+            }
+
             drawQueuePage() {
                 return e('div', {className: 'container'},
                     e('h2', null, 'Queue'),
@@ -174,7 +183,8 @@
                                         name: 'select-cataloging-template-set',
                                         onChange: this.onChangeCatalogingTemplateSet,
                                         value: this.state.selectedCatalogingTemplateSet,
-                                        required: true
+                                        required: true,
+                                        disabled: this.state.disableButtons
                                     },
                                     this.state.catalogingTemplateSets.map(function (name, index) {
                                             return e('option', {key: index, value: name}, name);
@@ -195,7 +205,8 @@
                                         name: 'select-provider',
                                         onChange: this.onChangeProvider,
                                         value: this.state.selectedProvider,
-                                        required: true
+                                        required: true,
+                                        disabled: this.state.disableButtons
                                     },
                                     this.state.providers.map(function (name, index) {
                                             return e('option', {key: index, value: name}, name);
@@ -217,7 +228,8 @@
                                         name: 'select-deleted',
                                         value: this.state.includeDeleted,
                                         onChange: this.onChangeIncludeDeleted,
-                                        required: true
+                                        required: true,
+                                        disabled: this.state.disableButtons
                                     },
                                     [e('option', {key: 'delete-yes', value: true}, 'Ja'),
                                         e('option', {key: 'delete-no', value: false}, 'Nej')]
@@ -237,13 +249,18 @@
                                     rows: 15,
                                     onChange: this.onChangeAgencies,
                                     value: this.state.selectedAgencies,
-                                    required: true
+                                    required: true,
+                                    disabled: this.state.disableButtons
                                 }, null)
                             )
                         ),
                         e('div', {className: 'form-group'},
                             e('div', {className: 'col-sm-offset-2 col-sm-10'},
-                                e('button', {className: 'btn',type: 'submit', disabled: this.state.disableButtons}, 'Udfør')
+                                e('button', {
+                                    className: 'btn',
+                                    type: 'submit',
+                                    disabled: this.state.disableButtons
+                                }, this.getSubmitButtonLabel())
                             )
                         )
                     )

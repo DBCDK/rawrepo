@@ -89,20 +89,20 @@ public class QueueAPI {
                 LOGGER.error("The provider input {} could not be validated, so returning HTTP 400", provider);
                 return returnValidateFailResponse("Provider kunne ikke valideres");
             }
-            LOGGER.info("provider: {}", provider);
+            LOGGER.debug("provider: {}", provider);
 
             String catalogingTemplateSet = obj.getString("catalogingTemplateSet");
             if (catalogingTemplateSet == null || catalogingTemplateSet.isEmpty() || !allowedCatalogingTemplateSets.contains(catalogingTemplateSet)) {
                 LOGGER.error("CatalogingTemplateSet {} could not be validated, so returning HTTP 400", catalogingTemplateSet);
                 return returnValidateFailResponse("Provider kunne ikke valideres");
             }
-            LOGGER.info("catalogingTemplateSet: {}", catalogingTemplateSet);
+            LOGGER.debug("catalogingTemplateSet: {}", catalogingTemplateSet);
 
             boolean includeDeleted = obj.getBoolean("includeDeleted");
-            LOGGER.info("includeDeleted: {}", includeDeleted);
+            LOGGER.debug("includeDeleted: {}", includeDeleted);
 
             String agencyString = obj.getString("agencyText");
-            LOGGER.info("agencyString: {}", agencyString);
+            LOGGER.debug("agencyString: {}", agencyString);
             agencyString = agencyString.replace("\n", ","); // Transform newline and space separation into comma separation
             agencyString = agencyString.replace(" ", ",");
             List<String> agencies = Arrays.asList(agencyString.split(","));
@@ -133,13 +133,13 @@ public class QueueAPI {
                     LOGGER.error("Agency '{}' is not a valid {} agency, so returning HTTP 400", agency, catalogingTemplateSet);
                     return returnValidateFailResponse("Biblioteksnummeret " + agency + " tilhører ikke biblioteksgruppen " + catalogingTemplateSet);
                 }
-                LOGGER.info("Found agency {} in input agency string", agency);
+                LOGGER.debug("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
             }
 
-            LOGGER.info("A total of {} agencies was found in input. Looking for records...", agencyList.size());
+            LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
             List<RecordId> recordIds = rawrepo.getFFURecords(agencyList, includeDeleted);
-            LOGGER.info("Found a total of {} records", recordIds.size());
+            LOGGER.debug("Found a total of {} records", recordIds.size());
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
             List<Integer> agencyListBulk = new ArrayList<>();
@@ -155,14 +155,13 @@ public class QueueAPI {
                 leafList.add(false);
             }
 
-            LOGGER.info("{} records will be enqueued", bibliographicRecordIdList.size());
+            LOGGER.debug("{} records will be enqueued", bibliographicRecordIdList.size());
 
             List<RawRepoDAO.EnqueueBulkResult> enqueueBulkResults = rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
             Integer wasEnqueued = 0;
 
             for (RawRepoDAO.EnqueueBulkResult bulkResult : enqueueBulkResults) {
-                //LOGGER.info("Enqueue of {}:{} on worker {}. Enqueued? {}", bulkResult.recordId, bulkResult.agencyId, bulkResult.worker, bulkResult.queued);
                 if (bulkResult.queued) {
                     wasEnqueued++;
                 }
