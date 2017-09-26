@@ -126,16 +126,31 @@ public class Introspect {
         }
     }
 
+    private Record recordFetcher ( Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
+        log.trace("Entering recordFetcher");
+        Record record = null;
+        try (Connection connection = globalDataSource.getConnection()) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
+                @Override
+                public List<Integer> provide(Integer key) throws Exception {
+                    return Arrays.asList(key);
+                }
+            }).build();
+            return record = dao.fetchRecord(bibliographicRecordId, agencyId);
+        } finally {
+            log.trace("Exit recordFetcher : " + record );
+        }
+    }
+
 
     @GET
     @Path("lineformatter/{db : [^/]+}/{agency : \\d+}/{id : .+}")
     public Response convertToLineFormat(@PathParam("db") String resource,
                                         @PathParam("agency") Integer agencyId,
                                         @PathParam("id") String bibliographicRecordId) {
-        log.error("mvs hest entering convertToLineFormat");
         log.info("Enter -> convertToLineFormat");
         try {
-            Record record = recordMergedFetcher ( agencyId, bibliographicRecordId );
+            Record record = recordFetcher ( agencyId, bibliographicRecordId );
             MarcRecord mcr = MarcConverter.convertFromMarcXChange(new String(record.getContent(),  "UTF-8"));
             return ok(Arrays.asList(mcr.toString()));
         } catch (Exception ex) {
