@@ -76,7 +76,6 @@
 
             getInstanceName() {
                 superagent.get('api/hydra/instance').end((err, res) => {
-                    console.log('getInstanceName');
                     this.setState({instanceName: JSON.parse(res.text).value})
                 });
             }
