@@ -16,6 +16,10 @@ public class ApplicationConstants {
     public static final String API_LIBRARY_CATALOGING_TEMPLATE_SETS = "catalogingTemplateSets";
     public static final String API_LIBRARY_CATALOGING_TEMPLATE_SET = "catalogingTemplateSet";
 
+    public static final String API_HYDRA = "/hydra";
+    public static final String API_HYDRA_STATUS = "status";
+    public static final String API_HYDRA_INSTANCE_NAME = "instance";
+
     public static final Integer OPENAGENCY_CACHE_AGE = 8;
     public static final Integer OPENAGENCY_CONNECT_TIMEOUT = 60 * 1000;
     public static final Integer OPENAGENCY_REQUEST_TIMEOUT = 3 * 60 * 1000;

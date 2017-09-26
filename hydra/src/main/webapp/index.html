@@ -32,7 +32,8 @@
                     selectedAgencies: '',
                     selectedProvider: undefined,
                     includeDeleted: false,
-                    disableButtons: false
+                    disableButtons: false,
+                    instanceName: undefined
                 };
                 this.getCatalogingTemplateTypes = this.getCatalogingTemplateTypes.bind(this);
                 this.getLibrariesByCatalogingTemplateSet = this.getLibrariesByCatalogingTemplateSet.bind(this);
@@ -50,6 +51,8 @@
                 this.setDefaultValues = this.setDefaultValues.bind(this);
                 this.getProvidersLink = this.getProvidersLink.bind(this);
                 this.getSubmitButtonLabel = this.getSubmitButtonLabel.bind(this);
+                this.getInstanceName = this.getInstanceName.bind(this);
+                this.getHeader = this.getHeader.bind(this);
             }
 
             getCatalogingTemplateTypes() {
@@ -69,6 +72,22 @@
                 superagent.get('api/queue/providers').end((err, res) => {
                     this.setState({providers: JSON.parse(res.text).providers}, this.setDefaultValues);
                 });
+            }
+
+            getInstanceName() {
+                superagent.get('api/hydra/instance').end((err, res) => {
+                    console.log('getInstanceName');
+                    this.setState({instanceName: JSON.parse(res.text).value})
+                });
+            }
+
+            getHeader() {
+                if (this.state.instanceName === undefined) {
+                    this.getInstanceName();
+                    return 'RawRepo HYDRA';
+                } else {
+                    return 'RawRepo HYDRA - ' + this.state.instanceName;
+                }
             }
 
             enqueue(event) {
@@ -272,7 +291,7 @@
                     e('h1', {
                         id: 'h1-div-headline',
                         title: 'Hydra: Multi headed beast guarding the entrance to the Underworld'
-                    }, 'RawRepo HYDRA'),
+                    }, this.getHeader()),
                     e('hr'),
                     e('div', null, 'Vælg venligst en funktion:'),
                     e('button', {

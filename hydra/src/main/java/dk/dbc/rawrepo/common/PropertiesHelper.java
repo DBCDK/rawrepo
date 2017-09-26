@@ -21,6 +21,8 @@ public class PropertiesHelper {
     public static final String OPENAGENCY_CONNECT_TIMEOUT = "OPENAGENCY_CONNECT_TIMEOUT";
     public static final String OPENAGENCY_REQUEST_TIMEOUT = "OPENAGENCY_REQUEST_TIMEOUT";
 
+    public static final String INSTANCE_NAME = "INSTANCE_NAME";
+
     // The reason this function takes System.getEnv() as argument instead of just calling the function is because of testability
     public static Properties getProperties(Map<String, String> systemProperties) throws NullPointerException {
         Properties properties = new Properties();
@@ -72,6 +74,13 @@ public class PropertiesHelper {
             properties.setProperty(OPENAGENCY_REQUEST_TIMEOUT, ApplicationConstants.OPENAGENCY_REQUEST_TIMEOUT.toString());
         } else {
             properties.setProperty(OPENAGENCY_REQUEST_TIMEOUT, openAgencyRequestTimeout);
+        }
+
+        String instanceName = getEnvValue(systemProperties, INSTANCE_NAME);
+        if (instanceName == null) {
+            properties.setProperty(INSTANCE_NAME, "Ukendt");
+        } else {
+            properties.setProperty(INSTANCE_NAME, instanceName);
         }
 
         return properties;
