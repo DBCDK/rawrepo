@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Implements {@link AgencySearchOrder}, using openagency webservicecall
+ * Implements {@link AgencySearchOrder}, using openagency webservice call
  * showOrder
  *
  *
@@ -49,7 +49,7 @@ public class AgencySearchOrderFromShowOrder extends AgencySearchOrder {
      *
      * System.setProperty("http.keepAlive", "true");
      *
-     * @param url URL of openagencyservice (at least version 2.17)
+     * @param url URL of openagency service (at least version 2.17)
      */
     public AgencySearchOrderFromShowOrder(String url) {
         super(null);

@@ -26,9 +26,12 @@ import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+
 import static org.hamcrest.Matchers.containsInAnyOrder;
+
 import org.junit.After;
 import org.junit.Assert;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +39,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,7 +69,9 @@ public class RawRepoDAOIT {
     public void setup() throws SQLException, ClassNotFoundException {
         postgres = new PostgresITConnection("rawrepo");
         connection = postgres.getConnection();
-        connection.prepareStatement("SET log_statement = 'all';").execute();
+        // Don't do this unless you know what you are doing. You need to be superuser in the database
+        // before you can do it. Only effect seems to be that sql statements are written to the pg logfile.
+        // connection.prepareStatement("SET log_statement = 'all';").execute();
         resetDatabase();
     }
 
@@ -184,7 +190,7 @@ public class RawRepoDAOIT {
 
     @Test
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, ClassNotFoundException {
-        setupData(100000, "B:2", "B:870970", "C:870970", "D:1", "D:870970", "E:870970", "F:1", "F:870970", "G:870970", "H:1", "H:870970");
+        setupData(100000, "B:2,870970", "C:870970", "D:1,870970", "E:870970", "F:1,870970", "G:870970", "H:1,870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
@@ -621,16 +627,34 @@ public class RawRepoDAOIT {
 
     @Test
     public void testGetAllAgencies() throws Exception {
-        setupData(100000,
-                "A:870970,101-deleted,102",
-                "B:870970-deleted,200");
+        setupData(100000, "A:870970,101-deleted,102", "B:870970-deleted,200");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
-        
-        assertThat("lookup A", dao.allAgenciesForBibliographicRecordId("A"), containsInAnyOrder(870970,101,102));
-        assertThat("lookup B", dao.allAgenciesForBibliographicRecordId("B"), containsInAnyOrder(870970,200));
-        assertThat("lookup A skip Deleted", dao.allAgenciesForBibliographicRecordIdSkipDeleted("A"), containsInAnyOrder(870970,102));
+
+        assertThat("lookup A", dao.allAgenciesForBibliographicRecordId("A"), containsInAnyOrder(870970, 101, 102));
+        assertThat("lookup B", dao.allAgenciesForBibliographicRecordId("B"), containsInAnyOrder(870970, 200));
+        assertThat("lookup A skip Deleted", dao.allAgenciesForBibliographicRecordIdSkipDeleted("A"), containsInAnyOrder(870970, 102));
         assertThat("lookup B skip Deleted", dao.allAgenciesForBibliographicRecordIdSkipDeleted("B"), containsInAnyOrder(200));
+    }
+
+    @Test
+    public void testGetMimeTypes() throws Exception {
+        setupData(100000, "X:000111", "A:870970", "B:870971", "C:870979", "D:898989");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        assertEquals(MarcXChangeMimeType.MARCXCHANGE, dao.getMimeTypeOfSafe("A", 870970));
+        assertEquals(MarcXChangeMimeType.ARTICLE, dao.getMimeTypeOfSafe("B", 870971));
+        assertEquals(MarcXChangeMimeType.AUTHORITY, dao.getMimeTypeOfSafe("C", 870979));
+        assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOfSafe("D", 898989));
+        assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOfSafe("E", 898989));
+        assertEquals(MarcXChangeMimeType.ENRICHMENT, dao.getMimeTypeOfSafe("X", 111));
+
+        assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOf("D", 898989));
+        try {
+            System.out.println("Nothing should be written here " + dao.getMimeTypeOf("E", 898989));
+        } catch (RawRepoExceptionRecordNotFound t) {
+            assertEquals("Trying to find mimetype", t.getMessage());
+        }
     }
 
     //  _   _      _                   _____                 _   _
@@ -639,7 +663,7 @@ public class RawRepoDAOIT {
 // |  _  |  __/ | |_) |  __/ |    |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
 // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 //              |_|
-    void resetDatabase() throws SQLException {
+    private void resetDatabase() throws SQLException {
         postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
@@ -666,14 +690,14 @@ public class RawRepoDAOIT {
     }
 
     /**
-     *
      * Create Test Data
+     *
      * @param maxEnrichmentLibrary Record with AgencyLower records Get mimeType ENRICHMENT
-     * @param ids Setof Ids of the form [BibliographicId:Agency,Agency] The Agency Can have a -delete attatch for creating records with deleted='t' 
+     * @param ids                  Set of Ids of the form [BibliographicId:Agency,Agency] The Agency Can have a -delete attach for creating records with deleted='t'
      * @throws RawRepoException on Dao Errors
-     * @throws SQLException Errors from Commits
+     * @throws SQLException     Errors from Commits
      */
-    void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
+    private void setupData(int maxEnrichmentLibrary, String... ids) throws RawRepoException, SQLException {
         connection.setAutoCommit(false);
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         Map<String, Set<RecordId>> idMap = new HashMap<>();
@@ -686,11 +710,11 @@ public class RawRepoDAOIT {
             String[] split1 = id.split(":");
             String[] split2 = split1[1].split(",");
             for (String lib : split2) {
-                boolean isDeleted=false;
-                if( lib.endsWith("-deleted") ) {
-                    isDeleted=true;
-                    lib=lib.replace("-deleted","");
-                }                 
+                boolean isDeleted = false;
+                if (lib.endsWith("-deleted")) {
+                    isDeleted = true;
+                    lib = lib.replace("-deleted", "");
+                }
                 RecordId recordId = new RecordId(split1[0], Integer.parseInt(lib));
                 Record record = dao.fetchRecord(recordId.getBibliographicRecordId(), recordId.getAgencyId());
                 String mimeType;
@@ -698,10 +722,12 @@ public class RawRepoDAOIT {
                     mimeType = MarcXChangeMimeType.ENRICHMENT;
                 } else if (recordId.getAgencyId() == 870979) {
                     mimeType = MarcXChangeMimeType.AUTHORITY;
-                } else if (recordId.getAgencyId() == 870791) {
+                } else if (recordId.getAgencyId() == 870971) {
                     mimeType = MarcXChangeMimeType.ARTICLE;
-                } else {
+                } else if (recordId.getAgencyId() == 870970) {
                     mimeType = MarcXChangeMimeType.MARCXCHANGE;
+                } else {
+                    mimeType = MarcXChangeMimeType.UNKNOWN;
                 }
                 record.setMimeType(mimeType);
                 record.setContent(id.getBytes());
@@ -713,7 +739,7 @@ public class RawRepoDAOIT {
         connection.commit();
     }
 
-    void setupRelations(String... relations) throws NumberFormatException, RawRepoException, SQLException {
+    private void setupRelations(String... relations) throws NumberFormatException, RawRepoException, SQLException {
         connection.setAutoCommit(false);
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         for (String relation : relations) {
@@ -730,12 +756,12 @@ public class RawRepoDAOIT {
         connection.commit();
     }
 
-    void clearQueue() throws SQLException {
+    private void clearQueue() throws SQLException {
         PreparedStatement stmt = connection.prepareStatement("DELETE FROM QUEUE");
         stmt.execute();
     }
 
-    Collection<String> getQueue() throws SQLException {
+    private Collection<String> getQueue() throws SQLException {
         Set<String> result = new HashSet<>();
         PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker FROM QUEUE");
         if (stmt.execute()) {
@@ -747,7 +773,7 @@ public class RawRepoDAOIT {
         return result;
     }
 
-    Collection<String> getQueueState() throws SQLException {
+    private Collection<String> getQueueState() throws SQLException {
         Set<String> result = new HashSet<>();
         PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid, agencyid, worker, COUNT(queued) FROM QUEUE GROUP BY bibliographicrecordid, agencyid, worker");
         if (stmt.execute()) {
@@ -759,7 +785,7 @@ public class RawRepoDAOIT {
         return result;
     }
 
-    public Collection<String> idsFromCollection(Map<String, Record> records) {
+    private Collection<String> idsFromCollection(Map<String, Record> records) {
         Collection<String> collection = new HashSet<>();
         for (Record record : records.values()) {
             collection.add(record.getId().getBibliographicRecordId() + ":" + record.getId().getAgencyId());
@@ -775,9 +801,9 @@ public class RawRepoDAOIT {
      * @param elems string elements collection should consist of
      */
     private static void collectionIs(Collection<String> col, String... elems) {
-        HashSet<String> missing = new HashSet();
+        HashSet<String> missing = new HashSet<>();
         Collections.addAll(missing, elems);
-        HashSet<String> extra = new HashSet(col);
+        HashSet<String> extra = new HashSet<>(col);
         extra.removeAll(missing);
         missing.removeAll(col);
         if (!extra.isEmpty() || !missing.isEmpty()) {
@@ -790,7 +816,7 @@ public class RawRepoDAOIT {
      *
      * @param target ID:LIBRARY
      * @return recordid
-     * @throws NumberFormatException
+     * @throws NumberFormatException Id was not an integer
      */
     private static RecordId recordIdFromString(String target) throws NumberFormatException {
         String[] list = target.split(":");
@@ -834,14 +860,14 @@ public class RawRepoDAOIT {
 
     private static class MyRelationHints extends RelationHints {
 
-        public MyRelationHints() {
+        MyRelationHints() {
         }
 
         @Override
         public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
             switch (agencyId) {
                 case 999999:
-                    return Arrays.asList(999999);
+                    return Collections.singletonList(999999);
                 default:
                     return Arrays.asList(870970, 870971, 870979);
             }
@@ -860,7 +886,7 @@ public class RawRepoDAOIT {
     }
 
     private static class MySearchOrder extends AgencySearchOrder {
-        public MySearchOrder() {
+        MySearchOrder() {
             super(null);
         }
 

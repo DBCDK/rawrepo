@@ -163,7 +163,7 @@
                         </configuration>
                     </execution>
 
-                    <!-- Unpack DB shema-->
+                    <!-- Unpack DB schema-->
                     <execution>
                         <id>unpack-cfg-test-resources</id>
                         <goals>
