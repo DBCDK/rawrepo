@@ -796,7 +796,7 @@ $('document').ready(function () {
                 dtys = ty - 3 * Math.sin(theta),
                 l = 8,
                 w = 2.5
-            ;
+                ;
             return "M" + sx + "," + sy +
                 "L" + tx + "," + ty +
                 "M" + dtxs + "," + dtys +
@@ -824,6 +824,7 @@ $('document').ready(function () {
         return RelationPane;
     })();
 
+
     /**
      * Pageoptions Class
      * @type PageOptions
@@ -850,20 +851,23 @@ $('document').ready(function () {
             this.dbSelect.selectmenu({
                 select: this.dbSelected.bind(this)
             });
-
             this.clearcacheInput.button();
-
             this.bibliographicrecordidInput.button();
-
             this.clearcacheInput.on('click', clearCache);
-
             this.bibliographicrecordidInput.on('change', this.bibliographicRecordIdChanged.bind(this));
+            this.bibliographicrecordidInput.on('focus', this.populateRecordIdsList.bind(this));
+
             this.agencyidSelect.selectmenu({
                 select: this.agencyidSelected.bind(this)
             });
             $(window).on('hashchange', this.hashChanged.bind(this));
             this.dbFetch();
         };
+
+        PageOptions.prototype.submitForm = function () {
+            document.getElementById("myForm").submit();
+        }
+
 
         /**
          * Clear widget content
@@ -982,16 +986,69 @@ $('document').ready(function () {
          *
          * @returns {undefined}
          */
+
+        function getExpirationDate () {
+            var date = new Date();
+            date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
+            return "; expires=" + date.toGMTString();
+        }
+
+        function addToCookie(recId) {
+            var expires = getExpirationDate();
+            var cookieVal = readCookie("recId");
+            if (cookieVal == null) {
+                document.cookie = "recId" + "=" + recId + expires;
+            }
+            else {
+                var addToCookie = true;
+                var cookieArr = cookieVal.split(',');
+                for (var i in cookieArr.length) {
+                    if (recId === cookieArr[i]) {
+                        addToCookie = false;
+                        break;
+                    }
+                }
+                if (addToCookie) {
+                    document.cookie = "recId" + "=" + readCookie("recId") + "," + recId + expires;
+                }
+            }
+        }
+
+
+        PageOptions.prototype.populateRecordIdsList = function () {
+            var cookieArr = readCookie("recId").split(',')
+            var options = '';
+            for(var i = 0; i < cookieArr.length; i++)
+                options += '<option value="'+cookieArr[i]+'" />';
+            document.getElementById('bibreclist').innerHTML = options;
+        }
+
+        function readCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0)
+                    return c.substring(nameEQ.length, c.length);
+            }
+            // change this
+            return null;
+        }
+
+
         PageOptions.prototype.bibliographicRecordIdChanged = function () {
             if (this.db === null)
                 return;
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
+            addToCookie(bibliographicrecordid);
             this.agencyidClear();
             if (bibliographicrecordid !== '') {
                 ajax("resources/agencies-with/" + this.db + "/" + bibliographicrecordid,
                     this.agencyidFetched.bind(this));
             }
         };
+
 
         /**
          * Internal: Callback for agencies-with ajax call
