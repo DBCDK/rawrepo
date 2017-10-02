@@ -42,20 +42,20 @@ public class AgencySearchOrderEJB {
 
 
     @Inject
-    @EEConfig.Name(C.SEARCHORDER.URL)
-    @EEConfig.Default(C.SEARCHORDER.URL_DEFAULT)
+    @EEConfig.Name(C.OPENAGENCY.URL)
+    @EEConfig.Default(C.OPENAGENCY.URL_DEFAULT)
     @EEConfig.Url
-    String searchOrderUrl;
+    String openAgencyUrl;
 
     @Inject
-    @EEConfig.Name(C.SEARCHORDER.CONNECT_TIMEOUT)
-    @EEConfig.Default(C.SEARCHORDER.CONNECT_TIMEOUT_DEFAULT)
+    @EEConfig.Name(C.OPENAGENCY.CONNECT_TIMEOUT)
+    @EEConfig.Default(C.OPENAGENCY.CONNECT_TIMEOUT_DEFAULT)
     @Min(1)
     int connectTimeout;
 
     @Inject
-    @EEConfig.Name(C.SEARCHORDER.REQUEST_TIMEOUT)
-    @EEConfig.Default(C.SEARCHORDER.REQUEST_TIMEOUT_DEFAULT)
+    @EEConfig.Name(C.OPENAGENCY.REQUEST_TIMEOUT)
+    @EEConfig.Default(C.OPENAGENCY.REQUEST_TIMEOUT_DEFAULT)
     @Min(1)
     int requestTimeout;
 
@@ -69,7 +69,7 @@ public class AgencySearchOrderEJB {
         openAgencyService = OpenAgencyServiceFromURL.builder()
         .connectTimeout(connectTimeout)
         .requestTimeout(requestTimeout)
-        .build(searchOrderUrl);
+        .build(openAgencyUrl);
     }
 
     @Lock( LockType.READ )

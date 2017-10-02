@@ -51,7 +51,7 @@ public class RawRepoDAOTest {
             RawRepoDAO access = mock(RawRepoDAO.class);
             access.agencySearchOrder = new AgencySearchOrderFallback();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
-            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject(), anyBoolean());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             fillMockRelations(access,
                               "B:870970", // HEAD
@@ -84,7 +84,7 @@ public class RawRepoDAOTest {
     }
 
     @Test
-    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, Exception {
+    public void testFetchRecordCollection() throws Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             access.agencySearchOrder = new AgencySearchOrderFallback();
@@ -106,13 +106,13 @@ public class RawRepoDAOTest {
             doAnswer(new Answer() {
                 @Override
                 public Object answer(InvocationOnMock invocation) throws Throwable {
-                    return Arrays.asList(870970);
+                    return Collections.singletonList(870970);
                 }
             }).when(access.relationHints).get(anyInt());
 
-            doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), (MarcXMerger) anyObject());
+            doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), anyObject());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
-            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), (MarcXMerger) anyObject(), anyBoolean());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).findParentRelationAgency(anyString(), anyInt());
             fillMockRelations(access,
                               "A:870970", "A:1", "A:2",
@@ -151,7 +151,7 @@ public class RawRepoDAOTest {
         doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
-        when(mock.relationHints.get(654321)).thenReturn(Arrays.asList());
+        when(mock.relationHints.get(654321)).thenReturn(Collections.emptyList());
         when(mock.relationHints.usesCommonAgency(654321)).thenReturn(Boolean.FALSE);
         when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
         when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
@@ -172,6 +172,7 @@ public class RawRepoDAOTest {
             mock.findParentRelationAgency("NA", 123456);
             Assert.fail("Expected RawRepoExceptionRecordNotFound");
         } catch (RawRepoExceptionRecordNotFound ex) {
+            System.out.println("Didn't find record " + ex.getMessage());
         }
     }
 
@@ -199,6 +200,7 @@ public class RawRepoDAOTest {
             mock.findSiblingRelationAgency("PRIVATE", 123456);
             Assert.fail("Expected RawRepoExceptionRecordNotFound");
         } catch (RawRepoExceptionRecordNotFound ex) {
+            System.out.println("Didn't find record " + ex.getMessage());
         }
     }
 
@@ -213,8 +215,8 @@ public class RawRepoDAOTest {
      *
      * @param access mocked object
      * @param ids    list of RECORD:LIBRARY ids that relations should be
-     *               refering to
-     * @throws SQLException
+     *               referring to
+     * @throws SQLException when error
      */
     private static void fillMockRelations(RawRepoDAO access, String... ids) throws SQLException, RawRepoException {
         HashSet<String> filter = new HashSet<>();
@@ -271,7 +273,7 @@ public class RawRepoDAOTest {
         for (String record : filter) {
             RecordId rec = recordIdFromString(record);
             if (!allAgenciesFor.containsKey(rec.getBibliographicRecordId())) {
-                allAgenciesFor.put(rec.getBibliographicRecordId(), new HashSet<Integer>());
+                allAgenciesFor.put(rec.getBibliographicRecordId(), new HashSet<>());
             }
             allAgenciesFor.get(rec.getBibliographicRecordId()).add(rec.getAgencyId());
         }
@@ -284,7 +286,7 @@ public class RawRepoDAOTest {
             @Override
             public Record answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                String content = ( (String) arguments[0] ) + ":" + ( (int) arguments[1] );
+                String content = ( arguments[0] ) + ":" + ( arguments[1] );
                 System.out.println("content = " + content);
                 Record recordFromContent = recordFromContent(content);
                 System.out.println("recordFromContent = " + recordFromContent);
@@ -414,14 +416,13 @@ public class RawRepoDAOTest {
      *
      * @param target ID:LIBRARY
      * @return recordid
-     * @throws NumberFormatException
+     * @throws NumberFormatException when error
      */
     private static RecordId recordIdFromString(String target) throws NumberFormatException {
         int colon = target.indexOf(':');
         String l = target.substring(0, colon);
         String r = target.substring(colon + 1);
-        final RecordId recordId = new RecordId(l, Integer.parseInt(r));
-        return recordId;
+        return new RecordId(l, Integer.parseInt(r));
     }
 
     /**
@@ -432,9 +433,9 @@ public class RawRepoDAOTest {
      * @param elems string elements collection should consist of
      */
     private static void collectionIs(Collection<String> col, String... elems) {
-        HashSet<String> missing = new HashSet();
+        HashSet<String> missing = new HashSet<>();
         Collections.addAll(missing, elems);
-        HashSet<String> extra = new HashSet(col);
+        HashSet<String> extra = new HashSet<>(col);
         extra.removeAll(missing);
         missing.removeAll(col);
         if (!extra.isEmpty() || !missing.isEmpty()) {

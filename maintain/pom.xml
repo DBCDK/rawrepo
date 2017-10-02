@@ -25,12 +25,12 @@
     <parent>
         <artifactId>rawrepo</artifactId>
         <groupId>dk.dbc</groupId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>rawrepo-maintain</artifactId>
     <packaging>war</packaging>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
 
     <name>rawrepo-maintain</name>
 

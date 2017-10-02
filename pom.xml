@@ -38,7 +38,7 @@
     </parent>
 
     <artifactId>rawrepo</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>rawrepo</name>
     <url>http://oss.dbc.dk</url>

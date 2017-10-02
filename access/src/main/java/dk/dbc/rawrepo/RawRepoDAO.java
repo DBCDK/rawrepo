@@ -59,27 +59,27 @@ public abstract class RawRepoDAO {
     public static class Builder {
 
         private final Connection connection;
-        private AgencySearchOrder agencySearchOrder;
-        private RelationHints relationHints;
+        private AgencySearchOrder builderAgencySearchOrder;
+        private RelationHints builderRelationHints;
 
         private Builder(Connection connection) {
             this.connection = connection;
-            this.agencySearchOrder = null;
-            this.relationHints = null;
+            this.builderAgencySearchOrder = null;
+            this.builderRelationHints = null;
         }
 
         /**
          * use
          * with a static service, to facilitate caching
          *
-         * @param agencySearchOrder URL to openAgency service
+         * @param newAgencySearchOrder URL to openAgency service
          * @return self
          */
-        public Builder searchOrder(AgencySearchOrder agencySearchOrder) {
-            if (this.agencySearchOrder != null) {
+        public Builder searchOrder(AgencySearchOrder newAgencySearchOrder) {
+            if (this.builderAgencySearchOrder != null) {
                 throw new IllegalStateException("Cannot set agencySearchOrder again");
             }
-            this.agencySearchOrder = agencySearchOrder;
+            this.builderAgencySearchOrder = newAgencySearchOrder;
             return this;
         }
 
@@ -87,38 +87,14 @@ public abstract class RawRepoDAO {
          * use
          * with a static service, to facilitate caching
          *
-         * @param relationHints URL to openAgency service
+         * @param newRelationHints URL to openAgency service
          * @return self
          */
-        public Builder relationHints(RelationHints relationHints) {
-            if (this.relationHints != null) {
+        public Builder relationHints(RelationHints newRelationHints) {
+            if (this.builderRelationHints != null) {
                 throw new IllegalStateException("Cannot set relationHints again");
             }
-            this.relationHints = relationHints;
-            return this;
-        }
-
-        /**
-         * Construct all services that uses openagency webservice
-         * <p>
-         * use {@link  #openAgency(dk.dbc.openagency.client.OpenAgencyServiceFromURL, java.util.concurrent.ExecutorService)
-         * } instead.
-         * <p>
-         * This produces 2 threadpools, mostly often not used at all
-         *
-         * @param service URL to openAgency service
-         * @return self
-         */
-        @Deprecated
-        public Builder openAgency(OpenAgencyServiceFromURL service) {
-            if (this.agencySearchOrder != null) {
-                throw new IllegalStateException("Cannot set agencySearchOrder again");
-            }
-            if (this.relationHints != null) {
-                throw new IllegalStateException("Cannot set relationHints again");
-            }
-            this.agencySearchOrder = new AgencySearchOrderFromShowOrder(service);
-            this.relationHints = new RelationHintsOpenAgency(service);
+            this.builderRelationHints = newRelationHints;
             return this;
         }
 
@@ -130,14 +106,14 @@ public abstract class RawRepoDAO {
          * @return self
          */
         public Builder openAgency(OpenAgencyServiceFromURL service, ExecutorService es) {
-            if (this.agencySearchOrder != null) {
+            if (this.builderAgencySearchOrder != null) {
                 throw new IllegalStateException("Cannot set agencySearchOrder again");
             }
-            if (this.relationHints != null) {
+            if (this.builderRelationHints != null) {
                 throw new IllegalStateException("Cannot set relationHints again");
             }
-            this.agencySearchOrder = new AgencySearchOrderFromShowOrder(service, es);
-            this.relationHints = new RelationHintsOpenAgency(service, es);
+            this.builderAgencySearchOrder = new AgencySearchOrderFromShowOrder(service, es);
+            this.builderRelationHints = new RelationHintsOpenAgency(service, es);
             return this;
         }
 
@@ -170,15 +146,15 @@ public abstract class RawRepoDAO {
                 }
                 dao.validateConnection();
 
-                if (agencySearchOrder == null) {
-                    agencySearchOrder = new AgencySearchOrderFallback();
+                if (builderAgencySearchOrder == null) {
+                    builderAgencySearchOrder = new AgencySearchOrderFallback();
                 }
-                dao.agencySearchOrder = agencySearchOrder;
+                dao.agencySearchOrder = builderAgencySearchOrder;
 
-                if (relationHints == null) {
-                    relationHints = new RelationHints();
+                if (builderRelationHints == null) {
+                    builderRelationHints = new RelationHints();
                 }
-                dao.relationHints = relationHints;
+                dao.relationHints = builderRelationHints;
 
                 return dao;
             } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException |
@@ -245,23 +221,6 @@ public abstract class RawRepoDAO {
     public abstract boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
-     * *** DEPRECATED ***
-     * Use recordExistsMaybeDeleted instead
-     * <p>
-     * Check for existence of a record (possibly deleted)
-     *
-     * @param bibliographicRecordId String with record id
-     * @param agencyId              library number
-     * @return truth value for the existence of the record
-     * @throws RawRepoException done at failure
-     * @deprecated use {@link #recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId)} instead.
-     */
-    @Deprecated
-    public boolean recordExistsMabyDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        return recordExistsMaybeDeleted(bibliographicRecordId, agencyId);
-    }
-
-    /**
      * Check for existence of a record (possibly deleted)
      *
      * @param bibliographicRecordId String with record id
@@ -310,25 +269,6 @@ public abstract class RawRepoDAO {
                 fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
             }
         }
-    }
-
-    /**
-     * Fetch record for id, merging more common records with this
-     *
-     * @param bibliographicRecordId local id
-     * @param originalAgencyId      least to most common
-     * @param merger                marc merger function
-     * @return Record merged
-     * @throws RawRepoException     if there's a data error or record isn't
-     *                              found
-     * @throws MarcXMergerException if we can't merge record
-     *                              <p>
-     *                              USE:
-     *                              {@link #fetchMergedRecord(java.lang.String, int, dk.dbc.marcxmerge.MarcXMerger, boolean)}
-     */
-    @Deprecated
-    public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
-        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, false);
     }
 
     /**
@@ -604,15 +544,6 @@ public abstract class RawRepoDAO {
     public abstract Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException;
 
     /**
-     * Delete a record from the database
-     *
-     * @param recordId complex key for record
-     * @throws RawRepoException done at failure
-     */
-    @Deprecated
-    public abstract void purgeRecord(RecordId recordId) throws RawRepoException;
-
-    /**
      * Save a record to database after it has been modified
      * <p>
      * Will try to update, otherwise insert
@@ -753,17 +684,6 @@ public abstract class RawRepoDAO {
     public abstract QueueJob dequeueWithSavepoint(String worker) throws RawRepoException;
 
     /**
-     * QueueJob has successfully been processed
-     * <p>
-     * This is now the default when dequeueing
-     *
-     * @param queueJob job that has been processed
-     * @throws RawRepoException done at failure
-     */
-    @Deprecated
-    public abstract void queueSuccess(QueueJob queueJob) throws RawRepoException;
-
-    /**
      * QueueJob has failed
      *
      * @param queueJob job that failed
@@ -790,20 +710,6 @@ public abstract class RawRepoDAO {
      */
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
         changedRecord(provider, recordId, recordId.getAgencyId(), true);
-    }
-
-    /**
-     * Traverse relations calling enqueue(...) to trigger manipulation of change
-     *
-     * @param provider         parameter to pass to enqueue(...)
-     * @param recordId         the record that has been changed
-     * @param fallbackMimetype Which mimetype to use when no mimetype can be
-     *                         found (deleted)
-     * @throws RawRepoException done at failure
-     */
-    @Deprecated
-    public void changedRecord(String provider, RecordId recordId, String fallbackMimetype) throws RawRepoException {
-        changedRecord(provider, recordId);
     }
 
     private void changedRecord(String provider, RecordId recordId, int originalAgencyId, boolean changed) throws RawRepoException {

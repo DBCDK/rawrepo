@@ -61,25 +61,25 @@ public class AgencyLoad implements AutoCloseable {
 
     private MetricRegistry metrics;
     private JmxReporter reporter;
-    Timer recordsProcessed;
-    Timer recordsRelated;
-    Timer recordsQueued;
-    Counter enrichmentRecords;
-    Counter parentRelationRecords;
-    Counter deletedRecords;
-    Counter errorRecords;
-    Counter relationErrors;
-    Counter queueErrors;
+    private Timer recordsProcessed;
+    private Timer recordsRelated;
+    private Timer recordsQueued;
+    private Counter enrichmentRecords;
+    private Counter parentRelationRecords;
+    private Counter deletedRecords;
+    private Counter errorRecords;
+    private Counter relationErrors;
+    private Counter queueErrors;
     private Timer setRelations;
     private Timer recordExists;
     private Timer saveRecord;
     private Timer fetchRecord;
 
-    public void timingStart() {
+    void timingStart() {
         reporter.start();
     }
 
-    public void timingStop() {
+    void timingStop() {
         reporter.stop();
     }
 
@@ -133,7 +133,7 @@ public class AgencyLoad implements AutoCloseable {
         }
     }
 
-    public void store(byte[] xml, int agencyId, String bibliographicRecordId, String parentBibliographicRecordId, boolean isDeleted) {
+    void store(byte[] xml, int agencyId, String bibliographicRecordId, String parentBibliographicRecordId, boolean isDeleted) {
         try (Timer.Context time = recordsProcessed.time()) {
             long processedRecords = recordsProcessed.getCount();
             if (processedRecords % 1000 == 0) {
@@ -313,7 +313,7 @@ public class AgencyLoad implements AutoCloseable {
                         log.info("Queueing: " + cnt);
                     }
                     try {
-                        dao.changedRecord(role, recordId, MarcXChangeMimeType.MARCXCHANGE);
+                        dao.changedRecord(role, recordId);
                     } catch (RawRepoException ex) {
                         log.error("Error queueing record: " + recordId.getBibliographicRecordId() +
                                   " from " + recordId.getAgencyId() + " got: " + ex.getMessage());
@@ -338,7 +338,7 @@ public class AgencyLoad implements AutoCloseable {
 
     void commit() throws SQLException {
         connection.commit();
-        log.debug("Transcation committed");
+        log.debug("Transaction committed");
     }
 
     /*

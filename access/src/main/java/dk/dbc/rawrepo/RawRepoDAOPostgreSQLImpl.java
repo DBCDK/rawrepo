@@ -46,7 +46,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String PURGE_RECORD = "DELETE FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified, trackingId) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=?, trackingId=? WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -138,7 +137,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param bibliographicRecordId String with record bibliographicRecordId
      * @param agencyId              agencyId number
      * @return fetched / new Record
-     * @throws RawRepoException
+     * @throws RawRepoException     when something goes wrong
      */
     @Override
     public Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -175,7 +174,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param bibliographicRecordId String with record bibliographicRecordId
      * @param agencyId              agencyId number
      * @return truth value for the existence of the record
-     * @throws RawRepoException
+     * @throws RawRepoException     when something goes wrong
      */
     @Override
     public boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -189,7 +188,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param bibliographicRecordId String with record bibliographicRecordId
      * @param agencyId              agencyId number
      * @return truth value for the existence of the record
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public boolean recordExistsMaybeDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -201,21 +200,21 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public List<RecordMetaDataHistory> getRecordHistory(String bibliographicRecordId, int agencyId) throws RawRepoException {
         try {
             ArrayList<RecordMetaDataHistory> ret = new ArrayList<>();
-            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_METADATA);) {
+            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_METADATA)) {
                 RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
                 int pos = 1;
                 stmt.setInt(pos++, agencyId);
                 stmt.setString(pos++, bibliographicRecordId);
                 stmt.setInt(pos++, agencyId);
-                stmt.setString(pos++, bibliographicRecordId);
-                try (ResultSet resultSet = stmt.executeQuery();) {
+                stmt.setString(pos, bibliographicRecordId);
+                try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
                         pos = 1;
                         Timestamp created = resultSet.getTimestamp(pos++);
                         Timestamp modified = resultSet.getTimestamp(pos++);
                         boolean deleted = resultSet.getBoolean(pos++);
                         String mimeType = resultSet.getString(pos++);
-                        String trackingId = resultSet.getString(pos++);
+                        String trackingId = resultSet.getString(pos);
                         ret.add(new RecordMetaDataHistory(recordId, deleted, mimeType, created, modified, trackingId));
                     }
                 }
@@ -232,15 +231,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             int agencyId = recordMetaData.getId().getAgencyId();
             String bibliographicRecordId = recordMetaData.getId().getBibliographicRecordId();
             Timestamp timestamp = recordMetaData.getTimestamp();
-            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_CONTENT);) {
+            try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_CONTENT)) {
                 int pos = 1;
                 stmt.setInt(pos++, agencyId);
                 stmt.setString(pos++, bibliographicRecordId);
                 stmt.setTimestamp(pos++, timestamp);
                 stmt.setInt(pos++, agencyId);
                 stmt.setString(pos++, bibliographicRecordId);
-                stmt.setTimestamp(pos++, timestamp);
-                try (ResultSet resultSet = stmt.executeQuery();) {
+                stmt.setTimestamp(pos, timestamp);
+                try (ResultSet resultSet = stmt.executeQuery()) {
                     if (resultSet.next()) {
                         final String base64Content = resultSet.getString(1);
                         byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
@@ -261,15 +260,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     public List<String> getTrackingIdsSince(String bibliographicRecordId, int agencyId, Timestamp timestamp) throws RawRepoException {
         ArrayList<String> list = new ArrayList<>();
         try {
-            try (PreparedStatement stmt = connection.prepareStatement(TRACKING_IDS_SINCE);) {
+            try (PreparedStatement stmt = connection.prepareStatement(TRACKING_IDS_SINCE)) {
                 int pos = 1;
                 stmt.setInt(pos++, agencyId);
                 stmt.setString(pos++, bibliographicRecordId);
                 stmt.setTimestamp(pos++, timestamp);
                 stmt.setInt(pos++, agencyId);
                 stmt.setString(pos++, bibliographicRecordId);
-                stmt.setTimestamp(pos++, timestamp);
-                try (ResultSet resultSet = stmt.executeQuery();) {
+                stmt.setTimestamp(pos, timestamp);
+                try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
                         list.add(resultSet.getString(1));
                     }
@@ -281,27 +280,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         }
     }
 
-
-    /**
-     * Purge a record from the database
-     *
-     * @param recordId complex key for record
-     * @throws RawRepoException
-     */
-    @Deprecated
-    @Override
-    public void purgeRecord(RecordId recordId) throws RawRepoException {
-        try (PreparedStatement stmt = connection.prepareStatement(PURGE_RECORD)) {
-            int pos = 1;
-            stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
-            stmt.execute();
-        } catch (SQLException ex) {
-            logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error purging record", ex);
-        }
-    }
-
     private static final String LOG_DATABASE_ERROR = "Error accessing database";
 
     /**
@@ -310,7 +288,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Will try to update, otherwise insert
      *
      * @param record record to be saved
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void saveRecord(Record record) throws RawRepoException {
@@ -325,7 +303,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
             stmt.setString(pos++, record.getTrackingId());
             stmt.setString(pos++, record.getId().getBibliographicRecordId());
-            stmt.setInt(pos++, record.getId().getAgencyId());
+            stmt.setInt(pos, record.getId().getAgencyId());
             if (stmt.executeUpdate() > 0) {
                 stmt.close();
                 return;
@@ -343,7 +321,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
             stmt.setTimestamp(pos++, new Timestamp(record.getCreated().getTime()));
             stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
-            stmt.setString(pos++, record.getTrackingId());
+            stmt.setString(pos, record.getTrackingId());
             stmt.execute();
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
@@ -359,7 +337,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_MIMETYPE)) {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
-            stmt.setInt(pos++, agencyId);
+            stmt.setInt(pos, agencyId);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
                     return resultSet.getString(1);
@@ -376,7 +354,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_DELETED)) {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
-            stmt.setInt(pos++, agencyId);
+            stmt.setInt(pos, agencyId);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
                     return resultSet.getBoolean(1);
@@ -394,8 +372,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * bibliographicRecordId have
      *
      * @param recordId complex key for a record
-     * @return collection of recordids of whom bibliographicRecordId depends
-     * @throws RawRepoException
+     * @return collection of record ids of whom bibliographicRecordId depends
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<RecordId> getRelationsFrom(RecordId recordId) throws RawRepoException {
@@ -403,7 +381,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
@@ -411,7 +389,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching getRelationsFrom relations", ex);
         }
         return collection;
     }
@@ -420,14 +398,14 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Delete all relations related from an bibliographicRecordId
      *
      * @param recordId complex key of bibliographicRecordId
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void deleteRelationsFrom(RecordId recordId) throws RawRepoException {
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RELATIONS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             stmt.execute();
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
@@ -439,8 +417,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * Clear all existing relations and set the new ones
      *
      * @param recordId recordid to update
-     * @param refers   collection of recordids bibliographicRecordId depends on
-     * @throws RawRepoException
+     * @param refers   collection of record ids bibliographicRecordId depends on
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void setRelationsFrom(RecordId recordId, Set<RecordId> refers) throws RawRepoException {
@@ -454,7 +432,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             for (RecordId refer : refers) {
                 int p = pos;
                 stmt.setString(p++, refer.getBibliographicRecordId());
-                stmt.setInt(p++, refer.getAgencyId());
+                stmt.setInt(p, refer.getAgencyId());
                 stmt.execute();
             }
         } catch (SQLException ex) {
@@ -468,9 +446,9 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * siblings
      *
      * @param recordId recordid to find relations to
-     * @return collection of recordids that list bibliographicRecordId at
+     * @return collection of record ids that list bibliographicRecordId at
      * relation
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<RecordId> getRelationsChildren(RecordId recordId) throws RawRepoException {
@@ -478,7 +456,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_CHILDREN)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
@@ -486,7 +464,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching getRelationsChildren relations", ex);
         }
         return collection;
     }
@@ -496,8 +474,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * bibliographicRecordId have
      *
      * @param recordId complex key for a record
-     * @return collection of recordids of whom bibliographicRecordId depends
-     * @throws RawRepoException
+     * @return collection of record ids of whom bibliographicRecordId depends
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<RecordId> getRelationsParents(RecordId recordId) throws RawRepoException {
@@ -505,7 +483,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_PARENTS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
@@ -513,15 +491,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching getRelationsParents relations", ex);
         }
         return collection;
     }
 
     /**
-     * @param recordId
-     * @return
-     * @throws RawRepoException
+     * @param recordId complex key for a record
+     * @return siblings collection
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException {
@@ -529,7 +507,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
@@ -537,15 +515,15 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching getRelationsSiblingsToMe relations", ex);
         }
         return collection;
     }
 
     /**
-     * @param recordId
-     * @return
-     * @throws RawRepoException
+     * @param recordId complex key for a record
+     * @return set of relation siblings
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<RecordId> getRelationsSiblingsFromMe(RecordId recordId) throws RawRepoException {
@@ -553,7 +531,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
-            stmt.setInt(pos++, recordId.getAgencyId());
+            stmt.setInt(pos, recordId.getAgencyId());
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     collection.add(new RecordId(resultSet.getString(1), resultSet.getInt(2)));
@@ -561,7 +539,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching getRelationsSiblingsFromMe relations", ex);
         }
         return collection;
     }
@@ -571,7 +549,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param bibliographicRecordId record bibliographicRecordId
      * @return Collection of libraries that has localdata for this record
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException {
@@ -585,7 +563,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordId relations", ex);
         }
         return collection;
     }
@@ -595,7 +573,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param bibliographicRecordId record bibliographicRecordId
      * @return Collection of libraries that has localData for this record
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Set<Integer> allAgenciesForBibliographicRecordIdSkipDeleted(String bibliographicRecordId) throws RawRepoException {
@@ -609,7 +587,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error fetching relations", ex);
+            throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordIdSkipDeleted relations", ex);
         }
         return collection;
     }
@@ -622,7 +600,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param provider change initiator
      * @param changed  is job for a record that has been changed
      * @param leaf     is this job for a tree leaf
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
@@ -634,7 +612,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setInt(pos++, job.getAgencyId());
             stmt.setString(pos++, provider);
             stmt.setString(pos++, changed ? "Y" : "N");
-            stmt.setString(pos++, leaf ? "Y" : "N");
+            stmt.setString(pos, leaf ? "Y" : "N");
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     if (resultSet.getBoolean(2)) {
@@ -656,7 +634,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param worker name of worker that want's to take a job
      * @return job description
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public QueueJob dequeueWithSavepoint(String worker) throws RawRepoException {
@@ -681,7 +659,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param worker name of worker that want's to take a job
      * @return job description
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
@@ -689,7 +667,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
             int pos = 1;
             stmt.setString(pos++, worker);
-            stmt.setInt(pos++, wanted);
+            stmt.setInt(pos, wanted);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
@@ -712,7 +690,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param worker name of worker that want's to take a job
      * @return job description
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public QueueJob dequeue(String worker) throws RawRepoException {
@@ -736,24 +714,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * QueueJob has successfully been processed
-     * <p>
-     * This is now the default when dequeuing
-     *
-     * @param queueJob job that has been processed
-     * @throws RawRepoException
-     */
-    @Override
-    @Deprecated
-    public void queueSuccess(QueueJob queueJob) throws RawRepoException {
-    }
-
-    /**
      * QueueJob has failed, log to database
      *
      * @param queueJob job that failed
      * @param error    what happened (empty string not allowed)
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void queueFail(QueueJob queueJob, String error) throws RawRepoException {
@@ -766,7 +731,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setInt(pos++, queueJob.job.agencyId);
             stmt.setString(pos++, queueJob.worker);
             stmt.setString(pos++, error);
-            stmt.setTimestamp(pos++, queueJob.queued);
+            stmt.setTimestamp(pos, queueJob.queued);
             stmt.executeUpdate();
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
@@ -779,7 +744,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      *
      * @param queueJob job that failed
      * @param error    what happened (empty string not allowed)
-     * @throws RawRepoException
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public void queueFailWithSavepoint(QueueJob queueJob, String error) throws RawRepoException {

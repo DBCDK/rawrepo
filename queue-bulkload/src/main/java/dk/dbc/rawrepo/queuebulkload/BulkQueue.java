@@ -38,24 +38,22 @@ import org.slf4j.LoggerFactory;
  *
  * @author DBC {@literal <dbc.dk>}
  */
-public class BulkQueue {
+class BulkQueue {
 
     private static final Logger log = LoggerFactory.getLogger(BulkQueue.class);
 
-    String db;
-    Integer commit;
-    String role;
+    private Integer commit;
+    private String role;
     Connection connection;
-    RawRepoDAO dao;
+    private RawRepoDAO dao;
 
-    public BulkQueue(String db, Integer commit, String role) throws SQLException, RawRepoException {
-        this.db = db;
+    BulkQueue(String db, Integer commit, String role) throws SQLException, RawRepoException {
         this.commit = commit;
         this.role = role;
         dao = openDatabase(db);
     }
 
-    public void run(Iterator<RecordId> iterator, String fallbackMimeType) {
+    void runWithQueueRules(Iterator<RecordId> iterator) {
         try {
             int row = 0;
             connection.setAutoCommit(false);
@@ -69,7 +67,7 @@ public class BulkQueue {
                 row++;
                 RecordId id = iterator.next();
                 log.debug("id = " + id);
-                dao.changedRecord(role, id, fallbackMimeType);
+                dao.changedRecord(role, id);
             }
             connection.commit();
         } catch (Exception ex) {
@@ -82,7 +80,7 @@ public class BulkQueue {
         }
     }
 
-    public void run(Iterator<RecordId> iterator) {
+    void runSkipQueueRules(Iterator<RecordId> iterator) {
         try {
             connection.setAutoCommit(false);
             try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO queue (bibliographicrecordid, agencyid, worker) VALUES(?, ?, ?)")) {

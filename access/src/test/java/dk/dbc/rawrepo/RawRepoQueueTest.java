@@ -425,7 +425,7 @@ public class RawRepoQueueTest {
      *   /_/  \___/____/\__/
      *
      */
-    static void enqueuedIs(HashMap<String, AtomicInteger> enqueued, String... strings) {
+    private static void enqueuedIs(HashMap<String, AtomicInteger> enqueued, String... strings) {
         setIs(enqueued.keySet(), strings);
         for (String string : strings) {
             AtomicInteger count = enqueued.get(string);
@@ -445,19 +445,19 @@ public class RawRepoQueueTest {
         };
     }
 
-    static String recordToString(RecordId recordId) {
+    private static String recordToString(RecordId recordId) {
         String bibliographicRecordId = recordId.getBibliographicRecordId();
         int agencyId = recordId.getAgencyId();
         return agencyId + ":" + bibliographicRecordId;
     }
 
-    static void recordSetIs(Set<RecordId> records, String... values) {
+    private static void recordSetIs(Set<RecordId> records, String... values) {
         setIs(records.stream()
                 .map(r -> recordToString(r))
                 .collect(toSet()), values);
     }
 
-    static void setIs(Set<String> set, String... values) {
+    private static void setIs(Set<String> set, String... values) {
         assertThat(set, IsCollectionContaining.hasItems(values));
         assertEquals(values.length, set.size());
     }
@@ -475,7 +475,7 @@ public class RawRepoQueueTest {
 class RawRepoMock {
 
     private final Set<String> recordExists;
-    private final Set<String> recordExistsMabyDeleted;
+    private final Set<String> recordExistsMaybeDeleted;
     private final Map<String, Set<Integer>> agenciesForRecord;
     private final Map<String, Set<String>> outboundRelation;
     private final Map<String, Set<String>> inboundRelation;
@@ -485,9 +485,9 @@ class RawRepoMock {
     private final Map<String, AtomicInteger> enqueued;
     private int lastAddedAgency;
 
-    RawRepoMock(HashMap<String, AtomicInteger> enqueued) {
+    private RawRepoMock(HashMap<String, AtomicInteger> enqueued) {
         this.recordExists = new HashSet<>();
-        this.recordExistsMabyDeleted = new HashSet<>();
+        this.recordExistsMaybeDeleted = new HashSet<>();
         this.agenciesForRecord = new HashMap<>();
         this.outboundRelation = new HashMap<>();
         this.inboundRelation = new HashMap<>();
@@ -558,7 +558,7 @@ class RawRepoMock {
         int agencyId = Integer.parseInt(parts[0]);
         String bibliographicRecordId = parts[1];
         String id = agencyId + ":" + bibliographicRecordId;
-        recordExistsMabyDeleted.add(id);
+        recordExistsMaybeDeleted.add(id);
         agenciesForRecord.computeIfAbsent(bibliographicRecordId, s -> new HashSet<>()).add(agencyId);
         mimetype.put(id, MarcXChangeMimeType.MARCXCHANGE);
         return this;
@@ -568,7 +568,37 @@ class RawRepoMock {
         return build(true);
     }
 
-    RawRepoDAO build(boolean print) throws RawRepoException, CacheTimeoutException, CacheValueException {
+    private Set<RecordId> getRecordsWithoutBibrecidMatch(InvocationOnMock invocation, Map<String, Set<String>> ioBoundRelation) {
+        RecordId recordId = (RecordId) invocation.getArguments()[0];
+        String bibliographicRecordId = recordId.getBibliographicRecordId();
+        int agencyId = recordId.getAgencyId();
+        String id = agencyId + ":" + bibliographicRecordId;
+        Set<String> set = ioBoundRelation.get(id);
+        if (set == null) {
+            return Collections.emptySet();
+        }
+        return set.stream()
+                .filter(child -> !child.endsWith(":" + bibliographicRecordId))
+                .map(s -> RawRepoQueueTest.recordFromString(s))
+                .collect(toSet());
+    }
+
+    private Set<RecordId> getRecordsWithBibrecidMatch(InvocationOnMock invocation, Map<String, Set<String>> ioBoundRelation) {
+        RecordId recordId = (RecordId) invocation.getArguments()[0];
+        String bibliographicRecordId = recordId.getBibliographicRecordId();
+        int agencyId = recordId.getAgencyId();
+        String id = agencyId + ":" + bibliographicRecordId;
+        Set<String> set = ioBoundRelation.get(id);
+        if (set == null) {
+            return Collections.emptySet();
+        }
+        return set.stream()
+                .filter(child -> child.endsWith(":" + bibliographicRecordId))
+                .map(s -> RawRepoQueueTest.recordFromString(s))
+                .collect(toSet());
+    }
+
+    private RawRepoDAO build(boolean print) throws RawRepoException, CacheTimeoutException, CacheValueException {
         RawRepoDAO rawrepo = mock(RawRepoDAO.class);
         when(rawrepo.recordExists(anyString(), anyInt())).then(new Answer<Boolean>() {
             @Override
@@ -584,75 +614,31 @@ class RawRepoMock {
                 String bibliographicRecordId = (String) invocation.getArguments()[0];
                 int agencyId = (int) invocation.getArguments()[1];
                 return recordExists.contains(agencyId + ":" + bibliographicRecordId) ||
-                        recordExistsMabyDeleted.contains(agencyId + ":" + bibliographicRecordId);
+                        recordExistsMaybeDeleted.contains(agencyId + ":" + bibliographicRecordId);
             }
         });
         when(rawrepo.getRelationsChildren(anyObject())).thenAnswer(new Answer<Set<RecordId>>() {
             @Override
             public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                RecordId recordId = (RecordId) invocation.getArguments()[0];
-                String bibliographicRecordId = recordId.getBibliographicRecordId();
-                int agencyId = recordId.getAgencyId();
-                String id = agencyId + ":" + bibliographicRecordId;
-                Set<String> set = inboundRelation.get(id);
-                if (set == null) {
-                    return Collections.EMPTY_SET;
-                }
-                return set.stream()
-                        .filter(child -> !child.endsWith(":" + bibliographicRecordId))
-                        .map(s -> RawRepoQueueTest.recordFromString(s))
-                        .collect(toSet());
+                return getRecordsWithoutBibrecidMatch(invocation, inboundRelation);
             }
         });
         when(rawrepo.getRelationsParents(anyObject())).then(new Answer<Set<RecordId>>() {
             @Override
             public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                RecordId recordId = (RecordId) invocation.getArguments()[0];
-                String bibliographicRecordId = recordId.getBibliographicRecordId();
-                int agencyId = recordId.getAgencyId();
-                String id = agencyId + ":" + bibliographicRecordId;
-                Set<String> set = outboundRelation.get(id);
-                if (set == null) {
-                    return Collections.EMPTY_SET;
-                }
-                return set.stream()
-                        .filter(child -> !child.endsWith(":" + bibliographicRecordId))
-                        .map(s -> RawRepoQueueTest.recordFromString(s))
-                        .collect(toSet());
+                return getRecordsWithoutBibrecidMatch(invocation, outboundRelation);
             }
         });
         when(rawrepo.getRelationsSiblingsFromMe(anyObject())).then(new Answer<Set<RecordId>>() {
             @Override
             public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                RecordId recordId = (RecordId) invocation.getArguments()[0];
-                String bibliographicRecordId = recordId.getBibliographicRecordId();
-                int agencyId = recordId.getAgencyId();
-                String id = agencyId + ":" + bibliographicRecordId;
-                Set<String> set = outboundRelation.get(id);
-                if (set == null) {
-                    return Collections.EMPTY_SET;
-                }
-                return set.stream()
-                        .filter(child -> child.endsWith(":" + bibliographicRecordId))
-                        .map(s -> RawRepoQueueTest.recordFromString(s))
-                        .collect(toSet());
+                return getRecordsWithBibrecidMatch(invocation, outboundRelation);
             }
         });
         when(rawrepo.getRelationsSiblingsToMe(anyObject())).then(new Answer<Set<RecordId>>() {
             @Override
             public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                RecordId recordId = (RecordId) invocation.getArguments()[0];
-                String bibliographicRecordId = recordId.getBibliographicRecordId();
-                int agencyId = recordId.getAgencyId();
-                String id = agencyId + ":" + bibliographicRecordId;
-                Set<String> set = inboundRelation.get(id);
-                if (set == null) {
-                    return Collections.EMPTY_SET;
-                }
-                return set.stream()
-                        .filter(child -> child.endsWith(":" + bibliographicRecordId))
-                        .map(s -> RawRepoQueueTest.recordFromString(s))
-                        .collect(toSet());
+                return getRecordsWithBibrecidMatch(invocation, inboundRelation);
             }
         });
         when(rawrepo.getMimeTypeOf(anyString(), anyInt())).then(new Answer<String>() {
@@ -687,7 +673,7 @@ class RawRepoMock {
                 RecordId recordId = (RecordId) arguments[i++];
                 String provider = (String) arguments[i++];
                 boolean changed = (boolean) arguments[i++];
-                boolean leaf = (boolean) arguments[i++];
+                boolean leaf = (boolean) arguments[i];
                 StringBuilder sb = new StringBuilder();
                 sb.append(recordId.getAgencyId()).append(':').append(recordId.getBibliographicRecordId())
                         .append(':')
@@ -722,8 +708,7 @@ class RawRepoMock {
                 return relationHints.getOrDefault(agencyid, Collections.unmodifiableList(defaultList));
             }
         });
-        AgencySearchOrder agencySearchOrder = mock(AgencySearchOrder.class);
-        rawrepo.agencySearchOrder = agencySearchOrder;
+        rawrepo.agencySearchOrder = mock(AgencySearchOrder.class);
         if (print) {
             print();
         }
@@ -799,7 +784,7 @@ class RawRepoMock {
 
     private void printAgency(StringBuilder out, String rec, String indent) {
         HashMap<Integer, Integer> toSibling = new HashMap<>();
-        Set<Integer> set = agenciesForRecord.getOrDefault(rec, Collections.EMPTY_SET);
+        Set<Integer> set = agenciesForRecord.getOrDefault(rec, Collections.emptySet());
         set.stream()
                 .forEach(a -> toSibling.put(a, null));
         set.stream()
@@ -850,10 +835,10 @@ class RawRepoMock {
         }
     }
 
-    public static final String INDENT_MORE = "|- ";
-    public static final String INDENT_GAP = "|  ";
-    public static final String INDENT_LAST = "`- ";
-    public static final String INDENT_NONE = "   ";
+    private static final String INDENT_MORE = "|- ";
+    private static final String INDENT_GAP = "|  ";
+    private static final String INDENT_LAST = "`- ";
+    private static final String INDENT_NONE = "   ";
 
     private static final Pattern DOT = Pattern.compile(".");
 

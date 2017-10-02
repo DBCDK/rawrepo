@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class RollBack {
+class RollBack {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger( RollBack.class );
 
@@ -134,7 +134,7 @@ public class RollBack {
         return modified;
     }
 
-    static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
+    private static boolean rollbackRecord( RawRepoDAO dao, RecordId id, Date matchDate, DateMatch.Match matchType, State state ) throws RawRepoException {
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( id.getBibliographicRecordId(), id.getAgencyId() );
 
@@ -175,12 +175,11 @@ public class RollBack {
         }
     }
 
-    static void queueRecord( RawRepoDAO dao, RecordId id, String role ) throws RawRepoException {
-        String mimetype = dao.getMimeTypeOf( id.getBibliographicRecordId(), id.getAgencyId() );
-        dao.changedRecord( role, id, mimetype );
+    private static void queueRecord( RawRepoDAO dao, RecordId id, String role ) throws RawRepoException {
+        dao.changedRecord( role, id);
     }
 
-    static Set<String> getRecordIds( Connection connection, int agencyId ) throws SQLException {
+    private static Set<String> getRecordIds( Connection connection, int agencyId ) throws SQLException {
         Set<String> set = new HashSet<>();
         try ( PreparedStatement stmt = connection.prepareStatement( "SELECT bibliographicrecordid FROM records WHERE agencyid = ?" ) ) {
             stmt.setInt( 1, agencyId );
@@ -221,9 +220,9 @@ public class RollBack {
         log.info( "Rolled back {}, skipped {}, failed {}. Done.", success, skipped, failed );
     }
 
-    static void queueRecords( RawRepoDAO dao, int agencyId, Set<String> ids, String role ) throws RawRepoException {
+    private static void queueRecords( RawRepoDAO dao, int agencyId, Set<String> ids, String role ) throws RawRepoException {
         int no = 0;
-        log.info( "Queing {} ids", ids.size() );
+        log.info( "Queueing {} ids", ids.size() );
 
         for ( String id : ids ) {
             queueRecord( dao, new RecordId( id, agencyId ), role );
@@ -234,7 +233,7 @@ public class RollBack {
         log.info( "Queued {}", no );
     }
 
-    public static void rollbackAgency( Connection connection, int agencyId, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
+    static void rollbackAgency( Connection connection, int agencyId, Date matchDate, DateMatch.Match matchType, State state, String queueRole ) throws RawRepoException {
 
         RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
 

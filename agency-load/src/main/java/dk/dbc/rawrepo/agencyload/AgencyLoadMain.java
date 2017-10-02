@@ -101,8 +101,8 @@ public class AgencyLoadMain {
         try (AgencyLoad agencyLoad = new AgencyLoad((String) commandLine.getOption("db"),
                                                     list, commonAgency, role, useTransaction)) {
             agencyLoad.timingStart();
-            boolean success = true;
-            success = agencyLoad.load(in) && success;
+            boolean success;
+            success = agencyLoad.load(in);
             success = agencyLoad.buildParentRelations() && success;
             success = agencyLoad.queue() && success;
             if (success && useTransaction) {
@@ -135,7 +135,7 @@ public class AgencyLoadMain {
         @Override
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
-            addOption(PARENT_AGENCIES, "list of parent-agencied (could be 300000,191919)", false, false, string, null);
+            addOption(PARENT_AGENCIES, "list of parent-agency ids (could be 300000,191919)", false, false, string, null);
             addOption("common", "most common agency (implied by --" + PARENT_AGENCIES + " to last from list). \n" +
                                 "\tThis agency holds parent-relations, if record/agency exists", false, false, integer, null);
             addOption("role", "who to put on queue as (could be agency-maintain)", false, false, string, null);

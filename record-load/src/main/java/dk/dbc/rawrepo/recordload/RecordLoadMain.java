@@ -83,7 +83,7 @@ public class RecordLoadMain {
                 setLogLevel("logback-info.xml");
             }
 
-            try (RecordLoad recordLoad = new RecordLoad((String) commandLine.getOption("db"));) {
+            try (RecordLoad recordLoad = new RecordLoad((String) commandLine.getOption("db"))) {
                 if (delete) {
                     recordLoad.delete(agencyId, bibliographicRecordId);
                 } else if (relation) {
@@ -94,7 +94,7 @@ public class RecordLoadMain {
                     if (commandLine.hasOption("role")) {
                         String role = (String) commandLine.getOption("role");
                         if (role != null) {
-                            recordLoad.enqueue(agencyId, bibliographicRecordId, role, mimeType);
+                            recordLoad.enqueue(agencyId, bibliographicRecordId, role);
                         }
                     }
                 }
@@ -102,7 +102,7 @@ public class RecordLoadMain {
             }
         } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException e) {
             System.err.println(commandLine.usage());
-            System.err.println("Cauth: " + e.getClass().getName() + ": " + e.getLocalizedMessage());
+            System.err.println("Caught: " + e.getClass().getName() + ": " + e.getLocalizedMessage());
             System.exit(1);
 
         }
@@ -119,7 +119,7 @@ public class RecordLoadMain {
         StatusPrinter.printInCaseOfErrorsOrWarnings(context); // Internal status data is printed in case of warnings or errors.
     }
 
-    public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
+    private static byte[] getBytesFromInputStream(InputStream is) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] buffer = new byte[0xFFFF];
         for (int len ; ( len = is.read(buffer) ) != -1 ;) {
@@ -144,7 +144,7 @@ public class RecordLoadMain {
 
         @Override
         String usageCommandLine() {
-            return "prog [options --delete | {--set | --add}] agency id [ recordfile | agencyId:bibliographicRecordId  ...]";
+            return "prog [options --delete | {--set | --add}] agency id [ recordFile | agencyId:bibliographicRecordId  ...]";
         }
 
     }

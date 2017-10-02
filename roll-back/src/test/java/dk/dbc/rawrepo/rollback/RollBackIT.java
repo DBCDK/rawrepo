@@ -76,10 +76,10 @@ public class RollBackIT {
     }
 
     private Connection connection;
-    private String jdbc;
 
     @Before
     public void setup() throws SQLException, ClassNotFoundException {
+        String jdbc;
         String port = System.getProperty( "postgresql.port" );
         jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
         Properties properties = new Properties();
@@ -94,7 +94,7 @@ public class RollBackIT {
         connection.close();
     }
 
-    void resetDatabase() throws SQLException {
+    private void resetDatabase() throws SQLException {
         connection.prepareStatement( "DELETE FROM relations" ).execute();
         connection.prepareStatement( "DELETE FROM records" ).execute();
         connection.prepareStatement( "DELETE FROM records_archive" ).execute();

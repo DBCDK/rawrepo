@@ -50,12 +50,12 @@ public class RecordLoad implements Closeable {
     private final RawRepoDAO dao;
     private Connection connection;
 
-    public RecordLoad(String url) throws SQLException, RawRepoException {
+    RecordLoad(String url) throws SQLException, RawRepoException {
         dao = openDatabase(url);
         connection.setAutoCommit(false);
     }
 
-    public void commit() throws SQLException {
+    void commit() throws SQLException {
         connection.commit();
     }
 
@@ -69,7 +69,7 @@ public class RecordLoad implements Closeable {
         }
     }
 
-    public void save(int agencyId, String bibliographicRecordId, String mimeType, byte[] content) throws RawRepoException {
+    void save(int agencyId, String bibliographicRecordId, String mimeType, byte[] content) throws RawRepoException {
         Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
         boolean original = record.isOriginal();
         if (original) {
@@ -81,12 +81,12 @@ public class RecordLoad implements Closeable {
         dao.saveRecord(record);
     }
 
-    public void enqueue(int agencyId, String bibliographicRecordId, String role, String mimetype) throws RawRepoException {
+    void enqueue(int agencyId, String bibliographicRecordId, String role) throws RawRepoException {
         RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
-        dao.changedRecord(role, recordId, mimetype);
+        dao.changedRecord(role, recordId);
     }
 
-    public void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
+    void delete(int agencyId, String bibliographicRecordId) throws RawRepoException {
         Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
         record.setDeleted(true);
         record.setContent(( "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
@@ -107,7 +107,7 @@ public class RecordLoad implements Closeable {
 
     private static final Pattern RELATION = Pattern.compile("^(\\d+):(.+)$");
 
-    public void relations(int agencyId, String bibliographicRecordId, boolean add, List<String> relations) throws RawRepoException {
+    void relations(int agencyId, String bibliographicRecordId, boolean add, List<String> relations) throws RawRepoException {
         Set<RecordId> relationSet;
         if (add) {
             relationSet = dao.getRelationsFrom(new RecordId(bibliographicRecordId, agencyId));

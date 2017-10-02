@@ -67,14 +67,14 @@ public class C {
         public static final String DATASOURCE = "jdbc/rawrepocontentservice/rawrepo";
     }
 
-    public static class SEARCHORDER {
+    public static class OPENAGENCY {
 
-        public static final String URL = "searchOrderUrl";
-        public static final String URL_DEFAULT = "http://openagency.addi.dk/2.30/";
+        public static final String URL = "openAgencyUrl";
+        public static final String URL_DEFAULT = "http://openagency.addi.dk/2.33/";
 
-        public static final String CONNECT_TIMEOUT = "searchOrderConnectTimeout";
+        public static final String CONNECT_TIMEOUT = "openAgencyConnectTimeout";
         public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
-        public static final String REQUEST_TIMEOUT = "searchOrderRequestTimeout";
+        public static final String REQUEST_TIMEOUT = "openAgencyRequestTimeout";
         public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
 
     }

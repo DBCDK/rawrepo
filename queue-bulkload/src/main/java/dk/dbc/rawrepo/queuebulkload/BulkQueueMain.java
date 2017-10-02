@@ -23,9 +23,9 @@ package dk.dbc.rawrepo.queuebulkload;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -36,22 +36,22 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class BulkQueueMain {
 
-    public static final int DEFAULT_LIBRARY = 870970;
+    static final int DEFAULT_LIBRARY = 870970;
 
     private static final Logger log = LoggerFactory.getLogger(BulkQueueMain.class);
 
     private static final SimpleDateFormat dateFormats[] = {
-        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS"),
-        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+            new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS"),
+            new SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
     };
 
     private static Timestamp parseDate(String s) {
@@ -76,7 +76,6 @@ public class BulkQueueMain {
         String role;
         Integer commit;
         Integer library;
-        String fallbackMimeType;
         BulkQueue bulkQueue;
         try {
             commandLine.parse(args);
@@ -95,11 +94,6 @@ public class BulkQueueMain {
                 library = (Integer) commandLine.getOption("library");
             }
             log.debug("library = " + library);
-            fallbackMimeType = MarcXChangeMimeType.MARCXCHANGE;
-            if (commandLine.hasOption("mimetype")) {
-                fallbackMimeType = (String) commandLine.getOption("mimetype");
-            }
-            log.debug("fallbackMimeType = " + fallbackMimeType);
             commit = 1000;
             if (commandLine.hasOption("commit")) {
                 commit = (Integer) commandLine.getOption("commit");
@@ -167,7 +161,7 @@ public class BulkQueueMain {
                 }
                 List<String> extraArguments = commandLine.getExtraArguments();
                 AllCollection allCollection = new AllCollection(bulkQueue.connection, library,
-                                                                parseDate(extraArguments.get(0)), parseDate(extraArguments.get(1)));
+                        parseDate(extraArguments.get(0)), parseDate(extraArguments.get(1)));
                 autoCloseable = allCollection;
                 iterator = allCollection.iterator();
 
@@ -194,9 +188,9 @@ public class BulkQueueMain {
         log.debug("DEBUG");
         log.info("INFO");
         if (commandLine.hasOption("skip-queue-rules")) {
-            bulkQueue.run(iterator);
+            bulkQueue.runSkipQueueRules(iterator);
         } else {
-            bulkQueue.run(iterator, fallbackMimeType);
+            bulkQueue.runWithQueueRules(iterator);
         }
 
         try {
@@ -204,6 +198,7 @@ public class BulkQueueMain {
                 autoCloseable.close();
             }
         } catch (Exception ex) {
+            log.warn("Closing something gave an exception : " + ex.getMessage());
         }
 
     }
@@ -218,7 +213,7 @@ public class BulkQueueMain {
             configurator.setContext(context);
             configurator.doConfigure(stream); // loads logback file
         } catch (Exception ex) {
-            System.err.println("Set loglevel exception: " + ex.getMessage());
+            System.err.println("Set logLevel exception: " + ex.getMessage());
         }
         StatusPrinter.printInCaseOfErrorsOrWarnings(context); // Internal status data is printed in case of warnings or errors.
     }
@@ -230,13 +225,12 @@ class CommandLineBulkQueue extends CommandLine {
     void setOptions() {
         addOption("role", "name of enqueue software (provider)", true, false, string, null);
         addOption("library", "which library to use (default=" + BulkQueueMain.DEFAULT_LIBRARY + ")", false, false, integer, null);
-        addOption("mimetype", "Fallback mimetype, if type cannot be resolved", false, false, string, null);
         addOption("stdin", "read ids from stdin", false, false, null, yes);
         addOption("all", "select all ids from the records table in the database", false, false, null, yes);
         addOption("leafs", "select all leaf-ids from the records table in the database", false, false, null, yes);
         addOption("nodes", "select all node-ids from the records table in the database", false, false, null, yes);
         addOption("range", "select all ids from the records table in the database, "
-                           + "modified between argument 1 & 2 (yyyy-MM-dd hh:mm:ss.SSS)", false, false, null, yes);
+                + "modified between argument 1 & 2 (yyyy-MM-dd hh:mm:ss.SSS)", false, false, null, yes);
         addOption("file", "read ids from file", false, false, string, null);
         addOption("db", "connectstring for database", true, false, string, null);
         addOption("commit", "how often to commit (default=1000)", false, false, integer, null);

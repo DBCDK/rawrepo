@@ -34,7 +34,6 @@ import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffTextWriter;
 import dk.dbc.xmldiff.XmlDiffWriter;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -174,7 +173,7 @@ public class RecordInspectorMain {
             System.exit(exitOk ? 0 : 1);
         } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException | SAXException e) {
             System.err.println(commandLine.usage());
-            System.err.println("Cauth: " + e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+            System.err.println("Caught: " + e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
             System.exit(1);
         }
 
@@ -189,16 +188,6 @@ public class RecordInspectorMain {
         configurator.setContext(context);
         configurator.doConfigure(stream); // loads logback file
         StatusPrinter.printInCaseOfErrorsOrWarnings(context); // Internal status data is printed in case of warnings or errors.
-    }
-
-    public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] buffer = new byte[0xFFFF];
-        for (int len ; ( len = is.read(buffer) ) != -1 ;) {
-            os.write(buffer, 0, len);
-        }
-        os.flush();
-        return os.toByteArray();
     }
 
     static class RecordInspectorCommandLine extends CommandLine {
