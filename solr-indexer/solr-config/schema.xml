@@ -370,7 +370,9 @@
     <field name="match.652m" type="dbc-match" indexed="true" stored="true" required="false" />
 
     <field name="marc.y08a" type="dbc-default" indexed="true" stored="true" required="false" />
-    
+
+    <field name="marc.s11a" type="dbc-default" indexed="true" stored="true" required="false" />
+
     <field name="rec.collectionIdentifier" type="id" indexed="true" stored="true" required="false" />
     <field name="rec.created" type="date" indexed="true" stored="true" required="false" />
     <field name="rec.modified" type="date" indexed="true" stored="true" required="false" />
