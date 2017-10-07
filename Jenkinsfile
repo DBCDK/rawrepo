@@ -40,7 +40,7 @@ pipeline {
             }
         }
 
-        stage('Docker ') {
+        stage('Docker') {
             steps {
                 script {
                     def allDockerFiles = findFiles glob: '**/Dockerfile'
@@ -61,7 +61,7 @@ pipeline {
                             }
 
                             println("In ${dirName} build ${projectName} as ${imageName}:$imageLabel")
-                            sh 'cp  ../../../target/*.war .'
+                            sh 'rm -f *.war ; cp  ../../../target/*.war .'
                             def app = docker.build("$imageName:${imageLabel}".toLowerCase(), '--pull --no-cache .')
 
                             if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
