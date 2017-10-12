@@ -605,6 +605,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
         logQueue.debug("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}", job, provider, changed, leaf);
+        // TODO: TEMP
+        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}", job, provider, changed, leaf);
 
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
