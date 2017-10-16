@@ -197,7 +197,7 @@ public abstract class RawRepoDAO {
      * Find the mimetype of a record
      *
      * @param bibliographicRecordId record id to be examined
-     * @param agencyId the owner agency
+     * @param agencyId              the owner agency
      * @return the mimetype for a record
      * @throws RawRepoException done at failure
      */
@@ -237,7 +237,7 @@ public abstract class RawRepoDAO {
      * @param agencyId              library number
      * @param merger                marc merger function
      * @return a collection of Record
-     * @throws RawRepoException done at failure
+     * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
     public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
@@ -254,7 +254,7 @@ public abstract class RawRepoDAO {
      * @param bibliographicRecordId String with record id
      * @param agencyId              library number
      * @param merger                marc merger function
-     * @throws RawRepoException done at failure
+     * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger) throws
@@ -388,10 +388,10 @@ public abstract class RawRepoDAO {
     /**
      * This function takes a Record and expands the content with aut data (if the record has any aut references)
      *
-     * @param record The record to expand
+     * @param record       The record to expand
      * @param keepAutField Determines whether or not to keep the *5 and *6 subfields
-     * @throws RawRepoException done at failure
-     * @throws JAXBException done at failure
+     * @throws RawRepoException             done at failure
+     * @throws JAXBException                done at failure
      * @throws UnsupportedEncodingException done at failure
      */
     public void expandRecord(Record record, boolean keepAutField) throws RawRepoException, JAXBException, UnsupportedEncodingException {
@@ -408,7 +408,11 @@ public abstract class RawRepoDAO {
             RecordId articleRecordId = new RecordId(bibliographicRecordId, 870971);
             RecordId expandableRecordId = null;
 
-            if (getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
+            List<Integer> dbcAgencies = Arrays.asList(870970, 870971);
+
+            if (dbcAgencies.contains(recordId.agencyId)) {
+                expandableRecordId = recordId;
+            } else if (getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
                 expandableRecordId = commonRecordId;
             } else if (getRelationsSiblingsFromMe(recordId).contains(articleRecordId)) {
                 expandableRecordId = articleRecordId;
@@ -537,8 +541,8 @@ public abstract class RawRepoDAO {
     /**
      * Fetch a specific version of a record
      *
-     * @param recordMetaData    data identifying the record
-     * @return                  the wanted record
+     * @param recordMetaData data identifying the record
+     * @return the wanted record
      * @throws RawRepoException done at failure
      */
     public abstract Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException;
