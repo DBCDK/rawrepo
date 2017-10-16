@@ -401,7 +401,6 @@ public abstract class RawRepoDAO {
 
         // Only get record collection if the record exist (there are no relations if the record doesn't exist or is deleted)
         // Only 870970 and 870971 records can have authority records so authority is only relevant if the 870970 or 870971
-        // The agency in the request will never be 870970/870971 so it is not necessary to check if requestRecord.agencyId is 870970/870971
         if (recordExists(bibliographicRecordId, agencyId)) {
             logger.info("Record exists - checking if there is a 870970/870971 record");
             RecordId commonRecordId = new RecordId(bibliographicRecordId, 870970);
