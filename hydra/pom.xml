@@ -93,6 +93,11 @@
             <artifactId>openagency-ws-client</artifactId>
             <version>${openagency.ws.client.version}</version>
         </dependency>
+        <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>holdings-items-access</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

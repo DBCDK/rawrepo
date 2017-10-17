@@ -60,7 +60,7 @@ public class OpenAgencyDAO {
     // This should preferable be a service call to openagency.
     // However since we are limiting the features right now this is simply a hardcoded list
     public List<String> getCatalogingTemplateSets() {
-        return Arrays.asList("ffu");
+        return Arrays.asList("ffu", "fbs");
     }
 
     @Stopwatch

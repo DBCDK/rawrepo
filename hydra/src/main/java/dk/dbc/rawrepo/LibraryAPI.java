@@ -42,7 +42,7 @@ public class LibraryAPI {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_LIBRARY_CATALOGING_TEMPLATE_SET + "/{template}")
-    public Response getCatalogingTemplateSet(@PathParam("template") String template) {
+    public Response getLibrariesByCatalogingTemplateSet(@PathParam("template") String template) {
         LOGGER.entry(template);
         String res = "";
         try {

@@ -16,6 +16,10 @@ public class PropertiesHelper {
     public static final String RAWREPO_USER = "RAWREPO_USER";
     public static final String RAWREPO_PASS = "RAWREPO_PASS";
 
+    public static final String HOLDINGS_ITEMS_URL = "HOLDINGS_ITEMS_URL";
+    public static final String HOLDINGS_ITEMS_USER = "HOLDINGS_ITEMS_USER";
+    public static final String HOLDINGS_ITEMS_PASS = "HOLDINGS_ITEMS_PASS";
+
     public static final String OPENAGENCY_URL = "OPENAGENCY_URL";
     public static final String OPENAGENCY_CACHE_AGE = "OPENAGENCY_CACHE_AGE";
     public static final String OPENAGENCY_CONNECT_TIMEOUT = "OPENAGENCY_CONNECT_TIMEOUT";
@@ -46,6 +50,27 @@ public class PropertiesHelper {
             throw new NullPointerException("RAWREPO_PASS is required and must have a value");
         } else {
             properties.setProperty(RAWREPO_PASS, rawRepoPass);
+        }
+
+        String holdingsURL = getEnvValue(systemProperties, HOLDINGS_ITEMS_URL);
+        if (holdingsURL == null) {
+            throw new NullPointerException("HOLDINGS_ITEMS_URL is required and must have a value");
+        } else {
+            properties.setProperty(HOLDINGS_ITEMS_URL, holdingsURL);
+        }
+
+        String holdingsUser = getEnvValue(systemProperties, HOLDINGS_ITEMS_USER);
+        if (holdingsUser == null) {
+            throw new NullPointerException("HOLDINGS_ITEMS_USER is required and must have a value");
+        } else {
+            properties.setProperty(HOLDINGS_ITEMS_USER, holdingsUser);
+        }
+
+        String holdingsPass = getEnvValue(systemProperties, HOLDINGS_ITEMS_PASS);
+        if (holdingsPass == null) {
+            throw new NullPointerException("HOLDINGS_ITEMS_PASS is required and must have a value");
+        } else {
+            properties.setProperty(HOLDINGS_ITEMS_PASS, holdingsPass);
         }
 
         String openAgencyUrl = getEnvValue(systemProperties, OPENAGENCY_URL);

@@ -5,6 +5,7 @@
 
 package dk.dbc.rawrepo.dao;
 
+import dk.dbc.holdingsitems.HoldingsItemsDAO;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.common.PropertiesHelper;
 import dk.dbc.rawrepo.json.QueueProvider;
@@ -14,26 +15,20 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @Stateless
 public class RawRepoDAO {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(RawRepoDAO.class);
 
-    private static final String SELECT_QUEUERULES_ALL = "select * from queuerules";
-    private static final String SELECT_PROVIDERS = "select distinct(provider) from queuerules";
+    private static final String SELECT_QUEUERULES_ALL = "SELECT * FROM queuerules";
+    private static final String SELECT_PROVIDERS = "SELECT DISTINCT(provider) FROM queuerules";
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
 
-    private static Connection connection;
-
-    @EJB
-    private OpenAgencyDAO openAgencyDAO;
+    private static Connection rawRepoConnection;
+    private static Connection holdingsItemsConnection;
 
     @PostConstruct
     public void postConstruct() {
@@ -43,13 +38,16 @@ public class RawRepoDAO {
             final Properties properties = PropertiesHelper.getProperties(System.getenv());
 
             LOGGER.info("Connecting to {}", properties.getProperty(PropertiesHelper.RAWREPO_URL));
+            rawRepoConnection = DriverManager.getConnection(properties.getProperty(PropertiesHelper.RAWREPO_URL),
+                    properties.getProperty(PropertiesHelper.RAWREPO_USER),
+                    properties.getProperty(PropertiesHelper.RAWREPO_PASS));
+            rawRepoConnection.setAutoCommit(true);
 
-            final String url = properties.getProperty(PropertiesHelper.RAWREPO_URL);
-            final String user = properties.getProperty(PropertiesHelper.RAWREPO_USER);
-            final String pass = properties.getProperty(PropertiesHelper.RAWREPO_PASS);
-
-            connection = DriverManager.getConnection(url, user, pass);
-            connection.setAutoCommit(true);
+            LOGGER.info("Connecting to {}", properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_URL));
+            holdingsItemsConnection = DriverManager.getConnection(properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_URL),
+                    properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_USER),
+                    properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_PASS));
+            holdingsItemsConnection.setAutoCommit(true);
         } catch (SQLException ex) {
             throw new RuntimeException(ex); // Can't throw checked exceptions from postConstruct
         } finally {
@@ -62,7 +60,7 @@ public class RawRepoDAO {
         LOGGER.entry();
         List<String> result = new ArrayList<>();
 
-        try (CallableStatement stmt = connection.prepareCall(SELECT_PROVIDERS)) {
+        try (CallableStatement stmt = rawRepoConnection.prepareCall(SELECT_PROVIDERS)) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     result.add(resultSet.getString("provider"));
@@ -83,7 +81,7 @@ public class RawRepoDAO {
         HashMap<String, QueueProvider> providerMap = new HashMap<>();
         List<QueueProvider> result = new ArrayList<>();
 
-        try (CallableStatement stmt = connection.prepareCall(SELECT_QUEUERULES_ALL)) {
+        try (CallableStatement stmt = rawRepoConnection.prepareCall(SELECT_QUEUERULES_ALL)) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 QueueProvider provider;
                 while (resultSet.next()) {
@@ -119,6 +117,48 @@ public class RawRepoDAO {
         LOGGER.entry(agencies, includeDeleted);
         List<RecordId> result = new ArrayList<>();
 
+        try {
+            result = getRecordsForLibraries(agencies, includeDeleted);
+
+            return result;
+        } catch (SQLException ex) {
+            throw new Exception(ex);
+        } finally {
+            LOGGER.exit(result);
+        }
+    }
+
+    @Stopwatch
+    public List<RecordId> getFBSRecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
+        LOGGER.entry(agencies, includeDeleted);
+        List<RecordId> recordsToQueue = new ArrayList<>();
+
+        try {
+            recordsToQueue = getRecordsForLibraries(agencies, includeDeleted);
+
+            for (Integer agencyId : agencies) {
+                HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(holdingsItemsConnection);
+                Set<String> bibliographicIds = holdingsItemsDAO.getBibliographicIds(agencyId);
+                for (String bibliographicId : bibliographicIds) {
+                    RecordId recordId = new RecordId(bibliographicId, agencyId);
+                    if (!recordsToQueue.contains(recordId)) {
+                        recordsToQueue.add(recordId);
+                    }
+                }
+            }
+
+            return recordsToQueue;
+        } catch (SQLException ex) {
+            throw new Exception(ex);
+        } finally {
+            LOGGER.exit(recordsToQueue);
+        }
+    }
+
+    private List<RecordId> getRecordsForLibraries(List<Integer> agencies, boolean includeDeleted) throws Exception {
+        LOGGER.entry(agencies, includeDeleted);
+        List<RecordId> result = new ArrayList<>();
+
         // There is no smart or elegant way of doing a select 'in' clause, so this will have to do
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid IN (");
@@ -136,12 +176,27 @@ public class RawRepoDAO {
         String statement = sb.toString();
         LOGGER.debug("Constructed statement: {}", statement);
 
-        try (CallableStatement stmt = connection.prepareCall(statement)) {
+        try {
+            result = getRecords(statement, agencies);
+
+            return result;
+        } catch (SQLException ex) {
+            throw new Exception(ex);
+        } finally {
+            LOGGER.exit(result);
+        }
+    }
+
+    private List<RecordId> getRecords(String statement, List<Integer> agencies) throws Exception {
+        List<RecordId> result = new ArrayList<>();
+
+        try (CallableStatement stmt = rawRepoConnection.prepareCall(statement)) {
             int i = 1;
             for (Integer agencyId : agencies) {
                 stmt.setInt(i++, agencyId);
             }
 
+            LOGGER.info("Executing statement: {}", statement);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     final String bibliographicRecordId = resultSet.getString("bibliographicrecordid");
@@ -213,7 +268,7 @@ public class RawRepoDAO {
         }
 
         List<EnqueueBulkResult> result = new ArrayList<>();
-        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_BULK)) {
+        try (CallableStatement stmt = rawRepoConnection.prepareCall(CALL_ENQUEUE_BULK)) {
             stmt.setArray(1, stmt.getConnection().createArrayOf("VARCHAR", bibliographicRecordIdList.toArray(new String[bibliographicRecordIdList.size()])));
             stmt.setArray(2, stmt.getConnection().createArrayOf("NUMERIC", agencyList.toArray(new Integer[agencyList.size()])));
             stmt.setArray(3, stmt.getConnection().createArrayOf("VARCHAR", providerList.toArray(new String[providerList.size()])));

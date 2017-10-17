@@ -138,7 +138,12 @@ public class QueueAPI {
             }
 
             LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
-            List<RecordId> recordIds = rawrepo.getFFURecords(agencyList, includeDeleted);
+            List<RecordId> recordIds = null;
+            if (catalogingTemplateSet.equals("ffu")) {
+                recordIds = rawrepo.getFFURecords(agencyList, includeDeleted);
+            } else if (catalogingTemplateSet.equals("fbs")) {
+                recordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
+            }
             LOGGER.debug("Found a total of {} records", recordIds.size());
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
@@ -155,7 +160,7 @@ public class QueueAPI {
                 leafList.add(false);
             }
 
-            LOGGER.debug("{} records will be enqueued", bibliographicRecordIdList.size());
+            LOGGER.debug("{} records will be enqueued", recordIds.size());
 
             List<RawRepoDAO.EnqueueBulkResult> enqueueBulkResults = rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
