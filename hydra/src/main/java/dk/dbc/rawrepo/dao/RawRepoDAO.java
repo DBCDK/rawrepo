@@ -7,7 +7,7 @@ package dk.dbc.rawrepo.dao;
 
 import dk.dbc.holdingsitems.HoldingsItemsDAO;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.common.PropertiesHelper;
+import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueWorker;
 import dk.dbc.rawrepo.timer.Stopwatch;
@@ -17,7 +17,10 @@ import org.slf4j.ext.XLoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 @Stateless
 public class RawRepoDAO {
@@ -34,24 +37,50 @@ public class RawRepoDAO {
     public void postConstruct() {
         LOGGER.entry();
 
-        try {
-            final Properties properties = PropertiesHelper.getProperties(System.getenv());
+        checkProperties();
 
-            LOGGER.info("Connecting to {}", properties.getProperty(PropertiesHelper.RAWREPO_URL));
-            rawRepoConnection = DriverManager.getConnection(properties.getProperty(PropertiesHelper.RAWREPO_URL),
-                    properties.getProperty(PropertiesHelper.RAWREPO_USER),
-                    properties.getProperty(PropertiesHelper.RAWREPO_PASS));
+        try {
+            LOGGER.info("Connecting to Rawrepo URL {}", System.getenv().get(ApplicationConstants.RAWREPO_URL));
+            rawRepoConnection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.RAWREPO_URL),
+                    System.getenv().get(ApplicationConstants.RAWREPO_USER),
+                    System.getenv().get(ApplicationConstants.RAWREPO_PASS));
             rawRepoConnection.setAutoCommit(true);
 
-            LOGGER.info("Connecting to {}", properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_URL));
-            holdingsItemsConnection = DriverManager.getConnection(properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_URL),
-                    properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_USER),
-                    properties.getProperty(PropertiesHelper.HOLDINGS_ITEMS_PASS));
+            LOGGER.info("Connecting to Holdings Items URL {}", System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL));
+            holdingsItemsConnection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL),
+                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_USER),
+                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_PASS));
             holdingsItemsConnection.setAutoCommit(true);
         } catch (SQLException ex) {
             throw new RuntimeException(ex); // Can't throw checked exceptions from postConstruct
         } finally {
             LOGGER.exit();
+        }
+    }
+
+    private void checkProperties() {
+        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_URL)) {
+            throw new RuntimeException("OPENAGENCY_URL must have a value");
+        }
+
+        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_USER)) {
+            throw new RuntimeException("RAWREPO_USER must have a value");
+        }
+
+        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_PASS)) {
+            throw new RuntimeException("RAWREPO_PASS must have a value");
+        }
+
+        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_URL)) {
+            throw new RuntimeException("HOLDINGS_ITEMS_URL must have a value");
+        }
+
+        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_USER)) {
+            throw new RuntimeException("HOLDINGS_ITEMS_USER must have a value");
+        }
+
+        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_PASS)) {
+            throw new RuntimeException("HOLDINGS_ITEMS_PASS must have a value");
         }
     }
 

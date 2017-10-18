@@ -1,7 +1,6 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.rawrepo.common.ApplicationConstants;
-import dk.dbc.rawrepo.common.PropertiesHelper;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -16,7 +15,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Properties;
 
 @Interceptors(StopwatchInterceptor.class)
 @Stateless
@@ -39,10 +37,8 @@ public class HydraAPI {
     public Response getInstanceName() {
         String res = "";
         try {
-            Properties properties = PropertiesHelper.getProperties(System.getenv());
-
             JsonObjectBuilder jsonObject = Json.createObjectBuilder();
-            jsonObject.add("value", properties.getProperty(PropertiesHelper.INSTANCE_NAME));
+            jsonObject.add("value", System.getenv().getOrDefault(ApplicationConstants.INSTANCE_NAME, "INSTANCE_NAME not set"));
 
             res = jsonObject.build().toString();
 
