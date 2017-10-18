@@ -116,14 +116,13 @@ public class QueueAPI {
                 }
             }
 
-            final Pattern p = Pattern.compile("(\\d{6})");
-
             if (cleanedAgencyList.size() == 0) {
                 LOGGER.error("No agencies given, so returning HTTP 400");
                 return returnValidateFailResponse("Der skal angives mindst ét biblioteksnummer");
             }
 
             List<Integer> agencyList = new ArrayList<>();
+            final Pattern p = Pattern.compile("(\\d{6})");
             for (String agency : cleanedAgencyList) {
                 if (!p.matcher(agency).find()) {
                     LOGGER.error("'{}' is not a valid six digit number, so returning HTTP 400", agency);
