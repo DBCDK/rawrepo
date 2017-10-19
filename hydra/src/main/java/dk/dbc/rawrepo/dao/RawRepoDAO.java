@@ -6,7 +6,6 @@
 package dk.dbc.rawrepo.dao;
 
 import dk.dbc.holdingsitems.HoldingsItemsDAO;
-import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueWorker;
@@ -17,10 +16,7 @@ import org.slf4j.ext.XLoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Stateless
 public class RawRepoDAO {
@@ -142,9 +138,9 @@ public class RawRepoDAO {
     }
 
     @Stopwatch
-    public List<RecordId> getFFURecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public HashMap<Integer, Set<String>> getFFURecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        List<RecordId> result = new ArrayList<>();
+        HashMap<Integer, Set<String>> result = new HashMap<>();
 
         try {
             result = getRecordsForLibraries(agencies, includeDeleted);
@@ -158,35 +154,35 @@ public class RawRepoDAO {
     }
 
     @Stopwatch
-    public List<RecordId> getFBSRecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public HashMap<Integer, Set<String>> getFBSRecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        List<RecordId> recordsToQueue = new ArrayList<>();
+        HashMap<Integer, Set<String>> result = new HashMap<>();
 
         try {
-            recordsToQueue = getRecordsForLibraries(agencies, includeDeleted);
-
+            // First we find all holdings for all libraries
+            // The we find all records for all libraries and add that to holdings
+            HashMap<Integer, Set<String>> recordsForLibraries = getRecordsForLibraries(agencies, includeDeleted);
             for (Integer agencyId : agencies) {
                 HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(holdingsItemsConnection);
-                Set<String> bibliographicIds = holdingsItemsDAO.getBibliographicIds(agencyId);
-                for (String bibliographicId : bibliographicIds) {
-                    RecordId recordId = new RecordId(bibliographicId, agencyId);
-                    if (!recordsToQueue.contains(recordId)) {
-                        recordsToQueue.add(recordId);
-                    }
-                }
+                Set<String> holdingsRecords = holdingsItemsDAO.getBibliographicIds(agencyId);
+                Set<String> rawrepoRecords = recordsForLibraries.get(agencyId);
+                // addAll returns a boolean so we can't to it while it is added to the result map
+                holdingsRecords.addAll(rawrepoRecords);
+                result.put(agencyId, holdingsRecords);
+
             }
 
-            return recordsToQueue;
+            return result;
         } catch (SQLException ex) {
             throw new Exception(ex);
         } finally {
-            LOGGER.exit(recordsToQueue);
+            LOGGER.exit(result);
         }
     }
 
-    private List<RecordId> getRecordsForLibraries(List<Integer> agencies, boolean includeDeleted) throws Exception {
+    private HashMap<Integer, Set<String>> getRecordsForLibraries(List<Integer> agencies, boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        List<RecordId> result = new ArrayList<>();
+        HashMap<Integer, Set<String>> result = new HashMap<>();
 
         // There is no smart or elegant way of doing a select 'in' clause, so this will have to do
         StringBuilder sb = new StringBuilder();
@@ -205,20 +201,6 @@ public class RawRepoDAO {
         String statement = sb.toString();
         LOGGER.debug("Constructed statement: {}", statement);
 
-        try {
-            result = getRecords(statement, agencies);
-
-            return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
-        } finally {
-            LOGGER.exit(result);
-        }
-    }
-
-    private List<RecordId> getRecords(String statement, List<Integer> agencies) throws Exception {
-        List<RecordId> result = new ArrayList<>();
-
         try (CallableStatement stmt = rawRepoConnection.prepareCall(statement)) {
             int i = 1;
             for (Integer agencyId : agencies) {
@@ -231,7 +213,10 @@ public class RawRepoDAO {
                     final String bibliographicRecordId = resultSet.getString("bibliographicrecordid");
                     final Integer agencyId = resultSet.getInt("agencyid");
 
-                    result.add(new RecordId(bibliographicRecordId, agencyId));
+                    if (!result.containsKey(agencyId)) {
+                        result.put(agencyId, new HashSet<>());
+                    }
+                    result.get(agencyId).add(bibliographicRecordId);
                 }
             }
 

@@ -137,13 +137,12 @@ public class QueueAPI {
             }
 
             LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
-            List<RecordId> recordIds = null;
+            HashMap<Integer, Set<String>> recordMap = null;
             if (catalogingTemplateSet.equals("ffu")) {
-                recordIds = rawrepo.getFFURecords(agencyList, includeDeleted);
+                recordMap = rawrepo.getFFURecords(agencyList, includeDeleted);
             } else if (catalogingTemplateSet.equals("fbs")) {
-                recordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
+                recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
             }
-            LOGGER.debug("Found a total of {} records", recordIds.size());
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
             List<Integer> agencyListBulk = new ArrayList<>();
@@ -151,15 +150,18 @@ public class QueueAPI {
             List<Boolean> changedList = new ArrayList<>();
             List<Boolean> leafList = new ArrayList<>();
 
-            for (RecordId recordId : recordIds) {
-                bibliographicRecordIdList.add(recordId.bibliographicRecordId);
-                agencyListBulk.add(recordId.agencyId);
-                providerList.add(provider);
-                changedList.add(true);
-                leafList.add(false);
+            for (Integer agencyId : recordMap.keySet()) {
+                LOGGER.debug("Found {} records for agency {}", recordMap.get(agencyId).size(), agencyId);
+                for (String bibliographicRecordId : recordMap.get(agencyId)) {
+                    bibliographicRecordIdList.add(bibliographicRecordId);
+                    agencyListBulk.add(agencyId);
+                    providerList.add(provider);
+                    changedList.add(true);
+                    leafList.add(false);
+                }
             }
 
-            LOGGER.debug("{} records will be enqueued", recordIds.size());
+            LOGGER.debug("{} records will be enqueued", recordMap.size());
 
             List<RawRepoDAO.EnqueueBulkResult> enqueueBulkResults = rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
@@ -173,7 +175,7 @@ public class QueueAPI {
 
             JsonObjectBuilder responseJSON = Json.createObjectBuilder();
             responseJSON.add("validated", true);
-            responseJSON.add("recordCount", recordIds.size());
+            responseJSON.add("recordCount", recordMap.size());
             responseJSON.add("wasEnqueued", wasEnqueued);
             responseJSON.add("queueTotal", enqueueBulkResults.size());
 
