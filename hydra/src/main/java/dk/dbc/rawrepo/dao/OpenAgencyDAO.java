@@ -8,6 +8,7 @@ package dk.dbc.rawrepo.dao;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.common.ApplicationConstants;
+import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import org.perf4j.StopWatch;
 import org.perf4j.log4j.Log4JStopWatch;
@@ -19,7 +20,6 @@ import javax.ejb.Singleton;
 import javax.ejb.Stateless;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 @Singleton
@@ -28,8 +28,6 @@ public class OpenAgencyDAO {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(OpenAgencyDAO.class);
 
     private OpenAgencyServiceFromURL service;
-
-    private Properties properties;
 
     @PostConstruct
     public void postConstruct() {
@@ -67,11 +65,8 @@ public class OpenAgencyDAO {
         return service;
     }
 
-    // TODO Implement properly!
-    // This should preferable be a service call to openagency.
-    // However since we are limiting the features right now this is simply a hardcoded list
-    public List<String> getCatalogingTemplateSets() {
-        return Arrays.asList("ffu", "fbs");
+    public List<QueueType> getQueueTypes() {
+        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsHoldings());
     }
 
     @Stopwatch

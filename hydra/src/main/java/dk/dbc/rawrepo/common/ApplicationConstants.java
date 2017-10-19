@@ -13,7 +13,7 @@ public class ApplicationConstants {
     public static final String API_QUEUE_PROVIDER_INFO = "providerInfo";
 
     public static final String API_LIBRARY = "/library";
-    public static final String API_LIBRARY_CATALOGING_TEMPLATE_SETS = "catalogingTemplateSets";
+    public static final String API_LIBRARY_QUEUE_TYPES = "queueTypes";
     public static final String API_LIBRARY_CATALOGING_TEMPLATE_SET = "catalogingTemplateSet";
 
     public static final String API_HYDRA = "/hydra";

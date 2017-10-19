@@ -6,9 +6,11 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.rawrepo.common.ApplicationConstants;
+import dk.dbc.rawrepo.dao.HoldingsItemsDAO;
 import dk.dbc.rawrepo.dao.OpenAgencyDAO;
 import dk.dbc.rawrepo.dao.RawRepoDAO;
 import dk.dbc.rawrepo.json.QueueProvider;
+import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import net.logstash.logback.encoder.com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +39,9 @@ public class QueueAPI {
 
     @EJB
     private RawRepoDAO rawrepo;
+
+    @EJB
+    private HoldingsItemsDAO holdingsItemsDAO;
 
     @Stopwatch
     @GET
@@ -81,7 +86,7 @@ public class QueueAPI {
             JsonReader reader = Json.createReader(new StringReader(inputStr));
             JsonObject obj = reader.readObject();
 
-            List<String> allowedCatalogingTemplateSets = openAgency.getCatalogingTemplateSets();
+            List<QueueType> allowedQueueTypes = openAgency.getQueueTypes();
             List<String> allowedProviders = rawrepo.getProviders();
 
             String provider = obj.getString("provider");
@@ -91,12 +96,12 @@ public class QueueAPI {
             }
             LOGGER.debug("provider: {}", provider);
 
-            String catalogingTemplateSet = obj.getString("catalogingTemplateSet");
-            if (catalogingTemplateSet == null || catalogingTemplateSet.isEmpty() || !allowedCatalogingTemplateSets.contains(catalogingTemplateSet)) {
-                LOGGER.error("CatalogingTemplateSet {} could not be validated, so returning HTTP 400", catalogingTemplateSet);
-                return returnValidateFailResponse("Provider kunne ikke valideres");
+            QueueType queueType = QueueType.fromString(obj.getString("queueType"));
+            if (queueType == null) {
+                LOGGER.error("QueueType key {} could not be validated, so returning HTTP 400", obj.getString("queueType"));
+                return returnValidateFailResponse("Køtype kunne ikke valideres");
             }
-            LOGGER.debug("catalogingTemplateSet: {}", catalogingTemplateSet);
+            LOGGER.debug("QueueType: {}", queueType);
 
             boolean includeDeleted = obj.getBoolean("includeDeleted");
             LOGGER.debug("includeDeleted: {}", includeDeleted);
@@ -106,7 +111,7 @@ public class QueueAPI {
             agencyString = agencyString.replace("\n", ","); // Transform newline and space separation into comma separation
             agencyString = agencyString.replace(" ", ",");
             List<String> agencies = Arrays.asList(agencyString.split(","));
-            Set<String> allowedAgencies = openAgency.getLibrariesByCatalogingTemplateSet(catalogingTemplateSet);
+            Set<String> allowedAgencies = openAgency.getLibrariesByCatalogingTemplateSet(queueType.getCatalogingTemplateSet());
 
             List<String> cleanedAgencyList = new ArrayList<>();
             for (String agency : agencies) {
@@ -129,8 +134,8 @@ public class QueueAPI {
                     return returnValidateFailResponse("Værdien '" + agency + "' har ikke et gyldigt format for et biblioteksnummer");
                 }
                 if (!allowedAgencies.containsAll(Collections.singleton(agency))) {
-                    LOGGER.error("Agency '{}' is not a valid {} agency, so returning HTTP 400", agency, catalogingTemplateSet);
-                    return returnValidateFailResponse("Biblioteksnummeret " + agency + " tilhører ikke biblioteksgruppen " + catalogingTemplateSet);
+                    LOGGER.error("Agency '{}' is not a valid {} agency, so returning HTTP 400", agency, queueType.getCatalogingTemplateSet());
+                    return returnValidateFailResponse("Biblioteksnummeret " + agency + " tilhører ikke biblioteksgruppen " + queueType.getCatalogingTemplateSet());
                 }
                 LOGGER.debug("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
@@ -138,10 +143,12 @@ public class QueueAPI {
 
             LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
             HashMap<Integer, Set<String>> recordMap = null;
-            if (catalogingTemplateSet.equals("ffu")) {
+            if (queueType.getKey().equals(QueueType.KEY_FFU)) {
                 recordMap = rawrepo.getFFURecords(agencyList, includeDeleted);
-            } else if (catalogingTemplateSet.equals("fbs")) {
+            } else if (queueType.getKey().equals(QueueType.KEY_FBS_RR)) {
                 recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
+            } else if (queueType.getKey().equals(QueueType.KEY_FBS_HOLDINGS)) {
+                recordMap = holdingsItemsDAO.getHoldingsRecords(agencyList);
             }
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
@@ -157,7 +164,7 @@ public class QueueAPI {
                     agencyListBulk.add(agencyId);
                     providerList.add(provider);
                     changedList.add(true);
-                    leafList.add(false);
+                    leafList.add(true);
                 }
             }
 

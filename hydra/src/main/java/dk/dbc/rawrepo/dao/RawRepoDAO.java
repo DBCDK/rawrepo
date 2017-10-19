@@ -5,7 +5,6 @@
 
 package dk.dbc.rawrepo.dao;
 
-import dk.dbc.holdingsitems.HoldingsItemsDAO;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueWorker;
@@ -27,7 +26,7 @@ public class RawRepoDAO {
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
 
     private static Connection rawRepoConnection;
-    private static Connection holdingsItemsConnection;
+
 
     @PostConstruct
     public void postConstruct() {
@@ -41,12 +40,6 @@ public class RawRepoDAO {
                     System.getenv().get(ApplicationConstants.RAWREPO_USER),
                     System.getenv().get(ApplicationConstants.RAWREPO_PASS));
             rawRepoConnection.setAutoCommit(true);
-
-            LOGGER.info("Connecting to Holdings Items URL {}", System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL));
-            holdingsItemsConnection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL),
-                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_USER),
-                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_PASS));
-            holdingsItemsConnection.setAutoCommit(true);
         } catch (SQLException ex) {
             throw new RuntimeException(ex); // Can't throw checked exceptions from postConstruct
         } finally {
@@ -65,18 +58,6 @@ public class RawRepoDAO {
 
         if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_PASS)) {
             throw new RuntimeException("RAWREPO_PASS must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_URL)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_URL must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_USER)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_USER must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_PASS)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_PASS must have a value");
         }
     }
 
@@ -159,18 +140,7 @@ public class RawRepoDAO {
         HashMap<Integer, Set<String>> result = new HashMap<>();
 
         try {
-            // First we find all holdings for all libraries
-            // The we find all records for all libraries and add that to holdings
-            HashMap<Integer, Set<String>> recordsForLibraries = getRecordsForLibraries(agencies, includeDeleted);
-            for (Integer agencyId : agencies) {
-                HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(holdingsItemsConnection);
-                Set<String> holdingsRecords = holdingsItemsDAO.getBibliographicIds(agencyId);
-                Set<String> rawrepoRecords = recordsForLibraries.get(agencyId);
-                // addAll returns a boolean so we can't to it while it is added to the result map
-                holdingsRecords.addAll(rawrepoRecords);
-                result.put(agencyId, holdingsRecords);
-
-            }
+            result = getRecordsForLibraries(agencies, includeDeleted);
 
             return result;
         } catch (SQLException ex) {

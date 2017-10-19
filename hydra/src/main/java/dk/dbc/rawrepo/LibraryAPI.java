@@ -8,6 +8,7 @@ package dk.dbc.rawrepo;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.dao.OpenAgencyDAO;
+import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -73,19 +74,22 @@ public class LibraryAPI {
     @Stopwatch
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    @Path(ApplicationConstants.API_LIBRARY_CATALOGING_TEMPLATE_SETS)
+    @Path(ApplicationConstants.API_LIBRARY_QUEUE_TYPES)
     public Response getCatalogingTemplateSets() {
         LOGGER.entry();
 
-        List<String> catalogingTemplateSets = openAgency.getCatalogingTemplateSets();
+        List<QueueType> queueTypes = openAgency.getQueueTypes();
 
         String res = "";
         try {
             JsonObjectBuilder outerJSON = Json.createObjectBuilder();
             JsonArrayBuilder innerJSON = Json.createArrayBuilder();
 
-            for (String set : catalogingTemplateSets) {
-                innerJSON.add(set);
+            for (QueueType queueType : queueTypes) {
+                JsonObjectBuilder value = Json.createObjectBuilder();
+                value.add("key", queueType.getKey());
+                value.add("description", queueType.getDescription());
+                innerJSON.add(value);
             }
             outerJSON.add("values", innerJSON);
             JsonObject jsonObject = outerJSON.build();

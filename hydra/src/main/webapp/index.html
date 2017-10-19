@@ -26,16 +26,16 @@
                 super(props);
                 this.state = {
                     mode: undefined,
-                    catalogingTemplateSets: [],
+                    queueTypes: [],
                     providers: [],
-                    selectedCatalogingTemplateSet: undefined,
+                    selectedQueueType: undefined,
                     selectedAgencies: '',
                     selectedProvider: undefined,
                     includeDeleted: false,
                     disableButtons: false,
                     instanceName: undefined
                 };
-                this.getCatalogingTemplateTypes = this.getCatalogingTemplateTypes.bind(this);
+                this.getQueueTypes = this.getQueueTypes.bind(this);
                 this.getLibrariesByCatalogingTemplateSet = this.getLibrariesByCatalogingTemplateSet.bind(this);
                 this.getRRProviders = this.getRRProviders.bind(this);
                 this.enqueue = this.enqueue.bind(this);
@@ -55,9 +55,9 @@
                 this.getHeader = this.getHeader.bind(this);
             }
 
-            getCatalogingTemplateTypes() {
-                superagent.get("api/library/catalogingTemplateSets").end((err, res) => {
-                    this.setState({catalogingTemplateSets: JSON.parse(res.text).values}, this.setDefaultValues);
+            getQueueTypes() {
+                superagent.get("api/library/queueTypes").end((err, res) => {
+                    this.setState({queueTypes: JSON.parse(res.text).values}, this.setDefaultValues);
                 });
             }
 
@@ -93,7 +93,7 @@
                 this.setState({disableButtons: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
-                    catalogingTemplateSet: this.state.selectedCatalogingTemplateSet,
+                    queueType: this.state.selectedQueueType.key,
                     includeDeleted: this.state.includeDeleted,
                     agencyText: this.state.selectedAgencies
                 });
@@ -122,7 +122,7 @@
             }
 
             onChangeCatalogingTemplateSet(event) {
-                this.setState({selectedCatalogingTemplateSet: event.target.value});
+                this.setState({selectedQueueType: event.target.value});
             }
 
             onChangeProvider(event) {
@@ -142,15 +142,15 @@
                     this.setState({selectedProvider: this.state.providers[0]})
                 }
 
-                if (this.state.selectedCatalogingTemplateSet === undefined && this.state.catalogingTemplateSets.length > 0) {
-                    this.setState({selectedCatalogingTemplateSet: this.state.catalogingTemplateSets[0]})
+                if (this.state.selectedQueueType === undefined && this.state.queueTypes.length > 0) {
+                    this.setState({selectedQueueType: this.state.queueTypes[0]})
                 }
             }
 
             setQueuePage() {
                 this.setState({mode: 'QUEUE'});
 
-                this.getCatalogingTemplateTypes();
+                this.getQueueTypes();
                 this.getRRProviders();
                 this.setDefaultValues();
             }
@@ -191,21 +191,21 @@
                     e('form', {className: 'form-horizontal', onSubmit: this.enqueue},
                         e('div', {className: "form-group"},
                             e('label', {
-                                htmlFor: 'select-cataloging-template-set',
+                                htmlFor: 'select-queue-type',
                                 className: 'control-label col-sm-2'
-                            }, 'Vælg bibliotektstype:'),
+                            }, 'Vælg køtype:'),
                             e('div', {className: 'col-sm-8'},
                                 e('select', {
-                                        id: 'select-cataloging-template-set',
+                                        id: 'select-queue-type',
                                         className: 'form-control',
-                                        name: 'select-cataloging-template-set',
+                                        name: 'select-queue-type',
                                         onChange: this.onChangeCatalogingTemplateSet,
-                                        value: this.state.selectedCatalogingTemplateSet,
+                                        value: this.state.selectedQueueType,
                                         required: true,
                                         disabled: this.state.disableButtons
                                     },
-                                    this.state.catalogingTemplateSets.map(function (name, index) {
-                                            return e('option', {key: index, value: name}, name);
+                                    this.state.queueTypes.map(function (item, index) {
+                                            return e('option', {key: item.key, value: item.description}, item.description);
                                         }
                                     )
                                 )
