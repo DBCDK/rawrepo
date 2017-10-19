@@ -93,7 +93,7 @@
                 this.setState({disableButtons: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
-                    queueType: this.state.selectedQueueType.key,
+                    queueType: this.state.selectedQueueType,
                     includeDeleted: this.state.includeDeleted,
                     agencyText: this.state.selectedAgencies
                 });
@@ -205,7 +205,7 @@
                                         disabled: this.state.disableButtons
                                     },
                                     this.state.queueTypes.map(function (item, index) {
-                                            return e('option', {key: item.key, value: item.description}, item.description);
+                                            return e('option', {key: item.key, value: item.key}, item.description);
                                         }
                                     )
                                 )
