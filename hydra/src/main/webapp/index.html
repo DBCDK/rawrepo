@@ -44,7 +44,7 @@
                 this.setUpdatePage = this.setUpdatePage.bind(this);
                 this.drawSubPage = this.drawSubPage.bind(this);
                 this.drawQueuePage = this.drawQueuePage.bind(this);
-                this.onChangeCatalogingTemplateSet = this.onChangeCatalogingTemplateSet.bind(this);
+                this.onChangeQueueType = this.onChangeQueueType.bind(this);
                 this.onChangeProvider = this.onChangeProvider.bind(this);
                 this.onChangeIncludeDeleted = this.onChangeIncludeDeleted.bind(this);
                 this.onChangeAgencies = this.onChangeAgencies.bind(this);
@@ -93,7 +93,7 @@
                 this.setState({disableButtons: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
-                    queueType: this.state.selectedQueueType,
+                    queueType: this.state.selectedQueueType.key !== undefined ? this.state.selectedQueueType.key : this.state.selectedQueueType,
                     includeDeleted: this.state.includeDeleted,
                     agencyText: this.state.selectedAgencies
                 });
@@ -121,7 +121,7 @@
                 event.preventDefault();
             }
 
-            onChangeCatalogingTemplateSet(event) {
+            onChangeQueueType(event) {
                 this.setState({selectedQueueType: event.target.value});
             }
 
@@ -199,7 +199,7 @@
                                         id: 'select-queue-type',
                                         className: 'form-control',
                                         name: 'select-queue-type',
-                                        onChange: this.onChangeCatalogingTemplateSet,
+                                        onChange: this.onChangeQueueType,
                                         value: this.state.selectedQueueType,
                                         required: true,
                                         disabled: this.state.disableButtons

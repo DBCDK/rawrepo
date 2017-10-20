@@ -86,7 +86,6 @@ public class QueueAPI {
             JsonReader reader = Json.createReader(new StringReader(inputStr));
             JsonObject obj = reader.readObject();
 
-            List<QueueType> allowedQueueTypes = openAgency.getQueueTypes();
             List<String> allowedProviders = rawrepo.getProviders();
 
             String provider = obj.getString("provider");
@@ -163,8 +162,8 @@ public class QueueAPI {
                     bibliographicRecordIdList.add(bibliographicRecordId);
                     agencyListBulk.add(agencyId);
                     providerList.add(provider);
-                    changedList.add(true);
-                    leafList.add(true);
+                    changedList.add(queueType.isChanged());
+                    leafList.add(queueType.isLeaf());
                 }
             }
 

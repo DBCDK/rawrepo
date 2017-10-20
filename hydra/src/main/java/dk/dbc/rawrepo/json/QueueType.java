@@ -9,6 +9,9 @@ public class QueueType {
 
     private String key;
     private String description;
+    private String catalogingTemplateSet;
+    private boolean changed;
+    private boolean leaf;
 
     public static final String KEY_FFU = "ffu";
     public static final String KEY_FBS_RR = "fbs_rr";
@@ -20,15 +23,32 @@ public class QueueType {
     }
 
     public static QueueType ffu() {
-        return new QueueType(KEY_FFU, "FFU - lokalposter");
+        QueueType queueType = new QueueType(KEY_FFU, "FFU - lokalposter");
+        queueType.catalogingTemplateSet = "ffu";
+        queueType.changed = true;
+        queueType.leaf = false;
+
+        return queueType;
     }
 
     public static QueueType fbsRawrepo() {
-        return new QueueType(KEY_FBS_RR, "FBS - Rawrepo");
+        QueueType queueType =  new QueueType(KEY_FBS_RR, "FBS - Rawrepo");
+
+        queueType.catalogingTemplateSet = "fbs";
+        queueType.changed = true;
+        queueType.leaf = false;
+
+        return queueType;
     }
 
     public static QueueType fbsHoldings() {
-        return new QueueType(KEY_FBS_HOLDINGS, "FBS - Beholdning");
+        QueueType queueType =  new QueueType(KEY_FBS_HOLDINGS, "FBS - Beholdning");
+
+        queueType.catalogingTemplateSet = "fbs";
+        queueType.changed = false;
+        queueType.leaf = true;
+
+        return queueType;
     }
 
     public static QueueType fromString(String key) {
@@ -53,15 +73,14 @@ public class QueueType {
     }
 
     public String getCatalogingTemplateSet() {
-        switch (key) {
-            case (KEY_FFU):
-                return "ffu";
-            case (KEY_FBS_RR):
-            case (KEY_FBS_HOLDINGS):
-                return "fbs";
-            default:
-                return null; // Should never happen
-        }
+        return catalogingTemplateSet;
     }
 
+    public boolean isChanged() {
+        return changed;
+    }
+
+    public boolean isLeaf() {
+        return leaf;
+    }
 }
