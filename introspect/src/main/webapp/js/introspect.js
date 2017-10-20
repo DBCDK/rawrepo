@@ -987,7 +987,7 @@ $('document').ready(function () {
          * @returns {undefined}
          */
 
-        function getExpirationDate () {
+        function getExpirationDate() {
             var date = new Date();
             date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
             return "; expires=" + date.toGMTString();
@@ -1003,9 +1003,12 @@ $('document').ready(function () {
                 var addToCookie = true;
                 var cookieArr = cookieVal.split(',');
                 for (var i in cookieArr.length) {
-                    if (recId === cookieArr[i]) {
-                        addToCookie = false;
-                        break;
+                    var listRecId = cookieArr[i];
+                    if (listRecId !== undefined) {
+                        if (recId === String(listRecId)) {
+                            addToCookie = false;
+                            break;
+                        }
                     }
                 }
                 if (addToCookie) {
@@ -1018,8 +1021,8 @@ $('document').ready(function () {
         PageOptions.prototype.populateRecordIdsList = function () {
             var cookieArr = readCookie("recId").split(',')
             var options = '';
-            for(var i = 0; i < cookieArr.length; i++)
-                options += '<option value="'+cookieArr[i]+'" />';
+            for (var i = 0; i < cookieArr.length; i++)
+                options += '<option value="' + cookieArr[i] + '" />';
             document.getElementById('bibreclist').innerHTML = options;
         }
 
