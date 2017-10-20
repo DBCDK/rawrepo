@@ -22,11 +22,22 @@ public class QueueType {
         this.description = description;
     }
 
+    /*
+    * This is not 100% accurate but sort of understandable:
+    * changed = true means Rawrepo Solr is updated.
+    * changed = false means Rawrepo Solr is not updated
+    * leaf = true means dataio job is created and Corepo Solr is updated
+    * leaf = false means nothing is sent to dataio and Corepo
+    *
+    * BDM always want enqueuing to create a dataio job which in turn updates corepo. Therefor leaf is always true
+    * At the same time we want a "marker" in rawrepo solr so we can see something has happend, there for changed = true
+    * */
+
     public static QueueType ffu() {
         QueueType queueType = new QueueType(KEY_FFU, "FFU - lokalposter");
         queueType.catalogingTemplateSet = "ffu";
         queueType.changed = true;
-        queueType.leaf = false;
+        queueType.leaf = true;
 
         return queueType;
     }
@@ -36,7 +47,7 @@ public class QueueType {
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
-        queueType.leaf = false;
+        queueType.leaf = true;
 
         return queueType;
     }
@@ -45,7 +56,7 @@ public class QueueType {
         QueueType queueType =  new QueueType(KEY_FBS_HOLDINGS, "FBS - Beholdning");
 
         queueType.catalogingTemplateSet = "fbs";
-        queueType.changed = false;
+        queueType.changed = true;
         queueType.leaf = true;
 
         return queueType;
