@@ -16,6 +16,7 @@ public class QueueType {
     public static final String KEY_FFU = "ffu";
     public static final String KEY_FBS_RR = "fbs_rr";
     public static final String KEY_FBS_HOLDINGS = "fbs_holdings";
+    public static final String KEY_FBS_EVERYTHING = "fbs_everything";
 
     private QueueType(String key, String description) {
         this.key = key;
@@ -34,7 +35,7 @@ public class QueueType {
     * */
 
     public static QueueType ffu() {
-        QueueType queueType = new QueueType(KEY_FFU, "FFU - lokalposter");
+        QueueType queueType = new QueueType(KEY_FFU, "FFU - Lokalposter");
         queueType.catalogingTemplateSet = "ffu";
         queueType.changed = true;
         queueType.leaf = true;
@@ -62,6 +63,16 @@ public class QueueType {
         return queueType;
     }
 
+    public static QueueType fbsEverything() {
+        QueueType queueType =  new QueueType(KEY_FBS_EVERYTHING, "FBS - Både beholdning og rawrepo");
+
+        queueType.catalogingTemplateSet = "fbs";
+        queueType.changed = true;
+        queueType.leaf = true;
+
+        return queueType;
+    }
+
     public static QueueType fromString(String key) {
         switch (key) {
             case (KEY_FFU):
@@ -70,6 +81,8 @@ public class QueueType {
                 return fbsRawrepo();
             case (KEY_FBS_HOLDINGS):
                 return fbsHoldings();
+            case (KEY_FBS_EVERYTHING):
+                return fbsEverything();
             default:
                 return null;
         }

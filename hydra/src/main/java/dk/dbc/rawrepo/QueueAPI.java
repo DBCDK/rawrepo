@@ -79,7 +79,7 @@ public class QueueAPI {
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_QUEUE_ENQUEUE)
     public Response enqueue(String inputStr) {
-        LOGGER.info(inputStr);
+        LOGGER.info("Input string: {}", inputStr);
         String res = "";
 
         try {
@@ -148,6 +148,11 @@ public class QueueAPI {
                 recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
             } else if (queueType.getKey().equals(QueueType.KEY_FBS_HOLDINGS)) {
                 recordMap = holdingsItemsDAO.getHoldingsRecords(agencyList);
+            } else if (queueType.getKey().equals(QueueType.KEY_FBS_EVERYTHING)) {
+                HashMap<Integer, Set<String>> mapA = holdingsItemsDAO.getHoldingsRecords(agencyList);
+                HashMap<Integer, Set<String>> mapB = rawrepo.getFBSRecords(agencyList, includeDeleted);
+
+                recordMap = mergeHashMaps(mapA, mapB);
             }
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
@@ -194,6 +199,31 @@ public class QueueAPI {
         } finally {
             LOGGER.exit(res);
         }
+    }
+
+    private HashMap<Integer, Set<String>> mergeHashMaps(HashMap<Integer, Set<String>> mapA, HashMap<Integer, Set<String>> mapB) {
+        HashMap<Integer, Set<String>> result = new HashMap<>();
+
+        // The set returned from keySet is immutable so we have to instantiate new Set in order to use addAll
+        Set<Integer> allKeys = new HashSet<>();
+        allKeys.addAll(mapA.keySet());
+        allKeys.addAll(mapB.keySet());
+
+        for (Integer key : allKeys) {
+            Set<String> values = new HashSet<>();
+
+            if (mapA.keySet().contains(key)) {
+                values.addAll(mapA.get(key));
+            }
+
+            if (mapB.keySet().contains(key)) {
+                values.addAll(mapB.get(key));
+            }
+
+            result.put(key, values);
+        }
+
+        return result;
     }
 
     private Response returnValidateFailResponse(String message) throws Exception {

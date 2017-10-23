@@ -66,7 +66,7 @@ public class OpenAgencyDAO {
     }
 
     public List<QueueType> getQueueTypes() {
-        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsHoldings());
+        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsHoldings(), QueueType.fbsEverything());
     }
 
     @Stopwatch
