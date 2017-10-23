@@ -348,6 +348,10 @@ public abstract class Service {
             } else {
                 collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
             }
+
+            for (String key : collection.keySet()) {
+                dao.expandRecord(collection.get(key), false);
+            }
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
         } catch (Exception ex) {
