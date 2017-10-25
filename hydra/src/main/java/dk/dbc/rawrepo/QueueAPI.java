@@ -34,6 +34,13 @@ import java.util.regex.Pattern;
 public class QueueAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(QueueAPI.class);
 
+    private static final String MESSAGE_SUCCESS = "I alt %s post(er) blev fundet og er nu lagt på kø";
+    private static final String MESSAGE_FAIL_INVALID_AGENCY_FORMAT = "Værdien \"%s\" har ikke et gyldigt format for et biblioteksnummer";
+    private static final String MESSAGE_FAIL_INVAILD_AGENCY_ID = "Biblioteksnummeret %s tilhører ikke biblioteksgruppen %s";
+    private static final String MESSAGE_FAIL_QUEUETYPE = "Køtypen \"%s\" kunne ikke valideres";
+    private static final String MESSAGE_FAIL_PROVIDER = "Provideren %s kunne ikke valideres";
+    private static final String MESSAGE_FAIL_AGENCY_MISSING = "Der skal angives mindst ét biblioteksnummer";
+
     @EJB
     private OpenAgencyDAO openAgency;
 
@@ -90,15 +97,13 @@ public class QueueAPI {
 
             String provider = obj.getString("provider");
             if (provider == null || provider.isEmpty() || !allowedProviders.contains(provider)) {
-                LOGGER.error("The provider input {} could not be validated, so returning HTTP 400", provider);
-                return returnValidateFailResponse("Provider kunne ikke valideres");
+                return constructResponse(false, String.format(MESSAGE_FAIL_PROVIDER, provider));
             }
             LOGGER.debug("provider: {}", provider);
 
             QueueType queueType = QueueType.fromString(obj.getString("queueType"));
             if (queueType == null) {
-                LOGGER.error("QueueType key {} could not be validated, so returning HTTP 400", obj.getString("queueType"));
-                return returnValidateFailResponse("Køtype kunne ikke valideres");
+                return constructResponse(false, String.format(MESSAGE_FAIL_QUEUETYPE, obj.getString("queueType")));
             }
             LOGGER.debug("QueueType: {}", queueType);
 
@@ -121,20 +126,17 @@ public class QueueAPI {
             }
 
             if (cleanedAgencyList.size() == 0) {
-                LOGGER.error("No agencies given, so returning HTTP 400");
-                return returnValidateFailResponse("Der skal angives mindst ét biblioteksnummer");
+                return constructResponse(false, MESSAGE_FAIL_AGENCY_MISSING);
             }
 
             List<Integer> agencyList = new ArrayList<>();
             final Pattern p = Pattern.compile("(\\d{6})");
             for (String agency : cleanedAgencyList) {
                 if (!p.matcher(agency).find()) {
-                    LOGGER.error("'{}' is not a valid six digit number, so returning HTTP 400", agency);
-                    return returnValidateFailResponse("Værdien '" + agency + "' har ikke et gyldigt format for et biblioteksnummer");
+                    return constructResponse(false, String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
                 }
                 if (!allowedAgencies.containsAll(Collections.singleton(agency))) {
-                    LOGGER.error("Agency '{}' is not a valid {} agency, so returning HTTP 400", agency, queueType.getCatalogingTemplateSet());
-                    return returnValidateFailResponse("Biblioteksnummeret " + agency + " tilhører ikke biblioteksgruppen " + queueType.getCatalogingTemplateSet());
+                    return constructResponse(false, String.format(MESSAGE_FAIL_INVAILD_AGENCY_ID, agency, queueType.getCatalogingTemplateSet()));
                 }
                 LOGGER.debug("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
@@ -174,25 +176,9 @@ public class QueueAPI {
 
             LOGGER.debug("{} records will be enqueued", recordMap.size());
 
-            List<RawRepoDAO.EnqueueBulkResult> enqueueBulkResults = rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
+            rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
-            Integer wasEnqueued = 0;
-
-            for (RawRepoDAO.EnqueueBulkResult bulkResult : enqueueBulkResults) {
-                if (bulkResult.queued) {
-                    wasEnqueued++;
-                }
-            }
-
-            JsonObjectBuilder responseJSON = Json.createObjectBuilder();
-            responseJSON.add("validated", true);
-            responseJSON.add("recordCount", recordMap.size());
-            responseJSON.add("wasEnqueued", wasEnqueued);
-            responseJSON.add("queueTotal", enqueueBulkResults.size());
-
-            res = responseJSON.build().toString();
-
-            return Response.ok(res, MediaType.APPLICATION_JSON).build();
+            return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
         } catch (Exception e) {
             LOGGER.error("Something happened:", e);
             return Response.serverError().build();
@@ -226,12 +212,18 @@ public class QueueAPI {
         return result;
     }
 
-    private Response returnValidateFailResponse(String message) throws Exception {
+    private Response constructResponse(boolean validated, String message) throws Exception {
         JsonObjectBuilder responseJSON = Json.createObjectBuilder();
-        responseJSON.add("validated", false);
+        responseJSON.add("validated", validated);
         responseJSON.add("message", message);
 
         String res = responseJSON.build().toString();
+
+        if (validated) {
+            LOGGER.info("Response: " + message);
+        } else {
+            LOGGER.error("Response: " + message);
+        }
 
         return Response.ok(res, MediaType.APPLICATION_JSON).build();
     }
@@ -261,6 +253,5 @@ public class QueueAPI {
             LOGGER.exit(res);
         }
     }
-
 
 }

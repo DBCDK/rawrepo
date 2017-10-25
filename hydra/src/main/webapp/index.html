@@ -106,11 +106,11 @@
                         let validated = JSON.parse(res.text).validated;
 
                         if (validated) {
-                            alert('Køpålæggelsen lykkedes! \n' +
-                                'Det totale antal poster for de angivne biblioteker: ' + JSON.parse(res.text).recordCount + "\n" +
-                                "Af de i alt " + JSON.parse(res.text).queueTotal + ' forsøgte køpålæggelser lykkedes i alt ' + JSON.parse(res.text).wasEnqueued);
+                            alert('Køpålæggelsen lykkedes! \n\n' +
+                                JSON.parse(res.text).message);
                         } else {
-                            alert('VALIDERING FEJLEDE: ' + JSON.parse(res.text).message);
+                            alert('VALIDERING FEJLEDE! \n\n ' +
+                                JSON.parse(res.text).message);
                         }
                         this.setState({disableButtons: false});
                     })
