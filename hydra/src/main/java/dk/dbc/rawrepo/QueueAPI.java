@@ -6,9 +6,9 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.rawrepo.common.ApplicationConstants;
-import dk.dbc.rawrepo.dao.HoldingsItemsDAO;
-import dk.dbc.rawrepo.dao.OpenAgencyDAO;
-import dk.dbc.rawrepo.dao.RawRepoDAO;
+import dk.dbc.rawrepo.dao.HoldingsItemsConnector;
+import dk.dbc.rawrepo.dao.OpenAgencyConnector;
+import dk.dbc.rawrepo.dao.RawRepoConnector;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
@@ -35,6 +35,7 @@ public class QueueAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(QueueAPI.class);
 
     private static final String MESSAGE_SUCCESS = "I alt %s post(er) blev fundet og er nu lagt på kø";
+    private static final String MESSAGE_NO_RECORDS = "Der blev ikke fundet nogen poster, så intet er lagt på kø";
     private static final String MESSAGE_FAIL_INVALID_AGENCY_FORMAT = "Værdien \"%s\" har ikke et gyldigt format for et biblioteksnummer";
     private static final String MESSAGE_FAIL_INVAILD_AGENCY_ID = "Biblioteksnummeret %s tilhører ikke biblioteksgruppen %s";
     private static final String MESSAGE_FAIL_QUEUETYPE = "Køtypen \"%s\" kunne ikke valideres";
@@ -42,13 +43,13 @@ public class QueueAPI {
     private static final String MESSAGE_FAIL_AGENCY_MISSING = "Der skal angives mindst ét biblioteksnummer";
 
     @EJB
-    private OpenAgencyDAO openAgency;
+    private OpenAgencyConnector openAgency;
 
     @EJB
-    private RawRepoDAO rawrepo;
+    private RawRepoConnector rawrepo;
 
     @EJB
-    private HoldingsItemsDAO holdingsItemsDAO;
+    private HoldingsItemsConnector holdingsItemsConnector;
 
     @Stopwatch
     @GET
@@ -129,8 +130,8 @@ public class QueueAPI {
                 return constructResponse(false, MESSAGE_FAIL_AGENCY_MISSING);
             }
 
-            List<Integer> agencyList = new ArrayList<>();
-            final Pattern p = Pattern.compile("(\\d{6})");
+            Set<Integer> agencyList = new HashSet<>();
+            final Pattern p = Pattern.compile("(\\d{6})"); // Digit, 6 chars
             for (String agency : cleanedAgencyList) {
                 if (!p.matcher(agency).find()) {
                     return constructResponse(false, String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
@@ -143,18 +144,29 @@ public class QueueAPI {
             }
 
             LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
-            HashMap<Integer, Set<String>> recordMap = null;
-            if (queueType.getKey().equals(QueueType.KEY_FFU)) {
-                recordMap = rawrepo.getFFURecords(agencyList, includeDeleted);
-            } else if (queueType.getKey().equals(QueueType.KEY_FBS_RR)) {
-                recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
-            } else if (queueType.getKey().equals(QueueType.KEY_FBS_HOLDINGS)) {
-                recordMap = holdingsItemsDAO.getHoldingsRecords(agencyList);
-            } else if (queueType.getKey().equals(QueueType.KEY_FBS_EVERYTHING)) {
-                HashMap<Integer, Set<String>> mapA = holdingsItemsDAO.getHoldingsRecords(agencyList);
-                HashMap<Integer, Set<String>> mapB = rawrepo.getFBSRecords(agencyList, includeDeleted);
 
-                recordMap = mergeHashMaps(mapA, mapB);
+            Set<RecordId> holdingsItemsRecordIds, fbsRecordIds, recordMap = null;
+
+            switch (queueType.getKey()) {
+                case QueueType.KEY_FFU:
+                    recordMap = rawrepo.getFFURecords(agencyList, includeDeleted);
+                    break;
+                case QueueType.KEY_FBS_RR:
+                    recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
+                    break;
+                case QueueType.KEY_FBS_HOLDINGS:
+                    holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
+                    fbsRecordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
+                    recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
+                    break;
+                case QueueType.KEY_FBS_EVERYTHING:
+                    holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
+                    fbsRecordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
+                    recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
+                    // Rawrepo might contain records which the library doesn't have holdings on, so we have to add
+                    // the FBS records to the list as well
+                    recordMap.addAll(fbsRecordIds);
+                    break;
             }
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
@@ -162,23 +174,24 @@ public class QueueAPI {
             List<String> providerList = new ArrayList<>();
             List<Boolean> changedList = new ArrayList<>();
             List<Boolean> leafList = new ArrayList<>();
-
-            for (Integer agencyId : recordMap.keySet()) {
-                LOGGER.debug("Found {} records for agency {}", recordMap.get(agencyId).size(), agencyId);
-                for (String bibliographicRecordId : recordMap.get(agencyId)) {
-                    bibliographicRecordIdList.add(bibliographicRecordId);
-                    agencyListBulk.add(agencyId);
+            if (recordMap.size() > 0) {
+                for (RecordId recordId : recordMap) {
+                    LOGGER.debug(recordId.toString());
+                    bibliographicRecordIdList.add(recordId.bibliographicRecordId);
+                    agencyListBulk.add(recordId.agencyId);
                     providerList.add(provider);
                     changedList.add(queueType.isChanged());
                     leafList.add(queueType.isLeaf());
                 }
+
+                LOGGER.debug("{} records will be enqueued", recordMap.size());
+
+                rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
+
+                return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
+            } else {
+                return constructResponse(true, MESSAGE_NO_RECORDS);
             }
-
-            LOGGER.debug("{} records will be enqueued", recordMap.size());
-
-            rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
-
-            return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
         } catch (Exception e) {
             LOGGER.error("Something happened:", e);
             return Response.serverError().build();
@@ -187,26 +200,25 @@ public class QueueAPI {
         }
     }
 
-    private HashMap<Integer, Set<String>> mergeHashMaps(HashMap<Integer, Set<String>> mapA, HashMap<Integer, Set<String>> mapB) {
-        HashMap<Integer, Set<String>> result = new HashMap<>();
+    /**
+     * This function is necessary due to how Corepo works.
+     * Corepo only contains real/existing record. However holdings items will often return ids of records
+     * that doesn't actually exist. In those case we have to override the agencyId to be that of 191919 instead
+     * so that Corepo receives the correct register
+     *
+     * @param holdingsItemsRecordIds Set of record ids from holdings items
+     * @param fbsRecordIds           Set of record ids from rawrepo
+     * @return Set of record ids
+     */
+    private Set<RecordId> convertNotExistingRecordIds(Set<RecordId> holdingsItemsRecordIds, Set<RecordId> fbsRecordIds) {
+        Set<RecordId> result = new HashSet<>();
 
-        // The set returned from keySet is immutable so we have to instantiate new Set in order to use addAll
-        Set<Integer> allKeys = new HashSet<>();
-        allKeys.addAll(mapA.keySet());
-        allKeys.addAll(mapB.keySet());
-
-        for (Integer key : allKeys) {
-            Set<String> values = new HashSet<>();
-
-            if (mapA.keySet().contains(key)) {
-                values.addAll(mapA.get(key));
+        for (RecordId holdingsItemsRecordId : holdingsItemsRecordIds) {
+            if (fbsRecordIds.contains(holdingsItemsRecordId)) {
+                result.add(holdingsItemsRecordId);
+            } else {
+                result.add(new RecordId(holdingsItemsRecordId.bibliographicRecordId, 191919));
             }
-
-            if (mapB.keySet().contains(key)) {
-                values.addAll(mapB.get(key));
-            }
-
-            result.put(key, values);
         }
 
         return result;

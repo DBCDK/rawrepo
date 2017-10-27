@@ -5,6 +5,7 @@
 
 package dk.dbc.rawrepo.dao;
 
+import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueWorker;
@@ -18,8 +19,8 @@ import java.sql.*;
 import java.util.*;
 
 @Stateless
-public class RawRepoDAO {
-    private static final XLogger LOGGER = XLoggerFactory.getXLogger(RawRepoDAO.class);
+public class RawRepoConnector {
+    private static final XLogger LOGGER = XLoggerFactory.getXLogger(RawRepoConnector.class);
 
     private static final String SELECT_QUEUERULES_ALL = "SELECT * FROM queuerules";
     private static final String SELECT_PROVIDERS = "SELECT DISTINCT(provider) FROM queuerules";
@@ -119,9 +120,9 @@ public class RawRepoDAO {
     }
 
     @Stopwatch
-    public HashMap<Integer, Set<String>> getFFURecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public Set<RecordId> getFFURecords(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        HashMap<Integer, Set<String>> result = new HashMap<>();
+        Set<RecordId> result = new HashSet<>();
 
         try {
             result = getRecordsForLibraries(agencies, includeDeleted);
@@ -135,9 +136,9 @@ public class RawRepoDAO {
     }
 
     @Stopwatch
-    public HashMap<Integer, Set<String>> getFBSRecords(List<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public Set<RecordId> getFBSRecords(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        HashMap<Integer, Set<String>> result = new HashMap<>();
+        Set<RecordId> result = new HashSet<>();
 
         try {
             result = getRecordsForLibraries(agencies, includeDeleted);
@@ -150,9 +151,9 @@ public class RawRepoDAO {
         }
     }
 
-    private HashMap<Integer, Set<String>> getRecordsForLibraries(List<Integer> agencies, boolean includeDeleted) throws Exception {
+    private Set<RecordId> getRecordsForLibraries(Set<Integer> agencies, boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
-        HashMap<Integer, Set<String>> result = new HashMap<>();
+        Set<RecordId> result = new HashSet<>();
 
         // There is no smart or elegant way of doing a select 'in' clause, so this will have to do
         StringBuilder sb = new StringBuilder();
@@ -169,7 +170,6 @@ public class RawRepoDAO {
         }
 
         String statement = sb.toString();
-        LOGGER.debug("Constructed statement: {}", statement);
 
         try (CallableStatement stmt = rawRepoConnection.prepareCall(statement)) {
             int i = 1;
@@ -177,16 +177,13 @@ public class RawRepoDAO {
                 stmt.setInt(i++, agencyId);
             }
 
-            LOGGER.info("Executing statement: {}", statement);
+            LOGGER.debug("Executing statement: {}", statement);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     final String bibliographicRecordId = resultSet.getString("bibliographicrecordid");
                     final Integer agencyId = resultSet.getInt("agencyid");
 
-                    if (!result.containsKey(agencyId)) {
-                        result.put(agencyId, new HashSet<>());
-                    }
-                    result.get(agencyId).add(bibliographicRecordId);
+                    result.add(new RecordId(bibliographicRecordId, agencyId));
                 }
             }
 

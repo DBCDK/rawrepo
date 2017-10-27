@@ -7,7 +7,7 @@ package dk.dbc.rawrepo;
 
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
-import dk.dbc.rawrepo.dao.OpenAgencyDAO;
+import dk.dbc.rawrepo.dao.OpenAgencyConnector;
 import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
@@ -37,7 +37,7 @@ public class LibraryAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(LibraryAPI.class);
 
     @EJB
-    private OpenAgencyDAO openAgency;
+    private OpenAgencyConnector openAgency;
 
     @Stopwatch
     @GET

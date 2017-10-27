@@ -24,8 +24,8 @@ import java.util.Set;
 
 @Singleton
 @Stateless
-public class OpenAgencyDAO {
-    private static final XLogger LOGGER = XLoggerFactory.getXLogger(OpenAgencyDAO.class);
+public class OpenAgencyConnector {
+    private static final XLogger LOGGER = XLoggerFactory.getXLogger(OpenAgencyConnector.class);
 
     private OpenAgencyServiceFromURL service;
 

@@ -107,4 +107,9 @@ public class QueueType {
     public boolean isLeaf() {
         return leaf;
     }
+
+    @Override
+    public String toString() {
+        return description;
+    }
 }

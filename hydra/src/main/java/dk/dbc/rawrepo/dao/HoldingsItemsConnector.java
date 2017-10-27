@@ -5,6 +5,8 @@
 
 package dk.dbc.rawrepo.dao;
 
+import dk.dbc.holdingsitems.HoldingsItemsDAO;
+import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import org.perf4j.StopWatch;
@@ -19,13 +21,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Singleton
 @Stateless
-public class HoldingsItemsDAO {
-    private static final XLogger LOGGER = XLoggerFactory.getXLogger(HoldingsItemsDAO.class);
+public class HoldingsItemsConnector {
+    private static final XLogger LOGGER = XLoggerFactory.getXLogger(HoldingsItemsConnector.class);
 
     private static Connection holdingsItemsConnection;
 
@@ -66,13 +69,17 @@ public class HoldingsItemsDAO {
     }
 
     @Stopwatch
-    public HashMap<Integer, Set<String>> getHoldingsRecords(List<Integer> agencies) throws Exception {
+    public Set<RecordId> getHoldingsRecords(Set<Integer> agencies) throws Exception {
         LOGGER.entry(agencies);
-        HashMap<Integer, Set<String>> result = new HashMap<>();
+        Set<RecordId> result = new HashSet<>();
         try {
             for (Integer agencyId : agencies) {
-                dk.dbc.holdingsitems.HoldingsItemsDAO holdingsItemsDAO = dk.dbc.holdingsitems.HoldingsItemsDAO.newInstance(holdingsItemsConnection);
-                result.put(agencyId, holdingsItemsDAO.getBibliographicIds(agencyId));
+                HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(holdingsItemsConnection);
+                Set<String> bibliographicRecordIds = holdingsItemsDAO.getBibliographicIds(agencyId);
+
+                for (String bibliographicRecordId : bibliographicRecordIds) {
+                    result.add(new RecordId(bibliographicRecordId, agencyId));
+                }
             }
 
             return result;
