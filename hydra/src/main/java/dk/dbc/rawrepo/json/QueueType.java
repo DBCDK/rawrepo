@@ -15,6 +15,7 @@ public class QueueType {
 
     public static final String KEY_FFU = "ffu";
     public static final String KEY_FBS_RR = "fbs_rr";
+    public static final String KEY_FBS_RR_ENRICHEMENT = "fbs_rr_enrich";
     public static final String KEY_FBS_HOLDINGS = "fbs_holdings";
     public static final String KEY_FBS_EVERYTHING = "fbs_everything";
 
@@ -35,7 +36,7 @@ public class QueueType {
     * */
 
     public static QueueType ffu() {
-        QueueType queueType = new QueueType(KEY_FFU, "FFU - Lokalposter");
+        QueueType queueType = new QueueType(KEY_FFU, "FFU - RR Lokalposter");
         queueType.catalogingTemplateSet = "ffu";
         queueType.changed = true;
         queueType.leaf = true;
@@ -44,7 +45,17 @@ public class QueueType {
     }
 
     public static QueueType fbsRawrepo() {
-        QueueType queueType =  new QueueType(KEY_FBS_RR, "FBS - Rawrepo");
+        QueueType queueType =  new QueueType(KEY_FBS_RR, "FBS - RR lokalposter + RR påhængsposter");
+
+        queueType.catalogingTemplateSet = "fbs";
+        queueType.changed = true;
+        queueType.leaf = true;
+
+        return queueType;
+    }
+
+    public static QueueType fbsRawrepoEnrichment() {
+        QueueType queueType =  new QueueType(KEY_FBS_RR_ENRICHEMENT, "FBS - RR Påhængsposter");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -64,7 +75,7 @@ public class QueueType {
     }
 
     public static QueueType fbsEverything() {
-        QueueType queueType =  new QueueType(KEY_FBS_EVERYTHING, "FBS - Både beholdning og rawrepo");
+        QueueType queueType =  new QueueType(KEY_FBS_EVERYTHING, "FBS - Beholdning + RR lokalposter + RR påhængsposter");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -79,6 +90,8 @@ public class QueueType {
                 return ffu();
             case (KEY_FBS_RR):
                 return fbsRawrepo();
+            case (KEY_FBS_RR_ENRICHEMENT):
+                return fbsRawrepoEnrichment();
             case (KEY_FBS_HOLDINGS):
                 return fbsHoldings();
             case (KEY_FBS_EVERYTHING):

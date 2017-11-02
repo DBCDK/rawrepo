@@ -9,7 +9,9 @@ import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.dao.HoldingsItemsConnector;
 import dk.dbc.rawrepo.dao.OpenAgencyConnector;
 import dk.dbc.rawrepo.dao.RawRepoConnector;
+import dk.dbc.rawrepo.json.QueueException;
 import dk.dbc.rawrepo.json.QueueProvider;
+import dk.dbc.rawrepo.json.QueueRequest;
 import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
@@ -26,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Interceptors(StopwatchInterceptor.class)
@@ -81,14 +84,203 @@ public class QueueAPI {
         }
     }
 
+    private String recordIdsToBase64(Set<RecordId> recordIds) {
+        StringBuilder sb = new StringBuilder();
+        for (RecordId recordId : recordIds) {
+            sb.append(recordId.getBibliographicRecordId());
+            sb.append(":");
+            sb.append(Integer.toString(recordId.getAgencyId()));
+            sb.append(";");
+        }
+
+        String chunkString = sb.toString();
+
+        byte[] encodedBytes = Base64.getEncoder().encode(chunkString.getBytes());
+        return new String(encodedBytes);
+    }
+
+    private Set<RecordId> base64ToRecordIds(String base) {
+        Set<RecordId> result = new HashSet<>();
+
+        byte[] decoded = Base64.getDecoder().decode(base);
+        String decodedString = new String(decoded);
+
+        String[] split = decodedString.split(";");
+        for (String s : split) {
+            String[] splitRecordId = s.split(":");
+            RecordId recordId = new RecordId(splitRecordId[0], Integer.parseInt(splitRecordId[1]));
+            result.add(recordId);
+        }
+
+        return result;
+    }
+
+
     @Stopwatch
     @POST
     @Consumes({MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_JSON})
-    @Path(ApplicationConstants.API_QUEUE_ENQUEUE)
-    public Response enqueue(String inputStr) {
-        LOGGER.info("Input string: {}", inputStr);
+    @Path(ApplicationConstants.API_QUEUE_VALIDATE)
+    public Response validate(String inputStr) {
         String res = "";
+
+        try {
+            QueueRequest queueRequest = parseQueueInput(inputStr);
+
+            Set<RecordId> recordMap = getRecordIdsForQueuing(queueRequest);
+
+            Map<Integer, Integer> recordCount = new HashMap<>();
+
+            //Set<RecordId> chunk = new HashSet<>();
+            Map<Integer, Set<RecordId>> chunks = new HashMap<>();
+            Integer chunkIndex = 0;
+
+            for (RecordId recordId : recordMap) {
+                if (!chunks.containsKey(chunkIndex)) {
+                    chunks.put(chunkIndex, new HashSet<>());
+                }
+                chunks.get(chunkIndex).add(recordId);
+                if (chunks.get(chunkIndex).size() == 1000) {
+                    chunkIndex++;
+                }
+
+                Integer agencyId = recordId.getAgencyId();
+                Integer count = 1;
+
+                if (recordCount.containsKey(agencyId)) {
+                    count = recordCount.get(agencyId);
+                    count++;
+                }
+
+                recordCount.put(agencyId, count);
+            }
+
+            JsonObjectBuilder responseJSON = Json.createObjectBuilder();
+            JsonArrayBuilder analysisList = Json.createArrayBuilder();
+
+            for (Integer key : recordCount.keySet()) {
+                JsonObjectBuilder innerAnalysis = Json.createObjectBuilder();
+                innerAnalysis.add("agencyId", key);
+                innerAnalysis.add("count", recordCount.get(key));
+
+                analysisList.add(innerAnalysis);
+            }
+            responseJSON.add("analysis", analysisList);
+
+            JsonArrayBuilder chunkList = Json.createArrayBuilder();
+            for (int i = 0; i <= chunkIndex; i++) {
+                chunkList.add(recordIdsToBase64(chunks.get(i)));
+            }
+            responseJSON.add("chunks", chunkList);
+            responseJSON.add("validated", true);
+
+            res = responseJSON.build().toString();
+
+            return Response.ok(res, MediaType.APPLICATION_JSON).build();
+        } catch (QueueException e) {
+            return constructResponse(false, e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Unexpected exception:", e);
+            return Response.serverError().build();
+        } finally {
+            LOGGER.exit(res);
+        }
+    }
+
+    private Set<RecordId> getRecordIdsForQueuing(QueueRequest queueRequest) throws Exception {
+        Set<RecordId> holdingsItemsRecordIds, fbsRecordIds, recordMap = null;
+        QueueType queueType = queueRequest.getQueueType();
+        Set<Integer> agencyList = queueRequest.getAgencyIds();
+        boolean includeDeleted = queueRequest.isIncludeDeleted();
+
+        switch (queueType.getKey()) {
+            case QueueType.KEY_FFU:
+                recordMap = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
+                break;
+            case QueueType.KEY_FBS_RR:
+                recordMap = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
+                break;
+            case QueueType.KEY_FBS_RR_ENRICHEMENT:
+                recordMap = rawrepo.getEnrichmentForAgencies(agencyList, includeDeleted);
+                break;
+            case QueueType.KEY_FBS_HOLDINGS:
+                holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
+                fbsRecordIds = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
+                recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
+                break;
+            case QueueType.KEY_FBS_EVERYTHING:
+                holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
+                fbsRecordIds = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
+                recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
+                // Rawrepo might contain records which the library doesn't have holdings on, so we have to add
+                // the FBS records to the list as well
+                recordMap.addAll(fbsRecordIds);
+                break;
+        }
+
+        return recordMap;
+    }
+
+    @Stopwatch
+    @POST
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path(ApplicationConstants.API_QUEUE_PROCESS)
+    public Response process(String inputStr) {
+        String res = "";
+
+        try {
+
+            QueueRequest queueRequest = parseQueueInput(inputStr);
+            String provider = queueRequest.getProvider();
+            QueueType queueType = queueRequest.getQueueType();
+            Set<Integer> agencyList = queueRequest.getAgencyIds();
+
+            LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
+
+            //Set<RecordId> recordMap = getRecordIdsForQueuing(queueRequest);
+            /*Set<RecordId> recordMap = new HashSet<>();
+            for (String chunk : queueRequest.getChunks()) {
+                recordMap.addAll(base64ToRecordIds(chunk));
+            }
+*/
+            Set<RecordId> recordMap = base64ToRecordIds(queueRequest.getChunk());
+
+            List<String> bibliographicRecordIdList = new ArrayList<>();
+            List<Integer> agencyListBulk = new ArrayList<>();
+            List<String> providerList = new ArrayList<>();
+            List<Boolean> changedList = new ArrayList<>();
+            List<Boolean> leafList = new ArrayList<>();
+            if (recordMap.size() > 0) {
+                for (RecordId recordId : recordMap) {
+                    bibliographicRecordIdList.add(recordId.bibliographicRecordId);
+                    agencyListBulk.add(recordId.agencyId);
+                    providerList.add(provider);
+                    changedList.add(queueType.isChanged());
+                    leafList.add(queueType.isLeaf());
+                }
+
+                LOGGER.debug("{} records will be enqueued", recordMap.size());
+
+                rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
+
+                return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
+            } else {
+                return constructResponse(true, MESSAGE_NO_RECORDS);
+            }
+        } catch (QueueException e) {
+            return constructResponse(false, e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Unexpected exception:", e);
+            return Response.serverError().build();
+        } finally {
+            LOGGER.exit(res);
+        }
+    }
+
+    private QueueRequest parseQueueInput(String inputStr) throws Exception {
+        //LOGGER.info("Input string: {}", inputStr);
+        QueueRequest result = new QueueRequest();
 
         try {
             JsonReader reader = Json.createReader(new StringReader(inputStr));
@@ -98,17 +290,20 @@ public class QueueAPI {
 
             String provider = obj.getString("provider");
             if (provider == null || provider.isEmpty() || !allowedProviders.contains(provider)) {
-                return constructResponse(false, String.format(MESSAGE_FAIL_PROVIDER, provider));
+                throw new QueueException(String.format(MESSAGE_FAIL_PROVIDER, provider));
             }
+            result.setProvider(provider);
             LOGGER.debug("provider: {}", provider);
 
             QueueType queueType = QueueType.fromString(obj.getString("queueType"));
             if (queueType == null) {
-                return constructResponse(false, String.format(MESSAGE_FAIL_QUEUETYPE, obj.getString("queueType")));
+                throw new QueueException(String.format(MESSAGE_FAIL_QUEUETYPE, obj.getString("queueType")));
             }
+            result.setQueueType(queueType);
             LOGGER.debug("QueueType: {}", queueType);
 
-            boolean includeDeleted = obj.getBoolean("includeDeleted");
+            boolean includeDeleted = Boolean.parseBoolean(obj.getString("includeDeleted"));
+            result.setIncludeDeleted(includeDeleted);
             LOGGER.debug("includeDeleted: {}", includeDeleted);
 
             String agencyString = obj.getString("agencyText");
@@ -127,76 +322,30 @@ public class QueueAPI {
             }
 
             if (cleanedAgencyList.size() == 0) {
-                return constructResponse(false, MESSAGE_FAIL_AGENCY_MISSING);
+                throw new QueueException(MESSAGE_FAIL_AGENCY_MISSING);
             }
 
             Set<Integer> agencyList = new HashSet<>();
             final Pattern p = Pattern.compile("(\\d{6})"); // Digit, 6 chars
             for (String agency : cleanedAgencyList) {
                 if (!p.matcher(agency).find()) {
-                    return constructResponse(false, String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
+                    throw new QueueException(String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
                 }
                 if (!allowedAgencies.containsAll(Collections.singleton(agency))) {
-                    return constructResponse(false, String.format(MESSAGE_FAIL_INVAILD_AGENCY_ID, agency, queueType.getCatalogingTemplateSet()));
+                    throw new QueueException(String.format(MESSAGE_FAIL_INVAILD_AGENCY_ID, agency, queueType.getCatalogingTemplateSet()));
                 }
                 LOGGER.debug("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
             }
+            result.setAgencyIds(agencyList);
 
-            LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
-
-            Set<RecordId> holdingsItemsRecordIds, fbsRecordIds, recordMap = null;
-
-            switch (queueType.getKey()) {
-                case QueueType.KEY_FFU:
-                    recordMap = rawrepo.getFFURecords(agencyList, includeDeleted);
-                    break;
-                case QueueType.KEY_FBS_RR:
-                    recordMap = rawrepo.getFBSRecords(agencyList, includeDeleted);
-                    break;
-                case QueueType.KEY_FBS_HOLDINGS:
-                    holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
-                    fbsRecordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
-                    recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
-                    break;
-                case QueueType.KEY_FBS_EVERYTHING:
-                    holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
-                    fbsRecordIds = rawrepo.getFBSRecords(agencyList, includeDeleted);
-                    recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
-                    // Rawrepo might contain records which the library doesn't have holdings on, so we have to add
-                    // the FBS records to the list as well
-                    recordMap.addAll(fbsRecordIds);
-                    break;
+            if (obj.containsKey("chunk")) {
+                result.setChunk(obj.getString("chunk"));
             }
 
-            List<String> bibliographicRecordIdList = new ArrayList<>();
-            List<Integer> agencyListBulk = new ArrayList<>();
-            List<String> providerList = new ArrayList<>();
-            List<Boolean> changedList = new ArrayList<>();
-            List<Boolean> leafList = new ArrayList<>();
-            if (recordMap.size() > 0) {
-                for (RecordId recordId : recordMap) {
-                    LOGGER.debug(recordId.toString());
-                    bibliographicRecordIdList.add(recordId.bibliographicRecordId);
-                    agencyListBulk.add(recordId.agencyId);
-                    providerList.add(provider);
-                    changedList.add(queueType.isChanged());
-                    leafList.add(queueType.isLeaf());
-                }
-
-                LOGGER.debug("{} records will be enqueued", recordMap.size());
-
-                rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
-
-                return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
-            } else {
-                return constructResponse(true, MESSAGE_NO_RECORDS);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Something happened:", e);
-            return Response.serverError().build();
+            return result;
         } finally {
-            LOGGER.exit(res);
+            LOGGER.exit(result);
         }
     }
 
@@ -224,7 +373,7 @@ public class QueueAPI {
         return result;
     }
 
-    private Response constructResponse(boolean validated, String message) throws Exception {
+    private Response constructResponse(boolean validated, String message) {
         JsonObjectBuilder responseJSON = Json.createObjectBuilder();
         responseJSON.add("validated", validated);
         responseJSON.add("message", message);

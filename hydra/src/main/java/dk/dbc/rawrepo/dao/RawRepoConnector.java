@@ -26,9 +26,6 @@ public class RawRepoConnector {
     private static final String SELECT_PROVIDERS = "SELECT DISTINCT(provider) FROM queuerules";
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
 
-    private static Connection rawRepoConnection;
-
-
     @PostConstruct
     public void postConstruct() {
         LOGGER.entry();
@@ -37,15 +34,22 @@ public class RawRepoConnector {
 
         try {
             LOGGER.info("Connecting to Rawrepo URL {}", System.getenv().get(ApplicationConstants.RAWREPO_URL));
-            rawRepoConnection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.RAWREPO_URL),
-                    System.getenv().get(ApplicationConstants.RAWREPO_USER),
-                    System.getenv().get(ApplicationConstants.RAWREPO_PASS));
-            rawRepoConnection.setAutoCommit(true);
+            Connection connection = getConnection();
+            connection.close();
         } catch (SQLException ex) {
             throw new RuntimeException(ex); // Can't throw checked exceptions from postConstruct
         } finally {
             LOGGER.exit();
         }
+    }
+
+    private Connection getConnection() throws SQLException {
+        Connection connection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.RAWREPO_URL),
+                System.getenv().get(ApplicationConstants.RAWREPO_USER),
+                System.getenv().get(ApplicationConstants.RAWREPO_PASS));
+        connection.setAutoCommit(true);
+
+        return connection;
     }
 
     private void checkProperties() {
@@ -67,7 +71,7 @@ public class RawRepoConnector {
         LOGGER.entry();
         List<String> result = new ArrayList<>();
 
-        try (CallableStatement stmt = rawRepoConnection.prepareCall(SELECT_PROVIDERS)) {
+        try (CallableStatement stmt = getConnection().prepareCall(SELECT_PROVIDERS)) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     result.add(resultSet.getString("provider"));
@@ -88,7 +92,7 @@ public class RawRepoConnector {
         HashMap<String, QueueProvider> providerMap = new HashMap<>();
         List<QueueProvider> result = new ArrayList<>();
 
-        try (CallableStatement stmt = rawRepoConnection.prepareCall(SELECT_QUEUERULES_ALL)) {
+        try (CallableStatement stmt = getConnection().prepareCall(SELECT_QUEUERULES_ALL)) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 QueueProvider provider;
                 while (resultSet.next()) {
@@ -120,12 +124,42 @@ public class RawRepoConnector {
     }
 
     @Stopwatch
-    public Set<RecordId> getFFURecords(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public Set<RecordId> getEnrichmentForAgencies(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
         Set<RecordId> result = new HashSet<>();
 
-        try {
-            result = getRecordsForLibraries(agencies, includeDeleted);
+        // There is no smart or elegant way of doing a select 'in' clause, so this will have to do
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid IN (");
+        for (int i = 0; i < agencies.size(); i++) {
+            if (i > 0)
+                sb.append(", ");
+            sb.append("?");
+        }
+        sb.append(")");
+        // By default deleted records are included with select *, so exclude them if they are not wanted
+        if (!includeDeleted) {
+            sb.append(" AND deleted = false");
+        }
+        sb.append(" AND mimetype = 'text/enrichment+marcxchange'");
+
+        String statement = sb.toString();
+
+        try (CallableStatement stmt = getConnection().prepareCall(statement)) {
+            int i = 1;
+            for (Integer agencyId : agencies) {
+                stmt.setInt(i++, agencyId);
+            }
+
+            LOGGER.debug("Executing statement: {}", statement);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    final String bibliographicRecordId = resultSet.getString("bibliographicrecordid");
+                    final Integer agencyId = resultSet.getInt("agencyid");
+
+                    result.add(new RecordId(bibliographicRecordId, agencyId));
+                }
+            }
 
             return result;
         } catch (SQLException ex) {
@@ -136,22 +170,7 @@ public class RawRepoConnector {
     }
 
     @Stopwatch
-    public Set<RecordId> getFBSRecords(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
-        LOGGER.entry(agencies, includeDeleted);
-        Set<RecordId> result = new HashSet<>();
-
-        try {
-            result = getRecordsForLibraries(agencies, includeDeleted);
-
-            return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
-        } finally {
-            LOGGER.exit(result);
-        }
-    }
-
-    private Set<RecordId> getRecordsForLibraries(Set<Integer> agencies, boolean includeDeleted) throws Exception {
+    public Set<RecordId> getRecordsForAgencies(Set<Integer> agencies, boolean includeDeleted) throws Exception {
         LOGGER.entry(agencies, includeDeleted);
         Set<RecordId> result = new HashSet<>();
 
@@ -171,7 +190,7 @@ public class RawRepoConnector {
 
         String statement = sb.toString();
 
-        try (CallableStatement stmt = rawRepoConnection.prepareCall(statement)) {
+        try (CallableStatement stmt = getConnection().prepareCall(statement)) {
             int i = 1;
             for (Integer agencyId : agencies) {
                 stmt.setInt(i++, agencyId);
@@ -249,7 +268,7 @@ public class RawRepoConnector {
         }
 
         List<EnqueueBulkResult> result = new ArrayList<>();
-        try (CallableStatement stmt = rawRepoConnection.prepareCall(CALL_ENQUEUE_BULK)) {
+        try (CallableStatement stmt = getConnection().prepareCall(CALL_ENQUEUE_BULK)) {
             stmt.setArray(1, stmt.getConnection().createArrayOf("VARCHAR", bibliographicRecordIdList.toArray(new String[bibliographicRecordIdList.size()])));
             stmt.setArray(2, stmt.getConnection().createArrayOf("NUMERIC", agencyList.toArray(new Integer[agencyList.size()])));
             stmt.setArray(3, stmt.getConnection().createArrayOf("VARCHAR", providerList.toArray(new String[providerList.size()])));

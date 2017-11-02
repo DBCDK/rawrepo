@@ -8,7 +8,9 @@ package dk.dbc.rawrepo.common;
 public class ApplicationConstants {
 
     public static final String API_QUEUE = "/queue";
-    public static final String API_QUEUE_ENQUEUE = "enqueue";
+    public static final String API_QUEUE_VALIDATE = "validate";
+    public static final String API_QUEUE_ANALYSE = "analyse";
+    public static final String API_QUEUE_PROCESS = "process";
     public static final String API_QUEUE_PROVIDERS = "providers";
     public static final String API_QUEUE_PROVIDER_INFO = "providerInfo";
 

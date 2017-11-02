@@ -24,21 +24,33 @@
         class RestCall extends React.Component {
             constructor(props) {
                 super(props);
+                this.queueModeInput = 0;
+                this.queueModeValidated = 10;
+                this.queueModeProcessing = 20;
+                this.queueModeProcessed = 30;
+
                 this.state = {
                     mode: undefined,
+                    queueMode: this.queueModeInput,
+                    queueAnalysis: undefined,
+                    queueChunks: undefined,
+                    queueChunkIndex: 0,
+                    queueProgress: 0,
                     queueTypes: [],
                     providers: [],
                     selectedQueueType: undefined,
                     selectedAgencies: '',
                     selectedProvider: undefined,
-                    includeDeleted: false,
-                    disableButtons: false,
+                    includeDeleted: "false",
+                    isLoading: false,
                     instanceName: undefined
                 };
+
                 this.getQueueTypes = this.getQueueTypes.bind(this);
                 this.getLibrariesByCatalogingTemplateSet = this.getLibrariesByCatalogingTemplateSet.bind(this);
                 this.getRRProviders = this.getRRProviders.bind(this);
-                this.enqueue = this.enqueue.bind(this);
+                this.handleQueueValidate = this.handleQueueValidate.bind(this);
+                this.handleQueueProcess = this.handleQueueProcess.bind(this);
                 this.setQueuePage = this.setQueuePage.bind(this);
                 this.setIntrospectPage = this.setIntrospectPage.bind(this);
                 this.setUpdatePage = this.setUpdatePage.bind(this);
@@ -51,9 +63,13 @@
                 this.setDefaultValues = this.setDefaultValues.bind(this);
                 this.getProvidersLink = this.getProvidersLink.bind(this);
                 this.getSubmitButtonLabel = this.getSubmitButtonLabel.bind(this);
+                this.getProcessButtonLabel = this.getProcessButtonLabel.bind(this);
                 this.getInstanceName = this.getInstanceName.bind(this);
                 this.getHeader = this.getHeader.bind(this);
+                this.setQueueModeInput = this.setQueueModeInput.bind(this);
+                this.processQueue = this.processQueue.bind(this);
             }
+
 
             getQueueTypes() {
                 superagent.get("api/library/queueTypes").end((err, res) => {
@@ -89,8 +105,8 @@
                 }
             }
 
-            enqueue(event) {
-                this.setState({disableButtons: true});
+            handleQueueValidate(event) {
+                this.setState({isLoading: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
                     queueType: this.state.selectedQueueType.key !== undefined ? this.state.selectedQueueType.key : this.state.selectedQueueType,
@@ -98,29 +114,92 @@
                     agencyText: this.state.selectedAgencies
                 });
                 superagent
-                    .post('api/queue/enqueue')
+                    .post('api/queue/validate')
                     .send(data)
                     .type('json')
                     .set('Accept', 'application/json')
                     .then((res) => {
-                        let validated = JSON.parse(res.text).validated;
+                        let response = JSON.parse(res.text);
 
-                        if (validated) {
-                            alert('Validering Ok \n\n' +
-                                JSON.parse(res.text).message);
+                        if (response.validated) {
+                            this.setState({
+                                queueMode: this.queueModeValidated,
+                                queueAnalysis: response.analysis,
+                                queueChunks: response.chunks
+                            });
                         } else {
                             alert('VALIDERING FEJLEDE! \n\n ' +
                                 JSON.parse(res.text).message);
                         }
-                        this.setState({disableButtons: false});
+                        this.setState({isLoading: false});
                     })
                     .catch((error) => {
                         alert('FEJL! ' + error);
-                        this.setState({disableButtons: false});
+                        this.setState({isLoading: false});
                     });
                 event.preventDefault();
             }
 
+            handleQueueProcess(event) {
+                this.setState({isLoading: true, queueMode: this.queueModeProcessing});
+
+                let provider = this.state.selectedProvider;
+                let queueType = this.state.selectedQueueType.key !== undefined ? this.state.selectedQueueType.key : this.state.selectedQueueType;
+                let includeDeleted = this.state.includeDeleted;
+                let agencyText = this.state.selectedAgencies;
+                let chunks = this.state.queueChunks;
+
+                this.processQueue(provider, queueType, includeDeleted, agencyText, chunks, 0);
+
+                event.preventDefault();
+            }
+
+
+            processQueue(provider, queueType, includeDeleted, agencyText, chunks, chunkIndex) {
+                superagent
+                    .post('api/queue/process')
+                    .send(JSON.stringify({
+                        provider: provider,
+                        queueType: queueType,
+                        includeDeleted: includeDeleted,
+                        agencyText: agencyText,
+                        chunk: chunks[chunkIndex]
+                    }))
+                    .type('json')
+                    .set('Accept', 'application/json')
+                    .then((res) => {
+                        let response = JSON.parse(res.text);
+
+                        if (response.validated) {
+                            if (chunkIndex === chunks.length - 1) {
+                                this.setState({
+                                    queueMode: this.queueModeProcessed,
+                                    queueProgress: 100
+                                });
+                            } else {
+                                this.setState({
+                                    queueProgress: (chunkIndex + 1) / (chunks.length) * 100
+                                });
+                                this.processQueue(provider, queueType, includeDeleted, agencyText, chunks, chunkIndex + 1)
+                            }
+                        } else {
+                            alert('VALIDERING FEJLEDE! \n\n ' +
+                                JSON.parse(res.text).message);
+                            this.setState({
+                                queueMode: this.queueModeValidated
+                            });
+                        }
+                        this.setState({isLoading: false});
+                    })
+                    .catch((error) => {
+                        alert('FEJL! ' + error);
+                        this.setState({
+                            isLoading: false
+                        });
+                    });
+            }
+
+//850160
             onChangeQueueType(event) {
                 this.setState({selectedQueueType: event.target.value});
             }
@@ -148,7 +227,7 @@
             }
 
             setQueuePage() {
-                this.setState({mode: 'QUEUE'});
+                this.setState({mode: 'QUEUE', queueMode: this.queueModeInput});
 
                 this.getQueueTypes();
                 this.getRRProviders();
@@ -170,7 +249,7 @@
             }
 
             getProvidersLink() {
-                if (!this.state.disableButtons) {
+                if (!this.state.isLoading) {
                     return e('a', {className: "toDoc", href: "providers.html", target: "_blank"}, "Forklaring");
                 } else {
                     return e('p', null, "Forklaring");
@@ -178,17 +257,35 @@
             }
 
             getSubmitButtonLabel() {
-                if (!this.state.disableButtons) {
-                    return 'Udfør';
+                if (!this.state.isLoading) {
+                    return 'Valider';
                 } else {
                     return 'Arbejder...'
                 }
             }
 
+            getProcessButtonLabel() {
+                if (!this.state.isLoading) {
+                    return 'Processer';
+                } else {
+                    return 'Arbejder...'
+                }
+            }
+
+            setQueueModeInput() {
+                this.setState({
+                    queueMode: this.queueModeInput,
+                    queueAnalysis: undefined,
+                    queueChunks: undefined,
+                    queueChunkIndex: 0,
+                    queueProgress: 0
+                })
+            }
+
             drawQueuePage() {
                 return e('div', {className: 'container'},
                     e('h2', null, 'Queue'),
-                    e('form', {className: 'form-horizontal', onSubmit: this.enqueue},
+                    e('form', {className: 'form-horizontal', onSubmit: this.handleQueueValidate},
                         e('div', {className: "form-group"},
                             e('label', {
                                 htmlFor: 'select-queue-type',
@@ -202,7 +299,7 @@
                                         onChange: this.onChangeQueueType,
                                         value: this.state.selectedQueueType,
                                         required: true,
-                                        disabled: this.state.disableButtons
+                                        disabled: this.state.isLoading || this.state.queueMode >= this.queueModeValidated
                                     },
                                     this.state.queueTypes.map(function (item, index) {
                                             return e('option', {key: item.key, value: item.key}, item.description);
@@ -224,7 +321,7 @@
                                         onChange: this.onChangeProvider,
                                         value: this.state.selectedProvider,
                                         required: true,
-                                        disabled: this.state.disableButtons
+                                        disabled: this.state.isLoading || this.state.queueMode >= this.queueModeValidated
                                     },
                                     this.state.providers.map(function (name, index) {
                                             return e('option', {key: index, value: name}, name);
@@ -247,7 +344,7 @@
                                         value: this.state.includeDeleted,
                                         onChange: this.onChangeIncludeDeleted,
                                         required: true,
-                                        disabled: this.state.disableButtons
+                                        disabled: this.state.isLoading || this.state.queueMode >= this.queueModeValidated
                                     },
                                     [e('option', {key: 'delete-yes', value: true}, 'Ja'),
                                         e('option', {key: 'delete-no', value: false}, 'Nej')]
@@ -268,20 +365,81 @@
                                     onChange: this.onChangeAgencies,
                                     value: this.state.selectedAgencies,
                                     required: true,
-                                    disabled: this.state.disableButtons
+                                    disabled: this.state.isLoading || this.state.queueMode >= this.queueModeValidated
                                 }, null)
                             )
                         ),
                         e('div', {className: 'form-group'},
                             e('div', {className: 'col-sm-offset-2 col-sm-10'},
                                 e('button', {
-                                    className: 'btn',
+                                    className: 'btn btn-success',
                                     type: 'submit',
-                                    disabled: this.state.disableButtons
-                                }, this.getSubmitButtonLabel())
+                                    disabled: this.state.isLoading || this.state.queueMode >= this.queueModeValidated
+                                }, this.getSubmitButtonLabel()),
+                                this.state.queueMode >= this.queueModeValidated ? e('button', {
+                                    className: 'btn btn-default',
+                                    type: 'button',
+                                    onClick: this.setQueueModeInput,
+                                    disabled: this.state.isLoading || this.state.queueMode >= this.queueModeProcessing
+                                }, 'Tilbage') : null
                             )
                         )
-                    )
+                    ),
+                    this.state.queueMode >= this.queueModeValidated ?
+                        e('div', null,
+                            e('hr', null, null),
+                            e('h2', null, 'Analyse'),
+                            e('form', {className: 'form-horizontal', onSubmit: this.handleQueueProcess},
+                                e('div', {className: 'container col-sm-offset-2 col-sm-8'},
+                                    e('table', {className: 'table'},
+                                        e('thead', null,
+                                            e('tr', {key: 'queue-analysis-head'},
+                                                e('th', null, 'Biblioteksnummer'),
+                                                e('th', null, 'Antal')
+                                            )
+                                        ),
+                                        e('tbody', null,
+                                            this.state.queueAnalysis.map(function (item, index) {
+                                                return e('tr', {key: 'queue-analysis-' + item.agencyId},
+                                                    e('td', null, item.agencyId),
+                                                    e('td', null, item.count)
+                                                );
+                                            })
+                                        )
+                                    )
+                                ),
+                                e('div', {className: 'form-group'},
+                                    e('div', {className: 'col-sm-offset-2 col-sm-10'},
+                                        e('button', {
+                                            className: 'btn btn-success',
+                                            type: 'submit',
+                                            disabled: this.state.isLoading || this.state.queueMode >= this.queueModeProcessing
+                                        }, this.getProcessButtonLabel())
+                                    )
+                                )
+                            )
+                        ) : null,
+                    this.state.queueMode >= this.queueModeProcessing ?
+                        e('div', null,
+                            e('hr', null, null),
+                            e('h2', null, 'Progress: ' + Math.round(this.state.queueProgress) + '%')
+                        ) : null,
+                    this.state.queueMode === this.queueModeProcessed ?
+                        e('div', null,
+                            e('hr', null, null),
+                            e('h2', null, 'Køpålæggelse færdig!'),
+                            e('form', {className: 'form-horizontal', onSubmit: this.setQueueModeInput},
+                                e('div', {className: 'form-group'},
+                                    e('div', {className: 'col-sm-offset-2 col-sm-10'},
+                                        e('button', {
+                                            className: 'btn btn-success',
+                                            type: 'submit',
+                                            disabled: this.state.isLoading
+                                        }, "Ny køpålæggelse")
+                                    )
+                                )
+                            )
+                        ) : null,
                 );
             }
 

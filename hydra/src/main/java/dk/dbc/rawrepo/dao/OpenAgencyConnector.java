@@ -66,7 +66,7 @@ public class OpenAgencyConnector {
     }
 
     public List<QueueType> getQueueTypes() {
-        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsHoldings(), QueueType.fbsEverything());
+        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsRawrepoEnrichment(), QueueType.fbsHoldings(), QueueType.fbsEverything());
     }
 
     @Stopwatch
