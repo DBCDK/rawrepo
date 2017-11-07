@@ -18,6 +18,7 @@ public class QueueType {
     public static final String KEY_FBS_RR_ENRICHEMENT = "fbs_rr_enrich";
     public static final String KEY_FBS_HOLDINGS = "fbs_holdings";
     public static final String KEY_FBS_EVERYTHING = "fbs_everything";
+    public static final String KEY_DBC_COMMON_ONLY = "dbc_common_only";
 
     private QueueType(String key, String description) {
         this.key = key;
@@ -32,9 +33,8 @@ public class QueueType {
     * leaf = false means nothing is sent to dataio and Corepo
     *
     * BDM always want enqueuing to create a dataio job which in turn updates corepo. Therefor leaf is always true
-    * At the same time we want a "marker" in rawrepo solr so we can see something has happend, there for changed = true
-    * */
-
+    * At the same time we want a "marker" in rawrepo solr so we can see something has happend, therefor changed = true
+    */
     public static QueueType ffu() {
         QueueType queueType = new QueueType(KEY_FFU, "FFU - RR Lokalposter");
         queueType.catalogingTemplateSet = "ffu";
@@ -84,6 +84,16 @@ public class QueueType {
         return queueType;
     }
 
+    public static QueueType dbcCommon() {
+        QueueType queueType =  new QueueType(KEY_DBC_COMMON_ONLY, "DBC - Fællesposter til RR solr (uden FBS påhæng)");
+
+        queueType.catalogingTemplateSet = "dbc";
+        queueType.changed = true;
+        queueType.leaf = false;
+
+        return queueType;
+    }
+
     public static QueueType fromString(String key) {
         switch (key) {
             case (KEY_FFU):
@@ -96,6 +106,8 @@ public class QueueType {
                 return fbsHoldings();
             case (KEY_FBS_EVERYTHING):
                 return fbsEverything();
+            case (KEY_DBC_COMMON_ONLY):
+                return dbcCommon();
             default:
                 return null;
         }

@@ -9,20 +9,17 @@ import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueType;
-import dk.dbc.rawrepo.timer.Stopwatch;
 import org.perf4j.StopWatch;
 import org.perf4j.log4j.Log4JStopWatch;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
 import javax.ejb.Stateless;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-@Singleton
 @Stateless
 public class OpenAgencyConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(OpenAgencyConnector.class);
@@ -61,15 +58,6 @@ public class OpenAgencyConnector {
 
     }
 
-    public OpenAgencyServiceFromURL getService() {
-        return service;
-    }
-
-    public List<QueueType> getQueueTypes() {
-        return Arrays.asList(QueueType.ffu(), QueueType.fbsRawrepo(), QueueType.fbsRawrepoEnrichment(), QueueType.fbsHoldings(), QueueType.fbsEverything());
-    }
-
-    @Stopwatch
     public Set<String> getLibrariesByCatalogingTemplateSet(String template) throws OpenAgencyException {
         LOGGER.entry(template);
         StopWatch watch = new Log4JStopWatch("service.openagency.getLibrariesByCatalogingTemplateSet");

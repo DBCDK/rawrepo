@@ -11,11 +11,12 @@ import dk.dbc.rawrepo.dao.OpenAgencyConnector;
 import dk.dbc.rawrepo.dao.RawRepoConnector;
 import dk.dbc.rawrepo.json.QueueException;
 import dk.dbc.rawrepo.json.QueueProvider;
-import dk.dbc.rawrepo.json.QueueRequest;
+import dk.dbc.rawrepo.json.QueueValidateRequest;
 import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import net.logstash.logback.encoder.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -28,8 +29,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
 
 @Interceptors(StopwatchInterceptor.class)
 @Stateless
@@ -37,13 +38,14 @@ import java.util.regex.Pattern;
 public class QueueAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(QueueAPI.class);
 
-    private static final String MESSAGE_SUCCESS = "I alt %s post(er) blev fundet og er nu lagt på kø";
     private static final String MESSAGE_NO_RECORDS = "Der blev ikke fundet nogen poster, så intet er lagt på kø";
     private static final String MESSAGE_FAIL_INVALID_AGENCY_FORMAT = "Værdien \"%s\" har ikke et gyldigt format for et biblioteksnummer";
     private static final String MESSAGE_FAIL_INVAILD_AGENCY_ID = "Biblioteksnummeret %s tilhører ikke biblioteksgruppen %s";
     private static final String MESSAGE_FAIL_QUEUETYPE = "Køtypen \"%s\" kunne ikke valideres";
     private static final String MESSAGE_FAIL_PROVIDER = "Provideren %s kunne ikke valideres";
     private static final String MESSAGE_FAIL_AGENCY_MISSING = "Der skal angives mindst ét biblioteksnummer";
+
+    private static final Integer CHUNK_SIZE = 5000;
 
     @EJB
     private OpenAgencyConnector openAgency;
@@ -53,6 +55,8 @@ public class QueueAPI {
 
     @EJB
     private HoldingsItemsConnector holdingsItemsConnector;
+
+    private PassiveExpiringMap<String, List<RecordId>> chunkCache = new PassiveExpiringMap<>(1000 * 60 * 60 * 24); // 24 hours
 
     @Stopwatch
     @GET
@@ -84,66 +88,24 @@ public class QueueAPI {
         }
     }
 
-    private String recordIdsToBase64(Set<RecordId> recordIds) {
-        StringBuilder sb = new StringBuilder();
-        for (RecordId recordId : recordIds) {
-            sb.append(recordId.getBibliographicRecordId());
-            sb.append(":");
-            sb.append(Integer.toString(recordId.getAgencyId()));
-            sb.append(";");
-        }
-
-        String chunkString = sb.toString();
-
-        byte[] encodedBytes = Base64.getEncoder().encode(chunkString.getBytes());
-        return new String(encodedBytes);
-    }
-
-    private Set<RecordId> base64ToRecordIds(String base) {
-        Set<RecordId> result = new HashSet<>();
-
-        byte[] decoded = Base64.getDecoder().decode(base);
-        String decodedString = new String(decoded);
-
-        String[] split = decodedString.split(";");
-        for (String s : split) {
-            String[] splitRecordId = s.split(":");
-            RecordId recordId = new RecordId(splitRecordId[0], Integer.parseInt(splitRecordId[1]));
-            result.add(recordId);
-        }
-
-        return result;
-    }
-
-
     @Stopwatch
     @POST
     @Consumes({MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_QUEUE_VALIDATE)
     public Response validate(String inputStr) {
+        LOGGER.info("Validate request: {}", inputStr);
         String res = "";
+        String sessionId = UUID.randomUUID().toString();
 
         try {
-            QueueRequest queueRequest = parseQueueInput(inputStr);
+            QueueValidateRequest queueValidateRequest = parseQueueInput(inputStr);
 
-            Set<RecordId> recordMap = getRecordIdsForQueuing(queueRequest);
+            Set<RecordId> recordIdSet = getRecordIdsForQueuing(queueValidateRequest);
 
             Map<Integer, Integer> recordCount = new HashMap<>();
 
-            //Set<RecordId> chunk = new HashSet<>();
-            Map<Integer, Set<RecordId>> chunks = new HashMap<>();
-            Integer chunkIndex = 0;
-
-            for (RecordId recordId : recordMap) {
-                if (!chunks.containsKey(chunkIndex)) {
-                    chunks.put(chunkIndex, new HashSet<>());
-                }
-                chunks.get(chunkIndex).add(recordId);
-                if (chunks.get(chunkIndex).size() == 1000) {
-                    chunkIndex++;
-                }
-
+            for (RecordId recordId : recordIdSet) {
                 Integer agencyId = recordId.getAgencyId();
                 Integer count = 1;
 
@@ -154,6 +116,10 @@ public class QueueAPI {
 
                 recordCount.put(agencyId, count);
             }
+
+            List<RecordId> recordIdList = new ArrayList<>();
+            recordIdList.addAll(recordIdSet);
+            this.chunkCache.put(sessionId, recordIdList);
 
             JsonObjectBuilder responseJSON = Json.createObjectBuilder();
             JsonArrayBuilder analysisList = Json.createArrayBuilder();
@@ -166,12 +132,8 @@ public class QueueAPI {
                 analysisList.add(innerAnalysis);
             }
             responseJSON.add("analysis", analysisList);
-
-            JsonArrayBuilder chunkList = Json.createArrayBuilder();
-            for (int i = 0; i <= chunkIndex; i++) {
-                chunkList.add(recordIdsToBase64(chunks.get(i)));
-            }
-            responseJSON.add("chunks", chunkList);
+            responseJSON.add("chunks", (recordIdSet.size() / CHUNK_SIZE));
+            responseJSON.add("sessionId", sessionId);
             responseJSON.add("validated", true);
 
             res = responseJSON.build().toString();
@@ -187,16 +149,17 @@ public class QueueAPI {
         }
     }
 
-    private Set<RecordId> getRecordIdsForQueuing(QueueRequest queueRequest) throws Exception {
+    private Set<RecordId> getRecordIdsForQueuing(QueueValidateRequest queueValidateRequest) throws Exception {
         Set<RecordId> holdingsItemsRecordIds, fbsRecordIds, recordMap = null;
-        QueueType queueType = queueRequest.getQueueType();
-        Set<Integer> agencyList = queueRequest.getAgencyIds();
-        boolean includeDeleted = queueRequest.isIncludeDeleted();
+        QueueType queueType = queueValidateRequest.getQueueType();
+        Set<Integer> agencyList = queueValidateRequest.getAgencyIds();
+        boolean includeDeleted = queueValidateRequest.isIncludeDeleted();
 
         switch (queueType.getKey()) {
-            case QueueType.KEY_FFU:
-                recordMap = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
+            case QueueType.KEY_DBC_COMMON_ONLY:
+                recordMap = rawrepo.getRecordsForDBC(agencyList, includeDeleted);
                 break;
+            case QueueType.KEY_FFU:
             case QueueType.KEY_FBS_RR:
                 recordMap = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
                 break;
@@ -230,41 +193,36 @@ public class QueueAPI {
         String res = "";
 
         try {
+            QueueValidateRequest queueValidateRequest = parseQueueInput(inputStr);
 
-            QueueRequest queueRequest = parseQueueInput(inputStr);
-            String provider = queueRequest.getProvider();
-            QueueType queueType = queueRequest.getQueueType();
-            Set<Integer> agencyList = queueRequest.getAgencyIds();
+            String provider = queueValidateRequest.getProvider();
+            QueueType queueType = queueValidateRequest.getQueueType();
+            String sessionId = queueValidateRequest.getSessionId();
+            Integer chunkIndex = queueValidateRequest.getChunk();
 
-            LOGGER.debug("A total of {} agencies was found in input. Looking for records...", agencyList.size());
-
-            //Set<RecordId> recordMap = getRecordIdsForQueuing(queueRequest);
-            /*Set<RecordId> recordMap = new HashSet<>();
-            for (String chunk : queueRequest.getChunks()) {
-                recordMap.addAll(base64ToRecordIds(chunk));
-            }
-*/
-            Set<RecordId> recordMap = base64ToRecordIds(queueRequest.getChunk());
+            List<RecordId> sessionCache = this.chunkCache.get(sessionId);
+            List<RecordId> chunk = sessionCache.subList(Math.max(0, chunkIndex * CHUNK_SIZE),
+                    Math.min(sessionCache.size(), (chunkIndex + 1) * CHUNK_SIZE));
 
             List<String> bibliographicRecordIdList = new ArrayList<>();
             List<Integer> agencyListBulk = new ArrayList<>();
             List<String> providerList = new ArrayList<>();
             List<Boolean> changedList = new ArrayList<>();
             List<Boolean> leafList = new ArrayList<>();
-            if (recordMap.size() > 0) {
-                for (RecordId recordId : recordMap) {
-                    bibliographicRecordIdList.add(recordId.bibliographicRecordId);
-                    agencyListBulk.add(recordId.agencyId);
+            if (chunk.size() > 0) {
+                LOGGER.debug("{} records will be enqueued", chunk.size());
+
+                for (RecordId recordId : chunk) {
+                    bibliographicRecordIdList.add(recordId.getBibliographicRecordId());
+                    agencyListBulk.add(recordId.getAgencyId());
                     providerList.add(provider);
                     changedList.add(queueType.isChanged());
                     leafList.add(queueType.isLeaf());
                 }
 
-                LOGGER.debug("{} records will be enqueued", recordMap.size());
-
                 rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
-                return constructResponse(true, String.format(MESSAGE_SUCCESS, recordMap.size()));
+                return constructResponse(true, "");
             } else {
                 return constructResponse(true, MESSAGE_NO_RECORDS);
             }
@@ -278,9 +236,8 @@ public class QueueAPI {
         }
     }
 
-    private QueueRequest parseQueueInput(String inputStr) throws Exception {
-        //LOGGER.info("Input string: {}", inputStr);
-        QueueRequest result = new QueueRequest();
+    private QueueValidateRequest parseQueueInput(String inputStr) throws Exception {
+        QueueValidateRequest result = new QueueValidateRequest();
 
         try {
             JsonReader reader = Json.createReader(new StringReader(inputStr));
@@ -293,21 +250,17 @@ public class QueueAPI {
                 throw new QueueException(String.format(MESSAGE_FAIL_PROVIDER, provider));
             }
             result.setProvider(provider);
-            LOGGER.debug("provider: {}", provider);
 
             QueueType queueType = QueueType.fromString(obj.getString("queueType"));
             if (queueType == null) {
                 throw new QueueException(String.format(MESSAGE_FAIL_QUEUETYPE, obj.getString("queueType")));
             }
             result.setQueueType(queueType);
-            LOGGER.debug("QueueType: {}", queueType);
 
             boolean includeDeleted = Boolean.parseBoolean(obj.getString("includeDeleted"));
             result.setIncludeDeleted(includeDeleted);
-            LOGGER.debug("includeDeleted: {}", includeDeleted);
 
             String agencyString = obj.getString("agencyText");
-            LOGGER.debug("agencyString: {}", agencyString);
             agencyString = agencyString.replace("\n", ","); // Transform newline and space separation into comma separation
             agencyString = agencyString.replace(" ", ",");
             List<String> agencies = Arrays.asList(agencyString.split(","));
@@ -326,7 +279,7 @@ public class QueueAPI {
             }
 
             Set<Integer> agencyList = new HashSet<>();
-            final Pattern p = Pattern.compile("(\\d{6})"); // Digit, 6 chars
+            final Pattern p = Pattern.compile("(\\d{6})"); // Digit, length of 6
             for (String agency : cleanedAgencyList) {
                 if (!p.matcher(agency).find()) {
                     throw new QueueException(String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
@@ -334,14 +287,19 @@ public class QueueAPI {
                 if (!allowedAgencies.containsAll(Collections.singleton(agency))) {
                     throw new QueueException(String.format(MESSAGE_FAIL_INVAILD_AGENCY_ID, agency, queueType.getCatalogingTemplateSet()));
                 }
-                LOGGER.debug("Found agency {} in input agency string", agency);
                 agencyList.add(Integer.parseInt(agency));
             }
             result.setAgencyIds(agencyList);
 
             if (obj.containsKey("chunk")) {
-                result.setChunk(obj.getString("chunk"));
+                result.setChunk(obj.getInt("chunk"));
             }
+
+            if (obj.containsKey("sessionId")) {
+                result.setSessionId(obj.getString("sessionId"));
+            }
+
+            LOGGER.info(result.toString());
 
             return result;
         } finally {
@@ -380,9 +338,7 @@ public class QueueAPI {
 
         String res = responseJSON.build().toString();
 
-        if (validated) {
-            LOGGER.info("Response: " + message);
-        } else {
+        if (!validated) {
             LOGGER.error("Response: " + message);
         }
 
@@ -413,6 +369,51 @@ public class QueueAPI {
         } finally {
             LOGGER.exit(res);
         }
+    }
+
+    @Stopwatch
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path(ApplicationConstants.API_QUEUE_TYPES)
+    public Response getCatalogingTemplateSets() {
+        LOGGER.entry();
+
+        List<QueueType> queueTypes = this.getQueueTypes();
+
+        String res = "";
+        try {
+            JsonObjectBuilder outerJSON = Json.createObjectBuilder();
+            JsonArrayBuilder innerJSON = Json.createArrayBuilder();
+
+            for (QueueType queueType : queueTypes) {
+                JsonObjectBuilder value = Json.createObjectBuilder();
+                value.add("key", queueType.getKey());
+                value.add("description", queueType.getDescription());
+                innerJSON.add(value);
+            }
+            outerJSON.add("values", innerJSON);
+            JsonObject jsonObject = outerJSON.build();
+            res = jsonObject.toString();
+            return Response.ok(res, MediaType.APPLICATION_JSON).build();
+        } finally {
+            LOGGER.exit(res);
+        }
+    }
+
+    private List<QueueType> getQueueTypes() {
+        List<QueueType> result = new ArrayList<>();
+        result.add(QueueType.ffu());
+        result.add(QueueType.fbsRawrepo());
+        result.add(QueueType.fbsRawrepoEnrichment());
+        result.add(QueueType.fbsHoldings());
+        result.add(QueueType.fbsEverything());
+
+        // Hack to only enable DBC queue type on basismig environment
+        if (System.getenv("INSTANCE_NAME").toLowerCase().contains("basismig")) {
+            result.add(QueueType.dbcCommon());
+        }
+
+        return result;
     }
 
 }

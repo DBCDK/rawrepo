@@ -2,15 +2,16 @@ package dk.dbc.rawrepo.json;
 
 import java.util.Set;
 
-public class QueueRequest {
+public class QueueValidateRequest {
 
     private QueueType queueType;
     private String provider;
     private Set<Integer> agencyIds;
     private boolean includeDeleted;
-    private String chunk;
+    private Integer chunk;
+    private String sessionId;
 
-    public QueueRequest() {
+    public QueueValidateRequest() {
 
     }
 
@@ -46,11 +47,31 @@ public class QueueRequest {
         this.includeDeleted = includeDeleted;
     }
 
-    public String getChunk() {
+    public Integer getChunk() {
         return chunk;
     }
 
-    public void setChunk(String chunk) {
+    public void setChunk(Integer chunk) {
         this.chunk = chunk;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @Override
+    public String toString() {
+        return "QueueValidateRequest{" +
+                "queueType=" + queueType.toString() +
+                ", provider='" + provider + '\'' +
+                ", agencyIds=" + agencyIds +
+                ", includeDeleted=" + includeDeleted +
+                ", chunk=" + chunk +
+                ", sessionId='" + sessionId + '\'' +
+                '}';
     }
 }

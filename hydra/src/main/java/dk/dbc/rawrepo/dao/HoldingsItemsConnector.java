@@ -9,72 +9,63 @@ import dk.dbc.holdingsitems.HoldingsItemsDAO;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.timer.Stopwatch;
+import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.perf4j.StopWatch;
 import org.perf4j.log4j.Log4JStopWatch;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Stateless;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import javax.interceptor.Interceptors;
+import javax.sql.DataSource;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Singleton
+@Interceptors(StopwatchInterceptor.class)
 @Stateless
 public class HoldingsItemsConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(HoldingsItemsConnector.class);
 
-    private static Connection holdingsItemsConnection;
+    @Resource(lookup = "jdbc/holdingsitems")
+    DataSource globalDataSource;
 
     @PostConstruct
     public void postConstruct() {
-        LOGGER.entry();
-        StopWatch watch = new Log4JStopWatch("service.openagency.init");
+        LOGGER.debug("HoldingsItemsConnector.postConstruct()");
 
-        checkProperties();
-
-        try {
-            LOGGER.info("Connecting to Holdings Items URL {}", System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL));
-            holdingsItemsConnection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_URL),
-                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_USER),
-                    System.getenv().get(ApplicationConstants.HOLDINGS_ITEMS_PASS));
-            holdingsItemsConnection.setAutoCommit(true);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            watch.stop();
-            LOGGER.exit();
-        }
-
-    }
-
-    private void checkProperties() {
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_URL)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_URL must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_USER)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_USER must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.HOLDINGS_ITEMS_PASS)) {
-            throw new RuntimeException("HOLDINGS_ITEMS_PASS must have a value");
+        if (!healthCheck()) {
+            throw new RuntimeException("Unable to connection to Holdings Items"); // Can't throw checked exceptions from postConstruct
         }
     }
+
+    public boolean healthCheck() {
+        try (Connection connection = globalDataSource.getConnection()) {
+            try (CallableStatement stmt = connection.prepareCall("SELECT 1")) {
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    resultSet.next();
+
+                    return true;
+                }
+            }
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
 
     @Stopwatch
     public Set<RecordId> getHoldingsRecords(Set<Integer> agencies) throws Exception {
         LOGGER.entry(agencies);
         Set<RecordId> result = new HashSet<>();
-        try {
+        try (Connection connection = globalDataSource.getConnection()) {
             for (Integer agencyId : agencies) {
-                HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(holdingsItemsConnection);
+                HoldingsItemsDAO holdingsItemsDAO = HoldingsItemsDAO.newInstance(connection);
                 Set<String> bibliographicRecordIds = holdingsItemsDAO.getBibliographicIds(agencyId);
 
                 for (String bibliographicRecordId : bibliographicRecordIds) {

@@ -50,7 +50,6 @@ public class LibraryAPI {
             try {
                 Set<String> libraries = openAgency.getLibrariesByCatalogingTemplateSet(template);
 
-
                 JsonObjectBuilder outerJSON = Json.createObjectBuilder();
                 JsonArrayBuilder innerJSON = Json.createArrayBuilder();
                 for (String set : libraries) {
@@ -69,36 +68,4 @@ public class LibraryAPI {
             LOGGER.exit(res);
         }
     }
-
-
-    @Stopwatch
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    @Path(ApplicationConstants.API_LIBRARY_QUEUE_TYPES)
-    public Response getCatalogingTemplateSets() {
-        LOGGER.entry();
-
-        List<QueueType> queueTypes = openAgency.getQueueTypes();
-
-        String res = "";
-        try {
-            JsonObjectBuilder outerJSON = Json.createObjectBuilder();
-            JsonArrayBuilder innerJSON = Json.createArrayBuilder();
-
-            for (QueueType queueType : queueTypes) {
-                JsonObjectBuilder value = Json.createObjectBuilder();
-                value.add("key", queueType.getKey());
-                value.add("description", queueType.getDescription());
-                innerJSON.add(value);
-            }
-            outerJSON.add("values", innerJSON);
-            JsonObject jsonObject = outerJSON.build();
-            res = jsonObject.toString();
-            return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } finally {
-            LOGGER.exit(res);
-        }
-    }
-
-
 }

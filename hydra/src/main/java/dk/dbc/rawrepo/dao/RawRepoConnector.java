@@ -6,18 +6,25 @@
 package dk.dbc.rawrepo.dao;
 
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.json.QueueProvider;
 import dk.dbc.rawrepo.json.QueueWorker;
 import dk.dbc.rawrepo.timer.Stopwatch;
+import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.ejb.Stateless;
-import java.sql.*;
+import javax.interceptor.Interceptors;
+import javax.sql.DataSource;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
+@Interceptors(StopwatchInterceptor.class)
 @Stateless
 public class RawRepoConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(RawRepoConnector.class);
@@ -26,56 +33,41 @@ public class RawRepoConnector {
     private static final String SELECT_PROVIDERS = "SELECT DISTINCT(provider) FROM queuerules";
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
 
+    @Resource(lookup = "jdbc/rawrepo")
+    private DataSource globalDataSource;
+
     @PostConstruct
     public void postConstruct() {
-        LOGGER.entry();
+        LOGGER.debug("RawRepoConnector.postConstruct()");
 
-        checkProperties();
+        if (!healthCheck()) {
+            throw new RuntimeException("Unable to connection to RawRepo"); // Can't throw checked exceptions from postConstruct
+        }
+    }
 
-        try {
-            LOGGER.info("Connecting to Rawrepo URL {}", System.getenv().get(ApplicationConstants.RAWREPO_URL));
-            Connection connection = getConnection();
-            connection.close();
+    public boolean healthCheck() {
+        try (Connection connection = globalDataSource.getConnection()) {
+            try (CallableStatement stmt = connection.prepareCall("SELECT 1")) {
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    resultSet.next();
+
+                    return true;
+                }
+            }
         } catch (SQLException ex) {
-            throw new RuntimeException(ex); // Can't throw checked exceptions from postConstruct
-        } finally {
-            LOGGER.exit();
+            return false;
         }
     }
 
-    private Connection getConnection() throws SQLException {
-        Connection connection = DriverManager.getConnection(System.getenv().get(ApplicationConstants.RAWREPO_URL),
-                System.getenv().get(ApplicationConstants.RAWREPO_USER),
-                System.getenv().get(ApplicationConstants.RAWREPO_PASS));
-        connection.setAutoCommit(true);
-
-        return connection;
-    }
-
-    private void checkProperties() {
-        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_URL)) {
-            throw new RuntimeException("OPENAGENCY_URL must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_USER)) {
-            throw new RuntimeException("RAWREPO_USER must have a value");
-        }
-
-        if (!System.getenv().containsKey(ApplicationConstants.RAWREPO_PASS)) {
-            throw new RuntimeException("RAWREPO_PASS must have a value");
-        }
-    }
-
-    @Stopwatch
     public List<String> getProviders() throws Exception {
         LOGGER.entry();
         List<String> result = new ArrayList<>();
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(SELECT_PROVIDERS);
+             ResultSet resultSet = stmt.executeQuery()) {
 
-        try (CallableStatement stmt = getConnection().prepareCall(SELECT_PROVIDERS)) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                while (resultSet.next()) {
-                    result.add(resultSet.getString("provider"));
-                }
+            while (resultSet.next()) {
+                result.add(resultSet.getString("provider"));
             }
 
             return result;
@@ -92,7 +84,8 @@ public class RawRepoConnector {
         HashMap<String, QueueProvider> providerMap = new HashMap<>();
         List<QueueProvider> result = new ArrayList<>();
 
-        try (CallableStatement stmt = getConnection().prepareCall(SELECT_QUEUERULES_ALL)) {
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(SELECT_QUEUERULES_ALL)) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 QueueProvider provider;
                 while (resultSet.next()) {
@@ -145,7 +138,8 @@ public class RawRepoConnector {
 
         String statement = sb.toString();
 
-        try (CallableStatement stmt = getConnection().prepareCall(statement)) {
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(statement)) {
             int i = 1;
             for (Integer agencyId : agencies) {
                 stmt.setInt(i++, agencyId);
@@ -190,7 +184,8 @@ public class RawRepoConnector {
 
         String statement = sb.toString();
 
-        try (CallableStatement stmt = getConnection().prepareCall(statement)) {
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(statement)) {
             int i = 1;
             for (Integer agencyId : agencies) {
                 stmt.setInt(i++, agencyId);
@@ -203,6 +198,54 @@ public class RawRepoConnector {
                     final Integer agencyId = resultSet.getInt("agencyid");
 
                     result.add(new RecordId(bibliographicRecordId, agencyId));
+                }
+            }
+
+            return result;
+        } catch (SQLException ex) {
+            throw new Exception(ex);
+        } finally {
+            LOGGER.exit(result);
+        }
+    }
+
+    @Stopwatch
+    public Set<RecordId> getRecordsForDBC(Set<Integer> agencies, boolean includeDeleted) throws Exception {
+        LOGGER.entry(agencies, includeDeleted);
+        Set<RecordId> result = new HashSet<>();
+
+        // There is no smart or elegant way of doing a select 'in' clause, so this will have to do
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT bibliographicrecordid, agencyid FROM records WHERE agencyid IN (");
+        for (int i = 0; i < agencies.size(); i++) {
+            if (i > 0)
+                sb.append(", ");
+            sb.append("?");
+        }
+        sb.append(")");
+        // By default deleted records are included with select *, so exclude them if they are not wanted
+        if (!includeDeleted) {
+            sb.append(" AND deleted = false");
+        }
+
+        String statement = sb.toString();
+
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(statement)) {
+            int i = 1;
+            for (Integer agencyId : agencies) {
+                stmt.setInt(i++, agencyId);
+            }
+
+            LOGGER.debug("Executing statement: {}", statement);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    final String bibliographicRecordId = resultSet.getString("bibliographicrecordid");
+                    final Integer agencyId = resultSet.getInt("agencyid");
+
+                    result.add(new RecordId(bibliographicRecordId, agencyId));
+                    result.add(new RecordId(bibliographicRecordId, 191919));
+
                 }
             }
 
@@ -268,7 +311,8 @@ public class RawRepoConnector {
         }
 
         List<EnqueueBulkResult> result = new ArrayList<>();
-        try (CallableStatement stmt = getConnection().prepareCall(CALL_ENQUEUE_BULK)) {
+        try (Connection connection = globalDataSource.getConnection();
+             CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_BULK)) {
             stmt.setArray(1, stmt.getConnection().createArrayOf("VARCHAR", bibliographicRecordIdList.toArray(new String[bibliographicRecordIdList.size()])));
             stmt.setArray(2, stmt.getConnection().createArrayOf("NUMERIC", agencyList.toArray(new Integer[agencyList.size()])));
             stmt.setArray(3, stmt.getConnection().createArrayOf("VARCHAR", providerList.toArray(new String[providerList.size()])));

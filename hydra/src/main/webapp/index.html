@@ -36,7 +36,9 @@
                     queueChunks: undefined,
                     queueChunkIndex: 0,
                     queueProgress: 0,
+                    queueDoContinue: true,
                     queueTypes: [],
+                    sessionId: undefined,
                     providers: [],
                     selectedQueueType: undefined,
                     selectedAgencies: '',
@@ -51,6 +53,7 @@
                 this.getRRProviders = this.getRRProviders.bind(this);
                 this.handleQueueValidate = this.handleQueueValidate.bind(this);
                 this.handleQueueProcess = this.handleQueueProcess.bind(this);
+                this.handleQueueProcessStop = this.handleQueueProcessStop.bind(this);
                 this.setQueuePage = this.setQueuePage.bind(this);
                 this.setIntrospectPage = this.setIntrospectPage.bind(this);
                 this.setUpdatePage = this.setUpdatePage.bind(this);
@@ -68,11 +71,12 @@
                 this.getHeader = this.getHeader.bind(this);
                 this.setQueueModeInput = this.setQueueModeInput.bind(this);
                 this.processQueue = this.processQueue.bind(this);
+                this.getStopButtonLabel = this.getStopButtonLabel.bind(this);
             }
 
 
             getQueueTypes() {
-                superagent.get("api/library/queueTypes").end((err, res) => {
+                superagent.get("api/queue/types").end((err, res) => {
                     this.setState({queueTypes: JSON.parse(res.text).values}, this.setDefaultValues);
                 });
             }
@@ -125,7 +129,8 @@
                             this.setState({
                                 queueMode: this.queueModeValidated,
                                 queueAnalysis: response.analysis,
-                                queueChunks: response.chunks
+                                queueChunks: response.chunks,
+                                sessionId: response.sessionId
                             });
                         } else {
                             alert('VALIDERING FEJLEDE! \n\n ' +
@@ -141,7 +146,7 @@
             }
 
             handleQueueProcess(event) {
-                this.setState({isLoading: true, queueMode: this.queueModeProcessing});
+                this.setState({isLoading: true, queueMode: this.queueModeProcessing, queueDoContinue: true});
 
                 let provider = this.state.selectedProvider;
                 let queueType = this.state.selectedQueueType.key !== undefined ? this.state.selectedQueueType.key : this.state.selectedQueueType;
@@ -154,6 +159,11 @@
                 event.preventDefault();
             }
 
+            handleQueueProcessStop(event) {
+                this.setState({queueDoContinue: false});
+
+                event.preventDefault();
+            }
 
             processQueue(provider, queueType, includeDeleted, agencyText, chunks, chunkIndex) {
                 superagent
@@ -163,7 +173,8 @@
                         queueType: queueType,
                         includeDeleted: includeDeleted,
                         agencyText: agencyText,
-                        chunk: chunks[chunkIndex]
+                        chunk: chunkIndex,
+                        sessionId: this.state.sessionId
                     }))
                     .type('json')
                     .set('Accept', 'application/json')
@@ -171,16 +182,22 @@
                         let response = JSON.parse(res.text);
 
                         if (response.validated) {
-                            if (chunkIndex === chunks.length - 1) {
+                            if (chunkIndex === chunks) {
                                 this.setState({
                                     queueMode: this.queueModeProcessed,
                                     queueProgress: 100
                                 });
                             } else {
                                 this.setState({
-                                    queueProgress: (chunkIndex + 1) / (chunks.length) * 100
+                                    queueProgress: (chunkIndex + 1) / chunks * 100
                                 });
-                                this.processQueue(provider, queueType, includeDeleted, agencyText, chunks, chunkIndex + 1)
+                                if (this.state.queueDoContinue) {
+                                    this.processQueue(provider, queueType, includeDeleted, agencyText, chunks, chunkIndex + 1);
+                                } else {
+                                    this.setState({
+                                        queueMode: this.queueModeValidated
+                                    });
+                                }
                             }
                         } else {
                             alert('VALIDERING FEJLEDE! \n\n ' +
@@ -199,7 +216,6 @@
                     });
             }
 
-//850160
             onChangeQueueType(event) {
                 this.setState({selectedQueueType: event.target.value});
             }
@@ -214,6 +230,14 @@
 
             onChangeAgencies(event) {
                 this.setState({selectedAgencies: event.target.value});
+            }
+
+            getStopButtonLabel(event) {
+                if (this.state.queueDoContinue) {
+                    return 'Stop';
+                } else {
+                    return 'Stopper...'
+                }
             }
 
             setDefaultValues() {
@@ -422,7 +446,18 @@
                     this.state.queueMode >= this.queueModeProcessing ?
                         e('div', null,
                             e('hr', null, null),
-                            e('h2', null, 'Progress: ' + Math.round(this.state.queueProgress) + '%')
+                            e('h2', null, 'Progress: ' + (Math.round(this.state.queueProgress * 100) / 100) + '%'),
+                            e('form', {className: 'form-horizontal', onSubmit: this.handleQueueProcessStop},
+                                e('div', {className: 'form-group'},
+                                    e('div', {className: 'col-sm-offset-2 col-sm-10'},
+                                        e('button', {
+                                            className: 'btn btn-success',
+                                            type: 'submit',
+                                            disabled: this.state.queueMode !== this.queueModeProcessing
+                                        }, this.getStopButtonLabel())
+                                    )
+                                )
+                            )
                         ) : null,
                     this.state.queueMode === this.queueModeProcessed ?
                         e('div', null,
