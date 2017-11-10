@@ -109,6 +109,20 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             </map>
         </index>
         <index>
+            <title lang="en">ISBN</title>
+            <title lang="da">ISBN</title>
+            <map>
+                <name set="marc">021a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">ISBN</title>
+            <title lang="da">ISBN</title>
+            <map>
+                <name set="marc">021e</name>
+            </map>
+        </index>
+        <index>
             <title lang="en">Title</title>
             <title lang="da">Titel</title>
             <map>
@@ -120,6 +134,13 @@ Open Library System is distributed in the hope that it will be useful, but WITHO
             <title lang="da">ISSN</title>
             <map>
                 <name set="marc">022a</name>
+            </map>
+        </index>
+        <index>
+            <title lang="en">S11a</title>
+            <title lang="da">S11a</title>
+            <map>
+                <name set="marc">s11a</name>
             </map>
         </index>
         <index>
