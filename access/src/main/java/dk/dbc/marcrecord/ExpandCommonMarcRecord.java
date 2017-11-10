@@ -26,26 +26,28 @@ public class ExpandCommonMarcRecord {
      *
      * @param expandableRecord The record which should be expanded
      * @param authorityRecords List of authority records to be used for expanding
-     * @throws UnsupportedEncodingException When there is encoding problem during marshalling
      * @throws RawRepoException When expansion fails (usually due to missing authority record)
-     * @throws JAXBException When the Record can't be marshalled to MarcRecord
      */
-    public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException, JAXBException, UnsupportedEncodingException {
-        MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(expandableRecord.getContent());
+    public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException {
+        try {
+            MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(expandableRecord.getContent());
 
-        Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
-        for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
-            authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue().getContent()));
+            Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
+            for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
+                authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue().getContent()));
+            }
+
+            MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
+
+            sortFields(expandedMarcRecord);
+
+            expandableRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
+        } catch (JAXBException | UnsupportedEncodingException e) {
+            throw new RawRepoException(e);
         }
-
-        MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
-
-        sortFields(expandedMarcRecord);
-
-        expandableRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
     }
 
-    public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords) throws RawRepoException, JAXBException, UnsupportedEncodingException {
+    public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords) throws RawRepoException {
         expandRecord(expandableRecord, authorityRecords, false);
     }
 
@@ -54,10 +56,9 @@ public class ExpandCommonMarcRecord {
      *
      * @param records map containing a common record and x amount of authority records
      * @return a single common record expanded with authority data
-     * @throws UnsupportedEncodingException if the records can't be decoded
-     * @throws RawRepoException             if the collection doesn't contain the necessary records
+     * @throws RawRepoException if the collection doesn't contain the necessary records
      */
-    public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records, boolean keepAutFields) throws UnsupportedEncodingException, RawRepoException {
+    public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records, boolean keepAutFields) throws RawRepoException {
         MarcRecord commonRecord = null;
         Map<String, MarcRecord> authorityRecords = new HashMap<>();
 

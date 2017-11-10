@@ -247,6 +247,18 @@ public abstract class RawRepoDAO {
         return ret;
     }
 
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
+        HashMap<String, Record> collection = new HashMap<>();
+        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger);
+
+        for (String key : collection.keySet()) {
+            expandRecord(collection.get(key), false);
+        }
+
+        return collection;
+    }
+
     /**
      * Traverse references and fill into collection
      *
@@ -391,10 +403,8 @@ public abstract class RawRepoDAO {
      * @param record       The record to expand
      * @param keepAutField Determines whether or not to keep the *5 and *6 subfields
      * @throws RawRepoException             done at failure
-     * @throws JAXBException                done at failure
-     * @throws UnsupportedEncodingException done at failure
      */
-    public void expandRecord(Record record, boolean keepAutField) throws RawRepoException, JAXBException, UnsupportedEncodingException {
+    public void expandRecord(Record record, boolean keepAutField) throws RawRepoException {
         RecordId recordId = record.getId();
         String bibliographicRecordId = recordId.getBibliographicRecordId();
         Integer agencyId = recordId.getAgencyId();
@@ -454,6 +464,15 @@ public abstract class RawRepoDAO {
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
             throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
+    }
+
+    public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
+            throws RawRepoException, MarcXMergerException {
+        Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
+
+        expandRecord(record, false);
+
+        return record;
     }
 
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger)
