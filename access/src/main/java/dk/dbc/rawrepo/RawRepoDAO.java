@@ -247,10 +247,22 @@ public abstract class RawRepoDAO {
         return ret;
     }
 
+    /**
+     * Get a collection of all the records related to the input record
+     * - All applicable records are expanded with aut data
+     * - Aut records are not included in the collection
+     *
+     * @param bibliographicRecordId String with record id
+     * @param agencyId              library number
+     * @param merger                marc merger function
+     * @return a collection of Record
+     * @throws RawRepoException     done at failure
+     * @throws MarcXMergerException done at failure
+     */
     public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
-        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger);
+        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger, false);
 
         for (String key : collection.keySet()) {
             expandRecord(collection.get(key), false);
@@ -260,7 +272,7 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     * Traverse references and fill into collection
+     * Traverse references and fill into collection. Collection always include authority records if relevant
      *
      * @param collection            A map to collect additional records in
      * @param bibliographicRecordId String with record id
@@ -271,6 +283,25 @@ public abstract class RawRepoDAO {
      */
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger) throws
             RawRepoException, MarcXMergerException {
+
+        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger, true);
+    }
+
+    /**
+     * Traverse references and fill into collection
+     * <p>
+     * Can exclude authority records from the result set
+     *
+     * @param collection            A map to collect additional records in
+     * @param bibliographicRecordId String with record id
+     * @param agencyId              library number
+     * @param merger                marc merger function
+     * @param includeAut            true = include authority record in the collection, false = don't include authority records
+     * @throws RawRepoException     done at failure
+     * @throws MarcXMergerException done at failure
+     */
+    private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAut) throws
+            RawRepoException, MarcXMergerException {
         if (!collection.containsKey(bibliographicRecordId)) {
             Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
             collection.put(bibliographicRecordId, record);
@@ -278,10 +309,13 @@ public abstract class RawRepoDAO {
             int mostCommonAgency = findParentRelationAgency(bibliographicRecordId, agencyId);
             Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
-                fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
+                if (!(870979 == parent.agencyId && !includeAut)) { // include record unless 870979 record and not includeAut
+                    fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
+                }
             }
         }
     }
+
 
     /**
      * Identify agency for a record, if agency doesn't have one self
@@ -402,7 +436,7 @@ public abstract class RawRepoDAO {
      *
      * @param record       The record to expand
      * @param keepAutField Determines whether or not to keep the *5 and *6 subfields
-     * @throws RawRepoException             done at failure
+     * @throws RawRepoException done at failure
      */
     public void expandRecord(Record record, boolean keepAutField) throws RawRepoException {
         RecordId recordId = record.getId();

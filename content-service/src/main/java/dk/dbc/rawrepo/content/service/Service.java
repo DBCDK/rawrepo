@@ -293,9 +293,7 @@ public abstract class Service {
         try (Timer.Context time = fetchMerged.time();
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
-            rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
-
-            dao.expandRecord(rawRecord, false);
+            rawRecord = dao.fetchMergedRecordExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -346,11 +344,7 @@ public abstract class Service {
                 collection = new HashMap<>();
                 collection.put(requestRecord.bibliographicRecordId, rawRecord);
             } else {
-                collection = dao.fetchRecordCollection(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
-            }
-
-            for (String key : collection.keySet()) {
-                dao.expandRecord(collection.get(key), false);
+                collection = dao.fetchRecordCollectionExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement());
             }
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
