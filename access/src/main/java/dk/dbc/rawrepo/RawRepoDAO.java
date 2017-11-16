@@ -309,9 +309,11 @@ public abstract class RawRepoDAO {
             int mostCommonAgency = findParentRelationAgency(bibliographicRecordId, agencyId);
             Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
             for (RecordId parent : parents) {
-                if (!(870979 == parent.agencyId && !includeAut)) { // include record unless 870979 record and not includeAut
-                    fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
+                // If this parent is an authority record and includeAut is false then skip parent
+                if (870979 == parent.agencyId && !includeAut) {
+                    continue;
                 }
+                fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
             }
         }
     }
