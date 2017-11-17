@@ -83,3 +83,4 @@ INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('ims-bulk','ims
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','basis-decentral','Y','A');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','broend-sync','A','Y');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','socl-sync','Y','A');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr-sync','socl-sync','Y','A');
