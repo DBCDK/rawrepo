@@ -243,7 +243,7 @@ public abstract class RawRepoDAO {
     public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
         logger.info("fetchRecordCollection 1 for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> ret = new HashMap<>();
-        fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger);
+        fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger, true);
         return ret;
     }
 
@@ -272,22 +272,6 @@ public abstract class RawRepoDAO {
     }
 
     /**
-     * Traverse references and fill into collection. Collection always include authority records if relevant
-     *
-     * @param collection            A map to collect additional records in
-     * @param bibliographicRecordId String with record id
-     * @param agencyId              library number
-     * @param merger                marc merger function
-     * @throws RawRepoException     done at failure
-     * @throws MarcXMergerException done at failure
-     */
-    private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger) throws
-            RawRepoException, MarcXMergerException {
-
-        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger, true);
-    }
-
-    /**
      * Traverse references and fill into collection
      * <p>
      * Can exclude authority records from the result set
@@ -313,7 +297,7 @@ public abstract class RawRepoDAO {
                 if (870979 == parent.agencyId && !includeAut) {
                     continue;
                 }
-                fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger);
+                fetchRecordCollection(collection, parent.getBibliographicRecordId(), agencyId, merger, includeAut);
             }
         }
     }
