@@ -687,7 +687,7 @@ public abstract class RawRepoDAO {
      * @param leaf     is this job for a tree leaf
      * @throws RawRepoException done at failure
      */
-    abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
+    public abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
 
     /**
      * Pull a job from the queue
