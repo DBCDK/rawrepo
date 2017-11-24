@@ -118,11 +118,11 @@ public class ExpandCommonMarcRecord {
     }
 
     private static void handleRepeatableField(List<MarcField> fields, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
-        Integer authIndicator = 0;
+        int authIndicator = 0;
         for (MarcField field : fields) {
             MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("å")) {
-                Integer indicator = Integer.parseInt(fieldReader.getValue("å"));
+                int indicator = Integer.parseInt(fieldReader.getValue("å"));
                 if (indicator > authIndicator) {
                     authIndicator = indicator;
                 }
@@ -151,8 +151,8 @@ public class ExpandCommonMarcRecord {
 
                 if (authRecordReader.hasField("400") || authRecordReader.hasField("500")) {
                     String indicator = field.getName();
-                    expandedField.getSubfields().add(0, new MarcSubField("å", authIndicator.toString()));
-                    indicator += "/" + authIndicator.toString();
+                    expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authIndicator)));
+                    indicator += "/" + Integer.toString(authIndicator);
                     addAdditionalFields(expandedRecord, authRecordReader.getFieldAll("400"), indicator);
                     addAdditionalFields(expandedRecord, authRecordReader.getFieldAll("500"), indicator);
 
@@ -198,7 +198,7 @@ public class ExpandCommonMarcRecord {
     private static void addMainField(MarcField field, MarcField authField, boolean keepAutFields) {
         // Find the index of where the AUT reference subfields are in the field
         // We need to add the AUT content at that location
-        Integer authSubfieldIndex = 0;
+        int authSubfieldIndex = 0;
         for (int i = 0; i < field.getSubfields().size(); i++) {
             if (field.getSubfields().get(i).getName().equals("5")) {
                 authSubfieldIndex = i;
