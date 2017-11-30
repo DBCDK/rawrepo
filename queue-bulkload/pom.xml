@@ -25,12 +25,12 @@
     <artifactId>rawrepo-queue-bulkload</artifactId>
     <packaging>jar</packaging>
     <name>rawrepo-queue-bulkload</name>
-    <version>1.7-SNAPSHOT</version>
+    <version>1.8-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.7-SNAPSHOT</version>
+        <version>1.8-SNAPSHOT</version>
     </parent>
 
     <repositories>
