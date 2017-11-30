@@ -253,7 +253,7 @@ public class ExpandCommonMarcRecordTest {
     private static Record recordFromContent(final MarcRecord marcRecord) throws Exception {
         final MarcRecordReader reader = new MarcRecordReader(marcRecord);
         final String id = reader.getRecordId();
-        final int agencyId = reader.getAgencyIdAsInteger();
+        final int agencyId = reader.getAgencyIdAsInt();
 
         return new Record() {
             boolean deleted = false;
