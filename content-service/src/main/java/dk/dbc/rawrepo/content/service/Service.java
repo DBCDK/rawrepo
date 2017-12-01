@@ -28,10 +28,7 @@ import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
-import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.*;
 import dk.dbc.rawrepo.content.service.transport.*;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -164,7 +161,7 @@ public abstract class Service {
             }
 
             try (Connection connection = rawrepo.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).openAgency(agencySearchOrder.getOpenAgencyService(), executorService).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(agencySearchOrder.getOpenAgencyService(), executorService)).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 

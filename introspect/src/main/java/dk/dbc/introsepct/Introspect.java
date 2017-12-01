@@ -114,7 +114,7 @@ public class Introspect {
         log.trace("Entering recordMergedFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(null) {
                 @Override
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);
@@ -130,7 +130,7 @@ public class Introspect {
         log.trace("Entering recordFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrder(null) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(null) {
                 @Override
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);

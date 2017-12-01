@@ -22,11 +22,9 @@ package dk.dbc.rawrepo.recordinspector;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.AgencySearchOrder;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RecordId;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.*;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -55,7 +53,7 @@ public class RecordInspector implements Closeable {
     private final RawRepoDAO dao;
     private Connection connection;
 
-    public RecordInspector(String url, AgencySearchOrder aso) throws SQLException, RawRepoException {
+    public RecordInspector(String url, OpenAgencyServiceFromURL aso) throws SQLException, RawRepoException {
         dao = openDatabase(url, aso);
         connection.setAutoCommit(false);
     }
@@ -177,7 +175,7 @@ public class RecordInspector implements Closeable {
     private static final int urlPatternPassword = 3;
     private static final int urlPatternHostPortDb = 4;
 
-    private RawRepoDAO openDatabase(String url, AgencySearchOrder aso) throws SQLException, RawRepoException {
+    private RawRepoDAO openDatabase(String url, OpenAgencyServiceFromURL aso) throws SQLException, RawRepoException {
         Matcher matcher = urlPattern.matcher(url);
         if (!matcher.find()) {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
@@ -197,7 +195,7 @@ public class RecordInspector implements Closeable {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.builder(connection).searchOrder(aso).build();
+        return RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(aso)).build();
     }
 
 }

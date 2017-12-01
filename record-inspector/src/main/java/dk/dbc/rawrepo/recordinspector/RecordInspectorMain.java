@@ -25,6 +25,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.AgencySearchOrderFallback;
 import dk.dbc.rawrepo.RawRepoException;
@@ -85,17 +86,17 @@ public class RecordInspectorMain {
                 throw new IllegalArgumentException("Syntax error");
             }
 
-            AgencySearchOrder aso;
-            if (commandLine.hasOption("show-order")) {
-                String showOrder = (String) commandLine.getOption("show-order");
+            OpenAgencyServiceFromURL aso;
+            if (commandLine.hasOption("open-agency")) {
+                String showOrder = (String) commandLine.getOption("open-agency");
                 try {
                     URL url = new URL(showOrder);
-                    aso = new AgencySearchOrderFromShowOrder(url.toExternalForm());
+                    aso = OpenAgencyServiceFromURL.builder().build(url.toExternalForm());
                 } catch (MalformedURLException malformedURLException) {
-                    aso = new AgencySearchOrderFallback(showOrder);
+                    aso = OpenAgencyServiceFromURL.builder().build(showOrder);
                 }
             } else {
-                aso = new AgencySearchOrderFallback();
+                throw new IllegalArgumentException("open-agency url is mandatory");
             }
 
             int agencyId = Integer.parseInt(arguments.get(0), 10);
@@ -195,7 +196,7 @@ public class RecordInspectorMain {
         @Override
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
-            addOption("show-order", "openagency url, or int list", false, false, string, null);
+            addOption("open-agency", "openagency url, or int list", true, false, string, null);
             addOption("relations", "show relations", false, false, null, yes);
             addOption("quiet", "text output", false, false, null, yes);
             addOption("text", "text output", false, false, null, yes);
