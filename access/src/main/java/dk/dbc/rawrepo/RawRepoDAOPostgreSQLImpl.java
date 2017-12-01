@@ -219,6 +219,10 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     }
                 }
             }
+            for (RecordMetaDataHistory his : ret) {
+                logger.info("RecordMetaDataHistory: {}", his);
+            }
+
             return ret;
         } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
