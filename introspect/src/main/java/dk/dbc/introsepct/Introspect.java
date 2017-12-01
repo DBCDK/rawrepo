@@ -23,6 +23,7 @@ package dk.dbc.introsepct;
 import dk.dbc.common.records.MarcConverter;
 import dk.dbc.common.records.MarcRecord;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.*;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffWriter;
@@ -80,6 +81,8 @@ public class Introspect {
     @Resource(lookup = "jdbc/rr")
     DataSource globalDataSource;
 
+    OpenAgencyServiceFromURL openagency;
+
     @GET
     @Path("dbs")
     public Response getDBs() {
@@ -110,11 +113,20 @@ public class Introspect {
         }
     }
 
+    private OpenAgencyServiceFromURL getOpenagency() {
+        if (openagency == null) {
+            String openAgencyUrl = System.getenv("OPENAGENCY_URL");
+            openagency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
+        }
+
+        return openagency;
+    }
+
     private Record recordMergedFetcher( Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
         log.trace("Entering recordMergedFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(null) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(getOpenagency()) {
                 @Override
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);
@@ -130,7 +142,7 @@ public class Introspect {
         log.trace("Entering recordFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
-            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(null) {
+            RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(getOpenagency()) {
                 @Override
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);
