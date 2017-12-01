@@ -25,21 +25,12 @@ import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.showorder.AgencySearchOrderFromShowOrder;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
-import javax.xml.bind.JAXBException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 
@@ -50,7 +41,6 @@ public abstract class RawRepoDAO {
 
     private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAO.class);
 
-    AgencySearchOrder agencySearchOrder;
     RelationHints relationHints;
 
     /**
@@ -59,28 +49,11 @@ public abstract class RawRepoDAO {
     public static class Builder {
 
         private final Connection connection;
-        private AgencySearchOrder builderAgencySearchOrder;
         private RelationHints builderRelationHints;
 
         private Builder(Connection connection) {
             this.connection = connection;
-            this.builderAgencySearchOrder = null;
             this.builderRelationHints = null;
-        }
-
-        /**
-         * use
-         * with a static service, to facilitate caching
-         *
-         * @param newAgencySearchOrder URL to openAgency service
-         * @return self
-         */
-        public Builder searchOrder(AgencySearchOrder newAgencySearchOrder) {
-            if (this.builderAgencySearchOrder != null) {
-                throw new IllegalStateException("Cannot set agencySearchOrder again");
-            }
-            this.builderAgencySearchOrder = newAgencySearchOrder;
-            return this;
         }
 
         /**
@@ -99,25 +72,6 @@ public abstract class RawRepoDAO {
         }
 
         /**
-         * Construct all services that uses openagency webservice
-         *
-         * @param service URL to openAgency service
-         * @param es      executor service, or null if block while fetching
-         * @return self
-         */
-        public Builder openAgency(OpenAgencyServiceFromURL service, ExecutorService es) {
-            if (this.builderAgencySearchOrder != null) {
-                throw new IllegalStateException("Cannot set agencySearchOrder again");
-            }
-            if (this.builderRelationHints != null) {
-                throw new IllegalStateException("Cannot set relationHints again");
-            }
-            this.builderAgencySearchOrder = new AgencySearchOrderFromShowOrder(service, es);
-            this.builderRelationHints = new RelationHintsOpenAgency(service, es);
-            return this;
-        }
-
-        /**
          * Construct a dao from the builder
          *
          * @return {@link RawRepoDAO} dao with default services, if none has
@@ -126,30 +80,8 @@ public abstract class RawRepoDAO {
          */
         public RawRepoDAO build() throws RawRepoException {
             try {
-                DatabaseMetaData metaData = connection.getMetaData();
-                String databaseProductName = metaData.getDatabaseProductName();
-                RawRepoDAO dao;
-                switch (databaseProductName) {
-                    case "PostgreSQL":
-                        dao = new RawRepoDAOPostgreSQLImpl(connection);
-                        break;
-                    default:
-                        String daoName = RawRepoDAO.class.getName();
-                        String className = daoName + databaseProductName + "Impl";
-                        Class<?> clazz = RawRepoDAO.class.getClassLoader().loadClass(className);
-                        if (!RawRepoDAO.class.isAssignableFrom(clazz)) {
-                            logger.error("Class found is not an instance of RawRepoDAO");
-                            throw new RawRepoException("Unable to load driver");
-                        }
-                        Constructor<?> constructor = clazz.getConstructor(Connection.class);
-                        dao = (RawRepoDAO) constructor.newInstance(connection);
-                }
+                RawRepoDAO dao = new RawRepoDAOPostgreSQLImpl(connection);
                 dao.validateConnection();
-
-                if (builderAgencySearchOrder == null) {
-                    builderAgencySearchOrder = new AgencySearchOrderFallback();
-                }
-                dao.agencySearchOrder = builderAgencySearchOrder;
 
                 if (builderRelationHints == null) {
                     builderRelationHints = new RelationHints();
@@ -157,8 +89,7 @@ public abstract class RawRepoDAO {
                 dao.relationHints = builderRelationHints;
 
                 return dao;
-            } catch (SQLException | ClassNotFoundException | RawRepoException | NoSuchMethodException | SecurityException | InstantiationException |
-                    IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            } catch (RawRepoException | SecurityException | IllegalArgumentException ex) {
                 logger.error("Caught exception trying to instantiate dao", ex);
                 throw new RawRepoException("Unable to load driver", ex);
             }
@@ -302,44 +233,23 @@ public abstract class RawRepoDAO {
         }
     }
 
-
     /**
      * Identify agency for a record, if agency doesn't have one self
      *
      * @param bibliographicRecordId record
      * @param originalAgencyId      agency requesting record
      * @param fetchDeleted          allow deleted records
-     * @return agency that has the wanted record
-     * @throws RawRepoException if no agency could be found
-     */
-    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws dk.dbc.rawrepo.RawRepoException {
-        return agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, false);
-    }
-
-    /**
-     * Identify agency for a record, if agency doesn't have one self
-     *
-     * @param bibliographicRecordId record
-     * @param originalAgencyId      agency requesting record
-     * @param fetchDeleted          allow deleted records
-     * @param prioritizeSelf        If original agency has, take despite not
      *                              first in openagency
      * @return agency that has the wanted record
      * @throws RawRepoException if no agency could be found
      */
-    private int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted, boolean prioritizeSelf) throws RawRepoException {
+    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
-        if (prioritizeSelf) {
-            if (allAgenciesWithRecord.contains(originalAgencyId)) {
-                if (fetchDeleted ?
-                        recordExistsMaybeDeleted(bibliographicRecordId, originalAgencyId) :
-                        recordExists(bibliographicRecordId, originalAgencyId)) {
-                    return originalAgencyId;
-                }
+        logger.info("agencyFor record {}:{} has record for the following agencies: {}", bibliographicRecordId, originalAgencyId, allAgenciesWithRecord);
 
-            }
-        }
-        for (Integer agencyId : agencySearchOrder.getAgenciesFor(originalAgencyId)) {
+        List<Integer> agencyPriorityList = relationHints.getProviderOptions(originalAgencyId);
+
+        for (Integer agencyId : agencyPriorityList) {
             if (!allAgenciesWithRecord.contains(agencyId)) {
                 continue;
             }
@@ -349,6 +259,7 @@ public abstract class RawRepoDAO {
                 return agencyId;
             }
         }
+
         throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + bibliographicRecordId + ":" + originalAgencyId +
                 " No agency has this record that is located in openagency showOrder");
     }
@@ -469,6 +380,22 @@ public abstract class RawRepoDAO {
         }
     }
 
+
+
+    public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
+            throws RawRepoException, MarcXMergerException {
+        Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
+
+        expandRecord(record, false);
+
+        return record;
+    }
+
+    public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger)
+            throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
+        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true);
+    }
+
     /**
      * Fetch record for id, merging more common records with this
      *
@@ -482,39 +409,8 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
-            throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
-        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
-    }
-
-    public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
             throws RawRepoException, MarcXMergerException {
-        Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted, false);
-
-        expandRecord(record, false);
-
-        return record;
-    }
-
-    public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger)
-            throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
-        return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true, true);
-    }
-
-    /**
-     * Fetch record for id, merging more common records with this
-     *
-     * @param bibliographicRecordId local id
-     * @param originalAgencyId      least to most common
-     * @param merger                marc merger function
-     * @param fetchDeleted          allow fetching of deleted records
-     * @return Record merged
-     * @throws RawRepoException     if there's a data error or record isn't
-     *                              found
-     * @throws MarcXMergerException if we can't merge record
-     */
-    private Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean prioritizeSelf)
-            throws RawRepoException, MarcXMergerException {
-        int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted, prioritizeSelf);
+        int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted);
         LinkedList<Record> records = new LinkedList<>();
         for (; ; ) {
             Record record = fetchRecord(bibliographicRecordId, agencyId);
@@ -837,9 +733,6 @@ public abstract class RawRepoDAO {
                     .map(r -> r.getBibliographicRecordId())
                     .distinct()
                     .collect(Collectors.toSet());
-//            Set<RecordId> be = children.stream()
-//                    .filter(r -> !agencies.contains(r.getAgencyId()))
-//                    .collect(Collectors.toSet());
             for (String b : bi) {
                 changedRecord(provider, b, agencies, -1, true, true);
             }

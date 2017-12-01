@@ -20,6 +20,8 @@
  */
 package dk.dbc.rawrepo;
 
+import dk.dbc.gracefulcache.CacheTimeoutException;
+import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -49,7 +51,7 @@ public class RawRepoDAOTest {
     public void testEnrichmentTrail() throws RawRepoException, MarcXMergerException {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            access.agencySearchOrder = new AgencySearchOrderFallback();
+            access.relationHints =  new MyRelationHints();
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
@@ -62,7 +64,6 @@ public class RawRepoDAOTest {
                               "G:870970", "G:1", "G:2", // BIND
                               "H:870970", "H:1", "H:2");// BIND
             MarcXMerger marcXMerger = new MarcXMerger() {
-
                     @Override
                     public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
                         return common;
@@ -74,6 +75,7 @@ public class RawRepoDAOTest {
                     }
 
                 };
+
             Assert.assertEquals("870970", access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail());
             Assert.assertEquals("870970,1", access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail());
 
@@ -87,28 +89,8 @@ public class RawRepoDAOTest {
     public void testFetchRecordCollection() throws Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            access.agencySearchOrder = new AgencySearchOrderFallback();
 
-            access.relationHints = mock(RelationHintsOpenAgency.class);
-            doAnswer(new Answer() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                    return true;
-                }
-            }).when(access.relationHints).usesCommonAgency(anyInt());
-            doAnswer(new Answer() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                    return false;
-                }
-            }).when(access.relationHints).usesCommonAgency(2);
-
-            doAnswer(new Answer() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                    return Collections.singletonList(870970);
-                }
-            }).when(access.relationHints).get(anyInt());
+            access.relationHints = new MyRelationHints();
 
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), anyObject());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
@@ -477,5 +459,58 @@ public class RawRepoDAOTest {
         "H:1,H:870970",
         "H:2,H:870970",
         "H:870970,F:870970"};
+
+    private static class MyRelationHints extends RelationHints {
+
+        MyRelationHints() {
+        }
+
+        @Override
+        public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
+            switch (agencyId) {
+                case 999999:
+                    return Collections.singletonList(999999);
+                default:
+                    return Arrays.asList(870970, 870971, 870979);
+            }
+        }
+
+        @Override
+        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+            switch (agencyId) {
+                case 999999:
+                case 2:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        @Override
+        public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
+            return false;
+        }
+
+        @Override
+        public List<Integer> getProviderOptions(int agencyId) throws RawRepoException {
+            List<Integer> result = new ArrayList<>();
+
+            switch (agencyId) {
+                case 2:
+                    result.add(2);
+                    break;
+                case 999999:
+                    result.add(999999);
+                    break;
+                default:
+                    result.add(agencyId);
+                    result.add(870970);
+                    result.add(870979);
+            }
+
+            return result;
+        }
+
+    }
 
 }

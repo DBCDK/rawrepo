@@ -32,6 +32,8 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import javax.sql.DataSource;
+
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +72,7 @@ public class RawRepoWorker implements AutoCloseable {
         try {
             synchronized (this) {
                 if (dao == null) {
-                    dao = RawRepoDAO.builder(getConnection()).openAgency(openAgency, executorService).build();
+                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(openAgency, executorService)).build();
                 }
                 return dao;
             }

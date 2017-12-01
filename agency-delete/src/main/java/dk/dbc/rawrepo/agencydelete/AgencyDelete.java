@@ -94,7 +94,7 @@ class AgencyDelete {
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if (openAgencyURL != null) {
             OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build(openAgencyURL);
-            builder.openAgency(service, null);
+            builder.relationHints(new RelationHintsOpenAgency(service));
             RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
             if (relationHints.usesCommonAgency(agencyid)) {
                 this.commonAgencies = relationHints.get(agencyid);
@@ -103,7 +103,7 @@ class AgencyDelete {
                 this.commonAgencies = Collections.EMPTY_LIST;
             }
         } else {
-            builder.searchOrder(new AgencySearchOrder(null) {
+            builder.relationHints(new RelationHints(null) {
                 @Override
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);

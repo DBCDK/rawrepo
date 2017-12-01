@@ -24,12 +24,8 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.AgencySearchOrderFallback;
-import dk.dbc.rawrepo.QueueJob;
-import dk.dbc.rawrepo.RawRepoDAO;
-import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -155,7 +151,7 @@ public class AgencyDeleteIT {
         agencyDelete.commit();
 
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                   .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
                    .build();
 
         countQueued("leaf", 2);
@@ -180,7 +176,7 @@ public class AgencyDeleteIT {
     public void testQueue() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                       .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
                        .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
@@ -203,7 +199,7 @@ public class AgencyDeleteIT {
     public void textGetIds() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                       .openAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/"), null)
+                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
                        .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "H", 888888, "S:870970");
@@ -247,7 +243,9 @@ public class AgencyDeleteIT {
     }
 
     private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).searchOrder(new AgencySearchOrderFallback("870970")).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection)
+                .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
+                .build();
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
         connection.prepareStatement("DELETE FROM records").execute();

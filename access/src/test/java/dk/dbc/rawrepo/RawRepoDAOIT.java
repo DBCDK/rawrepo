@@ -48,14 +48,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -64,6 +57,8 @@ public class RawRepoDAOIT {
 
     private Connection connection;
     private PostgresITConnection postgres;
+
+    private MarcXMerger merger;
 
     @Before
     public void setup() throws SQLException, ClassNotFoundException {
@@ -189,29 +184,65 @@ public class RawRepoDAOIT {
     }
 
     @Test
+    public void testFetchRecordSchoolLibrary() throws Exception {
+        setupData(0, "A:300041", "A:300000", "A:870970");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 300041, getMarcXMerger())), "A:300041");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 300042, getMarcXMerger())), "A:300000");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 870970, getMarcXMerger())), "A:870970");
+    }
+
+    @Test
+    public void testFetchRecordKKB() throws Exception {
+        setupData(0, "A:810014", "A:810010", "A:870970");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 810014, getMarcXMerger())), "A:810014");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 810010, getMarcXMerger())), "A:810010");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 870970, getMarcXMerger())), "A:870970");
+    }
+
+    @Test
+    public void testFetchRecordCollectionDataIO() throws Exception {
+        setupData(200000, "A:191919", "A:870970");
+        setupRelations("A:191919, A:870970");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 191919, getMarcXMerger())), "A:191919");
+    }
+
+    @Test
+    public void testFetchRecordCollectionMoreAuthority() throws Exception {
+        setupData(820000, "A:191919", "A:870970", "B:870979", "A:810010", "A:810014");
+        setupRelations("A:191919, A:870970", "A:870970,B:870979", "A:810010, A:870970", "A:810014,A:870970");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 191919, getMarcXMerger())), "A:191919", "B:870979");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 870970, getMarcXMerger())), "A:870970", "B:870979");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 810010, getMarcXMerger())), "A:810010", "B:870979");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 810014, getMarcXMerger())), "A:810014", "B:870979");
+    }
+
+    @Test
     public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, ClassNotFoundException {
         setupData(100000, "B:2,870970", "C:870970", "D:1,870970", "E:870970", "F:1,870970", "G:870970", "H:1,870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
-        MarcXMerger merger = new MarcXMerger() {
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 870970, getMarcXMerger())), "B:870970", "C:870970", "D:870970");
 
-            @Override
-            public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
-                return local;
-            }
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, getMarcXMerger())), "B:870970", "C:870970", "D:1");
 
-        };
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("G", 1, getMarcXMerger())), "B:870970", "F:1", "G:870970");
 
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 870970, merger)), "B:870970", "C:870970", "D:870970");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("H", 1, getMarcXMerger())), "B:870970", "F:1", "H:1");
 
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, merger)), "B:870970", "C:870970", "D:1");
-
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("G", 1, merger)), "B:870970", "F:1", "G:870970");
-
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("H", 1, merger)), "B:870970", "F:1", "H:1");
-
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("H", 2, merger)), "B:2", "F:870970", "H:870970");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("H", 2, getMarcXMerger())), "B:2", "F:870970", "H:870970");
 
         connection.commit();
 
@@ -224,27 +255,27 @@ public class RawRepoDAOIT {
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         MarcXMerger merger = new MarcXMerger();
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, merger)), "B:1", "C:1", "D:1");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, getMarcXMerger())), "B:1", "C:1", "D:1");
     }
 
     @Test
     public void testFetchRecordCollectionArticle() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "A:870970", "B:870971");
         setupRelations("B:870971,A:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).searchOrder(new MySearchOrder()).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         MarcXMerger merger = new MarcXMerger();
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870971, merger)), "A:870970", "B:870971");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870971, getMarcXMerger())), "A:870970", "B:870971");
     }
 
     @Test
     public void testFetchRecordCollectionAuthority() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "A:870979", "B:870979", "C:870970");
         setupRelations("C:870970,A:870979", "C:870970,B:870979");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).searchOrder(new MySearchOrder()).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         MarcXMerger merger = new MarcXMerger();
-        collectionIs(idsFromCollection(dao.fetchRecordCollection("C", 870970, merger)), "C:870970", "A:870979", "B:870979");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("C", 870970, getMarcXMerger())), "C:870970", "A:870979", "B:870979");
     }
 
     @Test
@@ -858,9 +889,25 @@ public class RawRepoDAOIT {
             "H:2,H:870970",
             "H:870970,F:870970"};
 
-    private static class MyRelationHints extends RelationHints {
+    private MarcXMerger getMarcXMerger() throws MarcXMergerException {
+
+        if (merger == null) {
+            merger = new MarcXMerger() {
+                @Override
+                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                    return local;
+                }
+            };
+        }
+
+        return merger;
+    }
+
+
+    private static class MyRelationHints extends RelationHintsOpenAgency {
 
         MyRelationHints() {
+            super(null);
         }
 
         @Override
@@ -881,18 +928,6 @@ public class RawRepoDAOIT {
                 default:
                     return true;
             }
-        }
-
-    }
-
-    private static class MySearchOrder extends AgencySearchOrder {
-        MySearchOrder() {
-            super(null);
-        }
-
-        @Override
-        public List<Integer> provide(Integer key) throws Exception {
-            return Arrays.asList(870970, 1, 2, 3, 4, 5, 6, 7, 8, 9, 870979, 870971);
         }
     }
 

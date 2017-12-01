@@ -25,6 +25,7 @@ import dk.dbc.gracefulcache.CacheTimeoutException;
 import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.gracefulcache.GracefulCache;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -58,4 +59,11 @@ public class RelationHints implements CacheProvider<Integer, List<Integer>> {
         throw new IllegalStateException("Relation Hints has not been configured");
     }
 
+    public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
+        throw new IllegalStateException("Relation Hints has not been configured");
+    }
+
+    public List<Integer> getProviderOptions(int agencyId) throws RawRepoException{
+        throw new IllegalStateException("Relation Hints has not been configured");
+    }
 }

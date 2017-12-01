@@ -31,9 +31,7 @@ import org.junit.Test;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -44,8 +42,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  *
@@ -71,7 +67,6 @@ public class AgencySearchOrderFromShowOrderIT {
     @Test
     public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException, IOException, MarcXMergerException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .searchOrder(new AgencySearchOrderFallback("870970"))
                    .relationHints(new MyRelationHints())
                    .build();
         connection.setAutoCommit(false);
@@ -201,6 +196,29 @@ public class AgencySearchOrderFromShowOrderIT {
         @Override
         public boolean usesCommonAgency(int agencyId) throws RawRepoException {
             return true;
+        }
+
+        @Override
+        public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
+            return false;
+        }
+
+        @Override
+        public List<Integer> getProviderOptions(int agencyId) throws RawRepoException {
+            List<Integer> result = new ArrayList<>();
+
+            switch (agencyId) {
+                case 999999:
+                    result.add(999999);
+                    break;
+                default:
+                    result.add(agencyId);
+                    result.add(870970);
+                    result.add(191919);
+                    result.add(870979);
+            }
+
+            return result;
         }
     }
 

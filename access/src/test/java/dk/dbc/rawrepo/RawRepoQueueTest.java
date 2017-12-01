@@ -708,7 +708,6 @@ class RawRepoMock {
                 return relationHints.getOrDefault(agencyid, Collections.unmodifiableList(defaultList));
             }
         });
-        rawrepo.agencySearchOrder = mock(AgencySearchOrder.class);
         if (print) {
             print();
         }

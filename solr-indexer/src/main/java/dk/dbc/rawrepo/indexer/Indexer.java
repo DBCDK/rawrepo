@@ -27,6 +27,7 @@ import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.*;
 import dk.dbc.rawrepo.exception.SolrIndexerRawRepoException;
 import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
@@ -50,8 +51,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  *
@@ -67,6 +66,11 @@ public class Indexer {
     @EEConfig.Name(C.SOLR_URL)
     @NotNull
     String solrUrl;
+
+    @Inject
+    @EEConfig.Name(C.OPENAGENCY_URL)
+    @NotNull
+    String openAgencyUrl;
 
     @Resource(lookup = C.DATASOURCE)
     DataSource dataSource;
@@ -102,21 +106,7 @@ public class Indexer {
 
     private SolrServer solrServer;
 
-    private static final AgencySearchOrder AGENCY_SEARCH_ORDER = new AgencySearchOrder(null) {
-
-        @Override
-        public List<Integer> provide(Integer key) throws Exception {
-            return Arrays.asList(key);
-        }
-    };
-
-    private static final RelationHints RELATION_HINTS = new RelationHints() {
-
-        @Override
-        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-            return true;
-        }
-    };
+    private OpenAgencyServiceFromURL openAgency;
 
     public Indexer() {
         this.solrServer = null;
@@ -127,6 +117,7 @@ public class Indexer {
         // Read solr url from application context
         log.info("Initializing with url {}", solrUrl);
         solrServer = new HttpSolrServer(solrUrl);
+        openAgency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
 
         processJobTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "processJob"));
         getConnectionTimer = registry.getRegistry().timer(MetricRegistry.name(Indexer.class, "getConnection"));
@@ -212,7 +203,7 @@ public class Indexer {
 
     private RawRepoDAO createDAO(final Connection connection) throws RawRepoException {
         try (Timer.Context time = createDAOTimer.time()) {
-            return RawRepoDAO.builder(connection).searchOrder(AGENCY_SEARCH_ORDER).relationHints(RELATION_HINTS).build();
+            return RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency)).build();
         }
     }
 

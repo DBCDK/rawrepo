@@ -30,6 +30,8 @@ public class C {
 
     public static final String SOLR_URL = "solrUrlRawrepo";
 
+    public static final String OPENAGENCY_URL = "openAgencyUrl";
+
     public static final String TIMEOUT = "timeout";
     public static final String TIMEOUT_DEFAULT = "5";
 

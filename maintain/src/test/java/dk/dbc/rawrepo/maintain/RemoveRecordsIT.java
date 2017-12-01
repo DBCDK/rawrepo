@@ -119,7 +119,7 @@ public class RemoveRecordsIT extends RawRepoTester {
         DataSource dataSource = mock(DataSource.class);
         when(dataSource.getConnection()).thenReturn(pg.getConnection());
 
-        OpenAgencyServiceFromURL openAgency = mock(OpenAgencyServiceFromURL.class);
+        OpenAgencyServiceFromURL openAgency = OpenAgencyServiceFromURL.builder().build("http://openagency.addi.dk/2.33/");
         return new RemoveRecords(dataSource, openAgency);
 
     }

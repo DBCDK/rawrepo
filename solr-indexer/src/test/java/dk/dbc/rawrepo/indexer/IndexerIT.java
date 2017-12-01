@@ -21,8 +21,10 @@
 package dk.dbc.rawrepo.indexer;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -50,6 +52,8 @@ public class IndexerIT {
 
     private static final String BIBLIOGRAPHIC_RECORD_ID = "A";
     private static final int AGENCY_ID = 191919;
+
+    private static final String OPENAGENCY_URL="http://openagency.addi.dk/2.33/";
 
     String jdbcUrl;
     private Connection connection;
@@ -106,6 +110,8 @@ public class IndexerIT {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(jdbcUrl);
         indexer.dataSource = dataSource;
+        indexer.openAgencyUrl = "http://openagency.addi.dk/2.33/";
+
 
         indexer.solrUrl = solrUrl;
         indexer.workerName = WORKER;
@@ -116,7 +122,7 @@ public class IndexerIT {
 
     @Test
     public void createRecord() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build(OPENAGENCY_URL))).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
@@ -142,7 +148,7 @@ public class IndexerIT {
 
     @Test
     public void deleteRecord() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build(OPENAGENCY_URL))).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         // Put in a document that is going to be deleted
@@ -170,7 +176,7 @@ public class IndexerIT {
 
     @Test(expected = SolrIndexerSolrException.class)
     public void createRecordWhenIndexingFails() throws Exception {
-        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build(OPENAGENCY_URL))).build();
         assertFalse(dao.recordExists(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID));
 
         Record record1 = dao.fetchRecord(BIBLIOGRAPHIC_RECORD_ID, AGENCY_ID);
