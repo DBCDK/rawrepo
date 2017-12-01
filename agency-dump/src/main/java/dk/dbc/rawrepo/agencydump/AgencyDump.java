@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +60,7 @@ public class AgencyDump implements AutoCloseable {
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if(openAgencyUrl != null) {
-            builder.openAgency(OpenAgencyServiceFromURL.builder().build(openAgencyUrl), null);
+            builder.relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build(openAgencyUrl)));
         }
         this.dao = builder.build();
     }
