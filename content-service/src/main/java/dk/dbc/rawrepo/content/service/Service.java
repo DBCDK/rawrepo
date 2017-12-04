@@ -68,7 +68,7 @@ public abstract class Service {
     AuthenticationService forsRights;
 
     @Inject
-    AgencySearchOrderEJB agencySearchOrder;
+    OpenAgencyEJB openAgency;
 
     @Inject
     MarcXMergerEJB marcXMerger;
@@ -161,7 +161,7 @@ public abstract class Service {
             }
 
             try (Connection connection = rawrepo.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(agencySearchOrder.getOpenAgencyService(), executorService)).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService(), executorService)).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 

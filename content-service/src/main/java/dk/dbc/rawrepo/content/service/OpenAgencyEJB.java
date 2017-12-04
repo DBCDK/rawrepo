@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
  * @author DBC {@literal <dbc.dk>}
  */
 @Singleton
-public class AgencySearchOrderEJB {
+public class OpenAgencyEJB {
 
-    private static final Logger log = LoggerFactory.getLogger(AgencySearchOrderEJB.class);
+    private static final Logger log = LoggerFactory.getLogger(OpenAgencyEJB.class);
 
 
     @Inject
