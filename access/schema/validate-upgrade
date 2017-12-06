@@ -25,11 +25,21 @@ else
     version=$(($1))
 fi
 
+if [ -d "/usr/lib/postgresql" ]; then
+    PG_PATH="/usr/lib/postgresql"
+elif [ -d "/Applications/Postgres.app/Contents/Versions" ]; then
+    PG_PATH="/Applications/Postgres.app/Contents/Versions"
+else
+    echo "Could not find pg binaries - exiting"
+    exit 1
+fi
 
-V="`ls -f /usr/lib/postgresql/ | sort -n | tail -n 1`"
+PG_VERSION="`ls -f $PG_PATH | sort -n | tail -n 1`"
+echo "Using postgresql folder $PG_PATH/$PG_VERSION"
+
 export PGHOST=/tmp/$$
 
-trap '/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data >>$tmp/log 2>&1 ; rm -rf $PGHOST' EXIT
+trap '$PG_PATH/$PG_VERSION/bin/pg_ctl stop -D $PGHOST/data >>$tmp/log 2>&1 ; rm -rf $PGHOST' EXIT
 
 if [ ! -e $name-$version.sql ]; then
     (echo '\set ON_ERROR_STOP' ; cat $name.sql) > $name-$version.sql
@@ -40,8 +50,8 @@ if [ ! -e $tmp/$name-$version.schema ] ||
     echo "building $name-$version.schema"
     (
 	rm -rf $PGHOST
-	/usr/lib/postgresql/$V/bin/pg_ctl initdb -D $PGHOST/data
-	/usr/lib/postgresql/$V/bin/pg_ctl start -w -D $PGHOST/data -l $PGHOST/log -o "-h '' -k $PGHOST" 1>&2
+	$PG_PATH/$PG_VERSION/bin/pg_ctl initdb -D $PGHOST/data
+	$PG_PATH/$PG_VERSION/bin/pg_ctl start -w -D $PGHOST/data -l $PGHOST/log -o "-h '' -k $PGHOST" 1>&2
 	cat - $name-$version.sql <<-EOT | psql postgres
 \set ON_ERROR_STOP
 CREATE DATABASE data;
@@ -49,9 +59,9 @@ CREATE ROLE duser WITH PASSWORD 'dpass' LOGIN SUPERUSER;
 GRANT ALL PRIVILEGES ON DATABASE data TO duser;
 \\connect data
 EOT
-	/usr/lib/postgresql/$V/bin/pg_dump -s -f $tmp/$name-$version.schema data
-	/usr/lib/postgresql/$V/bin/pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version.content
-	/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data
+	$PG_PATH/$PG_VERSION/bin/pg_dump -s -f $tmp/$name-$version.schema data
+	$PG_PATH/$PG_VERSION/bin/pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version.content
+	$PG_PATH/$PG_VERSION/bin/pg_ctl stop -D $PGHOST/data
 	rm -rf $PGHOST
     ) >>$tmp/log 2>&1
     if grep -q ^ERROR: $tmp/log; then
@@ -72,8 +82,8 @@ if [ ! -e $tmp/$name-$version-upgrade.schema ] ||
     echo "building $name-$version-upgrade.schema"
     (
 	rm -rf $PGHOST
-	/usr/lib/postgresql/$V/bin/pg_ctl initdb -D $PGHOST/data
-	/usr/lib/postgresql/$V/bin/pg_ctl start -w -D $PGHOST/data -l $PGHOST/log -o "-h '' -k $PGHOST" 1>&2
+	$PG_PATH/$PG_VERSION/bin/pg_ctl initdb -D $PGHOST/data
+	$PG_PATH/$PG_VERSION/bin/pg_ctl start -w -D $PGHOST/data -l $PGHOST/log -o "-h '' -k $PGHOST" 1>&2
 	cat - $name-$(($version - 1)).sql $name-$version-upgrade.sql <<-EOT | psql postgres
 \set ON_ERROR_STOP
 CREATE DATABASE data;
@@ -81,9 +91,9 @@ CREATE ROLE duser WITH PASSWORD 'dpass' LOGIN SUPERUSER;
 GRANT ALL PRIVILEGES ON DATABASE data TO duser;
 \\connect data
 EOT
-	/usr/lib/postgresql/$V/bin/pg_dump -s -f $tmp/$name-$version-upgrade.schema data
-	/usr/lib/postgresql/$V/bin/pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version-upgrade.content
-	/usr/lib/postgresql/$V/bin/pg_ctl stop -D $PGHOST/data
+	$PG_PATH/$PG_VERSION/bin/pg_dump -s -f $tmp/$name-$version-upgrade.schema data
+	$PG_PATH/$PG_VERSION/bin/pg_dump -a --inserts -t version data | grep '^INSERT INTO ' | sort > $tmp/$name-$version-upgrade.content
+	$PG_PATH/$PG_VERSION/bin/pg_ctl stop -D $PGHOST/data
 	rm -rf $PGHOST
     ) >>$tmp/log 2>&1
     if grep -q ^ERROR: $tmp/log; then
