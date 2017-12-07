@@ -8,8 +8,6 @@ package dk.dbc.rawrepo;
 import dk.dbc.openagency.client.LibraryRuleHandler;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
