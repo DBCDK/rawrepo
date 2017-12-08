@@ -38,6 +38,10 @@ public class RelationHintsOpenAgency extends RelationHints {
         }
     }
 
+    private boolean usesAuthorityAgency(int agencyId) {
+        return 870970 == agencyId || 870971 == agencyId;
+    }
+
     @Override
     public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
         return 300000 < agencyId && agencyId <= 399999;
@@ -62,6 +66,8 @@ public class RelationHintsOpenAgency extends RelationHints {
             agencyPriorityList.add(870979);
         } else if (usesCommonAgency(agencyId)) {
             agencyPriorityList.add(870970);
+            agencyPriorityList.add(870979);
+        } else if (usesAuthorityAgency(agencyId)) {
             agencyPriorityList.add(870979);
         }
 
