@@ -30,7 +30,14 @@ import org.slf4j.ext.XLoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -585,6 +592,8 @@ public abstract class RawRepoDAO {
      */
     public abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException;
 
+    public abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException;
+
     /**
      * Pull a job from the queue
      * <p>
@@ -641,22 +650,37 @@ public abstract class RawRepoDAO {
 
     /**
      * Traverse relations calling enqueue(...) to trigger manipulation of change
+     * Uses default priority
      *
      * @param provider parameter to pass to enqueue(...)
      * @param recordId the record that has been changed
      * @throws RawRepoException done at failure
      */
     public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
-        changedRecord(provider, recordId, recordId.getAgencyId(), true);
+        changedRecord(provider, recordId, recordId.getAgencyId(), true, 1000);
     }
 
-    private void changedRecord(String provider, RecordId recordId, int originalAgencyId, boolean changed) throws RawRepoException {
+    /**
+     * Traverse relations calling enqueue(...) to trigger manipulation of change
+     * Priority can
+     *
+     * @param provider parameter to pass to enqueue(...)
+     * @param recordId the record that has been changed
+     * @Param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
+     *        Default value is 1000
+     * @throws RawRepoException done at failure
+     */
+    public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException {
+        changedRecord(provider, recordId, recordId.getAgencyId(), true, priority);
+    }
+
+    private void changedRecord(String provider, RecordId recordId, int originalAgencyId, boolean changed, int priority) throws RawRepoException {
         String bibliographicRecordId = recordId.getBibliographicRecordId();
         int agencyId = recordId.getAgencyId();
         if (recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) {
                 HashSet<Integer> agencyIds = findParentsSiblingsFilter(bibliographicRecordId, agencyId);
-                changedRecord(provider, bibliographicRecordId, agencyIds, originalAgencyId, true, changed);
+                changedRecord(provider, bibliographicRecordId, agencyIds, originalAgencyId, true, changed, priority);
             } else {
                 enqueue(recordId, provider, true, true);
             }
@@ -668,7 +692,7 @@ public abstract class RawRepoDAO {
         }
     }
 
-    private void changedRecord(String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean traverse, boolean changed)
+    private void changedRecord(String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean traverse, boolean changed, int priority)
             throws RawRepoException {
         Set<Integer> agencies = new HashSet<>();
         for (Integer agencyId : agencyIds) {
@@ -734,10 +758,10 @@ public abstract class RawRepoDAO {
                     .distinct()
                     .collect(Collectors.toSet());
             for (String b : bi) {
-                changedRecord(provider, b, agencies, -1, true, true);
+                changedRecord(provider, b, agencies, -1, true, true, priority);
             }
             for (RecordId child : foreignChildren) {
-                changedRecord(provider, child, child.getAgencyId(), false);
+                changedRecord(provider, child, child.getAgencyId(), false, priority);
             }
         }
     }

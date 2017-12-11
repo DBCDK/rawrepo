@@ -26,12 +26,28 @@ import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-
-import static org.hamcrest.Matchers.containsInAnyOrder;
-
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.ext.XLogger;
+import org.slf4j.ext.XLoggerFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,20 +56,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.*;
-
 /**
  * @author DBC {@literal <dbc.dk>}
  */
 public class RawRepoDAOIT {
+    private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAOIT.class);
 
     private Connection connection;
     private PostgresITConnection postgres;
@@ -135,7 +142,7 @@ public class RawRepoDAOIT {
         connection.setAutoCommit(false);
 
         boolean recordExists = dao.recordExists("C", 12);
-        System.out.println("recordExists = " + recordExists);
+        logger.info("recordExists = " + recordExists);
         assertTrue("Record agencyid=12 exists", recordExists);
     }
 
@@ -402,7 +409,7 @@ public class RawRepoDAOIT {
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         dao.changedRecord("test", recordIdFromString("F:999999"));
-        System.out.println("getQueue() = " + getQueue());
+        logger.info("getQueue() = " + getQueue());
         collectionIs(getQueue(),
                 "F:999999:changed", "F:999999:leaf");
         connection.commit();
@@ -467,62 +474,62 @@ public class RawRepoDAOIT {
 
             connection3.setAutoCommit(false);
 
-            System.out.println("QUEUE A:1");
+            logger.info("QUEUE A:1");
             dao.enqueue(new RecordId("A", 1), "test", true, true);
             connection.commit();
             collectionIs(getQueueState(),
                     "A:1:changed:1", "A:1:leaf:1");
 
-            System.out.println("TAKE A:1");
+            logger.info("TAKE A:1");
             QueueJob job1 = dao1.dequeueWithSavepoint("changed");
 
-            System.out.println("QUEUE A:1 again");
+            logger.info("QUEUE A:1 again");
             dao.enqueue(new RecordId("A", 1), "test", true, true);
             connection.commit();
 
-            System.out.println("TEST");
+            logger.info("TEST");
             collectionIs(getQueueState(),
                     "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
 
-            System.out.println("TAKE NULL");
+            logger.info("TAKE NULL");
             QueueJob job2 = dao2.dequeueWithSavepoint("changed");
             assertNull(job2); // some in queue but one is processing
 
-            System.out.println("QUEUE B:2");
+            logger.info("QUEUE B:2");
             dao.enqueue(new RecordId("B", 2), "test", true, true); // 2 in queue
             connection.commit();
 
-            System.out.println("TEST");
+            logger.info("TEST");
             collectionIs(getQueueState(),
                     "A:1:changed:2", "A:1:leaf:1",
                     "B:2:changed:1", "B:2:leaf:1");
 
-            System.out.println("TAKE B:2");
+            logger.info("TAKE B:2");
             job2 = dao2.dequeueWithSavepoint("changed");
             assertNotNull(job2); //
 
-            System.out.println("DONE A:1");
+            logger.info("DONE A:1");
             dao1.queueFail(job1, "failure");
             connection1.commit(); // Commit 1st changed;
 
-            System.out.println("DONE B:2");
+            logger.info("DONE B:2");
             connection2.commit(); // Commit 1st changed;
 
-            System.out.println("TEST");
+            logger.info("TEST");
             collectionIs(getQueueState(),
                     "A:1:changed:1",
                     "A:1:leaf:1",
                     "B:2:leaf:1");
 
-            System.out.println("TAKE A:1#2");
+            logger.info("TAKE A:1#2");
             job1 = dao1.dequeueWithSavepoint("changed");
             assertNotNull(job1);
 
-            System.out.println("DONE A:1#2");
+            logger.info("DONE A:1#2");
             dao1.queueFail(job1, "failure");
             connection1.commit(); // Commit 1st changed;
 
-            System.out.println("TEST");
+            logger.info("TEST");
             collectionIs(getQueueState(),
                     "A:1:leaf:1",
                     "B:2:leaf:1");
@@ -531,7 +538,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testDeQueue() throws SQLException, RawRepoException {
+    public void testDequeue() throws SQLException, RawRepoException {
         setupData(100000);
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -543,6 +550,51 @@ public class RawRepoDAOIT {
 
         QueueJob job = dao.dequeue("changed");
         assertNotNull(job);
+    }
+
+    @Test
+    public void testDequeuePriority() throws SQLException, RawRepoException {
+        setupData(100000);
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        // Lower number = faster dequeuing
+        // No priority defaults to 1000
+        dao.enqueue(new RecordId("RECORD_0", 870970), "test", true, true);
+        dao.enqueue(new RecordId("RECORD_1", 870970), "test", true, true, 1000);
+        dao.enqueue(new RecordId("RECORD_2", 870970), "test", true, true, 10);
+        dao.enqueue(new RecordId("RECORD_3", 870970), "test", true, true, 1000);
+        dao.enqueue(new RecordId("RECORD_4", 870970), "test", true, true, 5);
+        dao.enqueue(new RecordId("RECORD_5", 870970), "test", true, true, 1000);
+        dao.enqueue(new RecordId("RECORD_6", 870970), "test", true, true);
+        dao.enqueue(new RecordId("RECORD_7", 870970), "test", true, true, 1000);
+        dao.enqueue(new RecordId("RECORD_8", 870970), "test", true, true, 10);
+        dao.enqueue(new RecordId("RECORD_9", 870970), "test", true, true, 42);
+
+        connection.commit();
+
+        collectionIs(getQueueState(),
+                "RECORD_0:870970:changed:1", "RECORD_0:870970:leaf:1",
+                "RECORD_1:870970:changed:1", "RECORD_1:870970:leaf:1",
+                "RECORD_2:870970:changed:1", "RECORD_2:870970:leaf:1",
+                "RECORD_3:870970:changed:1", "RECORD_3:870970:leaf:1",
+                "RECORD_4:870970:changed:1", "RECORD_4:870970:leaf:1",
+                "RECORD_5:870970:changed:1", "RECORD_5:870970:leaf:1",
+                "RECORD_6:870970:changed:1", "RECORD_6:870970:leaf:1",
+                "RECORD_7:870970:changed:1", "RECORD_7:870970:leaf:1",
+                "RECORD_8:870970:changed:1", "RECORD_8:870970:leaf:1",
+                "RECORD_9:870970:changed:1", "RECORD_9:870970:leaf:1");
+
+        assertEquals("RECORD_4", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_2", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_8", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_9", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_0", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_1", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_3", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_5", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_6", dao.dequeue("changed").job.getBibliographicRecordId());
+        assertEquals("RECORD_7", dao.dequeue("changed").job.getBibliographicRecordId());
     }
 
     @Test
@@ -682,7 +734,7 @@ public class RawRepoDAOIT {
 
         assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOf("D", 898989));
         try {
-            System.out.println("Nothing should be written here " + dao.getMimeTypeOf("E", 898989));
+            logger.info("Nothing should be written here " + dao.getMimeTypeOf("E", 898989));
         } catch (RawRepoExceptionRecordNotFound t) {
             assertEquals("Trying to find mimetype", t.getMessage());
         }

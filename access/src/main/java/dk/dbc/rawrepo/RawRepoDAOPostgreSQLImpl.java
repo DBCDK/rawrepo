@@ -25,7 +25,12 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,8 +46,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 21;
-    private static final int SCHEMA_VERSION_COMPATIBLE = 19;
+    private static final int SCHEMA_VERSION = 22;
+    private static final int SCHEMA_VERSION_COMPATIBLE = 22; //This version uses a sql function that only exist in V22
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
@@ -69,11 +74,11 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String SELECT_RELATIONS_SIBLINGS_TO_ME = "SELECT bibliographicrecordid, agencyid FROM relations WHERE refer_bibliographicrecordid=? AND refer_agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_RELATIONS_SIBLINGS_FROM_ME = "SELECT refer_bibliographicrecordid, refer_agencyid FROM relations WHERE bibliographicrecordid=? AND agencyid=? AND refer_bibliographicrecordid = bibliographicrecordid";
     private static final String SELECT_ALL_AGENCIES_FOR_ID = "SELECT agencyid FROM records WHERE bibliographicrecordid=?";
-    private static final String SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED = "SELECT agencyid FROM records WHERE bibliographicrecordid=? and deleted='f'";
+    private static final String SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED = "SELECT agencyid FROM records WHERE bibliographicrecordid=? AND deleted='f'";
     private static final String DELETE_RELATIONS = "DELETE FROM relations WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
-    private static final String CALL_ENQUEUE = "SELECT * FROM enqueue(?, ?, ?, ?, ?)";
+    private static final String CALL_ENQUEUE = "SELECT * FROM enqueue(?, ?, ?, ?, ?, ?)";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
     private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
@@ -137,7 +142,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param bibliographicRecordId String with record bibliographicRecordId
      * @param agencyId              agencyId number
      * @return fetched / new Record
-     * @throws RawRepoException     when something goes wrong
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -174,7 +179,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      * @param bibliographicRecordId String with record bibliographicRecordId
      * @param agencyId              agencyId number
      * @return truth value for the existence of the record
-     * @throws RawRepoException     when something goes wrong
+     * @throws RawRepoException when something goes wrong
      */
     @Override
     public boolean recordExists(String bibliographicRecordId, int agencyId) throws RawRepoException {
@@ -608,9 +613,14 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf) throws RawRepoException {
-        logQueue.debug("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}", job, provider, changed, leaf);
+        enqueue(job, provider, changed, leaf, 1000);
+    }
+
+    @Override
+    public void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException {
+        logQueue.debug("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
         // TODO: TEMP
-        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}", job, provider, changed, leaf);
+        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
 
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
@@ -618,7 +628,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setInt(pos++, job.getAgencyId());
             stmt.setString(pos++, provider);
             stmt.setString(pos++, changed ? "Y" : "N");
-            stmt.setString(pos, leaf ? "Y" : "N");
+            stmt.setString(pos++, leaf ? "Y" : "N");
+            stmt.setInt(pos, priority);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     if (resultSet.getBoolean(2)) {
