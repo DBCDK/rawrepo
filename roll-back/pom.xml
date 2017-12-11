@@ -24,12 +24,12 @@
     <artifactId>roll-back</artifactId>
     <packaging>jar</packaging>
     <name>${project.parent.artifactId}-${project.artifactId}</name>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.8-SNAPSHOT</version>
+        <version>1.9-SNAPSHOT</version>
     </parent>
 
     <dependencies>

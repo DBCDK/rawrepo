@@ -9,12 +9,12 @@
     <artifactId>rawrepo-hydra</artifactId>
     <packaging>war</packaging>
     <name>rawrepo-hydra</name>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.8-SNAPSHOT</version>
+        <version>1.9-SNAPSHOT</version>
     </parent>
 
     <repositories>
