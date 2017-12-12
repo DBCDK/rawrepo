@@ -1,33 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
- dbc-rawrepo-solr-indexer
- Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- Denmark. CVR: 15149043
-
- This file is part of dbc-rawrepo-solr-indexer.
-
- dbc-rawrepo-solr-indexer is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- dbc-rawrepo-solr-indexer is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with dbc-rawrepo-solr-indexer.  If not, see <http://www.gnu.org/licenses/>.
+ Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
+  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rawrepo-solr-indexer</artifactId>
-    <name>rawrepo-solr-indexer</name>
     <packaging>war</packaging>
-    <version>1.9-SNAPSHOT</version>
+    <name>rawrepo-solr-indexer</name>
 
     <parent>
         <groupId>dk.dbc</groupId>
@@ -118,7 +100,9 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>http://is.dbc.dk/job/opensearch-3rd-party-dependencies/lastSuccessfulBuild/artifact/trunk/ARTIFACTS/apache-solr-6.3.0/apache-solr-6.3.0.zip</url>
+                            <url>
+                                http://is.dbc.dk/job/opensearch-3rd-party-dependencies/lastSuccessfulBuild/artifact/trunk/ARTIFACTS/apache-solr-6.3.0/apache-solr-6.3.0.zip
+                            </url>
                             <unpack>true</unpack>
                             <outputDirectory>${test.resources}</outputDirectory>
                             <!--copied from md5 file in opensearch-3rd-party-dependencies job -->
@@ -181,7 +165,8 @@
                                     <overWrite>true</overWrite>
                                 </artifactItem>
                             </artifactItems>
-                            <outputDirectory>${test.resources}/solr-6.3.0/server/solr-webapp/webapp/WEB-INF/lib</outputDirectory>
+                            <outputDirectory>${test.resources}/solr-6.3.0/server/solr-webapp/webapp/WEB-INF/lib
+                            </outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -370,7 +355,7 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
         </dependency>
-	<dependency>
+        <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>3.1</version>

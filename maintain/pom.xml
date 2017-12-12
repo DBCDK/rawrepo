@@ -1,39 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    dbc-rawrepo-maintain
-    Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
-    Denmark. CVR: 15149043
-
-    This file is part of dbc-rawrepo-maintain.
-
-    dbc-rawrepo-maintain is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    dbc-rawrepo-maintain is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with dbc-rawrepo-maintain.  If not, see <http://www.gnu.org/licenses/>.
+ Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
+  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>rawrepo-maintain</artifactId>
+    <packaging>war</packaging>
+    <name>rawrepo-maintain</name>
 
     <parent>
         <artifactId>rawrepo</artifactId>
         <groupId>dk.dbc</groupId>
         <version>1.9-SNAPSHOT</version>
     </parent>
-
-    <artifactId>rawrepo-maintain</artifactId>
-    <packaging>war</packaging>
-    <version>1.9-SNAPSHOT</version>
-
-    <name>rawrepo-maintain</name>
 
     <properties>
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
