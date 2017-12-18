@@ -154,16 +154,23 @@ public class Indexer {
         }
 
         while (moreWork) {
+            log.info("Looping moreWork");
             Timer.Context time = processJobTimer.time();
             try (Connection connection = getConnection()) {
+                log.info("Got connection");
                 RawRepoDAO dao = createDAO(connection);
+                log.info("Created DAO connection");
                 try {
                     QueueJob job = dequeueJob(dao);
+                    log.info("dequeued Job");
 
                     if (job != null) {
                         MDC.put(TRACKING_ID, createTrackingId(job));
+                        log.info("pre process job");
                         processJob(job, dao);
+                        log.info("post process job");
                         commit(connection);
+                        log.info("connection committed");
                         processedJobs++;
                         if (processedJobs % 1000 == 0) {
                             log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
@@ -187,6 +194,7 @@ public class Indexer {
             } finally {
                 MDC.remove(TRACKING_ID);
             }
+            log.info("END Looping moreWork");
         }
         if (processedJobs > 0) {
             log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);
