@@ -219,7 +219,7 @@ CREATE TABLE queuerules (-- V18
 CREATE INDEX queue_idx_job
   ON queue (bibliographicrecordid, agencyid, worker);
 CREATE INDEX queue_idx_worker
-  ON queue (worker, queued, priority); --V4, V22
+  ON queue (worker, priority, queued); --V4, V22
 CREATE INDEX jobdiag_idx
   ON jobdiag (worker, error, queued, priority); --V7, V22
 -- DROP TYPE enqueueResult;

@@ -38,7 +38,7 @@ ALTER TABLE queue
   priority NUMERIC(4) DEFAULT 1000 NOT NULL;
 
 CREATE INDEX queue_idx_worker
-  ON queue (worker, queued, priority); --V22
+  ON queue (worker, priority, queued); --V22
 
 -- Jobdiag table
 
