@@ -3,7 +3,7 @@
  *  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
  */
 
-package dk.dbc.rawrepo.json;
+package dk.dbc.rawrepo.queue;
 
 public class QueueType {
 
@@ -13,12 +13,12 @@ public class QueueType {
     private boolean changed;
     private boolean leaf;
 
-    public static final String KEY_FFU = "ffu";
-    public static final String KEY_FBS_RR = "fbs_rr";
-    public static final String KEY_FBS_RR_ENRICHEMENT = "fbs_rr_enrich";
-    public static final String KEY_FBS_HOLDINGS = "fbs_holdings";
-    public static final String KEY_FBS_EVERYTHING = "fbs_everything";
-    public static final String KEY_DBC_COMMON_ONLY = "dbc_common_only";
+    public static final String FFU = "ffu";
+    public static final String FBS_LOCAL = "fbs_rr";
+    public static final String FBS_ENRICHMENT = "fbs_rr_enrich";
+    public static final String FBS_HOLDINGS = "fbs_holdings";
+    public static final String FBS_EVERYTHING = "fbs_everything";
+    public static final String DBC_COMMON_ONLY = "dbc_common_only";
 
     private QueueType(String key, String description) {
         this.key = key;
@@ -36,7 +36,7 @@ public class QueueType {
     * At the same time we want a "marker" in rawrepo solr so we can see something has happend, therefor changed = true
     */
     public static QueueType ffu() {
-        QueueType queueType = new QueueType(KEY_FFU, "FFU - RR Lokalposter");
+        QueueType queueType = new QueueType(FFU, "FFU - RR Lokalposter");
         queueType.catalogingTemplateSet = "ffu";
         queueType.changed = true;
         queueType.leaf = true;
@@ -45,7 +45,7 @@ public class QueueType {
     }
 
     public static QueueType fbsRawrepo() {
-        QueueType queueType =  new QueueType(KEY_FBS_RR, "FBS - RR lokalposter + RR påhængsposter");
+        QueueType queueType =  new QueueType(FBS_LOCAL, "FBS - RR lokalposter + RR påhængsposter");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -55,7 +55,7 @@ public class QueueType {
     }
 
     public static QueueType fbsRawrepoEnrichment() {
-        QueueType queueType =  new QueueType(KEY_FBS_RR_ENRICHEMENT, "FBS - RR Påhængsposter");
+        QueueType queueType =  new QueueType(FBS_ENRICHMENT, "FBS - RR Påhængsposter");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -65,7 +65,7 @@ public class QueueType {
     }
 
     public static QueueType fbsHoldings() {
-        QueueType queueType =  new QueueType(KEY_FBS_HOLDINGS, "FBS - Beholdning");
+        QueueType queueType =  new QueueType(FBS_HOLDINGS, "FBS - Beholdning");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -75,7 +75,7 @@ public class QueueType {
     }
 
     public static QueueType fbsEverything() {
-        QueueType queueType =  new QueueType(KEY_FBS_EVERYTHING, "FBS - Beholdning + RR lokalposter + RR påhængsposter");
+        QueueType queueType =  new QueueType(FBS_EVERYTHING, "FBS - Beholdning + RR lokalposter + RR påhængsposter");
 
         queueType.catalogingTemplateSet = "fbs";
         queueType.changed = true;
@@ -85,7 +85,7 @@ public class QueueType {
     }
 
     public static QueueType dbcCommon() {
-        QueueType queueType =  new QueueType(KEY_DBC_COMMON_ONLY, "DBC - Fællesposter til RR solr (uden FBS påhæng)");
+        QueueType queueType =  new QueueType(DBC_COMMON_ONLY, "DBC - Fællesposter til RR solr (uden FBS påhæng)");
 
         queueType.catalogingTemplateSet = "dbc";
         queueType.changed = true;
@@ -96,17 +96,17 @@ public class QueueType {
 
     public static QueueType fromString(String key) {
         switch (key) {
-            case (KEY_FFU):
+            case (FFU):
                 return ffu();
-            case (KEY_FBS_RR):
+            case (FBS_LOCAL):
                 return fbsRawrepo();
-            case (KEY_FBS_RR_ENRICHEMENT):
+            case (FBS_ENRICHMENT):
                 return fbsRawrepoEnrichment();
-            case (KEY_FBS_HOLDINGS):
+            case (FBS_HOLDINGS):
                 return fbsHoldings();
-            case (KEY_FBS_EVERYTHING):
+            case (FBS_EVERYTHING):
                 return fbsEverything();
-            case (KEY_DBC_COMMON_ONLY):
+            case (DBC_COMMON_ONLY):
                 return dbcCommon();
             default:
                 return null;
@@ -135,6 +135,6 @@ public class QueueType {
 
     @Override
     public String toString() {
-        return description;
+        return key;
     }
 }

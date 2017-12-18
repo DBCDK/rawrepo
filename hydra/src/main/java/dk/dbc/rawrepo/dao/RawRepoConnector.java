@@ -6,8 +6,8 @@
 package dk.dbc.rawrepo.dao;
 
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.json.QueueProvider;
-import dk.dbc.rawrepo.json.QueueWorker;
+import dk.dbc.rawrepo.queue.QueueProvider;
+import dk.dbc.rawrepo.queue.QueueWorker;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -22,7 +22,11 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Interceptors(StopwatchInterceptor.class)
 @Stateless
@@ -30,7 +34,6 @@ public class RawRepoConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(RawRepoConnector.class);
 
     private static final String SELECT_QUEUERULES_ALL = "SELECT * FROM queuerules";
-    private static final String SELECT_PROVIDERS = "SELECT DISTINCT(provider) FROM queuerules";
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
 
     @Resource(lookup = "jdbc/rawrepo")
@@ -59,27 +62,8 @@ public class RawRepoConnector {
         }
     }
 
-    public List<String> getProviders() throws Exception {
-        LOGGER.entry();
-        List<String> result = new ArrayList<>();
-        try (Connection connection = globalDataSource.getConnection();
-             CallableStatement stmt = connection.prepareCall(SELECT_PROVIDERS);
-             ResultSet resultSet = stmt.executeQuery()) {
-
-            while (resultSet.next()) {
-                result.add(resultSet.getString("provider"));
-            }
-
-            return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
-        } finally {
-            LOGGER.exit(result);
-        }
-    }
-
     @Stopwatch
-    public List<QueueProvider> getProviderDetails() throws Exception {
+    public List<QueueProvider> getProviders() throws Exception {
         LOGGER.entry();
         HashMap<String, QueueProvider> providerMap = new HashMap<>();
         List<QueueProvider> result = new ArrayList<>();
@@ -104,6 +88,7 @@ public class RawRepoConnector {
                 }
             }
 
+            // Convert from HashMap to flat list with only the values from the map
             for (String key : providerMap.keySet()) {
                 result.add(providerMap.get(key));
             }

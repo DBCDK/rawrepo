@@ -3,7 +3,7 @@
  *  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
  */
 
-package dk.dbc.rawrepo.json;
+package dk.dbc.rawrepo.queue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,11 @@ public class QueueProvider {
 
     public List<QueueWorker> getWorkers() {
         return workers;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
 }

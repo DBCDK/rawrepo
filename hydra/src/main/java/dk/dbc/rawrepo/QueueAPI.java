@@ -5,17 +5,24 @@
 
 package dk.dbc.rawrepo;
 
+import dk.dbc.commons.jsonb.JSONBContext;
+import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
+import dk.dbc.rawrepo.common.EnvironmentVariables;
 import dk.dbc.rawrepo.dao.HoldingsItemsConnector;
 import dk.dbc.rawrepo.dao.OpenAgencyConnector;
 import dk.dbc.rawrepo.dao.RawRepoConnector;
-import dk.dbc.rawrepo.json.QueueException;
-import dk.dbc.rawrepo.json.QueueProvider;
-import dk.dbc.rawrepo.json.QueueValidateRequest;
-import dk.dbc.rawrepo.json.QueueType;
+import dk.dbc.rawrepo.queue.AgencyAnalysis;
+import dk.dbc.rawrepo.queue.QueueException;
+import dk.dbc.rawrepo.queue.QueueJob;
+import dk.dbc.rawrepo.queue.QueueProcessRequest;
+import dk.dbc.rawrepo.queue.QueueProcessResponse;
+import dk.dbc.rawrepo.queue.QueueProvider;
+import dk.dbc.rawrepo.queue.QueueType;
+import dk.dbc.rawrepo.queue.QueueValidateRequest;
+import dk.dbc.rawrepo.queue.QueueValidateResponse;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
-import net.logstash.logback.encoder.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -23,12 +30,21 @@ import org.slf4j.ext.XLoggerFactory;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.json.*;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 
@@ -38,55 +54,38 @@ import java.util.regex.Pattern;
 public class QueueAPI {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(QueueAPI.class);
 
-    private static final String MESSAGE_NO_RECORDS = "Der blev ikke fundet nogen poster, så intet er lagt på kø";
-    private static final String MESSAGE_FAIL_INVALID_AGENCY_FORMAT = "Værdien \"%s\" har ikke et gyldigt format for et biblioteksnummer";
-    private static final String MESSAGE_FAIL_INVAILD_AGENCY_ID = "Biblioteksnummeret %s tilhører ikke biblioteksgruppen %s";
-    private static final String MESSAGE_FAIL_QUEUETYPE = "Køtypen \"%s\" kunne ikke valideres";
-    private static final String MESSAGE_FAIL_PROVIDER = "Provideren %s kunne ikke valideres";
+    private static final String MESSAGE_FAIL_NO_RECORDS = "Der blev ikke fundet nogen poster, så intet kan lægges på kø";
+    private static final String MESSAGE_FAIL_INVALID_AGENCY_FORMAT = "Værdien '%s' har ikke et gyldigt format for et biblioteksnummer";
+    private static final String MESSAGE_FAIL_INVAILD_AGENCY_ID = "Biblioteksnummeret '%s' tilhører ikke biblioteksgruppen %s";
+    private static final String MESSAGE_FAIL_QUEUETYPE_NULL = "Der skal angives en køtype";
+    private static final String MESSAGE_FAIL_QUEUETYPE = "Køtypen '%s' kunne ikke valideres";
+    private static final String MESSAGE_FAIL_PROVIDER_NULL = "Der skal angives en provider";
+    private static final String MESSAGE_FAIL_PROVIDER = "Provideren '%s' kunne ikke valideres";
     private static final String MESSAGE_FAIL_AGENCY_MISSING = "Der skal angives mindst ét biblioteksnummer";
+
+    private static final String MESSAGE_FAIL_SESSION_ID_NULL = "Der skal være angivet et sessionId";
+    private static final String MESSAGE_FAIL_SESSION_ID_NOT_FOUND = "SessionId '%s' blev ikke fundet";
+    private static final String MESSAGE_FAIL_CHUNK_TOO_BIG = "Chunk index '%s' er for stort";
+    private static final String MESSAGE_FAIL_CHUNK_TOO_SMALL = "Chunk index må ikke være negativt";
 
     private static final Integer CHUNK_SIZE = 5000;
 
     @EJB
-    private OpenAgencyConnector openAgency;
+    OpenAgencyConnector openAgency;
 
     @EJB
-    private RawRepoConnector rawrepo;
+    RawRepoConnector rawrepo;
 
     @EJB
-    private HoldingsItemsConnector holdingsItemsConnector;
+    HoldingsItemsConnector holdingsItemsConnector;
 
-    private PassiveExpiringMap<String, List<RecordId>> chunkCache = new PassiveExpiringMap<>(1000 * 60 * 60 * 24); // 24 hours
+    @EJB
+    EnvironmentVariables variables;
 
-    @Stopwatch
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    @Path(ApplicationConstants.API_QUEUE_PROVIDERS)
-    public Response getProviders() {
-        LOGGER.entry();
-        String res = "";
+    private final JSONBContext jsonbContext = new JSONBContext();
 
-        JsonObjectBuilder outerJSON = Json.createObjectBuilder();
-        JsonArrayBuilder innerJSON = Json.createArrayBuilder();
-
-        try {
-            List<String> providers = rawrepo.getProviders();
-
-            for (String provider : providers) {
-                innerJSON.add(provider);
-            }
-
-            outerJSON.add("providers", innerJSON);
-            JsonObject jsonObject = outerJSON.build();
-            res = jsonObject.toString();
-            return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (Exception ex) {
-            LOGGER.error("Exception during getProviders", ex);
-            return Response.serverError().build();
-        } finally {
-            LOGGER.exit(res);
-        }
-    }
+    // Not made private to facilitate easier testing
+    final PassiveExpiringMap<String, QueueJob> jobCache = new PassiveExpiringMap<>(1000 * 60 * 60 * 8); // 8 hours
 
     @Stopwatch
     @POST
@@ -94,53 +93,56 @@ public class QueueAPI {
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_QUEUE_VALIDATE)
     public Response validate(String inputStr) {
-        LOGGER.info("Validate request: {}", inputStr);
         String res = "";
+        final QueueValidateResponse response = new QueueValidateResponse();
         String sessionId = UUID.randomUUID().toString();
 
         try {
-            QueueValidateRequest queueValidateRequest = parseQueueInput(inputStr);
+            try {
+                final QueueValidateRequest queueValidateRequest = jsonbContext.unmarshall(inputStr, QueueValidateRequest.class);
 
-            Set<RecordId> recordIdSet = getRecordIdsForQueuing(queueValidateRequest);
+                LOGGER.debug("Validate request with sessionId {}: {}", sessionId, queueValidateRequest);
 
-            Map<Integer, Integer> recordCount = new HashMap<>();
+                final QueueJob queueJob = prepareQueueJob(queueValidateRequest);
+                getRecordIdsForQueuing(queueJob);
 
-            for (RecordId recordId : recordIdSet) {
-                Integer agencyId = recordId.getAgencyId();
-                Integer count = 1;
-
-                if (recordCount.containsKey(agencyId)) {
-                    count = recordCount.get(agencyId);
-                    count++;
+                if (queueJob.getRecordIdList().size() == 0) {
+                    throw new QueueException(MESSAGE_FAIL_NO_RECORDS);
                 }
 
-                recordCount.put(agencyId, count);
+                final Map<Integer, Integer> agencySummary = new HashMap<>();
+
+                for (RecordId recordId : queueJob.getRecordIdList()) {
+                    Integer agencyId = recordId.getAgencyId();
+                    Integer count = 1;
+
+                    if (agencySummary.containsKey(agencyId)) {
+                        count = agencySummary.get(agencyId);
+                        count++;
+                    }
+
+                    agencySummary.put(agencyId, count);
+                }
+
+                LOGGER.debug("{} = {}", sessionId, queueJob);
+                this.jobCache.put(sessionId, queueJob);
+
+                agencySummary.forEach((key, value) -> response.getAgencyAnalysisList().add(new AgencyAnalysis(key, value)));
+
+                response.setChunks(queueJob.getRecordIdList().size() / CHUNK_SIZE);
+                response.setSessionId(sessionId);
+                response.setValidated(true);
+
+                res = jsonbContext.marshall(response);
+            } catch (QueueException e) {
+                response.setValidated(false);
+                response.setMessage(e.getMessage());
+
+                res = jsonbContext.marshall(response);
             }
+            LOGGER.debug(response.toString());
 
-            List<RecordId> recordIdList = new ArrayList<>();
-            recordIdList.addAll(recordIdSet);
-            this.chunkCache.put(sessionId, recordIdList);
-
-            JsonObjectBuilder responseJSON = Json.createObjectBuilder();
-            JsonArrayBuilder analysisList = Json.createArrayBuilder();
-
-            for (Integer key : recordCount.keySet()) {
-                JsonObjectBuilder innerAnalysis = Json.createObjectBuilder();
-                innerAnalysis.add("agencyId", key);
-                innerAnalysis.add("count", recordCount.get(key));
-
-                analysisList.add(innerAnalysis);
-            }
-            responseJSON.add("analysis", analysisList);
-            responseJSON.add("chunks", (recordIdSet.size() / CHUNK_SIZE));
-            responseJSON.add("sessionId", sessionId);
-            responseJSON.add("validated", true);
-
-            res = responseJSON.build().toString();
-
-            return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (QueueException e) {
-            return constructResponse(false, e.getMessage());
+            return Response.ok(res).build();
         } catch (Exception e) {
             LOGGER.error("Unexpected exception:", e);
             return Response.serverError().build();
@@ -149,29 +151,31 @@ public class QueueAPI {
         }
     }
 
-    private Set<RecordId> getRecordIdsForQueuing(QueueValidateRequest queueValidateRequest) throws Exception {
-        Set<RecordId> holdingsItemsRecordIds, fbsRecordIds, recordMap = null;
-        QueueType queueType = queueValidateRequest.getQueueType();
-        Set<Integer> agencyList = queueValidateRequest.getAgencyIds();
-        boolean includeDeleted = queueValidateRequest.isIncludeDeleted();
+    private void getRecordIdsForQueuing(QueueJob queueJob) throws Exception {
+        Set<RecordId> holdingsItemsRecordIds;
+        Set<RecordId> fbsRecordIds;
+        Set<RecordId> recordMap = null;
+        final QueueType queueType = queueJob.getQueueType();
+        final Set<Integer> agencyList = queueJob.getAgencyIdList();
+        final boolean includeDeleted = queueJob.isIncludeDeleted();
 
         switch (queueType.getKey()) {
-            case QueueType.KEY_DBC_COMMON_ONLY:
+            case QueueType.DBC_COMMON_ONLY:
                 recordMap = rawrepo.getRecordsForDBC(agencyList, includeDeleted);
                 break;
-            case QueueType.KEY_FFU:
-            case QueueType.KEY_FBS_RR:
+            case QueueType.FFU: // Intended fall through
+            case QueueType.FBS_LOCAL:
                 recordMap = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
                 break;
-            case QueueType.KEY_FBS_RR_ENRICHEMENT:
+            case QueueType.FBS_ENRICHMENT:
                 recordMap = rawrepo.getEnrichmentForAgencies(agencyList, includeDeleted);
                 break;
-            case QueueType.KEY_FBS_HOLDINGS:
+            case QueueType.FBS_HOLDINGS:
                 holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
                 fbsRecordIds = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
                 recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
                 break;
-            case QueueType.KEY_FBS_EVERYTHING:
+            case QueueType.FBS_EVERYTHING:
                 holdingsItemsRecordIds = holdingsItemsConnector.getHoldingsRecords(agencyList);
                 fbsRecordIds = rawrepo.getRecordsForAgencies(agencyList, includeDeleted);
                 recordMap = convertNotExistingRecordIds(holdingsItemsRecordIds, fbsRecordIds);
@@ -181,7 +185,7 @@ public class QueueAPI {
                 break;
         }
 
-        return recordMap;
+        queueJob.setRecordIdList(recordMap);
     }
 
     @Stopwatch
@@ -191,27 +195,52 @@ public class QueueAPI {
     @Path(ApplicationConstants.API_QUEUE_PROCESS)
     public Response process(String inputStr) {
         String res = "";
+        final QueueProcessResponse response = new QueueProcessResponse();
 
         try {
-            QueueValidateRequest queueValidateRequest = parseQueueInput(inputStr);
+            try {
+                final QueueProcessRequest queueProcessRequest = jsonbContext.unmarshall(inputStr, QueueProcessRequest.class);
 
-            String provider = queueValidateRequest.getProvider();
-            QueueType queueType = queueValidateRequest.getQueueType();
-            String sessionId = queueValidateRequest.getSessionId();
-            Integer chunkIndex = queueValidateRequest.getChunk();
+                LOGGER.debug(queueProcessRequest.toString());
 
-            List<RecordId> sessionCache = this.chunkCache.get(sessionId);
-            List<RecordId> chunk = sessionCache.subList(Math.max(0, chunkIndex * CHUNK_SIZE),
-                    Math.min(sessionCache.size(), (chunkIndex + 1) * CHUNK_SIZE));
+                if (queueProcessRequest.getSessionId() == null || "null".equals(queueProcessRequest.getSessionId())) {
+                    throw new QueueException(MESSAGE_FAIL_SESSION_ID_NULL);
+                }
 
-            List<String> bibliographicRecordIdList = new ArrayList<>();
-            List<Integer> agencyListBulk = new ArrayList<>();
-            List<String> providerList = new ArrayList<>();
-            List<Boolean> changedList = new ArrayList<>();
-            List<Boolean> leafList = new ArrayList<>();
-            if (chunk.size() > 0) {
-                LOGGER.debug("{} records will be enqueued", chunk.size());
+                if (jobCache.get(queueProcessRequest.getSessionId()) == null) {
+                    throw new QueueException(String.format(MESSAGE_FAIL_SESSION_ID_NOT_FOUND, queueProcessRequest.getSessionId()));
+                }
 
+                final QueueJob queueJob = jobCache.get(queueProcessRequest.getSessionId());
+                final int chunkIndex = queueProcessRequest.getChunkIndex();
+                final String provider = queueJob.getProvider();
+                final QueueType queueType = queueJob.getQueueType();
+                final List<RecordId> recordIdList = new ArrayList<>(queueJob.getRecordIdList());
+
+                if (chunkIndex > queueJob.getRecordIdList().size() / CHUNK_SIZE) {
+                    throw new QueueException(String.format(MESSAGE_FAIL_CHUNK_TOO_BIG, chunkIndex));
+                }
+
+                if (chunkIndex < 0) {
+                    throw new QueueException(MESSAGE_FAIL_CHUNK_TOO_SMALL);
+                }
+
+                final int jobChunkStart = Math.max(0, chunkIndex * CHUNK_SIZE);
+                final int jobChunkEnd = Math.min(recordIdList.size(), (chunkIndex + 1) * CHUNK_SIZE);
+                final List<RecordId> chunk = recordIdList.subList(jobChunkStart, jobChunkEnd);
+
+                LOGGER.info("Processing QueueJob with sessionId {} from {} to {} (total {} records)",
+                        queueProcessRequest.getSessionId(),
+                        jobChunkStart, jobChunkEnd,
+                        queueJob.getRecordIdList().size());
+
+                final List<String> bibliographicRecordIdList = new ArrayList<>();
+                final List<Integer> agencyListBulk = new ArrayList<>();
+                final List<String> providerList = new ArrayList<>();
+                final List<Boolean> changedList = new ArrayList<>();
+                final List<Boolean> leafList = new ArrayList<>();
+
+                // This is a bit awkward construction, but necessary for setting parameters for a prepared statement
                 for (RecordId recordId : chunk) {
                     bibliographicRecordIdList.add(recordId.getBibliographicRecordId());
                     agencyListBulk.add(recordId.getAgencyId());
@@ -222,12 +251,18 @@ public class QueueAPI {
 
                 rawrepo.enqueueBulk(bibliographicRecordIdList, agencyListBulk, providerList, changedList, leafList);
 
-                return constructResponse(true, "");
-            } else {
-                return constructResponse(true, MESSAGE_NO_RECORDS);
+                response.setValidated(true);
+
+                res = jsonbContext.marshall(response);
+            } catch (QueueException e) {
+                response.setValidated(false);
+                response.setMessage(e.getMessage());
+
+                res = jsonbContext.marshall(response);
             }
-        } catch (QueueException e) {
-            return constructResponse(false, e.getMessage());
+            LOGGER.debug(response.toString());
+
+            return Response.ok(res).build();
         } catch (Exception e) {
             LOGGER.error("Unexpected exception:", e);
             return Response.serverError().build();
@@ -236,74 +271,80 @@ public class QueueAPI {
         }
     }
 
-    private QueueValidateRequest parseQueueInput(String inputStr) throws Exception {
-        QueueValidateRequest result = new QueueValidateRequest();
+    private QueueJob prepareQueueJob(QueueValidateRequest queueValidateRequest) throws Exception {
+        QueueJob queueJob = new QueueJob();
 
         try {
-            JsonReader reader = Json.createReader(new StringReader(inputStr));
-            JsonObject obj = reader.readObject();
+            final List<String> providerNames = new ArrayList<>();
 
-            List<String> allowedProviders = rawrepo.getProviders();
+            // Convert list of QueueProvider to list of provider names
+            rawrepo.getProviders().forEach(s -> {
+                providerNames.add(s.getName());
+            });
+            final String provider = queueValidateRequest.getProvider();
 
-            String provider = obj.getString("provider");
-            if (provider == null || provider.isEmpty() || !allowedProviders.contains(provider)) {
+            if (provider == null) {
+                throw new QueueException(MESSAGE_FAIL_PROVIDER_NULL);
+            }
+
+            if (provider.isEmpty() || !providerNames.contains(provider)) {
                 throw new QueueException(String.format(MESSAGE_FAIL_PROVIDER, provider));
             }
-            result.setProvider(provider);
+            queueJob.setProvider(provider);
 
-            QueueType queueType = QueueType.fromString(obj.getString("queueType"));
+            final String queueTypeString = queueValidateRequest.getQueueType();
+
+            if (queueTypeString == null) {
+                throw new QueueException(MESSAGE_FAIL_QUEUETYPE_NULL);
+            }
+
+            final QueueType queueType = QueueType.fromString(queueTypeString);
             if (queueType == null) {
-                throw new QueueException(String.format(MESSAGE_FAIL_QUEUETYPE, obj.getString("queueType")));
+                throw new QueueException(String.format(MESSAGE_FAIL_QUEUETYPE, queueValidateRequest.getQueueType()));
             }
-            result.setQueueType(queueType);
+            queueJob.setQueueType(queueType);
 
-            boolean includeDeleted = Boolean.parseBoolean(obj.getString("includeDeleted"));
-            result.setIncludeDeleted(includeDeleted);
+            queueJob.setIncludeDeleted(queueValidateRequest.isIncludeDeleted());
 
-            String agencyString = obj.getString("agencyText");
-            agencyString = agencyString.replace("\n", ","); // Transform newline and space separation into comma separation
+            String agencyString = queueValidateRequest.getAgencyText();
+            if (agencyString == null) {
+                throw new QueueException(MESSAGE_FAIL_AGENCY_MISSING);
+            }
+            // agencyText is a text field in which the user can write anything. Therefore we have to sanitize the
+            // field first. Transform newline and space separation into comma separation for easier splitting
+            agencyString = agencyString.replace("\n", ",");
             agencyString = agencyString.replace(" ", ",");
-            List<String> agencies = Arrays.asList(agencyString.split(","));
-            Set<String> allowedAgencies = openAgency.getLibrariesByCatalogingTemplateSet(queueType.getCatalogingTemplateSet());
-
-            List<String> cleanedAgencyList = new ArrayList<>();
-            for (String agency : agencies) {
-                String cleanedAgency = agency.trim();
-                if (!cleanedAgency.isEmpty()) {
-                    cleanedAgencyList.add(cleanedAgency);
-                }
+            // Remove eventual double or triple commas as a result of the replace
+            while(agencyString.indexOf(",,") > 0) {
+                agencyString = agencyString.replace(",,", ",");
             }
+            final List<String> agencies = Arrays.asList(agencyString.split(","));
+            final Set<String> allowedAgencies = openAgency.getLibrariesByCatalogingTemplateSet(queueType.getCatalogingTemplateSet());
 
-            if (cleanedAgencyList.size() == 0) {
+            agencies.forEach(s -> s = s.trim());
+
+            if (agencies.size() == 0) {
                 throw new QueueException(MESSAGE_FAIL_AGENCY_MISSING);
             }
 
-            Set<Integer> agencyList = new HashSet<>();
+            final Set<Integer> agencyList = new HashSet<>();
             final Pattern p = Pattern.compile("(\\d{6})"); // Digit, length of 6
-            for (String agency : cleanedAgencyList) {
+            for (String agency : agencies) {
+                // This filtering could be done more efficiently with removeIf, however we want to check the format
+                // so the user can be informed of invalid format
                 if (!p.matcher(agency).find()) {
                     throw new QueueException(String.format(MESSAGE_FAIL_INVALID_AGENCY_FORMAT, agency));
                 }
-                if (!allowedAgencies.containsAll(Collections.singleton(agency))) {
+                if (!allowedAgencies.contains(agency)) {
                     throw new QueueException(String.format(MESSAGE_FAIL_INVAILD_AGENCY_ID, agency, queueType.getCatalogingTemplateSet()));
                 }
                 agencyList.add(Integer.parseInt(agency));
             }
-            result.setAgencyIds(agencyList);
+            queueJob.setAgencyIdList(agencyList);
 
-            if (obj.containsKey("chunk")) {
-                result.setChunk(obj.getInt("chunk"));
-            }
-
-            if (obj.containsKey("sessionId")) {
-                result.setSessionId(obj.getString("sessionId"));
-            }
-
-            LOGGER.info(result.toString());
-
-            return result;
+            return queueJob;
         } finally {
-            LOGGER.exit(result);
+            LOGGER.exit(queueJob);
         }
     }
 
@@ -318,7 +359,7 @@ public class QueueAPI {
      * @return Set of record ids
      */
     private Set<RecordId> convertNotExistingRecordIds(Set<RecordId> holdingsItemsRecordIds, Set<RecordId> fbsRecordIds) {
-        Set<RecordId> result = new HashSet<>();
+        final Set<RecordId> result = new HashSet<>();
 
         for (RecordId holdingsItemsRecordId : holdingsItemsRecordIds) {
             if (fbsRecordIds.contains(holdingsItemsRecordId)) {
@@ -331,37 +372,19 @@ public class QueueAPI {
         return result;
     }
 
-    private Response constructResponse(boolean validated, String message) {
-        JsonObjectBuilder responseJSON = Json.createObjectBuilder();
-        responseJSON.add("validated", validated);
-        responseJSON.add("message", message);
-
-        String res = responseJSON.build().toString();
-
-        if (!validated) {
-            LOGGER.error("Response: " + message);
-        }
-
-        return Response.ok(res, MediaType.APPLICATION_JSON).build();
-    }
-
     @Stopwatch
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    @Path(ApplicationConstants.API_QUEUE_PROVIDER_INFO)
-    public Response getProviderInfo() {
+    @Path(ApplicationConstants.API_QUEUE_PROVIDERS)
+    public Response getProviders() {
         LOGGER.entry();
         String res = "";
 
         try {
-            List<QueueProvider> providers = rawrepo.getProviderDetails();
-            LOGGER.info(providers.toString());
+            final List<QueueProvider> providers = rawrepo.getProviders();
+            LOGGER.debug(providers.toString());
 
-            HashMap<String, List<QueueProvider>> resultObject = new HashMap<>();
-            resultObject.putIfAbsent("providers", providers);
-
-            ObjectMapper mapper = new ObjectMapper();
-            res = mapper.writeValueAsString(resultObject);
+            res = jsonbContext.marshall(providers);
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
         } catch (Exception ex) {
             LOGGER.error("Exception during getProviderInfo", ex);
@@ -375,45 +398,32 @@ public class QueueAPI {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path(ApplicationConstants.API_QUEUE_TYPES)
-    public Response getCatalogingTemplateSets() {
+    public Response getQueueTypes() {
         LOGGER.entry();
-
-        List<QueueType> queueTypes = this.getQueueTypes();
 
         String res = "";
         try {
-            JsonObjectBuilder outerJSON = Json.createObjectBuilder();
-            JsonArrayBuilder innerJSON = Json.createArrayBuilder();
+            final List<QueueType> queueTypes = new ArrayList<>();
+            queueTypes.add(QueueType.ffu());
+            queueTypes.add(QueueType.fbsRawrepo());
+            queueTypes.add(QueueType.fbsRawrepoEnrichment());
+            queueTypes.add(QueueType.fbsHoldings());
+            queueTypes.add(QueueType.fbsEverything());
 
-            for (QueueType queueType : queueTypes) {
-                JsonObjectBuilder value = Json.createObjectBuilder();
-                value.add("key", queueType.getKey());
-                value.add("description", queueType.getDescription());
-                innerJSON.add(value);
+            // Hack to only enable DBC queue type on basismig environment
+            if (variables.getenv(ApplicationConstants.INSTANCE_NAME).toLowerCase().contains("basismig")) {
+                queueTypes.add(QueueType.dbcCommon());
             }
-            outerJSON.add("values", innerJSON);
-            JsonObject jsonObject = outerJSON.build();
-            res = jsonObject.toString();
+
+            res = jsonbContext.marshall(queueTypes);
+
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
+        } catch (JSONBException e) {
+            LOGGER.error("Unexpected exception:", e);
+            return Response.serverError().build();
         } finally {
             LOGGER.exit(res);
         }
-    }
-
-    private List<QueueType> getQueueTypes() {
-        List<QueueType> result = new ArrayList<>();
-        result.add(QueueType.ffu());
-        result.add(QueueType.fbsRawrepo());
-        result.add(QueueType.fbsRawrepoEnrichment());
-        result.add(QueueType.fbsHoldings());
-        result.add(QueueType.fbsEverything());
-
-        // Hack to only enable DBC queue type on basismig environment
-        if (System.getenv("INSTANCE_NAME").toLowerCase().contains("basismig")) {
-            result.add(QueueType.dbcCommon());
-        }
-
-        return result;
     }
 
 }

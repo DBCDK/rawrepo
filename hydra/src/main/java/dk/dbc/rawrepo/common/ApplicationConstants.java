@@ -12,7 +12,6 @@ public class ApplicationConstants {
     public static final String API_QUEUE_PROCESS = "process";
     public static final String API_QUEUE_TYPES = "types";
     public static final String API_QUEUE_PROVIDERS = "providers";
-    public static final String API_QUEUE_PROVIDER_INFO = "providerInfo";
 
     public static final String API_LIBRARY = "/library";
     public static final String API_LIBRARY_CATALOGING_TEMPLATE_SET = "catalogingTemplateSet";

@@ -7,24 +7,23 @@ package dk.dbc.rawrepo.dao;
 
 import dk.dbc.holdingsitems.HoldingsItemsDAO;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
-import org.perf4j.StopWatch;
-import org.perf4j.log4j.Log4JStopWatch;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.ejb.Singleton;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.sql.DataSource;
-import java.sql.*;
-import java.util.HashMap;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Interceptors(StopwatchInterceptor.class)
@@ -33,7 +32,7 @@ public class HoldingsItemsConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(HoldingsItemsConnector.class);
 
     @Resource(lookup = "jdbc/holdingsitems")
-    DataSource globalDataSource;
+    private DataSource globalDataSource;
 
     @PostConstruct
     public void postConstruct() {
@@ -60,6 +59,7 @@ public class HoldingsItemsConnector {
 
 
     @Stopwatch
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Set<RecordId> getHoldingsRecords(Set<Integer> agencies) throws Exception {
         LOGGER.entry(agencies);
         Set<RecordId> result = new HashSet<>();

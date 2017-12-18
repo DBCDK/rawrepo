@@ -8,16 +8,15 @@ package dk.dbc.rawrepo.dao;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.common.ApplicationConstants;
-import dk.dbc.rawrepo.json.QueueType;
+import dk.dbc.rawrepo.common.EnvironmentVariables;
 import org.perf4j.StopWatch;
 import org.perf4j.log4j.Log4JStopWatch;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 @Stateless
@@ -25,6 +24,9 @@ public class OpenAgencyConnector {
     private static final XLogger LOGGER = XLoggerFactory.getXLogger(OpenAgencyConnector.class);
 
     private OpenAgencyServiceFromURL service;
+
+    @EJB
+    EnvironmentVariables environmentVariables;
 
     @PostConstruct
     public void postConstruct() {
@@ -38,19 +40,17 @@ public class OpenAgencyConnector {
         try {
             OpenAgencyServiceFromURL.Builder builder = OpenAgencyServiceFromURL.builder();
             builder = builder.
-                    connectTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                    connectTimeout(Integer.parseInt(environmentVariables.getenv().getOrDefault(
                             ApplicationConstants.OPENAGENCY_CONNECT_TIMEOUT,
                             ApplicationConstants.OPENAGENCY_CONNECT_TIMEOUT_DEFAULT))).
-
-                    requestTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                    requestTimeout(Integer.parseInt(environmentVariables.getenv().getOrDefault(
                             ApplicationConstants.OPENAGENCY_REQUEST_TIMEOUT,
                             ApplicationConstants.OPENAGENCY_REQUEST_TIMEOUT_DEFAULT))).
-
-                    setCacheAge(Integer.parseInt(System.getenv().getOrDefault(
+                    setCacheAge(Integer.parseInt(environmentVariables.getenv().getOrDefault(
                             ApplicationConstants.OPENAGENCY_CACHE_AGE,
                             ApplicationConstants.OPENAGENCY_CACHE_AGE_DEFAULT)));
 
-            service = builder.build(System.getenv().get(ApplicationConstants.OPENAGENCY_URL));
+            service = builder.build(environmentVariables.getenv().get(ApplicationConstants.OPENAGENCY_URL));
         } finally {
             watch.stop();
             LOGGER.exit();

@@ -5,10 +5,11 @@
 
 package dk.dbc.rawrepo;
 
+import dk.dbc.commons.jsonb.JSONBContext;
+import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.dao.OpenAgencyConnector;
-import dk.dbc.rawrepo.json.QueueType;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -17,17 +18,12 @@ import org.slf4j.ext.XLoggerFactory;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 import java.util.Set;
 
 @Interceptors(StopwatchInterceptor.class)
@@ -38,6 +34,8 @@ public class LibraryAPI {
 
     @EJB
     private OpenAgencyConnector openAgency;
+
+    private final JSONBContext mapper = new JSONBContext();
 
     @Stopwatch
     @GET
@@ -50,18 +48,11 @@ public class LibraryAPI {
             try {
                 Set<String> libraries = openAgency.getLibrariesByCatalogingTemplateSet(template);
 
-                JsonObjectBuilder outerJSON = Json.createObjectBuilder();
-                JsonArrayBuilder innerJSON = Json.createArrayBuilder();
-                for (String set : libraries) {
-                    innerJSON.add(set);
-                }
-
-                outerJSON.add("values", innerJSON);
-                JsonObject jsonObject = outerJSON.build();
-                res = jsonObject.toString();
+                res = mapper.marshall(libraries);
 
                 return Response.ok(res, MediaType.APPLICATION_JSON).build();
-            } catch (OpenAgencyException e) {
+            } catch (OpenAgencyException | JSONBException e) {
+                LOGGER.error(e.getMessage());
                 return Response.serverError().build();
             }
         } finally {
