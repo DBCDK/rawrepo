@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Interceptors(StopwatchInterceptor.class)
@@ -66,7 +67,7 @@ public class QueueAPI {
     private static final String MESSAGE_FAIL_SESSION_ID_NULL = "Der skal være angivet et sessionId";
     private static final String MESSAGE_FAIL_SESSION_ID_NOT_FOUND = "SessionId '%s' blev ikke fundet";
     private static final String MESSAGE_FAIL_CHUNK_TOO_BIG = "Chunk index '%s' er for stort";
-    private static final String MESSAGE_FAIL_CHUNK_TOO_SMALL = "Chunk index må ikke være negativt";
+    private static final String MESSAGE_FAIL_CHUNK_NEGATIVE = "Chunk index må ikke være negativt";
 
     private static final Integer CHUNK_SIZE = 5000;
 
@@ -104,7 +105,7 @@ public class QueueAPI {
                 LOGGER.debug("Validate request with sessionId {}: {}", sessionId, queueValidateRequest);
 
                 final QueueJob queueJob = prepareQueueJob(queueValidateRequest);
-                getRecordIdsForQueuing(queueJob);
+                loadRecordIdsForQueuing(queueJob);
 
                 if (queueJob.getRecordIdList().size() == 0) {
                     throw new QueueException(MESSAGE_FAIL_NO_RECORDS);
@@ -151,7 +152,7 @@ public class QueueAPI {
         }
     }
 
-    private void getRecordIdsForQueuing(QueueJob queueJob) throws Exception {
+    private void loadRecordIdsForQueuing(QueueJob queueJob) throws Exception {
         Set<RecordId> holdingsItemsRecordIds;
         Set<RecordId> fbsRecordIds;
         Set<RecordId> recordMap = null;
@@ -222,7 +223,7 @@ public class QueueAPI {
                 }
 
                 if (chunkIndex < 0) {
-                    throw new QueueException(MESSAGE_FAIL_CHUNK_TOO_SMALL);
+                    throw new QueueException(MESSAGE_FAIL_CHUNK_NEGATIVE);
                 }
 
                 final int jobChunkStart = Math.max(0, chunkIndex * CHUNK_SIZE);
@@ -275,12 +276,13 @@ public class QueueAPI {
         QueueJob queueJob = new QueueJob();
 
         try {
-            final List<String> providerNames = new ArrayList<>();
+            final List<String> providerNames =
+                    rawrepo.getProviders()
+                            .stream()
+                            .map(QueueProvider::getName)
+                            .collect(Collectors.toList());
 
             // Convert list of QueueProvider to list of provider names
-            rawrepo.getProviders().forEach(s -> {
-                providerNames.add(s.getName());
-            });
             final String provider = queueValidateRequest.getProvider();
 
             if (provider == null) {
@@ -315,7 +317,7 @@ public class QueueAPI {
             agencyString = agencyString.replace("\n", ",");
             agencyString = agencyString.replace(" ", ",");
             // Remove eventual double or triple commas as a result of the replace
-            while(agencyString.indexOf(",,") > 0) {
+            while (agencyString.indexOf(",,") > 0) {
                 agencyString = agencyString.replace(",,", ",");
             }
             final List<String> agencies = Arrays.asList(agencyString.split(","));
