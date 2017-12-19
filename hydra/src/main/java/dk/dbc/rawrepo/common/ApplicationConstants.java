@@ -20,6 +20,11 @@ public class ApplicationConstants {
     public static final String API_HYDRA_STATUS = "status";
     public static final String API_HYDRA_INSTANCE_NAME = "instance";
 
+    public static final String API_STATS = "/stats";
+    public static final String API_STATS_RECORDS = "/recordByAgency";
+    public static final String API_STATS_QUEUE_AGENCIES = "/queueByAgency";
+    public static final String API_STATS_QUEUE_WORKERS = "/queueByWorker";
+
     public static final String OPENAGENCY_URL = "OPENAGENCY_URL";
     public static final String OPENAGENCY_CACHE_AGE = "OPENAGENCY_CACHE_AGE";
     public static final String OPENAGENCY_CACHE_AGE_DEFAULT = String.valueOf(8); // 8 hours

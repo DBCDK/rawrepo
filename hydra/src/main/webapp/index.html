@@ -45,7 +45,16 @@
                     selectedProvider: undefined,
                     includeDeleted: "false",
                     isLoading: false,
-                    instanceName: undefined
+                    instanceName: undefined,
+
+                    statRecordByAgency: [],
+                    statQueueByAgency: [],
+                    statQueueByWorker: [],
+
+                    loadingStatRecordByAgency: false,
+                    loadingStatQueueByAgency: false,
+                    loadingStatQueueByWorker: false
+
                 };
 
                 this.getQueueTypes = this.getQueueTypes.bind(this);
@@ -57,18 +66,23 @@
                 this.setQueuePage = this.setQueuePage.bind(this);
                 this.setIntrospectPage = this.setIntrospectPage.bind(this);
                 this.setUpdatePage = this.setUpdatePage.bind(this);
+                this.setRawrepoPage = this.setRawrepoPage.bind(this);
                 this.drawSubPage = this.drawSubPage.bind(this);
                 this.drawQueuePage = this.drawQueuePage.bind(this);
+                this.drawRawrepoPage = this.drawRawrepoPage.bind(this);
                 this.onChangeQueueType = this.onChangeQueueType.bind(this);
                 this.onChangeProvider = this.onChangeProvider.bind(this);
                 this.onChangeIncludeDeleted = this.onChangeIncludeDeleted.bind(this);
                 this.onChangeAgencies = this.onChangeAgencies.bind(this);
-                this.setDefaultValues = this.setDefaultValues.bind(this);
+                this.setDefaultQueueValues = this.setDefaultQueueValues.bind(this);
                 this.getProvidersLink = this.getProvidersLink.bind(this);
                 this.getSubmitButtonLabel = this.getSubmitButtonLabel.bind(this);
                 this.getProcessButtonLabel = this.getProcessButtonLabel.bind(this);
                 this.getInstanceName = this.getInstanceName.bind(this);
                 this.getHeader = this.getHeader.bind(this);
+                this.getStatRecordByAgency = this.getStatRecordByAgency.bind(this);
+                this.getStatQueueByWorker = this.getStatQueueByWorker.bind(this);
+                this.getStatQueueByAgency = this.getStatQueueByAgency.bind(this);
                 this.setQueueModeInput = this.setQueueModeInput.bind(this);
                 this.processQueue = this.processQueue.bind(this);
                 this.getStopButtonLabel = this.getStopButtonLabel.bind(this);
@@ -76,7 +90,7 @@
 
             getQueueTypes() {
                 superagent.get("api/queue/types").end((err, res) => {
-                    this.setState({queueTypes: JSON.parse(res.text)}, this.setDefaultValues);
+                    this.setState({queueTypes: JSON.parse(res.text)}, this.setDefaultQueueValues);
                 });
             }
 
@@ -94,7 +108,31 @@
                     providers.map(function (item, index) {
                         providerNames.push(item.name);
                     });
-                    this.setState({providers: providerNames}, this.setDefaultValues);
+                    this.setState({providers: providerNames}, this.setDefaultQueueValues);
+                });
+            }
+
+            getStatRecordByAgency() {
+                this.setState({loadingStatRecordByAgency: true});
+                superagent.get("api/stats/recordByAgency").end((err, res) => {
+                    this.setState({
+                        statRecordByAgency: JSON.parse(res.text),
+                        loadingStatRecordByAgency: false
+                    });
+                });
+            }
+
+            getStatQueueByAgency() {
+                this.setState({loadingStatQueueByWorker: true});
+                superagent.get("api/stats/queueByAgency").end((err, res) => {
+                    this.setState({statQueueByAgency: JSON.parse(res.text), loadingStatQueueByWorker: false});
+                });
+            }
+
+            getStatQueueByWorker() {
+                this.setState({loadingStatQueueByAgency: true});
+                superagent.get("api/stats/queueByWorker").end((err, res) => {
+                    this.setState({statQueueByWorker: JSON.parse(res.text), loadingStatQueueByAgency: false});
                 });
             }
 
@@ -236,7 +274,7 @@
                 }
             }
 
-            setDefaultValues() {
+            setDefaultQueueValues() {
                 if (this.state.selectedProvider === undefined && this.state.providers.length > 0) {
                     this.setState({selectedProvider: this.state.providers[0]})
                 }
@@ -251,7 +289,7 @@
 
                 this.getQueueTypes();
                 this.getRRProviders();
-                this.setDefaultValues();
+                this.setDefaultQueueValues();
             }
 
             setIntrospectPage() {
@@ -262,9 +300,19 @@
                 this.state.mode = 'UPDATE';
             }
 
+            setRawrepoPage() {
+                this.setState({mode: 'RAWREPO'});
+
+                this.getStatRecordByAgency();
+                this.getStatQueueByWorker();
+                this.getStatQueueByAgency();
+            }
+
             drawSubPage() {
                 if (this.state.mode === 'QUEUE') {
                     return this.drawQueuePage();
+                } else if (this.state.mode === 'RAWREPO') {
+                    return this.drawRawrepoPage();
                 }
             }
 
@@ -474,6 +522,98 @@
                 );
             }
 
+            drawRawrepoPage() {
+                return e('div', {className: 'container'},
+                    e('div', {className: 'row'},
+                        e('div', {className: 'col-sm-6 container'},
+                            e('h2', null, 'Postoversigt'),
+                            e('btn', {
+                                className: 'btn btn-success',
+                                type: 'submit',
+                                disabled: this.state.loadingStatRecordByAgency,
+                                onClick: () => {
+                                    this.getStatRecordByAgency()
+                                }
+                            }, 'Genindlæs'),
+                            e('table', {className: 'table'},
+                                e('thead', null,
+                                    e('tr', null,
+                                        e('th', null, 'Biblioteksnummer'),
+                                        e('th', null, 'Antal marcxchange poster'),
+                                        e('th', null, 'Antal enrichment poster')
+                                    )
+                                ),
+                                e('tbody', null,
+                                    this.state.statRecordByAgency.map(function (item, index) {
+                                            return e('tr', {key: 'stats-record-by-agency-' + item.agencyId},
+                                                e('td', null, item.agencyId),
+                                                e('td', null, item.marcxCount),
+                                                e('td', null, item.enrichmentCount)
+                                            );
+                                        }
+                                    )
+                                )
+                            )
+                        ),
+                        e('div', {className: 'col-sm-6 container'},
+                            e('h2', null, 'Køoversigt - workers'),
+                            e('btn', {
+                                className: 'btn btn-success',
+                                type: 'submit',
+                                disabled: this.state.loadingStatQueueByAgency,
+                                onClick: () => {
+                                    this.getStatQueueByWorker()
+                                }
+                            }, 'Genindlæs'),
+                            e('table', {className: 'table'},
+                                e('thead', null,
+                                    e('tr', null,
+                                        e('th', null, 'Worker'),
+                                        e('th', null, 'Antal')
+                                    )
+                                ),
+                                e('tbody', null,
+                                    this.state.statQueueByWorker.map(function (item, index) {
+                                            return e('tr', {key: 'stats-queue-by-worker-' + item.name},
+                                                e('td', null, item.name),
+                                                e('td', null, item.count)
+                                            );
+                                        }
+                                    )
+                                )
+                            ),
+                            e('hr', null, null),
+                            e('h2', null, 'Køoversigt - biblioteker'),
+                            e('btn', {
+                                className: 'btn btn-success',
+                                type: 'submit',
+                                disabled: this.state.loadingStatQueueByWorker,
+                                onClick: () => {
+                                    this.getStatQueueByAgency()
+                                }
+                            }, 'Genindlæs'),
+                            e('table', {className: 'table'},
+                                e('thead', null,
+                                    e('tr', null,
+                                        e('th', null, 'Biblioteksnummer'),
+                                        e('th', null, 'Antal')
+                                    )
+                                ),
+                                e('tbody', null,
+                                    this.state.statQueueByAgency.map(function (item, index) {
+                                            return e('tr', {key: 'stats-queue-by-agency-' + item.name},
+                                                e('td', null, item.name),
+                                                e('td', null, item.count)
+                                            );
+                                        }
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+            }
+
             render() {
                 return e('div', null,
                     e('h1', {
@@ -508,6 +648,14 @@
                             this.setUpdatePage()
                         }
                     }, 'Update'),
+                    e('button', {
+                        id: 'btn-rawrepo',
+                        className: "btn btn-success",
+                        style: {margin: "10px", display: 'inline-block'},
+                        onClick: () => {
+                            this.setRawrepoPage()
+                        }
+                    }, 'Rawrepo'),
                     e('hr'),
                     this.drawSubPage());
             }

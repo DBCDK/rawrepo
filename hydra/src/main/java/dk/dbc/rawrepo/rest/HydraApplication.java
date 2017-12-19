@@ -8,6 +8,7 @@ package dk.dbc.rawrepo.rest;
 import dk.dbc.rawrepo.HydraAPI;
 import dk.dbc.rawrepo.LibraryAPI;
 import dk.dbc.rawrepo.QueueAPI;
+import dk.dbc.rawrepo.StatisticsAPI;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
@@ -21,7 +22,7 @@ import java.util.Set;
  */
 @ApplicationPath("/api")
 public class HydraApplication extends Application {
-    private static final Set<Class<?>> classes = new HashSet<>(Arrays.asList(QueueAPI.class, LibraryAPI.class, HydraAPI.class));
+    private static final Set<Class<?>> classes = new HashSet<>(Arrays.asList(QueueAPI.class, LibraryAPI.class, HydraAPI.class, StatisticsAPI.class));
 
     @Override
     public Set<Class<?>> getClasses() {
