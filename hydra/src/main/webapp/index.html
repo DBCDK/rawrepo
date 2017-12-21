@@ -55,10 +55,12 @@
                     statRecordByAgency: [],
                     statQueueByAgency: [],
                     statQueueByWorker: [],
+                    statQueueByError: [],
 
                     loadingStatRecordByAgency: false,
                     loadingStatQueueByAgency: false,
-                    loadingStatQueueByWorker: false
+                    loadingStatQueueByWorker: false,
+                    loadingStatQueueByError: false
                 };
 
                 this.getQueueTypes = this.getQueueTypes.bind(this);
@@ -87,6 +89,7 @@
                 this.getStatRecordByAgency = this.getStatRecordByAgency.bind(this);
                 this.getStatQueueByWorker = this.getStatQueueByWorker.bind(this);
                 this.getStatQueueByAgency = this.getStatQueueByAgency.bind(this);
+                this.getStatQueueByError = this.getStatQueueByError.bind(this);
                 this.setQueueModeInput = this.setQueueModeInput.bind(this);
                 this.processQueue = this.processQueue.bind(this);
                 this.getStopButtonLabel = this.getStopButtonLabel.bind(this);
@@ -137,6 +140,13 @@
                 this.setState({loadingStatQueueByAgency: true});
                 superagent.get("api/stats/queueByWorker").end((err, res) => {
                     this.setState({statQueueByWorker: JSON.parse(res.text), loadingStatQueueByAgency: false});
+                });
+            }
+
+            getStatQueueByError() {
+                this.setState({loadingStatQueueByError: true});
+                superagent.get("api/stats/queueByError").end((err, res) => {
+                    this.setState({statQueueByError: JSON.parse(res.text), loadingStatQueueByError: false});
                 });
             }
 
@@ -322,6 +332,7 @@
                 this.getStatRecordByAgency();
                 this.getStatQueueByWorker();
                 this.getStatQueueByAgency();
+                this.getStatQueueByError();
             }
 
             drawSubPage() {
@@ -590,9 +601,10 @@
                                 ),
                                 e('tbody', null,
                                     this.state.statQueueByWorker.map(function (item, index) {
-                                            return e('tr', {key: 'stats-queue-by-worker-' + item.name},
-                                                e('td', null, item.name),
-                                                e('td', null, item.count)
+                                            return e('tr', {key: 'stats-queue-by-worker-' + index},
+                                                e('td', null, item.text),
+                                                e('td', null, item.count),
+                                                e('td', null, item.date)
                                             );
                                         }
                                     )
@@ -617,9 +629,39 @@
                                 ),
                                 e('tbody', null,
                                     this.state.statQueueByAgency.map(function (item, index) {
-                                            return e('tr', {key: 'stats-queue-by-agency-' + item.name},
-                                                e('td', null, item.name),
-                                                e('td', null, item.count)
+                                            return e('tr', {key: 'stats-queue-by-agency-' + index},
+                                                e('td', null, item.text),
+                                                e('td', null, item.count),
+                                                e('td', null, item.date)
+                                            );
+                                        }
+                                    )
+                                )
+                            ),
+                            e('hr', null, null),
+                            e('h2', null, 'Køoversigt - fejlede jobs'),
+                            e('btn', {
+                                className: 'btn btn-success',
+                                type: 'submit',
+                                disabled: this.state.loadingStatQueueByError,
+                                onClick: () => {
+                                    this.getStatQueueByError()
+                                }
+                            }, 'Genindlæs'),
+                            e('table', {className: 'table'},
+                                e('thead', null,
+                                    e('tr', null,
+                                        e('th', null, 'Fejlbesked'),
+                                        e('th', null, 'Dato'),
+                                        e('th', null, 'Antal')
+                                    )
+                                ),
+                                e('tbody', null,
+                                    this.state.statQueueByError.map(function (item, index) {
+                                            return e('tr', {key: 'stats-queue-erorr-' + index},
+                                                e('td', null, item.text),
+                                                e('td', null, item.count),
+                                                e('td', null, item.date)
                                             );
                                         }
                                     )

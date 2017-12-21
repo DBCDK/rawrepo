@@ -7,23 +7,25 @@ package dk.dbc.rawrepo.stats;
 
 public class QueueStats {
 
-    private String name;
+    private String text;
     private int count;
+    private String date;
 
     public QueueStats() {
     }
 
-    public QueueStats(String name, int count) {
-        this.name = name;
+    public QueueStats(String text, int count, String date) {
+        this.text = text;
         this.count = count;
+        this.date = date;
     }
 
-    public String getName() {
-        return name;
+    public String getText() {
+        return text;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setText(String label) {
+        this.text = label;
     }
 
     public int getCount() {
@@ -34,11 +36,20 @@ public class QueueStats {
         this.count = count;
     }
 
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
     @Override
     public String toString() {
         return "QueueStats{" +
-                "name='" + name + '\'' +
+                "text='" + text + '\'' +
                 ", count=" + count +
+                ", date='" + date + '\'' +
                 '}';
     }
 }

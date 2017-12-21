@@ -51,10 +51,11 @@ public class RawRepoConnector {
                     "                  FROM   records AS r " +
                     "                  WHERE  r.mimetype = 'text/enrichment+marcxchange' " +
                     "                  GROUP  BY r.agencyid) b USING (agencyid) " +
-                    "ORDER  BY agencyid; ";
+                    "ORDER  BY agencyid";
 
-    private static final String SELECT_QUEUE_COUNT_BY_WORKER = "SELECT worker, COUNT(*) FROM queue GROUP BY worker ORDER BY worker";
-    private static final String SELECT_QUEUE_COUNT_BY_AGENCY = "SELECT agencyid, COUNT(*) FROM queue GROUP BY agencyid ORDER BY agencyid";
+    private static final String SELECT_QUEUE_COUNT_BY_WORKER = "SELECT worker AS text, COUNT(*), MAX(queued) FROM queue GROUP BY worker ORDER BY worker";
+    private static final String SELECT_QUEUE_COUNT_BY_AGENCY = "SELECT agencyid AS text, COUNT(*), MAX(queued)  FROM queue GROUP BY agencyid ORDER BY agencyid";
+    private static final String SELECT_QUEUE_COUNT_BY_ERROR = "SELECT error AS text, COUNT(*), MAX(queued)  FROM jobdiag GROUP BY error ORDER BY max(queued) DESC";
 
     @Resource(lookup = "jdbc/rawrepo")
     private DataSource globalDataSource;
@@ -363,10 +364,11 @@ public class RawRepoConnector {
              Statement stmt = connection.createStatement()) {
             try (ResultSet resultSet = stmt.executeQuery(SELECT_QUEUE_COUNT_BY_WORKER)) {
                 while (resultSet.next()) {
-                    final String name = resultSet.getString("worker");
+                    final String text = resultSet.getString("text");
                     final int count = resultSet.getInt("count");
+                    final String date = resultSet.getString("max");
 
-                    result.add(new QueueStats(name, count));
+                    result.add(new QueueStats(text, count, date));
                 }
             }
 
@@ -384,10 +386,33 @@ public class RawRepoConnector {
              Statement stmt = connection.createStatement()) {
             try (ResultSet resultSet = stmt.executeQuery(SELECT_QUEUE_COUNT_BY_AGENCY)) {
                 while (resultSet.next()) {
-                    final String name = resultSet.getString("agencyid");
+                    final String text = resultSet.getString("text");
                     final int count = resultSet.getInt("count");
+                    final String date = resultSet.getString("max");
 
-                    result.add(new QueueStats(name, count));
+                    result.add(new QueueStats(text, count, date));
+                }
+            }
+
+            return result;
+        } finally {
+            LOGGER.exit(result);
+        }
+    }
+
+    public List<QueueStats> getStatsQueueByError() throws SQLException {
+        LOGGER.entry();
+        List<QueueStats> result = new ArrayList<>();
+
+        try (Connection connection = globalDataSource.getConnection();
+             Statement stmt = connection.createStatement()) {
+            try (ResultSet resultSet = stmt.executeQuery(SELECT_QUEUE_COUNT_BY_ERROR)) {
+                while (resultSet.next()) {
+                    final String text = resultSet.getString("text");
+                    final int count = resultSet.getInt("count");
+                    final String date = resultSet.getString("max");
+
+                    result.add(new QueueStats(text, count, date));
                 }
             }
 

@@ -9,8 +9,8 @@ import dk.dbc.commons.jsonb.JSONBContext;
 import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.dao.RawRepoConnector;
-import dk.dbc.rawrepo.stats.RecordStats;
 import dk.dbc.rawrepo.stats.QueueStats;
+import dk.dbc.rawrepo.stats.RecordStats;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -98,6 +98,28 @@ public class StatisticsAPI {
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
         } catch (SQLException | JSONBException ex) {
             LOGGER.error("Exception during getQueueStatsByAgency", ex);
+            return Response.serverError().build();
+        } finally {
+            LOGGER.exit(res);
+        }
+    }
+
+    @Stopwatch
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path(ApplicationConstants.API_STATS_QUEUE_ERRORS)
+    public Response getQueueStatsByError() {
+        LOGGER.entry();
+        String res = "";
+
+        try {
+            final List<QueueStats> queueStats = rawrepo.getStatsQueueByError();
+
+            res = jsonbContext.marshall(queueStats);
+
+            return Response.ok(res, MediaType.APPLICATION_JSON).build();
+        } catch (SQLException | JSONBException ex) {
+            LOGGER.error("Exception during getQueueStatsByError", ex);
             return Response.serverError().build();
         } finally {
             LOGGER.exit(res);
