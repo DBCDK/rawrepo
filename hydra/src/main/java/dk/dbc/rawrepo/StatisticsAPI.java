@@ -6,6 +6,7 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.commons.jsonb.JSONBContext;
+import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.dao.RawRepoConnector;
 import dk.dbc.rawrepo.stats.RecordStats;
@@ -23,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.sql.SQLException;
 import java.util.List;
 
 @Interceptors(StopwatchInterceptor.class)
@@ -50,8 +52,8 @@ public class StatisticsAPI {
             res = jsonbContext.marshall(providers);
 
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (Exception ex) {
-            LOGGER.error("Exception during getRecordStats", ex);
+        } catch (SQLException | JSONBException ex) {
+            LOGGER.error("Exception during getRecordStatsByAgency", ex);
             return Response.serverError().build();
         } finally {
             LOGGER.exit(res);
@@ -72,8 +74,8 @@ public class StatisticsAPI {
             res = jsonbContext.marshall(queueStats);
 
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (Exception ex) {
-            LOGGER.error("Exception during getQueueForWorkers", ex);
+        } catch (SQLException | JSONBException ex) {
+            LOGGER.error("Exception during getQueueStatsByWorker", ex);
             return Response.serverError().build();
         } finally {
             LOGGER.exit(res);
@@ -94,8 +96,8 @@ public class StatisticsAPI {
             res = jsonbContext.marshall(queueStats);
 
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (Exception ex) {
-            LOGGER.error("Exception during getQueueForAgencies", ex);
+        } catch (SQLException | JSONBException ex) {
+            LOGGER.error("Exception during getQueueStatsByAgency", ex);
             return Response.serverError().build();
         } finally {
             LOGGER.exit(res);

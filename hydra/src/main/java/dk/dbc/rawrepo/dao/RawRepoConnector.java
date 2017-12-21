@@ -6,10 +6,11 @@
 package dk.dbc.rawrepo.dao;
 
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.stats.RecordStats;
-import dk.dbc.rawrepo.stats.QueueStats;
+import dk.dbc.rawrepo.queue.QueueException;
 import dk.dbc.rawrepo.queue.QueueProvider;
 import dk.dbc.rawrepo.queue.QueueWorker;
+import dk.dbc.rawrepo.stats.QueueStats;
+import dk.dbc.rawrepo.stats.RecordStats;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
 import org.slf4j.ext.XLogger;
@@ -24,6 +25,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,17 +41,17 @@ public class RawRepoConnector {
     private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?)";
     private static final String SELECT_RECORD_COUNT_BY_AGENCIES =
             "SELECT * " +
-            "FROM   (SELECT r.agencyid, " +
-            "               Count(*) AS count_marcxchange " +
-            "        FROM   records AS r " +
-            "        WHERE  r.mimetype = 'text/marcxchange' " +
-            "        GROUP  BY r.agencyid) a " +
-            "       FULL JOIN (SELECT r.agencyid, " +
-            "                         Count(*) AS count_enrichment " +
-            "                  FROM   records AS r " +
-            "                  WHERE  r.mimetype = 'text/enrichment+marcxchange' " +
-            "                  GROUP  BY r.agencyid) b USING (agencyid) " +
-            "ORDER  BY agencyid; ";
+                    "FROM   (SELECT r.agencyid, " +
+                    "               Count(*) AS count_marcxchange " +
+                    "        FROM   records AS r " +
+                    "        WHERE  r.mimetype = 'text/marcxchange' " +
+                    "        GROUP  BY r.agencyid) a " +
+                    "       FULL JOIN (SELECT r.agencyid, " +
+                    "                         Count(*) AS count_enrichment " +
+                    "                  FROM   records AS r " +
+                    "                  WHERE  r.mimetype = 'text/enrichment+marcxchange' " +
+                    "                  GROUP  BY r.agencyid) b USING (agencyid) " +
+                    "ORDER  BY agencyid; ";
 
     private static final String SELECT_QUEUE_COUNT_BY_WORKER = "SELECT worker, COUNT(*) FROM queue GROUP BY worker ORDER BY worker";
     private static final String SELECT_QUEUE_COUNT_BY_AGENCY = "SELECT agencyid, COUNT(*) FROM queue GROUP BY agencyid ORDER BY agencyid";
@@ -81,7 +83,7 @@ public class RawRepoConnector {
     }
 
     @Stopwatch
-    public List<QueueProvider> getProviders() throws Exception {
+    public List<QueueProvider> getProviders() throws SQLException {
         LOGGER.entry();
         HashMap<String, QueueProvider> providerMap = new HashMap<>();
         List<QueueProvider> result = new ArrayList<>();
@@ -112,15 +114,13 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
     @Stopwatch
-    public Set<RecordId> getEnrichmentForAgencies(Set<Integer> agencies, Boolean includeDeleted) throws Exception {
+    public Set<RecordId> getEnrichmentForAgencies(Set<Integer> agencies, Boolean includeDeleted) throws SQLException {
         LOGGER.entry(agencies, includeDeleted);
         Set<RecordId> result = new HashSet<>();
 
@@ -159,15 +159,13 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
     @Stopwatch
-    public Set<RecordId> getRecordsForAgencies(Set<Integer> agencies, boolean includeDeleted) throws Exception {
+    public Set<RecordId> getRecordsForAgencies(Set<Integer> agencies, boolean includeDeleted) throws SQLException {
         LOGGER.entry(agencies, includeDeleted);
         Set<RecordId> result = new HashSet<>();
 
@@ -205,15 +203,13 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
     @Stopwatch
-    public Set<RecordId> getRecordsForDBC(Set<Integer> agencies, boolean includeDeleted) throws Exception {
+    public Set<RecordId> getRecordsForDBC(Set<Integer> agencies, boolean includeDeleted) throws SQLException {
         LOGGER.entry(agencies, includeDeleted);
         Set<RecordId> result = new HashSet<>();
 
@@ -253,8 +249,6 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
@@ -291,14 +285,14 @@ public class RawRepoConnector {
                                                List<Integer> agencyList,
                                                List<String> providerList,
                                                List<Boolean> changedList,
-                                               List<Boolean> leafList) throws Exception {
+                                               List<Boolean> leafList) throws SQLException, QueueException {
         LOGGER.entry();
 
         if (!(bibliographicRecordIdList.size() == agencyList.size() &&
                 agencyList.size() == providerList.size() &&
                 providerList.size() == changedList.size() &&
                 changedList.size() == leafList.size())) {
-            throw new Exception("All input list must have same size");
+            throw new QueueException("All input list must have same size");
         }
 
         // Convert true/false to Y/N
@@ -334,20 +328,18 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
-    public List<RecordStats> getStatsRecordByAgency() throws Exception{
+    public List<RecordStats> getStatsRecordByAgency() throws SQLException {
         LOGGER.entry();
         List<RecordStats> result = new ArrayList<>();
 
         try (Connection connection = globalDataSource.getConnection();
-             CallableStatement stmt = connection.prepareCall(SELECT_RECORD_COUNT_BY_AGENCIES)) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
+             Statement stmt = connection.createStatement()) {
+            try (ResultSet resultSet = stmt.executeQuery(SELECT_RECORD_COUNT_BY_AGENCIES)) {
                 while (resultSet.next()) {
                     final int agencyId = resultSet.getInt("agencyId");
                     final int marcxCount = resultSet.getInt("count_marcxchange");
@@ -358,20 +350,18 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
-    public List<QueueStats> getStatsQueueByWorker() throws Exception{
+    public List<QueueStats> getStatsQueueByWorker() throws SQLException {
         LOGGER.entry();
         List<QueueStats> result = new ArrayList<>();
 
         try (Connection connection = globalDataSource.getConnection();
-             CallableStatement stmt = connection.prepareCall(SELECT_QUEUE_COUNT_BY_WORKER)) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
+             Statement stmt = connection.createStatement()) {
+            try (ResultSet resultSet = stmt.executeQuery(SELECT_QUEUE_COUNT_BY_WORKER)) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString("worker");
                     final int count = resultSet.getInt("count");
@@ -381,20 +371,18 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }
     }
 
-    public List<QueueStats> getStatsQueueByAgency() throws Exception{
+    public List<QueueStats> getStatsQueueByAgency() throws SQLException {
         LOGGER.entry();
         List<QueueStats> result = new ArrayList<>();
 
         try (Connection connection = globalDataSource.getConnection();
-             CallableStatement stmt = connection.prepareCall(SELECT_QUEUE_COUNT_BY_AGENCY)) {
-            try (ResultSet resultSet = stmt.executeQuery()) {
+             Statement stmt = connection.createStatement()) {
+            try (ResultSet resultSet = stmt.executeQuery(SELECT_QUEUE_COUNT_BY_AGENCY)) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString("agencyid");
                     final int count = resultSet.getInt("count");
@@ -404,8 +392,6 @@ public class RawRepoConnector {
             }
 
             return result;
-        } catch (SQLException ex) {
-            throw new Exception(ex);
         } finally {
             LOGGER.exit(result);
         }

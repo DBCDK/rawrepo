@@ -29,23 +29,28 @@
                 this.queueModeProcessing = 20;
                 this.queueModeProcessed = 30;
 
+                this.modeIntrospect = "INTROSPECT";
+                this.modeQueue = "QUEUE";
+                this.modeRawrepo = "RAWREPO";
+                this.modeUpdate = "UPDATE";
+
                 this.state = {
-                    mode: undefined,
+                    mode: null,
                     queueMode: this.queueModeInput,
-                    queueAnalysis: undefined,
-                    queueChunks: undefined,
+                    queueAnalysis: null,
+                    queueChunks: null,
                     queueChunkIndex: 0,
                     queueProgress: 0,
                     queueDoContinue: true,
                     queueTypes: [],
-                    sessionId: undefined,
+                    sessionId: null,
                     providers: [],
-                    selectedQueueType: undefined,
+                    selectedQueueType: null,
                     selectedAgencies: '',
-                    selectedProvider: undefined,
+                    selectedProvider: null,
                     includeDeleted: "false",
                     isLoading: false,
-                    instanceName: undefined,
+                    instanceName: null,
 
                     statRecordByAgency: [],
                     statQueueByAgency: [],
@@ -54,7 +59,6 @@
                     loadingStatRecordByAgency: false,
                     loadingStatQueueByAgency: false,
                     loadingStatQueueByWorker: false
-
                 };
 
                 this.getQueueTypes = this.getQueueTypes.bind(this);
@@ -143,7 +147,7 @@
             }
 
             getHeader() {
-                if (this.state.instanceName === undefined) {
+                if (this.state.instanceName === null) {
                     this.getInstanceName();
                     return 'RawRepo HYDRA';
                 } else {
@@ -155,7 +159,7 @@
                 this.setState({isLoading: true});
                 let data = JSON.stringify({
                     provider: this.state.selectedProvider,
-                    queueType: this.state.selectedQueueType.key !== undefined ? this.state.selectedQueueType.key : this.state.selectedQueueType,
+                    queueType: this.state.selectedQueueType,
                     includeDeleted: this.state.includeDeleted,
                     agencyText: this.state.selectedAgencies
                 });
@@ -165,18 +169,24 @@
                     .type('json')
                     .set('Accept', 'application/json')
                     .then((res) => {
-                        let response = JSON.parse(res.text);
+                        let response = res.body;
 
-                        if (response.validated) {
+                        if (response === null) {
+                            alert('FEJL!\n\n' +
+                                'Der kom tomt svar tilbage');
+                        } else if (response.validated === undefined) {
+                            alert('FEJL!\n\n' +
+                                'Der gik et eller andet galt, da svaret ikke indeholder de forventede attributter');
+                        } else if (!response.validated) {
+                            alert('VALIDERING FEJLEDE!\n\n' +
+                                response.message);
+                        } else {
                             this.setState({
                                 queueMode: this.queueModeValidated,
                                 queueAnalysis: response.agencyAnalysisList,
                                 queueChunks: response.chunks,
                                 sessionId: response.sessionId
                             });
-                        } else {
-                            alert('VALIDERING FEJLEDE! \n\n ' +
-                                JSON.parse(res.text).message);
                         }
                         this.setState({isLoading: false});
                     })
@@ -213,9 +223,21 @@
                     .type('json')
                     .set('Accept', 'application/json')
                     .then((res) => {
-                        let response = JSON.parse(res.text);
+                        let response = res.body;
 
-                        if (response.validated) {
+                        if (response === null) {
+                            alert('FEJL!\n\n' +
+                                'Der kom tomt svar tilbage');
+                        } else if (response.validated === undefined) {
+                            alert('FEJL!\n\n' +
+                                'Der gik et eller andet galt, da svaret ikke indeholder de forventede attributter');
+                        } else if (!response.validated) {
+                            this.setState({
+                                queueMode: this.queueModeValidated
+                            });
+                            alert('VALIDERING FEJLEDE!\n\n' +
+                                response.message);
+                        } else {
                             if (chunkIndex === chunks) {
                                 this.setState({
                                     queueMode: this.queueModeProcessed,
@@ -233,12 +255,6 @@
                                     });
                                 }
                             }
-                        } else {
-                            alert('VALIDERING FEJLEDE! \n\n ' +
-                                JSON.parse(res.text).message);
-                            this.setState({
-                                queueMode: this.queueModeValidated
-                            });
                         }
                         this.setState({isLoading: false});
                     })
@@ -275,17 +291,17 @@
             }
 
             setDefaultQueueValues() {
-                if (this.state.selectedProvider === undefined && this.state.providers.length > 0) {
+                if (this.state.selectedProvider === null && this.state.providers.length > 0) {
                     this.setState({selectedProvider: this.state.providers[0]})
                 }
 
-                if (this.state.selectedQueueType === undefined && this.state.queueTypes.length > 0) {
-                    this.setState({selectedQueueType: this.state.queueTypes[0]})
+                if (this.state.selectedQueueType === null && this.state.queueTypes.length > 0) {
+                    this.setState({selectedQueueType: this.state.queueTypes[0].key})
                 }
             }
 
             setQueuePage() {
-                this.setState({mode: 'QUEUE', queueMode: this.queueModeInput});
+                this.setState({mode: this.modeQueue, queueMode: this.queueModeInput});
 
                 this.getQueueTypes();
                 this.getRRProviders();
@@ -293,15 +309,15 @@
             }
 
             setIntrospectPage() {
-                this.state.mode = 'INTRO';
+                this.setState({mode: this.modeIntrospect});
             }
 
             setUpdatePage() {
-                this.state.mode = 'UPDATE';
+                this.setState({mode: this.modeUpdate});
             }
 
             setRawrepoPage() {
-                this.setState({mode: 'RAWREPO'});
+                this.setState({mode: this.modeRawrepo});
 
                 this.getStatRecordByAgency();
                 this.getStatQueueByWorker();
@@ -309,9 +325,9 @@
             }
 
             drawSubPage() {
-                if (this.state.mode === 'QUEUE') {
+                if (this.state.mode === this.modeQueue) {
                     return this.drawQueuePage();
-                } else if (this.state.mode === 'RAWREPO') {
+                } else if (this.state.mode === this.modeRawrepo) {
                     return this.drawRawrepoPage();
                 }
             }
@@ -343,8 +359,8 @@
             setQueueModeInput() {
                 this.setState({
                     queueMode: this.queueModeInput,
-                    queueAnalysis: undefined,
-                    queueChunks: undefined,
+                    queueAnalysis: null,
+                    queueChunks: null,
                     queueChunkIndex: 0,
                     queueProgress: 0
                 })

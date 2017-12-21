@@ -7,6 +7,8 @@ package dk.dbc.rawrepo;
 
 import dk.dbc.commons.jsonb.JSONBContext;
 import dk.dbc.commons.jsonb.JSONBException;
+import dk.dbc.holdingsitems.HoldingsItemsException;
+import dk.dbc.openagency.client.OpenAgencyException;
 import dk.dbc.rawrepo.common.ApplicationConstants;
 import dk.dbc.rawrepo.common.EnvironmentVariables;
 import dk.dbc.rawrepo.dao.HoldingsItemsConnector;
@@ -37,6 +39,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -144,15 +147,15 @@ public class QueueAPI {
             LOGGER.debug(response.toString());
 
             return Response.ok(res).build();
-        } catch (Exception e) {
-            LOGGER.error("Unexpected exception:", e);
-            return Response.serverError().build();
+        } catch (SQLException | JSONBException | HoldingsItemsException ex) {
+            LOGGER.error("Unexpected exception:", ex);
+            return Response.serverError().entity(ex.getMessage()).build();
         } finally {
             LOGGER.exit(res);
         }
     }
 
-    private void loadRecordIdsForQueuing(QueueJob queueJob) throws Exception {
+    private void loadRecordIdsForQueuing(QueueJob queueJob) throws SQLException, HoldingsItemsException {
         Set<RecordId> holdingsItemsRecordIds;
         Set<RecordId> fbsRecordIds;
         Set<RecordId> recordMap = null;
@@ -264,15 +267,15 @@ public class QueueAPI {
             LOGGER.debug(response.toString());
 
             return Response.ok(res).build();
-        } catch (Exception e) {
-            LOGGER.error("Unexpected exception:", e);
-            return Response.serverError().build();
+        } catch (SQLException | JSONBException ex) {
+            LOGGER.error("Unexpected exception:", ex);
+            return Response.serverError().entity(ex.getMessage()).build();
         } finally {
             LOGGER.exit(res);
         }
     }
 
-    private QueueJob prepareQueueJob(QueueValidateRequest queueValidateRequest) throws Exception {
+    private QueueJob prepareQueueJob(QueueValidateRequest queueValidateRequest) throws QueueException {
         QueueJob queueJob = new QueueJob();
 
         try {
@@ -345,6 +348,9 @@ public class QueueAPI {
             queueJob.setAgencyIdList(agencyList);
 
             return queueJob;
+        } catch (SQLException | OpenAgencyException ex) {
+            LOGGER.error("Exception during prepareQueueJob", ex);
+            throw new QueueException("Exception during prepareQueueJob: " + ex.toString());
         } finally {
             LOGGER.exit(queueJob);
         }
@@ -388,9 +394,9 @@ public class QueueAPI {
 
             res = jsonbContext.marshall(providers);
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (Exception ex) {
+        } catch (SQLException | JSONBException ex) {
             LOGGER.error("Exception during getProviderInfo", ex);
-            return Response.serverError().build();
+            return Response.serverError().entity(ex.toString()).build();
         } finally {
             LOGGER.exit(res);
         }
@@ -420,9 +426,9 @@ public class QueueAPI {
             res = jsonbContext.marshall(queueTypes);
 
             return Response.ok(res, MediaType.APPLICATION_JSON).build();
-        } catch (JSONBException e) {
-            LOGGER.error("Unexpected exception:", e);
-            return Response.serverError().build();
+        } catch (JSONBException ex) {
+            LOGGER.error("Unexpected exception:", ex);
+            return Response.serverError().entity(ex.toString()).build();
         } finally {
             LOGGER.exit(res);
         }

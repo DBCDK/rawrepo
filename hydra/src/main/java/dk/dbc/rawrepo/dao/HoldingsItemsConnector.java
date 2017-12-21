@@ -6,6 +6,7 @@
 package dk.dbc.rawrepo.dao;
 
 import dk.dbc.holdingsitems.HoldingsItemsDAO;
+import dk.dbc.holdingsitems.HoldingsItemsException;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.timer.Stopwatch;
 import dk.dbc.rawrepo.timer.StopwatchInterceptor;
@@ -60,7 +61,7 @@ public class HoldingsItemsConnector {
 
     @Stopwatch
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Set<RecordId> getHoldingsRecords(Set<Integer> agencies) throws Exception {
+    public Set<RecordId> getHoldingsRecords(Set<Integer> agencies) throws HoldingsItemsException, SQLException {
         LOGGER.entry(agencies);
         Set<RecordId> result = new HashSet<>();
         try (Connection connection = globalDataSource.getConnection()) {
