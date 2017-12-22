@@ -571,14 +571,15 @@
                                     )
                                 ),
                                 e('tbody', null,
-                                    this.state.statRecordByAgency.map(function (item, index) {
-                                            return e('tr', {key: 'stats-record-by-agency-' + item.agencyId},
-                                                e('td', null, item.agencyId),
-                                                e('td', null, item.marcxCount),
-                                                e('td', null, item.enrichmentCount)
-                                            );
-                                        }
-                                    )
+                                    this.state.statRecordByAgency.length === 0 ? "Indlæser..." :
+                                        this.state.statRecordByAgency.map(function (item, index) {
+                                                return e('tr', {key: 'stats-record-by-agency-' + index},
+                                                    e('td', null, item.agencyId),
+                                                    e('td', null, item.marcxCount),
+                                                    e('td', null, item.enrichmentCount)
+                                                );
+                                            }
+                                        )
                                 )
                             )
                         ),
@@ -596,18 +597,23 @@
                                 e('thead', null,
                                     e('tr', null,
                                         e('th', null, 'Worker'),
-                                        e('th', null, 'Antal')
+                                        e('th', null, 'Antal'),
+                                        e('th', null, 'Ajourdato')
                                     )
                                 ),
                                 e('tbody', null,
-                                    this.state.statQueueByWorker.map(function (item, index) {
-                                            return e('tr', {key: 'stats-queue-by-worker-' + index},
-                                                e('td', null, item.text),
-                                                e('td', null, item.count),
-                                                e('td', null, item.date)
-                                            );
-                                        }
-                                    )
+                                    this.state.statQueueByWorker.length === 0 ?
+                                        e('tr', {key: 'stats-queue-by-worker-none'}, null,
+                                            e('td', {colSpan: 3}, "Ingen"))
+                                        :
+                                        this.state.statQueueByWorker.map(function (item, index) {
+                                                return e('tr', {key: 'stats-queue-by-worker-' + index},
+                                                    e('td', null, item.text),
+                                                    e('td', null, item.count),
+                                                    e('td', null, item.date)
+                                                );
+                                            }
+                                        )
                                 )
                             ),
                             e('hr', null, null),
@@ -624,18 +630,23 @@
                                 e('thead', null,
                                     e('tr', null,
                                         e('th', null, 'Biblioteksnummer'),
-                                        e('th', null, 'Antal')
+                                        e('th', null, 'Antal'),
+                                        e('th', null, 'Ajourdato')
                                     )
                                 ),
                                 e('tbody', null,
-                                    this.state.statQueueByAgency.map(function (item, index) {
-                                            return e('tr', {key: 'stats-queue-by-agency-' + index},
-                                                e('td', null, item.text),
-                                                e('td', null, item.count),
-                                                e('td', null, item.date)
-                                            );
-                                        }
-                                    )
+                                    this.state.statQueueByAgency.length === 0 ?
+                                        e('tr', {key: 'stats-queue-by-agency-none'}, null,
+                                            e('td', {colSpan: 3}, "Ingen"))
+                                        :
+                                        this.state.statQueueByAgency.map(function (item, index) {
+                                                return e('tr', {key: 'stats-queue-by-agency-' + index},
+                                                    e('td', null, item.text),
+                                                    e('td', null, item.count),
+                                                    e('td', null, item.date)
+                                                );
+                                            }
+                                        )
                                 )
                             ),
                             e('hr', null, null),
@@ -652,19 +663,23 @@
                                 e('thead', null,
                                     e('tr', null,
                                         e('th', null, 'Fejlbesked'),
-                                        e('th', null, 'Dato'),
-                                        e('th', null, 'Antal')
+                                        e('th', null, 'Antal'),
+                                        e('th', null, 'Ajourdato')
                                     )
                                 ),
                                 e('tbody', null,
-                                    this.state.statQueueByError.map(function (item, index) {
-                                            return e('tr', {key: 'stats-queue-erorr-' + index},
-                                                e('td', null, item.text),
-                                                e('td', null, item.count),
-                                                e('td', null, item.date)
-                                            );
-                                        }
-                                    )
+                                    this.state.statQueueByError.length === 0 ?
+                                        e('tr', {key: 'stats-queue-by-error-none'}, null,
+                                            e('td', {colSpan: 3}, "Ingen"))
+                                        :
+                                        this.state.statQueueByError.map(function (item, index) {
+                                                return e('tr', {key: 'stats-queue-by-error-' + index},
+                                                    e('td', null, item.text),
+                                                    e('td', null, item.count),
+                                                    e('td', null, item.date)
+                                                );
+                                            }
+                                        )
                                 )
                             )
                         )
