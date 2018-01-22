@@ -221,7 +221,7 @@
       </analyzer>
     </fieldType>
 
-    <fieldType name="dbc-doc-id" class="solr.TextField" sortMissingLast="true" omitNorms="true" multiValued="true">
+      <fieldType name="dbc-doc-id" class="solr.TextField" sortMissingLast="true" omitNorms="true" multiValued="true">
       <analyzer>
         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="\s" replacement=""/>
         <tokenizer class="solr.PatternTokenizerFactory" pattern="^(.*)$" group="1"/>
@@ -306,7 +306,7 @@
     <copyField source="marc.021e" dest="marc.021ae"/>
     <field name="marc.021ae" type="dbc-isbn" indexed="true" stored="true" required="false" />
 
-      <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false" />
+      <field name="marc.022a" type="dbc-isbn" indexed="true" stored="true" required="false"/>
     <copyField source="marc.022a" dest="match.022a"/>
     <field name="match.022a" type="dbc-match" indexed="true" stored="true" required="false" />
 
@@ -317,7 +317,7 @@
     <copyField source="marc.023b" dest="match.023ab"/>
     <field name="match.023ab" type="dbc-match" indexed="true" stored="true" required="false" />
 
-      <field name="marc.024a" type="dbc-default" indexed="false" stored="false" required="false" />
+      <field name="marc.024a" type="dbc-default" indexed="false" stored="false" required="false"/>
     <copyField source="marc.024a" dest="match.024a"/>
     <field name="match.024a" type="dbc-match" indexed="true" stored="true" required="false" />
 
@@ -410,7 +410,7 @@
   <uniqueKey>id</uniqueKey>
 
   <!-- field for the QueryParser to use when an explicit fieldname is absent -->
-    <defaultSearchField>term.default</defaultSearchField>
+    <defaultSearchField>default</defaultSearchField>
 
   <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
   <solrQueryParser defaultOperator="AND"/>
