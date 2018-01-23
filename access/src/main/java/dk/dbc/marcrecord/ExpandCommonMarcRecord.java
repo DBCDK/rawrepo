@@ -134,9 +134,11 @@ public class ExpandCommonMarcRecord {
 
     private static void handleRepeatableField(List<MarcField> fields, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
         int authIndicator = 0;
+        logger.info("hit handleRepeatableField");
         for (MarcField field : fields) {
             MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("å")) {
+                logger.info("found å");
                 int indicator = Integer.parseInt(fieldReader.getValue("å"));
                 if (indicator > authIndicator) {
                     authIndicator = indicator;
@@ -236,9 +238,11 @@ public class ExpandCommonMarcRecord {
     }
 
     private static void addAdditionalFields(MarcRecord record, List<MarcField> authFields, String indicator) {
+        logger.info("hit addAdditionalFields");
         for (MarcField field : authFields) {
+            logger.info("For authField {}", field);
             MarcField additionalField = new MarcField("900", "00");
-            additionalField.setSubfields(field.getSubfields());
+            additionalField.getSubfields().addAll(field.getSubfields());
             additionalField.getSubfields().add(new MarcSubField("z", indicator));
             record.getFields().add(additionalField);
         }

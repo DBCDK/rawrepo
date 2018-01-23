@@ -1,0 +1,28 @@
+001 00 *a 26443784 *b 870970 *c 20111203151350 *d 20060919 *f a
+004 00 *r n *a e
+008 00 *t s *u f *a 2006 *b dk *l dan *x 06 *v 0
+009 00 *a a *g xx
+021 00 *a 87-91770-29-7 *c ib. *d kr. 199,00
+032 00 *x ACC200638 *a DBF200644 *x SFD200644 *x DAT991149
+100 00 *5 870979 *6 68313686
+245 00 *a 30 taler - 30 år *c udvalgte taler 1976-2006 *e Anders Fogh Rasmussen *f redaktion og forord: Ejvin Bjørnkjær *f billedredaktion: Charlotte Wognsen og Preben Falk Rangård *f billedtekster: Charlotte Wognsen
+250 00 *a 1. udgave *b ÷ *x 1. oplag
+260 00 *& 1 *a [Kbh.] *b Jepsen & Co. *f [Vejle] *g [eksp. Kroghs Forlag] *c 2006 *k Nørhaven Book, Viborg
+300 00 *a 239 sider *b ill. (nogle i farver)
+504 00 *& 1 *a Uddrag fra nogle af statsminister Anders Fogh Rasmussen taler gennem de sidste 30 år med temaerne: Fra Venstres Ungdoms landsformand til Venstres formand ; liberalisme - den tredje vej! ; Kulturkamp ; Frihed og ansvar - Grundtvig og Kierkegꜳrd ; Sikring af frihedsrettighederne ; Opgør med samarbejds- og tilpasningspolitikken ; En aktiv udenrigs- og sikkerhedspolitik ; Statsminister
+521 00 *& REX *b 1. oplag *c 2006
+600 00 *5 870979 *6 68313686
+610 00 *1  *a Venstre
+652 00 *m 96.72
+652 00 *p 96.8
+652 00 *p 32.269 *b Venstre
+666 00 *0  *f historie
+666 00 *0  *f politik
+666 00 *0  *i 1970-1979
+666 00 *0  *i 1980-1989
+666 00 *0  *i 1990-1999
+666 00 *0  *i 2000-2009
+666 00 *0  *e Danmark
+666 00 *0  *o taler
+990 00 *a SFD *b L *c A *o 200644
+996 00 *a DBC

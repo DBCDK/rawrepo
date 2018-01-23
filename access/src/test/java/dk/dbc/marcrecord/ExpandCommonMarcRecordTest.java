@@ -19,8 +19,6 @@ import dk.dbc.rawrepo.RecordId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +32,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 
 public class ExpandCommonMarcRecordTest {
-    private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecordTest.class);
-
+    private static final String AUT_RAW_26443784 = "authority/raw-26443784.marc";
     private static final String AUT_RAW_52846943 = "authority/raw-52846943.marc";
     private static final String AUT_RAW_53025757 = "authority/raw-53025757.marc";
     private static final String AUT_RAW_53161510 = "authority/raw-53161510.marc";
@@ -45,6 +42,7 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUT_RAW_53214827 = "authority/raw-53214827.marc";
     private static final String AUT_RAW_90004158 = "authority/raw-90004158.marc";
 
+    private static final String AUT_EXPANDED_26443784 = "authority/expanded-26443784.marc";
     private static final String AUT_EXPANDED_52846943 = "authority/expanded-52846943.marc";
     private static final String AUT_EXPANDED_53025757 = "authority/expanded-53025757.marc";
     private static final String AUT_EXPANDED_53161510 = "authority/expanded-53161510.marc";
@@ -60,6 +58,7 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUTHORITY_19064689 = "authority/authority-19064689.marc";
     private static final String AUTHORITY_19130452 = "authority/authority-19130452.marc";
     private static final String AUTHORITY_68098203 = "authority/authority-68098203.marc";
+    private static final String AUTHORITY_68313686 = "authority/authority-68313686.marc";
     private static final String AUTHORITY_68354153 = "authority/authority-68354153.marc";
     private static final String AUTHORITY_68432359 = "authority/authority-68432359.marc";
     private static final String AUTHORITY_68472806 = "authority/authority-68472806.marc";
@@ -241,6 +240,21 @@ public class ExpandCommonMarcRecordTest {
 
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "20611529")), equalTo(record));
     }
+
+    @Test
+    public void expandCommonRecordWithTwoReferencesToSameAuthorityRecord() throws Exception {
+        MarcRecord raw = loadMarcRecord(AUT_RAW_26443784);
+        MarcRecord authority = loadMarcRecord(AUTHORITY_68313686);
+
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_26443784);
+
+        Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("26443784", raw);
+        collection.put("68313686", authority);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "26443784")), equalTo(expanded));
+    }
+
 
     private MarcRecord sortRecord(MarcRecord record) {
         Collections.sort(record.getFields(), new Comparator<MarcField>() {
