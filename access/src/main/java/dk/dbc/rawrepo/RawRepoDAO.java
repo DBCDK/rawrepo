@@ -749,7 +749,8 @@ public abstract class RawRepoDAO {
             RecordId recordId = new RecordId(bibliographicRecordId, agency);
             enqueue(recordId, provider,
                     changed && agency == originalAgencyId,
-                    children.isEmpty());
+                    children.isEmpty(),
+                    priority);
         }
         if (traverse) {
             Set<String> bi = children.stream()

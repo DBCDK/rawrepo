@@ -28,7 +28,16 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -36,12 +45,17 @@ import static dk.dbc.marcxmerge.MarcXChangeMimeType.ARTICLE;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.ENRICHMENT;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -668,22 +682,16 @@ class RawRepoMock {
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                int i = 0;
-                RecordId recordId = (RecordId) arguments[i++];
-                String provider = (String) arguments[i++];
-                boolean changed = (boolean) arguments[i++];
-                boolean leaf = (boolean) arguments[i];
-                StringBuilder sb = new StringBuilder();
-                sb.append(recordId.getAgencyId()).append(':').append(recordId.getBibliographicRecordId())
-                        .append(':')
-                        .append(changed ? 'C' : '-')
-                        .append(leaf ? 'L' : '-');
-                String id = sb.toString();
-                enqueued.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet();
-                return null;
+                return enqueue(invocation);
             }
         }).when(rawrepo).enqueue(anyObject(), anyString(), anyBoolean(), anyBoolean());
+
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                return enqueue(invocation);
+            }
+        }).when(rawrepo).enqueue(anyObject(), anyString(), anyBoolean(), anyBoolean(), anyInt());
 
         doCallRealMethod().when(rawrepo).agencyFor(anyString(), anyInt(), anyBoolean());
         doCallRealMethod().when(rawrepo).findParentRelationAgency(anyString(), anyInt());
@@ -712,6 +720,23 @@ class RawRepoMock {
             print();
         }
         return rawrepo;
+    }
+
+    private Void enqueue(InvocationOnMock invocation) {
+        Object[] arguments = invocation.getArguments();
+        int i = 0;
+        RecordId recordId = (RecordId) arguments[i++];
+        String provider = (String) arguments[i++];
+        boolean changed = (boolean) arguments[i++];
+        boolean leaf = (boolean) arguments[i];
+        StringBuilder sb = new StringBuilder();
+        sb.append(recordId.getAgencyId()).append(':').append(recordId.getBibliographicRecordId())
+                .append(':')
+                .append(changed ? 'C' : '-')
+                .append(leaf ? 'L' : '-');
+        String id = sb.toString();
+        enqueued.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet();
+        return null;
     }
 
     private void print() {
