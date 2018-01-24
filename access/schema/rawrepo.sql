@@ -225,9 +225,9 @@ CREATE INDEX jobdiag_idx
 CREATE TYPE ENQUEUERESULT AS (worker VARCHAR(32), queued BOOLEAN);
 
 CREATE TABLE provider_log (
-  provider  VARCHAR(32) NOT NULL,
-  hit_count NUMERIC     NOT NULL DEFAULT 1,
-  modified  TIMESTAMP   NOT NULL DEFAULT now()
+  provider  VARCHAR(32),
+  hit_count NUMERIC   NOT NULL DEFAULT 1,
+  modified  TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX provider_log_idx
