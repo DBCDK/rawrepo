@@ -124,7 +124,8 @@ BEGIN
     END CASE;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 --- DEPRECATED as of December 2017
 CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_ NUMERIC(6), mimetype_ VARCHAR(128),
@@ -134,7 +135,8 @@ BEGIN
   SELECT *
   FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 --- DEPRECATED as of December 2017
@@ -149,7 +151,8 @@ BEGIN
   SELECT *
   FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION enqueue_bulk(bibliographicrecordid_ VARCHAR(64) [],
@@ -182,7 +185,8 @@ BEGIN
     elements_current = elements_current + 1;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128))
@@ -192,7 +196,8 @@ BEGIN
   SELECT *
   FROM dequeue(worker_, 1);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128), no_ INT)
@@ -234,7 +239,8 @@ BEGIN
     END;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 --
 --

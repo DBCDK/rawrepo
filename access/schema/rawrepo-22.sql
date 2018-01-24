@@ -80,7 +80,8 @@ BEGIN
           OLD.trackingId);
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION archive_record_cleanup()
   RETURNS TRIGGER AS $$ -- V12
@@ -104,19 +105,22 @@ BEGIN
   END LOOP;
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 CREATE TRIGGER archive_record_update
   -- V2
-AFTER UPDATE ON records
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
+  AFTER UPDATE
+  ON records
+  FOR EACH ROW
+  WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE PROCEDURE archive_record_cleanup();
 
 CREATE TRIGGER archive_record_delete
   -- V2
-AFTER DELETE ON records
-FOR EACH ROW
+  AFTER DELETE
+  ON records
+  FOR EACH ROW
 EXECUTE PROCEDURE archive_record();
 
 -- relations:
@@ -143,19 +147,22 @@ BEGIN
   NEW.always_false = FALSE;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 CREATE TRIGGER relation_immutable_false_insert
   -- V10
-BEFORE INSERT ON relations
-FOR EACH ROW
+  BEFORE INSERT
+  ON relations
+  FOR EACH ROW
 EXECUTE PROCEDURE relation_immutable_false();
 
 CREATE TRIGGER relation_immutable_false_update
   -- V10
-BEFORE UPDATE ON relations
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
+  BEFORE UPDATE
+  ON relations
+  FOR EACH ROW
+  WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE PROCEDURE relation_immutable_false();
 
 --
@@ -297,7 +304,8 @@ BEGIN
     END CASE;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 --- DEPRECATED as of December 2017
@@ -308,7 +316,8 @@ BEGIN
   SELECT *
   FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 --- DEPRECATED as of December 2017
@@ -323,7 +332,8 @@ BEGIN
   SELECT *
   FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION enqueue_bulk(bibliographicrecordid_ VARCHAR(64) [],
@@ -356,7 +366,8 @@ BEGIN
     elements_current = elements_current + 1;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128))
@@ -366,7 +377,8 @@ BEGIN
   SELECT *
   FROM dequeue(worker_, 1);
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128), no_ INT)
@@ -408,4 +420,5 @@ BEGIN
     END;
   END LOOP;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
