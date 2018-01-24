@@ -218,12 +218,20 @@ CREATE TABLE queuerules (-- V18
 CREATE INDEX queue_idx_job
   ON queue (bibliographicrecordid, agencyid, worker);
 CREATE INDEX queue_idx_worker
-  ON queue (worker, queued, priority); --V4, V22
+  ON queue (worker, priority, queued); --V4, V22
 CREATE INDEX jobdiag_idx
   ON jobdiag (worker, error, queued, priority); --V7, V22
 -- DROP TYPE enqueueResult;
 CREATE TYPE ENQUEUERESULT AS (worker VARCHAR(32), queued BOOLEAN);
 
+CREATE TABLE provider_log (
+  provider  VARCHAR(32) NOT NULL,
+  hit_count NUMERIC     NOT NULL DEFAULT 1,
+  modified  TIMESTAMP   NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX provider_log_idx
+  ON provider_log (provider);
 
 CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64),
                                    agencyid_              NUMERIC(6),
@@ -238,6 +246,11 @@ DECLARE
   rows   INT;
   r      ENQUEUERESULT%ROWTYPE;
 BEGIN
+
+  INSERT INTO provider_log (provider, hit_count, modified) VALUES (provider_, 1, now())
+  ON CONFLICT (provider)
+    DO UPDATE SET hit_count = provider_log.hit_count + 1, modified = now();
+
   FOR row IN SELECT *
              FROM queuerules
              WHERE provider = provider_ AND (changed = 'A' OR changed = changed_) AND (leaf = 'A' OR leaf = leaf_) LOOP
