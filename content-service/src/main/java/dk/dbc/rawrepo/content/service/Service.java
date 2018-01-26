@@ -28,8 +28,17 @@ import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.rawrepo.*;
-import dk.dbc.rawrepo.content.service.transport.*;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
+import dk.dbc.rawrepo.content.service.transport.FetchRequestRecord;
+import dk.dbc.rawrepo.content.service.transport.FetchResponseError;
+import dk.dbc.rawrepo.content.service.transport.FetchResponseRecord;
+import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
+import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.xml.sax.SAXParseException;
@@ -72,6 +81,9 @@ public abstract class Service {
 
     @Inject
     MarcXMergerEJB marcXMerger;
+
+    @Inject
+    MarcXMergerOverwrite006EJB marcXMergerOverwrite006;
 
     @Inject
     XmlToolsEJB xmlTools;
@@ -288,7 +300,7 @@ public abstract class Service {
     private FetchResponseRecordContent fetchMerged(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
         Record rawRecord;
         try (Timer.Context time = fetchMerged.time();
-             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
+             Pool.Element<MarcXMerger> marcXMergerElement = marcXMergerOverwrite006.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecordExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
