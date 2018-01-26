@@ -103,7 +103,7 @@ pipeline {
         }
         success {
             build job: 'dataio/dataio', wait: false
-            build job: 'updateservice-head', wait: false
+            build job: 'update/updateservice-head', wait: false
         }
     }
     
