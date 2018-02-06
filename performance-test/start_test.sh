@@ -5,6 +5,14 @@ if [ ${RR_PERFORMANCE_TEST_BOOTSTRAP_VERSION} ]; then
     RAWREPO_SQL="rawrepo${BOOTSTRAP_VERSION}.sql"
 fi
 
+poll-queue() {
+    echo "Running test 'polling from queue'..."
+    # measure elpased time to dequeue 1/10 of the queue
+    time {
+        docker exec rr_speedtest python /scripts/harness_dequeue.py 100000
+    }
+    echo "Done test"
+}
 
 cp ../access/schema/${RAWREPO_SQL} rawrepo.sql
 cp ../access/schema/queuerules.sql .
@@ -12,18 +20,14 @@ cp ../access/schema/queuerules.sql .
 docker stop rr_speedtest || true
 docker rm rr_speedtest || true
 docker run -d --name rr_speedtest -v $(pwd):/scripts docker.dbc.dk/dbc-postgres:9.5
-docker exec -u 0 rr_speedtest bash -c 'apt-get update && apt-get -qy install python'
-echo "=> Sleeping 10"
-
+docker exec -u 0 rr_speedtest bash -c 'apt-get update && apt-get -qy install python python-psycopg2'
+echo "Waiting for postgresql to be ready..."
 sleep 10s
 docker logs rr_speedtest
 docker exec rr_speedtest /scripts/prepare_db.sh
 
+poll-queue
 
-
-echo "=> Do speedtests here."
-sleep 30s
-echo "=> Done speedtests."
 rm queuerules.sql rawrepo.sql
 docker stop rr_speedtest
 docker rm rr_speedtest
