@@ -7,9 +7,9 @@ fi
 
 poll-queue() {
     echo "Running test 'polling from queue'..."
-    # measure elpased time to dequeue 1/10 of the queue
+    # measure elapsed time to dequeue
     time {
-        docker exec rr_speedtest python /scripts/harness_dequeue.py 100000
+        docker exec rr_speedtest python /scripts/harness_dequeue.py 1000000
     }
     echo "Done test"
 }
