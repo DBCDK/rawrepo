@@ -383,41 +383,22 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION dequeue(worker_ VARCHAR(128), no_ INT)
   RETURNS SETOF QUEUE AS $$ -- V8
 DECLARE
-  queue_row        QUEUE;
-  queue_update_row QUEUE;
-  no               INT = 0;
+  queue_row QUEUE;
 BEGIN
-  << done >>
-    -- LIMIT xxx CUT OFF TO LARGE DATA SETS, SHOULD BE > MAX WORKERTHREADS
   FOR queue_row IN SELECT *
                    FROM queue
                    WHERE worker = worker_
-                   ORDER BY priority, queued LOOP
-    BEGIN
-      -- IF FIRST WITH THIS row.job IS TAKEN NONE WILL BE SELECTED
-      -- EVEN IF AN IDENTICAL IS LATER IN THE QUEUE
-      -- NO 2 WORKERS CAN RUN THE SAME JOB AT THE SAME TIME
-      FOR queue_update_row IN SELECT *
-                              FROM queue
-                              WHERE
-                                bibliographicrecordid = queue_row.bibliographicrecordid AND
-                                agencyid = queue_row.agencyid AND worker = worker_
-                              FOR UPDATE NOWAIT LOOP
-        DELETE FROM queue
-        WHERE bibliographicrecordid = queue_row.bibliographicrecordid AND agencyid = queue_row.agencyid AND
-              worker = worker_;
-        RETURN NEXT queue_row;
-        no = no + 1;
-        IF no >= no_
-        THEN
-          EXIT done; -- We got one - exit
-        END IF;
-      END LOOP;
-      EXCEPTION
-      WHEN lock_not_available
-        THEN
-    END;
-  END LOOP;
+                   ORDER BY priority, queued
+                   FOR UPDATE SKIP LOCKED
+  LIMIT no_ LOOP
+  BEGIN
+    DELETE FROM queue
+    WHERE bibliographicrecordid = queue_row.bibliographicrecordid
+          AND agencyid = queue_row.agencyid
+          AND worker = worker_;
+    RETURN NEXT queue_row;
+  END;
+END LOOP;
 END
 $$
 LANGUAGE plpgsql;
