@@ -102,7 +102,7 @@ pipeline {
             warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'Java Compiler (javac)']], defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
         }
         success {
-            build job: 'dataio/dataio', wait: false
+            build job: 'dataio/feature-branches/master', wait: false
             build job: 'updateservice/updateservice-head', wait: false
         }
     }
