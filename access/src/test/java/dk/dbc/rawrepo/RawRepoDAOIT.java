@@ -52,7 +52,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -452,88 +451,6 @@ public class RawRepoDAOIT {
                 "B12:9:changed",
                 "B12:9:leaf");
 
-        connection.commit();
-    }
-
-    @Test
-    public void testDeQueueWithSavepoint() throws SQLException, RawRepoException {
-        setupData(100000);
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
-
-        try (Connection connection1 = postgres.getExtraConnection();
-             Connection connection2 = postgres.getExtraConnection();
-             Connection connection3 = postgres.getExtraConnection()) {
-
-            connection.setAutoCommit(false);
-
-            RawRepoDAO dao1 = RawRepoDAO.builder(connection1).relationHints(new MyRelationHints()).build();
-            connection1.setAutoCommit(false);
-
-            RawRepoDAO dao2 = RawRepoDAO.builder(connection2).relationHints(new MyRelationHints()).build();
-            connection2.setAutoCommit(false);
-
-            connection3.setAutoCommit(false);
-
-            logger.info("QUEUE A:1");
-            dao.enqueue(new RecordId("A", 1), "test", true, true);
-            connection.commit();
-            collectionIs(getQueueState(),
-                    "A:1:changed:1", "A:1:leaf:1");
-
-            logger.info("TAKE A:1");
-            QueueJob job1 = dao1.dequeueWithSavepoint("changed");
-
-            logger.info("QUEUE A:1 again");
-            dao.enqueue(new RecordId("A", 1), "test", true, true);
-            connection.commit();
-
-            logger.info("TEST");
-            collectionIs(getQueueState(),
-                    "A:1:changed:2", "A:1:leaf:1"); // one processing and one in queue
-
-            logger.info("TAKE NULL");
-            QueueJob job2 = dao2.dequeueWithSavepoint("changed");
-            assertNull(job2); // some in queue but one is processing
-
-            logger.info("QUEUE B:2");
-            dao.enqueue(new RecordId("B", 2), "test", true, true); // 2 in queue
-            connection.commit();
-
-            logger.info("TEST");
-            collectionIs(getQueueState(),
-                    "A:1:changed:2", "A:1:leaf:1",
-                    "B:2:changed:1", "B:2:leaf:1");
-
-            logger.info("TAKE B:2");
-            job2 = dao2.dequeueWithSavepoint("changed");
-            assertNotNull(job2); //
-
-            logger.info("DONE A:1");
-            dao1.queueFail(job1, "failure");
-            connection1.commit(); // Commit 1st changed;
-
-            logger.info("DONE B:2");
-            connection2.commit(); // Commit 1st changed;
-
-            logger.info("TEST");
-            collectionIs(getQueueState(),
-                    "A:1:changed:1",
-                    "A:1:leaf:1",
-                    "B:2:leaf:1");
-
-            logger.info("TAKE A:1#2");
-            job1 = dao1.dequeueWithSavepoint("changed");
-            assertNotNull(job1);
-
-            logger.info("DONE A:1#2");
-            dao1.queueFail(job1, "failure");
-            connection1.commit(); // Commit 1st changed;
-
-            logger.info("TEST");
-            collectionIs(getQueueState(),
-                    "A:1:leaf:1",
-                    "B:2:leaf:1");
-        }
         connection.commit();
     }
 

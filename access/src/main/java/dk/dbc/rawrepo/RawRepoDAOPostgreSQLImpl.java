@@ -645,31 +645,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     /**
-     * Pull a job from the queue with rollback to savepoint capability
-     *
-     * @param worker name of worker that want's to take a job
-     * @return job description
-     * @throws RawRepoException when something goes wrong
-     */
-    @Override
-    public QueueJob dequeueWithSavepoint(String worker) throws RawRepoException {
-        try (PreparedStatement begin = connection.prepareStatement("BEGIN")) {
-            begin.execute();
-        } catch (SQLException ex) {
-            logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing job", ex);
-        }
-        QueueJob result = dequeue(worker);
-        try (PreparedStatement savepoint = connection.prepareStatement("SAVEPOINT DEQUEUED")) {
-            savepoint.execute();
-        } catch (SQLException ex) {
-            logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error dequeueing job", ex);
-        }
-        return result;
-    }
-
-    /**
      * Pull a job from the queue
      *
      * @param worker name of worker that want's to take a job

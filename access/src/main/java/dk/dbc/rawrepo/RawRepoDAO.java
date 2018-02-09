@@ -622,15 +622,6 @@ public abstract class RawRepoDAO {
     public abstract List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException;
 
     /**
-     * Pull a job from the queue with rollback to savepoint capability
-     *
-     * @param worker name of worker that want's to take a job
-     * @return job description
-     * @throws RawRepoException done at failure
-     */
-    public abstract QueueJob dequeueWithSavepoint(String worker) throws RawRepoException;
-
-    /**
      * QueueJob has failed
      *
      * @param queueJob job that failed
