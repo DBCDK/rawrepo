@@ -20,27 +20,48 @@
  */
 package dk.dbc.marcxmerge;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @RunWith(Parameterized.class)
@@ -84,14 +105,15 @@ public class MarcXMergerTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection filenames() {
         return Arrays.asList(new String[][]{ // Constructor arguments
-            {"append", "", "", "", ".*", "false"}, // Append
-            {"immutable", "245", "", "", ".*", "false"}, // Don't overwrite procted field
-            {"overwrite", "", "245", "", ".*", "false"}, // Overwrite of single fields
-            {"overwrite_multi", "", "245", "", ".*", "false"}, // Overwrite of repeated field
-            {"overwrite_group", "", "245 239", "", ".*", "false"}, // Overwrite of repeated field
-            {"remove", "", "", "245", ".*", "false"}, // Remove field
-            {"invalid", "", "", "", "\\d{3}", "false"}, // Pattern validation
-            {"isfinal", "", "", "", "\\d{3}", "true"} // Pattern validation
+                {"append", "", "", "", ".*", "false"}, // Append
+                {"immutable", "245", "", "", ".*", "false"}, // Don't overwrite procted field
+                {"overwrite", "", "245", "", ".*", "false"}, // Overwrite of single fields
+                {"overwrite_multi_to_single", "", "006;300", "", ".*", "false"},
+                {"overwrite_multi", "", "245", "", ".*", "false"}, // Overwrite of repeated field
+                {"overwrite_group", "", "245 239", "", ".*", "false"}, // Overwrite of repeated field
+                {"remove", "", "", "245", ".*", "false"}, // Remove field
+                {"invalid", "", "", "", "\\d{3}", "false"}, // Pattern validation
+                {"isfinal", "", "", "", "\\d{3}", "true"} // Pattern validation
         });
     }
 
@@ -209,14 +231,14 @@ public class MarcXMergerTest {
                     String expectedValue = expectedAttributes.getNamedItem(attr).getNodeValue();
                     String actualValue = actualAttributes.getNamedItem(attr).getNodeValue();
                     assertEquals("Different attributes @" + location + "<" + expected.getLocalName() + ">#" + attr,
-                                 expectedValue, actualValue);
+                            expectedValue, actualValue);
                 }
 
                 location = location + nodeText(expected);
 
                 Iterator<Node> expectedNodes = nodeIterator(expected);
                 Iterator<Node> actualNodes = nodeIterator(actual);
-                for (;;) {
+                for (; ; ) {
                     Node expectedNode = nextNode(expectedNodes);
                     Node actualNode = nextNode(actualNodes);
                     if (expectedNode == null && actualNode == null) {
@@ -237,14 +259,14 @@ public class MarcXMergerTest {
         private String nodeText(Node node) throws UnsupportedEncodingException, TransformerException {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             transformer.transform(new DOMSource(node.cloneNode(false)),
-                                  new StreamResult(new OutputStreamWriter(os, "UTF-8")));
+                    new StreamResult(new OutputStreamWriter(os, "UTF-8")));
             final String nodeText = os.toString("UTF-8");
             return nodeText;
         }
 
         private ArrayList<String> attributesInSet(NamedNodeMap attributes) {
             ArrayList<String> names = new ArrayList<>();
-            for (int i = 0 ; i < attributes.getLength() ; i++) {
+            for (int i = 0; i < attributes.getLength(); i++) {
                 names.add(attributes.item(i).getNodeName());
             }
             Collections.sort(names);

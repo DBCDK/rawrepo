@@ -26,7 +26,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -36,7 +42,7 @@ public class FieldRules {
     private static final XLogger logger = XLoggerFactory.getXLogger(FieldRules.class);
 
     public static final String INVALID_DEFAULT = "";
-    public static final String OVERWRITE_DEFAULT = "001;004;005;013;014;017;035;036;240;243;247;300"
+    public static final String OVERWRITE_DEFAULT = "001;004;005;006;013;014;017;035;036;240;243;247;300"
             + ";008 009 038 039 100 110 239 245 652 654"; // Opstillingsdata
     public static final String IMMUTABLE_DEFAULT = "010;020;990;991;996";
     public static final String VALID_REGEX_DANMARC2 = "\\d{3}";
@@ -55,6 +61,25 @@ public class FieldRules {
         return set;
     }
 
+    /**
+     * This function parses a string and returns a map
+     * <p>
+     * The returned map contains pairs of field names and set of field names that belongs with the index field name
+     * <p>
+     * The resulting map will look something like this:
+     * <p>
+     * 001: [001]
+     * 006: [006]
+     * ...
+     * 300: [300]
+     * 008: [008]
+     * 009: [008, 009]
+     * ...
+     * 245: [008, 009, 038, 039, 100, 100, 239, 245]
+     *
+     * @param init A comma and space separated string
+     * @return Map of field names and name of fields to be overwritten
+     */
     private static Map<String, Set<String>> overwriteCollectionsInit(String init) {
         Map<String, Set<String>> map = new HashMap<>();
         String[] groups = init.split(";");

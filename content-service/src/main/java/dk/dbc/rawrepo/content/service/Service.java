@@ -83,9 +83,6 @@ public abstract class Service {
     MarcXMergerEJB marcXMerger;
 
     @Inject
-    MarcXMergerOverwrite006EJB marcXMergerOverwrite006;
-
-    @Inject
     XmlToolsEJB xmlTools;
 
     @Inject
@@ -300,7 +297,7 @@ public abstract class Service {
     private FetchResponseRecordContent fetchMerged(RawRepoDAO dao, FetchRequestRecord requestRecord) throws RawRepoException, MarcXMergerException {
         Record rawRecord;
         try (Timer.Context time = fetchMerged.time();
-             Pool.Element<MarcXMerger> marcXMergerElement = marcXMergerOverwrite006.take()) {
+             Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecordExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
