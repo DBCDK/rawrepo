@@ -289,7 +289,6 @@ CREATE TRIGGER records_delete_trig_summary
   FOR EACH ROW
 EXECUTE PROCEDURE delete_records_summary();
 
-
 -- relations:
 -- bibliographicrecordid, agencyid => refer(bibliographicrecordid, agencyid)
 CREATE TABLE relations (-- V2
