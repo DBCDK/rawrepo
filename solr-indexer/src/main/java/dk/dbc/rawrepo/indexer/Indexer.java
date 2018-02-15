@@ -28,7 +28,13 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.QueueJob;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import dk.dbc.rawrepo.exception.SolrIndexerRawRepoException;
 import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
 import org.apache.solr.client.solrj.SolrServer;
@@ -154,23 +160,20 @@ public class Indexer {
         }
 
         while (moreWork) {
-            log.info("Looping moreWork");
             Timer.Context time = processJobTimer.time();
             try (Connection connection = getConnection()) {
-                log.info("Got connection");
                 RawRepoDAO dao = createDAO(connection);
-                log.info("Created DAO connection");
                 try {
+                    long beforeDequeue = System.nanoTime();
                     QueueJob job = dequeueJob(dao);
-                    log.info("dequeued Job");
+                    long dequeueDuration = (System.nanoTime() - beforeDequeue);
 
                     if (job != null) {
+                        log.info("---------------------------------------------------------------");
+                        log.info("Dequeued job in {} ms", dequeueDuration / 1000000);
                         MDC.put(TRACKING_ID, createTrackingId(job));
-                        log.info("pre process job");
                         processJob(job, dao);
-                        log.info("post process job");
                         commit(connection);
-                        log.info("connection committed");
                         processedJobs++;
                         if (processedJobs % 1000 == 0) {
                             log.info("Still indexing {} jobs from '{}'", processedJobs, workerName);
@@ -178,7 +181,6 @@ public class Indexer {
                         time.stop();
                     } else {
                         moreWork = false;
-                        log.trace("Queue is empty. Nothing to index");
                     }
                 } catch (RawRepoException | IllegalArgumentException | MarcXMergerException | SQLException ex) {
                     connection.rollback();
@@ -194,7 +196,6 @@ public class Indexer {
             } finally {
                 MDC.remove(TRACKING_ID);
             }
-            log.info("END Looping moreWork");
         }
         if (processedJobs > 0) {
             log.info("Done indexing {} jobs from '{}'", processedJobs, workerName);

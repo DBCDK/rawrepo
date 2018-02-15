@@ -29,7 +29,13 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.*;
+import javax.ejb.EJB;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Inject;
 import javax.validation.constraints.Min;
@@ -64,6 +70,8 @@ public class Dispatcher {
     @EEConfig.Default(C.MAX_CONCURRENT_DEFAULT)
     @Min(1)
     int maxConcurrent;
+
+    private int performWorkCount = 0;
 
     // all runnables that are given to "mes", they remove themselves upon completion
     private final Collection<Runnable> runnables = new HashSet<>();
@@ -223,6 +231,10 @@ public class Dispatcher {
      */
     void performWork() {
         try {
+            performWorkCount++;
+            if (performWorkCount % 1000 == 0) {
+                log.info("Still running...");
+            }
             indexer.performWork();
         } catch (SolrIndexerRawRepoException ex) {
             log.error("SolrIndexerRawRepoException exception caught");
