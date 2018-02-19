@@ -37,6 +37,7 @@ import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import dk.dbc.rawrepo.exception.SolrIndexerRawRepoException;
 import dk.dbc.rawrepo.exception.SolrIndexerSolrException;
+import dk.dbc.util.Stopwatch;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -159,18 +161,20 @@ public class Indexer {
             throw new SolrIndexerSolrException("Could not connect to the solr server. " + ex.getMessage(), ex);
         }
 
+        final Stopwatch dequeueStopwatch = new Stopwatch();
+
         while (moreWork) {
             Timer.Context time = processJobTimer.time();
             try (Connection connection = getConnection()) {
                 RawRepoDAO dao = createDAO(connection);
                 try {
-                    long beforeDequeue = System.nanoTime();
+                    dequeueStopwatch.reset();
                     QueueJob job = dequeueJob(dao);
-                    long dequeueDuration = (System.nanoTime() - beforeDequeue);
+                    long dequeueDurationInMS = dequeueStopwatch.getElapsedTime(TimeUnit.MILLISECONDS);
 
                     if (job != null) {
                         log.info("---------------------------------------------------------------");
-                        log.info("Dequeued job in {} ms", dequeueDuration / 1000000);
+                        log.info("Dequeued job in {} ms", dequeueDurationInMS);
                         MDC.put(TRACKING_ID, createTrackingId(job));
                         processJob(job, dao);
                         commit(connection);
