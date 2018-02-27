@@ -25,16 +25,16 @@ import com.codahale.metrics.Timer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import javax.xml.parsers.ParserConfigurationException;
 import org.apache.solr.common.SolrInputDocument;
-
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.Date;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  *
@@ -297,9 +297,11 @@ public class IndexerTest {
 
         // check that Marcx record is indexed correctly
         String field002a = (String) doc.getField("marc.002a").getValue();
+        String field002x = (String) doc.getField("marc.002x").getValue();
         String field022a = (String) doc.getField("marc.022a").getValue();
 
         assertEquals("06605141", field002a);
+        assertEquals("81001009009310", field002x);
         assertEquals("0904-6054", field022a);
 
     }
