@@ -280,6 +280,7 @@
         <field name="marc.002b" type="dbc-analyzed-id" indexed="true" stored="true" required="false"
                multiValued="true"/>
         <field name="marc.002c" type="dbc-doc-id" indexed="true" stored="true" required="false" multiValued="true"/>
+        <field name="marc.002x" type="dbc-doc-id" indexed="true" stored="true" required="false" multiValued="true"/>
 
         <field name="marc.004a" type="dbc-default" indexed="true" stored="true" required="false" multiValued="false"/>
         <copyField source="marc.004a" dest="match.004a"/>
