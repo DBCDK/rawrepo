@@ -372,8 +372,8 @@
           -->
         <autoCommit>
             <!-- These default setting can be overwritten by deploy script -->
-            <maxTime>600000</maxTime>
-            <maxDocs>25000</maxDocs>
+            <maxTime>1000</maxTime>
+            <maxDocs>5000</maxDocs>
             <openSearcher>true</openSearcher>
         </autoCommit>
 
