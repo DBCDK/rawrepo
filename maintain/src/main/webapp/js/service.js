@@ -1044,7 +1044,21 @@ var Service = (function () {
             }
         });  
     };
-    
+
+    /**
+     * Removes all spaces in the textarea element
+     *
+     * @param event
+     */
+    var trimRecordIds = function (event) {
+        var textarea = event.target;
+        var text = textarea.value;
+
+        text = text.split(' ').join('');
+
+        event.target.value = text;
+    };
+
     return {
         SoapRequest: SoapRequest,
         SoapResponse: SoapResponse,
@@ -1063,7 +1077,8 @@ var Service = (function () {
         toText: toText,
         traverse: traverse,
         validateField: validateField,
-        showInfo: showInfo
+        showInfo: showInfo,
+        trimRecordIds: trimRecordIds
     };
     
 })();
