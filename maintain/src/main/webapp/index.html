@@ -1,167 +1,168 @@
 <!DOCTYPE html>
 <!--
-    dbc-rawrepo-maintain
-    Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
-    Denmark. CVR: 15149043
-
-    This file is part of dbc-rawrepo-maintain.
-
-    dbc-rawrepo-maintain is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    dbc-rawrepo-maintain is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with dbc-rawrepo-maintain.  If not, see <http://www.gnu.org/licenses/>.
+    Copyright Dansk Bibliotekscenter a/s. Licensed under GPLv3
+    See license text in LICENSE.txt or at https://opensource.dbc.dk/licenses/gpl-3.0/
 -->
 <html>
-    <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>RawRepo Maintain</title>
-        <link href="css/error.css" type="text/css" rel="stylesheet">
-        <link href="css/content.css" type="text/css" rel="stylesheet">
-        <script src="js/moment.min.js"></script><!-- http://momentjs.com License: MIT -->
-        <script src="js/marked.min.js"></script><!-- https://github.com/chjj/marked License: ASIS-->
-        <script type="text/javascript">
-            var queueProviderHtml = 'api/queuerules';
-            /* global Service, marked */
-            marked.setOptions({
-//                renderer: new marked.Renderer(),
-//                gfm: true,
-//                tables: true,
-//                breaks: false,
-//                pedantic: false,
-                sanitize: true //, escape html
-//                smartLists: true,
-//                smartypants: false
-            });
-        <!-- Build 2017-06-14 -->
-        </script>
-        <script src="js/service.js"></script>
-    </head>
-    <body onload="Service.constructContent();Service.showInfo();" onkeydown="Service.keydown(event);">
-        <h1 class="center" id="info">RawRepo Maintenance</h1>
-        <div id="titles"></div>
-        <div id="content">
-            <div class="selected">
-                <div class="center">
-                    <h1>Velkommen til RawRepo vedligehold</h1>
-                    <hr>
-                    <p>Her kan man rette i RawRepo, ved at vælge en fane, som kan løse ens opgave.</p>
-                    <p>Brug Ctrl + '1' - '9', for at skifte faner</p>
-
-                </div>
-            </div>
-
-            Queue Records
-            <div id="queueRecords">
-                <a class="reset" href="#" onclick="Service.resetPage('queueRecords');">Reset</a>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" name="agencyId#agencyid"></td>
-                            <td>AgencyId</td>
-                        </tr>
-                        <tr>
-                            <td><textarea name="ids/id#lines"
-                                          onchange="Service.trimRecordIds(event);"></textarea><br><input type="file"
-                                                                                                         onchange="Service.loadFileHandler(event, this);">
-                            </td>
-                            <td>BibliographicRecordId<br>One pr. line</td>
-                        </tr>
-                        <tr>
-                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
-                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
-                        </tr>
-                        <tr>
-                            <td><input name="trackingId#any" placeholder="TrackingId"></td>
-                            <td>Tracking id (optional)</td>
-                        </tr>
-                        <tr>
-                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('queueRecords')">Perform</button></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            Remove Records
-            <div id="removeRecords">
-                <a class="reset" href="#" onclick="Service.resetPage('removeRecords');">Reset</a>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" name="agencyId#agencyidnotdbc"></td>
-                            <td>AgencyId</td>
-                        </tr>
-                        <tr>
-                            <td><textarea name="ids/id#lines"
-                                          onchange="Service.trimRecordIds(event);"></textarea><br><input type="file"
-                                                                                                         onchange="Service.loadFileHandler(event, this);">
-                            </td>
-                            <td>BibliographicRecordId<br>One pr. line</td>
-                        </tr>
-                        <tr>
-                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
-                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
-                        </tr>
-                        <tr>
-                            <td><input name="trackingId#any" placeholder="TrackingId"></td>
-                            <td>Tracking id (optional)</td>
-                        </tr>
-                        <tr>
-                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('removeRecords')">Perform</button></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            Revert Records
-            <div id="revertRecords">
-                <a class="reset" href="#" onclick="Service.resetPage('revertRecords');">Reset</a>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" name="agencyId#agencyid"></td>
-                            <td>AgencyId</td>
-                        </tr>
-                        <tr>
-                            <td><textarea name="ids/id#lines"
-                                          onchange="Service.trimRecordIds(event);"></textarea><br><input type="file"
-                                                                                                         onchange="Service.loadFileHandler(event, this);">
-                            </td>
-                            <td>BibliographicRecordId<br>One pr. line</td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" name="time/millis#timestampms"></td>
-                            <td>(YYYY-MM-DD HH:MM:SS.SSS) As record appeared at this time</td>
-                        </tr>
-                        <tr>
-                            <td><select name="provider#token"><option value="">[Select One]</option></select></td>
-                            <td>Queue provider <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button></td>
-                        </tr>
-                        <tr>
-                            <td><input name="trackingId#any" placeholder="TrackingId" onchange="Service.SoapRequest.pageContent('revertRecords', 'trackingId');"></td>
-                            <td>Tracking id (optional)</td>
-                        </tr>
-                        <tr>
-                            <td><button class="cr" onclick="Service.SoapRequest.sendRequest('revertRecords')">Perform</button></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>RawRepo Maintain</title>
+    <link href="css/error.css" type="text/css" rel="stylesheet">
+    <link href="css/content.css" type="text/css" rel="stylesheet">
+    <script src="js/moment.min.js"></script><!-- http://momentjs.com License: MIT -->
+    <script src="js/marked.min.js"></script><!-- https://github.com/chjj/marked License: ASIS-->
+    <script type="text/javascript">
+        var queueProviderHtml = 'api/queuerules';
+        /* global Service, marked */
+        marked.setOptions({
+            sanitize: true //, escape html
+        });
+    </script>
+    <script src="js/service.js"></script>
+</head>
+<body onload="Service.constructContent();Service.showInfo();" onkeydown="Service.keydown(event);">
+<h1 class="center" id="info">RawRepo Maintenance</h1>
+<div id="titles"></div>
+<div id="content">
+    <div class="selected">
+        <div class="center">
+            <h1>Velkommen til RawRepo vedligehold</h1>
+            <hr>
+            <p>Her kan man rette i RawRepo, ved at vælge en fane, som kan løse ens opgave.</p>
+            <p>Brug Ctrl + '1' - '9', for at skifte faner</p>
 
         </div>
-        <div class="" id="status" onclick="false;"><div class="status-header"><div class="status-close" onclick="Service.closeStatus();">x</div></div><div class="status-body-wrapper"><div id="status-body">message</div></div></div>
-        <div class="selected" id="spinner" onclick="false;"><div><img src="images/pleasewait.gif" title="http://mentalized.net/activity-indicators/ [public domain]"></div></div>
-        <div id="errors"><a href="#" onclick="Service.errorsClear();">Clear All</a></div>
-    </body>
+    </div>
+
+    Queue Records
+    <div id="queueRecords">
+        <a class="reset" href="#" onclick="Service.resetPage('queueRecords');">Reset</a>
+        <table>
+            <tbody>
+            <tr>
+                <td><input type="text" name="agencyId#agencyid"></td>
+                <td>AgencyId</td>
+            </tr>
+            <tr>
+                <td><textarea name="ids/id#lines" onchange="Service.trimRecordIds(event);"></textarea><br>
+                    <input type="file" onchange="Service.loadFileHandler(event, this);">
+                </td>
+                <td>BibliographicRecordId<br> One pr. line</td>
+            </tr>
+            <tr>
+                <td><select name="provider#token">
+                    <option value="">[Select One]</option>
+                </select></td>
+                <td>Queue provider
+                    <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="trackingId#any" placeholder="TrackingId"></td>
+                <td>Tracking id (optional)</td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="cr" onclick="Service.SoapRequest.sendRequest('queueRecords')">Perform</button>
+                </td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    Remove Records
+    <div id="removeRecords">
+        <a class="reset" href="#" onclick="Service.resetPage('removeRecords');">Reset</a>
+        <table>
+            <tbody>
+            <tr>
+                <td><input type="text" name="agencyId#agencyidnotdbc"></td>
+                <td>AgencyId</td>
+            </tr>
+            <tr>
+                <td><textarea name="ids/id#lines" onchange="Service.trimRecordIds(event);"></textarea><br>
+                    <input type="file" onchange="Service.loadFileHandler(event, this);">
+                </td>
+                <td>BibliographicRecordId<br>One pr. line</td>
+            </tr>
+            <tr>
+                <td><select name="provider#token">
+                    <option value="">[Select One]</option>
+                </select></td>
+                <td>Queue provider
+                    <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="trackingId#any" placeholder="TrackingId"></td>
+                <td>Tracking id (optional)</td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="cr" onclick="Service.SoapRequest.sendRequest('removeRecords')">Perform</button>
+                </td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    Revert Records
+    <div id="revertRecords">
+        <a class="reset" href="#" onclick="Service.resetPage('revertRecords');">Reset</a>
+        <table>
+            <tbody>
+            <tr>
+                <td><input type="text" name="agencyId#agencyid"></td>
+                <td>AgencyId</td>
+            </tr>
+            <tr>
+                <td><textarea name="ids/id#lines" onchange="Service.trimRecordIds(event);"></textarea><br>
+                    <input type="file" onchange="Service.loadFileHandler(event, this);">
+                </td>
+                <td>BibliographicRecordId<br>One pr. line</td>
+            </tr>
+            <tr>
+                <td><input type="text" name="time/millis#timestampms"></td>
+                <td>(YYYY-MM-DD HH:MM:SS.SSS) As record appeared at this time</td>
+            </tr>
+            <tr>
+                <td><select name="provider#token">
+                    <option value="">[Select One]</option>
+                </select></td>
+                <td>Queue provider
+                    <button class="toDoc" onClick="window.open(queueProviderHtml, '_blank');">?</button>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="trackingId#any" placeholder="TrackingId"
+                           onchange="Service.SoapRequest.pageContent('revertRecords', 'trackingId');"></td>
+                <td>Tracking id (optional)</td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="cr" onclick="Service.SoapRequest.sendRequest('revertRecords')">Perform</button>
+                </td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<div class="" id="status" onclick="false;">
+    <div class="status-header">
+        <div class="status-close" onclick="Service.closeStatus();">x</div>
+    </div>
+    <div class="status-body-wrapper">
+        <div id="status-body">message</div>
+    </div>
+</div>
+<div class="selected" id="spinner" onclick="false;">
+    <div><img src="images/pleasewait.gif" title="http://mentalized.net/activity-indicators/ [public domain]"></div>
+</div>
+<div id="errors"><a href="#" onclick="Service.errorsClear();">Clear All</a></div>
+</body>
 </html>
