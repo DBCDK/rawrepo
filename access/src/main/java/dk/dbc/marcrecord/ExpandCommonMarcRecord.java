@@ -137,9 +137,14 @@ public class ExpandCommonMarcRecord {
         for (MarcField field : fields) {
             MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("å")) {
-                int indicator = Integer.parseInt(fieldReader.getValue("å"));
-                if (indicator > authIndicator) {
-                    authIndicator = indicator;
+                try {
+                    int indicator = Integer.parseInt(fieldReader.getValue("å"));
+                    if (indicator > authIndicator) {
+                        authIndicator = indicator;
+                    }
+                } catch (NumberFormatException ex) {
+                    String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal med fik '%s'", field.getName(), fieldReader.getValue("å"));
+                    throw new RawRepoException(message, ex);
                 }
             }
         }
