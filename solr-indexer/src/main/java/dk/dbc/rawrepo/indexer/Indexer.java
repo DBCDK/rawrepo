@@ -186,7 +186,7 @@ public class Indexer {
                     } else {
                         moreWork = false;
                     }
-                } catch (RawRepoException | IllegalArgumentException | MarcXMergerException | SQLException ex) {
+                } catch (RawRepoException | IllegalArgumentException | SQLException ex) {
                     connection.rollback();
                     throw ex;
                 }
@@ -194,7 +194,7 @@ public class Indexer {
                 // If we get a SQLException there is something wrong which we can't do anything about.
                 log.error("SQLException: ", ex);
                 throw new SolrIndexerRawRepoException("SQL exception from rawrepo:" + ex.toString(), ex);
-            } catch (MarcXMergerException | RawRepoException | RuntimeException ex) {
+            } catch (RawRepoException | RuntimeException ex) {
                 log.error("Error getting job from database", ex);
                 moreWork = false;
             } finally {
@@ -220,7 +220,7 @@ public class Indexer {
         }
     }
 
-    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, MarcXMergerException, SolrIndexerSolrException {
+    private void processJob(QueueJob job, RawRepoDAO dao) throws RawRepoException, SolrIndexerSolrException {
         log.info("Indexing {}", job);
         RecordId jobId = job.getJob();
         String id = jobId.getBibliographicRecordId();
@@ -249,7 +249,7 @@ public class Indexer {
             }
             log.error("Error processing {}", job, ex);
             queueFail(dao, job, ex.getMessage());
-        } catch (RawRepoException | SolrException | SolrServerException | IOException ex) {
+        } catch (RawRepoException | MarcXMergerException | SolrException | SolrServerException | IOException ex) {
             log.error("Error processing {}", job, ex);
             queueFail(dao, job, ex.getMessage());
         }
