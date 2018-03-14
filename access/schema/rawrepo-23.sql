@@ -382,10 +382,11 @@ CREATE TABLE jobdiag (-- V17
 -- When a given provider queues a job
 --
 CREATE TABLE queuerules (-- V18
-  provider VARCHAR(32) NOT NULL, -- name of worker adding data
-  worker   VARCHAR(32) NOT NULL, -- name of designated worker
-  changed  CHAR(1)     NOT NULL, -- queue jobs if changes Y(es), N(no), A(ll)
-  leaf     CHAR(1)     NOT NULL, -- queue jobs if leaf    Y(es), N(no), A(ll)
+  provider    VARCHAR(32) NOT NULL, -- name of worker adding data
+  worker      VARCHAR(32) NOT NULL, -- name of designated worker
+  changed     CHAR(1)     NOT NULL, -- queue jobs if changes Y(es), N(no), A(ll)
+  leaf        CHAR(1)     NOT NULL, -- queue jobs if leaf    Y(es), N(no), A(ll)
+  description VARCHAR(2000), -- human readable description of the provider and what it is used for
   -- changed AND leaf should be true to queue
   CONSTRAINT queuerules_pk PRIMARY KEY (provider, worker, changed, leaf),
   CONSTRAINT queuerules_fk_worker FOREIGN KEY (worker) REFERENCES queueworkers (worker)

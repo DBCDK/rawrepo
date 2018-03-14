@@ -29,6 +29,9 @@ $$;
 --
 --
 
+ALTER TABLE queuerules
+  ADD COLUMN description VARCHAR(2000);
+
 CREATE TABLE records_summary (-- V23
   agencyid         NUMERIC(6) PRIMARY KEY   NOT NULL,
   original_count   NUMERIC                  NOT NULL DEFAULT 0,
@@ -94,7 +97,8 @@ BEGIN
       rs.deleted_count
     INTO _original_count, _enrichment_count, _deleted_count
     FROM records_summary rs
-    WHERE rs.agencyid = NEW.agencyid;
+    WHERE rs.agencyid = NEW.agencyid
+    FOR UPDATE;
   END IF;
 
   IF NEW.deleted
@@ -134,7 +138,8 @@ BEGIN
     rs.deleted_count
   INTO _original_count, _enrichment_count, _deleted_count
   FROM records_summary rs
-  WHERE rs.agencyid = NEW.agencyid;
+  WHERE rs.agencyid = NEW.agencyid
+  FOR UPDATE;
 
   IF OLD.deleted <> NEW.deleted AND OLD.deleted -- Restore record
   THEN
@@ -185,7 +190,8 @@ BEGIN
     rs.deleted_count
   INTO _original_count, _enrichment_count, _deleted_count
   FROM records_summary rs
-  WHERE rs.agencyid = OLD.agencyid;
+  WHERE rs.agencyid = OLD.agencyid
+  FOR UPDATE;
 
   IF OLD.deleted
   THEN
