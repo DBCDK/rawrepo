@@ -1,0 +1,36 @@
+Følgende scripts starter services der kører pr bruger. 
+
+Følgende er fælles for alle :
+Kræver at der er startet en update service via updateservice checkoutet. Der kan startes to forskellige versioner derovre :
+start_dev_docker.sh                Starter en updateservice hvor poster hældes ind via opencat-business testcases
+start_index_docker.sh              Starter en updateservice der opfører sig som en almindelig sådan - dvs. den slår op i en rigtig openagency
+                                   og bruger den solr server som start_solrserver_dev.sh starter.
+--
+start_content_service_dev.sh
+
+Start_dev_docker.sh er til almindelig udviklig/test af rr pakker mens den anden er rettet mod udvikling og test af indexes i solr.
+Servicen kan nås på port `id -u $USER`2
+
+--
+start_introspect_service_dev.sh
+starter en introspect service der giver adgang til indholdet af rr i ovennævnte updateservice testmiljø
+Servicen kan nås på port `id -u $USER`1
+f.eks. http://devel8:10041/
+--
+start_maintain_dev.sh
+starter en maintain service der giver adgang til at vedligeholde indholdet af rr i ovennævnte updateservice testmiljø
+Servicen kan nås på port `id -u $USER`4
+--
+start_solr_indexer_dev.sh
+starter en solr indexer service der løbende indexerer hvad der måtte blive sat på kø i ovennævnte updateservice testmiljø
+Servicen kan nås på port `id -u $USER`3
+--
+start_solrserver_dev.sh
+Starter en solr server der indeholder indexerede data fra ovennævnte updateservice testmiljø 
+Servicen kan nås på port `id -u $USER`5
+F.eks. http://172.17.20.165:10045/solr
+--
+start_private_solr_server.sh
+Kan bruges til at starte en solr installeret lokalt. Mest til leg/test - læs scriptet for yderligere (sparsom) info.
+
+I rawrepo/solr-indexer/index_development/bin findes yderligere scripts + en README der kan benyttes ved test og udvikling af indexes.

@@ -1,0 +1,6 @@
+[rawrepo-indexer]
+solrUrlRawrepo=${SOLR_URL}
+openAgencyUrl=${OPENAGENCY_URL|http://openagency.addi.dk/2.33/}
+maxConcurrent=${MAX_CONCURRENT|2}
+workerName=${WORKER_NAME|solr-sync}
+timeout=${TIMEOUT|5}

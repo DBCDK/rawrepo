@@ -1,0 +1,11 @@
+[template]
+src = "core.properties.tmpl"
+dest = "/opt/solr/server/solr/rawrepo/core.properties"
+
+keys = [
+    "/dbc/autocommit/maxtime",
+    "/dbc/autocommit/maxdocs",
+    "/dbc/autocommit/opensearcher",
+    "/solr/autosoftcommit/maxtime",
+    "/dbc/autosoftcommit/maxdocs"
+]
