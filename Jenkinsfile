@@ -103,7 +103,7 @@ pipeline {
         }
         success {
             build job: 'dataio/feature-branches/master', wait: false
-            build job: 'updateservice/updateservice-head', wait: false
+            build job: 'updateservice/updateservice-master', wait: false
         }
     }
     
