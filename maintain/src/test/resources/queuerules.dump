@@ -1,16 +1,16 @@
-opencataloging-update	broend-sync	A	Y
-opencataloging-update	solr-sync	Y	A
-opencataloging-update	basis-decentral	Y	A
-bulk-broend	broend-sync	A	Y
-bulk-solr	solr-sync-bulk	Y	A
-agency-delete	broend-sync	A	Y
-agency-delete	solr-sync	Y	A
-agency-maintain	broend-sync	A	Y
-agency-maintain	solr-sync	Y	A
-fbs-update	broend-sync	A	Y
-fbs-update	solr-sync	Y	A
-fbs-update	basis-decentral	Y	A
-dataio-update	broend-sync	A	Y
-dataio-update	solr-sync	Y	A
-test	changed	Y	A
-test	leaf	A	Y
+opencataloging-update	broend-sync	A	Y	description
+opencataloging-update	solr-sync	Y	A	description
+opencataloging-update	basis-decentral	Y	A	description
+bulk-broend	broend-sync	A	Y	description
+bulk-solr	solr-sync-bulk	Y	A	description
+agency-delete	broend-sync	A	Y	description
+agency-delete	solr-sync	Y	A	description
+agency-maintain	broend-sync	A	Y	description
+agency-maintain	solr-sync	Y	A	description
+fbs-update	broend-sync	A	Y	description
+fbs-update	solr-sync	Y	A	description
+fbs-update	basis-decentral	Y	A	description
+dataio-update	broend-sync	A	Y	description
+dataio-update	solr-sync	Y	A	description
+test	changed	Y	A	description
+test	leaf	A	Y	description
