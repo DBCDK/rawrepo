@@ -54,9 +54,9 @@ pipeline {
                         dir(dirName) {
                             def imageName = "rawrepo-${projectName}-${pom.version}".toLowerCase()
                             def imageLabel = env.BUILD_NUMBER
-                            if (BRANCH_NAME && !BRANCH_NAME ==~ /master|trunk/ ) {
-                                println("Using branch_name ${BRANCH_NAME}")
-                                imageLabel = BRANCH_NAME.split(/\//)[-1]
+                            if (env.BRANCH_NAME && !env.BRANCH_NAME ==~ /master|trunk/ ) {
+                                println("Using branch_name ${env.BRANCH_NAME}")
+                                imageLabel = env.BRANCH_NAME.split(/\//)[-1]
                                 imageLabel = imageLabel.toLowerCase()
                             }
 
@@ -67,7 +67,7 @@ pipeline {
                             if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
                                 docker.withRegistry('https://docker-i.dbc.dk', 'docker') {
                                     app.push()
-                                    if( BRANCH_NAME ==~ /master|trunk/ ) {
+                                    if( env.BRANCH_NAME ==~ /master|trunk/ ) {
                                         app.push "latest"
                                     }
                                 }
@@ -82,7 +82,7 @@ pipeline {
 
         stage('dpkg') {
             when {
-                expression { BRANCH_NAME ==~ /master|trunk/ }
+                expression { env.BRANCH_NAME ==~ /master|trunk/ }
             }
             steps {
                 sh "svn upgrade && mvn -pl debian install"
@@ -94,10 +94,7 @@ pipeline {
     post {
         always {
             pmd canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '**/pmd.xml', unHealthy: ''
-            //junit '**/target/*-reports/*.xml'
-            //openTasks canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'todo', ignoreCase: true, low: 'review', normal: 'fixme,fix', pattern: '', unHealthy: ''
             findbugs canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', pattern: '', unHealthy: ''
-            //warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'Java Compiler (javac)']], defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
             archiveArtifacts 'access/schema/*.sql, access/schema/*.md5, **/target/*.jar, **/target/*.war, **/target/*.zip, **/target/*.md5, docs/RR-documentation.pdf'
             warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'Java Compiler (javac)']], defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
         }
