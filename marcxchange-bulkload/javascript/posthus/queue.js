@@ -7,7 +7,7 @@ use("PostgreSQL");
 
 var db = PostgreSQL(System.arguments[0]);
 var parent_agencyid = System.arguments.length > 1 ? System.arguments[1] : '0';
-var provider = System.arguments.length > 2 ? System.arguments[2] : "opencataloging-update";
+var provider = System.arguments.length > 2 ? System.arguments[2] : "agency-maintain";
 
 function begin() {
     for (var i = 0; i < System.arguments.length; i++)
