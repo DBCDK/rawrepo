@@ -83,7 +83,7 @@ pipeline {
                 expression { env.BRANCH_NAME ==~ /master|trunk/ }
             }
             steps {
-                sh "git pull && mvn -pl debian install"
+                sh "mvn -pl debian install"
                 sh "mvn -pl access deploy"
             }
         }
