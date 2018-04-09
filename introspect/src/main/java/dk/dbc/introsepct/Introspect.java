@@ -100,7 +100,7 @@ public class Introspect {
     @Path("agencies-with/{db : [^/]+}/{id : .+}")
     public Response getAgenciesWith(@PathParam("db") String resource,
                                     @PathParam("id") String bibliographicRecordId) {
-        log.info("Input bibliographicRecordId: {}", bibliographicRecordId);
+        log.info("Input bibliographicRecordId: '{}'", bibliographicRecordId);
         try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
             Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);

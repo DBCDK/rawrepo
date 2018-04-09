@@ -1044,7 +1044,7 @@ $('document').ready(function () {
             if (this.db === null)
                 return;
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
-            console.log(bibliographicrecordid);
+            console.log('"' + bibliographicrecordid + '"');
             addToCookie(bibliographicrecordid);
             this.agencyidClear();
             if (bibliographicrecordid !== '') {
