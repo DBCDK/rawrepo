@@ -111,8 +111,9 @@ public class Introspect {
                                     @PathParam("id") String bibliographicRecordId) {
         log.info("Input bibliographicRecordId: '{}'", bibliographicRecordId);
         try (Connection connection = globalDataSource.getConnection()) {
+            String id = bibliographicRecordId.replaceAll("%20", " ");
             RawRepoDAO dao = RawRepoDAO.builder(connection).build();
-            Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(bibliographicRecordId);
+            Set<Integer> agencies = dao.allAgenciesForBibliographicRecordId(id);
             ArrayList<Integer> response = new ArrayList<>(agencies);
             log.info("Found agencies: {}", response);
             Collections.sort(response);

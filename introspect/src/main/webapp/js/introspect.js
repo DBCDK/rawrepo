@@ -143,7 +143,7 @@ $('document').ready(function () {
             var agencyid = arg[1];
             var bibliographicrecordid = arg[2];
 
-            ajax("resources/lineformatter/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+            ajax("resources/lineformatter/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                 this.lineformatterFunction.bind(this));
         };
 
@@ -180,15 +180,15 @@ $('document').ready(function () {
                 return;
             if (thisVersion === '-1') {
                 this.otherVersionSelect.selectmenu('disable');
-                ajax("resources/record-merged/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                ajax("resources/record-merged/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                     this.displayRecord.bind(this));
             } else {
                 this.otherVersionSelect.selectmenu('enable');
                 if (otherVersion === '') {
-                    ajax("resources/record-historic/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion,
+                    ajax("resources/record-historic/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20') + "/" + thisVersion,
                         this.displayRecord.bind(this));
                 } else {
-                    ajax("resources/record-diff/" + this.db + "/" + agencyid + "/" + bibliographicrecordid + "/" + thisVersion + "/" + otherVersion,
+                    ajax("resources/record-diff/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20') + "/" + thisVersion + "/" + otherVersion,
                         this.displayRecord.bind(this));
                 }
             }
@@ -211,9 +211,9 @@ $('document').ready(function () {
                 var agencyid = arg[1];
                 var bibliographicrecordid = arg[2];
                 this.clear();
-                ajax("resources/record-history/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                ajax("resources/record-history/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                     this.historyRead.bind(this));
-                ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+                ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                     this.relationsRead.bind(this));
             }
         };
@@ -462,7 +462,7 @@ $('document').ready(function () {
                 return;
             var agencyid = arg[1];
             var bibliographicrecordid = arg[2];
-            ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid,
+            ajax("resources/relations/" + this.db + "/" + agencyid + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                 this.relationsFetched.bind(this));
         };
 
@@ -1048,7 +1048,7 @@ $('document').ready(function () {
             addToCookie(bibliographicrecordid);
             this.agencyidClear();
             if (bibliographicrecordid !== '') {
-                ajax("resources/agencies-with/" + this.db + "/" + bibliographicrecordid,
+                ajax("resources/agencies-with/" + this.db + "/" + bibliographicrecordid.replace('/ /g', '%20'),
                     this.agencyidFetched.bind(this));
             }
         };
