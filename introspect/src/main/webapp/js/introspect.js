@@ -1019,7 +1019,7 @@ $('document').ready(function () {
 
 
         PageOptions.prototype.populateRecordIdsList = function () {
-            var cookieArr = readCookie("recId").split(',')
+            var cookieArr = readCookie("recId").split(',');
             var options = '';
             for (var i = 0; i < cookieArr.length; i++)
                 options += '<option value="' + cookieArr[i] + '" />';
@@ -1044,6 +1044,7 @@ $('document').ready(function () {
             if (this.db === null)
                 return;
             var bibliographicrecordid = this.bibliographicrecordidInput.val();
+            console.log(bibliographicrecordid);
             addToCookie(bibliographicrecordid);
             this.agencyidClear();
             if (bibliographicrecordid !== '') {
