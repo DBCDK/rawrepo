@@ -159,129 +159,35 @@ public class IndexerTest {
 
         Date created = new Date(100);
         Date modified = new Date(200);
-        String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                         + "<marcx:record format=\"danMARC2\" type=\"Bibliographic\" xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\">\n"
-                         + "      <marcx:leader>00000n    2200000   4500</marcx:leader>\n"
-                         + "      <marcx:datafield tag=\"001\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">2 364 149 6</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"b\">191919</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">20130118221234</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"d\">20010822</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"f\">a</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"002\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">06605141</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"002\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"b\">810010</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"d\">09009310</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"x\">81001009009310</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"004\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"r\">n</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"a\">b</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"008\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"t\">m</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"u\">f</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"a\">2001</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"l\">dan</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"v\">0</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"014\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">2 364 143 7</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield ind1=\"0\" ind2=\"0\" tag=\"021\">\n"
-                         + "        <marcx:subfield code=\"e\">9788777248573</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"022\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">0904-6054</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">hf.</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"d\">kr. 6,50 pr. nr.</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"023\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">23-a</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"b\">23-b</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"032\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">IDO200137</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"x\">NET200137</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"x\">DAT991304</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"245\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"g\">1.3</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"a\">Forandringsledelse og orkestrering</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"e\">udarbejdet af: Danmarks Tekniske Universitet, Byg.DTU og Institut for Produktion og Ledelse</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"e\">forfatter: Peter Vogelius, Christian Koch</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"526\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"i\">Hertil findes</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"t\">Bilag</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"u\">http://www.arbejdsulykker.dk/pdf/1_3_bilag.pdf</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"532\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">Med litteraturhenvisninger</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"700\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"0\"/>\n"
-                         + "        <marcx:subfield code=\"a\">Vogelius</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"h\">Peter</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"700\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"0\"/>\n"
-                         + "        <marcx:subfield code=\"a\">Koch</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"h\">Christian</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">f. 1958</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"710\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"Ã¥\">2</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"a\">Danmarks Tekniske Universitet</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">BYG. DTU</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"710\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"Ã¥\">1</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"a\">Danmarks Tekniske Universitet</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"c\">Institut for Produktion og Ledelse</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"856\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"z\">AdgangsmÃ¥de: Internet</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"u\">http://www.arbejdsulykker.dk/pdf/met_1_3.pdf</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"z\">KrÃ¦ver lÃ¦seprogrammet Acrobat Reader</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"910\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">BYG. DTU, Danmarks Tekniske Universitet</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"z\">710/2</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"910\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">DTU</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"z\">710/1(a)</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"910\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">Institut for Produktion og Ledelse, Danmarks Tekniske Universitet</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"z\">710/1</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"910\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">IPL</marcx:subfield>\n"
-                         + "        <marcx:subfield code=\"z\">710/1</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"d08\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">tb</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"d08\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">rettet i forb. med tilf. af 008w</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"s10\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">DBC</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"z99\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">masseret</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "      <marcx:datafield tag=\"n55\" ind1=\"0\" ind2=\"0\">\n"
-                         + "        <marcx:subfield code=\"a\">20050302</marcx:subfield>\n"
-                         + "      </marcx:datafield>\n"
-                         + "    </marcx:record>";
+        String content =
+                        "<record xmlns='info:lc/xmlns/marcxchange-v1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+                      + "xsi:schemaLocation='http://www.loc.gov/standards/iso25577/marcxchange-1-1.xsd'>\n"
+                      + "  <leader>00948cam a2200241 a 4500</leader>\n"
+                      + "  <controlfield tag='001'>   94026209 </controlfield>\n"
+                      + "  <controlfield tag='003'>DLC</controlfield>\n"
+                      + "  <controlfield tag='005'>20180401231613.0</controlfield>\n"
+                      + "  <controlfield tag='008'>940606s1995    enka     b    001 0 eng  </controlfield>\n"
+                      + "  <datafield tag='040' ind1=' ' ind2=' '>\n"
+                      + "    <subfield code='a'>DLC</subfield>\n"
+                      + "    <subfield code='c'>DLC</subfield>\n"
+                      + "  </datafield>\n"
+                      + "  <datafield tag='245' ind1='0' ind2='0'>\n"
+                      + "    <subfield code='a'>Research foundations for psychotherapy practice /</subfield>\n"
+                      + "    <subfield code='c'>Mark Aveline, David A. Shapiro.</subfield>\n"
+                      + "  </datafield>\n"
+                      + "  <datafield tag='260' ind1=' ' ind2=' '>\n"
+                      + "    <subfield code='a'>Chichester ;</subfield>\n"
+                      + "    <subfield code='a'>New York :</subfield>\n"
+                      + "    <subfield code='b'>J. Wiley in association with the Mental Health Foundation,</subfield>\n"
+                      + "    <subfield code='c'>1995.</subfield>\n"
+                      + "  </datafield>\n"
+                      + "  <datafield tag='300' ind1=' ' ind2=' '>\n"
+                      + "    <subfield code='a'>xiv, 332 p. :</subfield>\n"
+                      + "    <subfield code='c'>24 cm.</subfield>\n"
+                      + "  </datafield>\n"
+                     +  "</record>";
 
-        Record record = new MockRecord("id", 123456, content.getBytes(), created, modified, true, MarcXChangeMimeType.MARCXCHANGE);
+        Record record = new MockRecord("   94026209 ", 100700, content.getBytes(), created, modified, true, MarcXChangeMimeType.MARCXCHANGE);
 
         Indexer indexer = createInstance();
         indexer.createIndexDocumentTimer = new Timer();
@@ -291,18 +197,22 @@ public class IndexerTest {
 
         assertEquals(created, doc.getField("rec.created").getValue());
         assertEquals(modified, doc.getField("rec.modified").getValue());
-        assertEquals("id:123456", doc.getField("id").getValue());
-        assertEquals("id", doc.getField("rec.bibliographicRecordId").getValue());
-        assertEquals(123456, doc.getField("rec.agencyId").getValue());
+        assertEquals("   94026209 :100700", doc.getField("id").getValue());
+        assertEquals("   94026209 ", doc.getField("rec.bibliographicRecordId").getValue());
+        assertEquals(100700, doc.getField("rec.agencyId").getValue());
 
         // check that Marcx record is indexed correctly
-        String field002a = (String) doc.getField("marc.002a").getValue();
-        String field002x = (String) doc.getField("marc.002x").getValue();
-        String field022a = (String) doc.getField("marc.022a").getValue();
+        String field003 = (String) doc.getField("marc21.003").getValue();
+        String field001 = (String) doc.getField("marc21.001").getValue();
+        String field245 = (String) doc.getField("marc21.245a").getValue();
 
-        assertEquals("06605141", field002a);
-        assertEquals("81001009009310", field002x);
-        assertEquals("0904-6054", field022a);
+        assertEquals("DLC", field003);
+        assertEquals("   94026209 ", field001);
+        assertEquals("Research foundations for psychotherapy practice /", field245);
+
+        //TODO fjern - note to self om hvordan testen køres
+        //stå i branchen for marc21_proof_of_concept inde i intelliJ
+        //kwc@devel8:~/rawrepo$ mvn -pl solr-indexer test -Dtest=IndexerTest
 
     }
     @Test

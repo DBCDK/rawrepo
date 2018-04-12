@@ -26,6 +26,7 @@ use("XmlUtil");
 use("XmlNamespaces");
 use("NodeTypes");
 use("Log");
+use("MarcXchange");
 
 var COLLECTION_IDENTIFIER = 'rec.collectionIdentifier';
 
@@ -144,71 +145,25 @@ setup_danmarc_field(
     'y08a',
     's11a');
 
+var createMarc21Index = function ( xmlRecord ) {
+    var marcRecord = MarcXchange.marcXchangeToMarcRecord ( xmlRecord );
+    var indexObject = {};
+    var field001 = marcRecord.field("001").value;
+    var field003 = marcRecord.field("003").value;
+    var field245a = marcRecord.field("245").subfield("a").value;
+    indexObject["marc21.001"] = [ field001 ];
+    indexObject["marc21.003"] = [ field003 ];
+    indexObject["marc21.245a"] = [ field245a ];
+    return indexObject
+};
+
 var index = function (content, mimetype) {
 
     var dom = XmlUtil.fromString(content);
-    var e = dom.documentElement;
 
-    // Validate (marcx v1 / record)
-    if (e.namespaceURI !== XmlNamespaces.marcx.uri || e.localName !== 'record') {
-        throw Error("Document not of marcx:record type");
-    }
-
-    // find record format
-    var format = e.hasAttribute('format') ? e.getAttribute('format') : "danMARC2";
-
-    Log.trace("format = " + format);
-    var actions = RULES[format];
-    if (actions === undefined) {
-        throw Error("Cannot handle record-format: " + format);
-    }
-
-    // DEFAULT VALUES
-    var obj = {};
-    obj[COLLECTION_IDENTIFIER] = ['any'];
-
-    for (var node = e.firstChild; node !== null; node = node.nextSibling) {
-        if (node.nodeType === NodeTypes.ELEMENT_NODE && node.namespaceURI === XmlNamespaces.marcx.uri) {
-            // marcx v1 / datafield
-            if (node.localName === 'datafield') {
-                var tag = node.getAttribute('tag');
-                var fieldActions = actions[tag]; // action for this tag
-                if (fieldActions === undefined) {
-                    continue;
-                } else if (typeof (fieldActions) === 'function') {
-                    fieldActions(obj);
-                } else if (typeof (fieldActions) === 'object') {
-                    for (var subnode = node.firstChild; subnode !== null; subnode = subnode.nextSibling) {
-                        if (subnode.nodeType === NodeTypes.ELEMENT_NODE && subnode.namespaceURI === XmlNamespaces.marcx.uri) {
-                            // marcx v1 / subfield
-                            if (subnode.localName === 'subfield') {
-                                var code = subnode.getAttribute('code');
-                                var action = fieldActions[code]; // action for this code
-                                if (action === undefined) {
-                                    continue;
-                                } else if (typeof (action) === 'function') {
-                                    Log.trace("Calling function on " + tag + code);
-                                    action(obj, XmlUtil.getText(subnode));
-                                } else if (typeof (action) === 'string') {
-                                    Log.trace("Adding " + tag + code + " to " + action);
-                                    if (obj[action] === undefined)
-                                        obj[action] = [];
-                                    obj[action].push(XmlUtil.getText(subnode));
-                                } else {
-                                    Log.warn("datafield: " + tag + code + " format: " + format + " invalid data in RULES: type: " + typeof (fieldActions) + " expected function or string");
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Log.warn("datafield: " + tag + " format: " + format + " invalid data in RULES: type: " + typeof (fieldActions) + " expected function or object");
-                }
-            }
-        }
-    }
-
-    for (var i in obj) {
-        var a = obj[i];
+    var indexObject = createMarc21Index( dom );
+    for (var i in indexObject) {
+        var a = indexObject[i];
         if (!(a instanceof Array) || i.indexOf('.') === -1)
             continue;
         for (var n = 0; n < a.length; n++) {

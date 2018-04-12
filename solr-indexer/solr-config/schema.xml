@@ -270,6 +270,11 @@
         <field name="_version_" type="long" indexed="true" stored="true"/>
         <!-- -->
         <field name="id" type="id" indexed="true" stored="true" required="true"/>
+        <!-- -->
+        <field name="marc21.001" type="dbc-default" indexed="true" stored="true" required="false"/>
+        <field name="marc21.003" type="dbc-default" indexed="true" stored="true" required="false"/>
+        <field name="marc21.245" type="dbc-default" indexed="true" stored="true" required="false"/>
+        <!-- -->
         <field name="marc.001a001b" type="dbc-analyzed-id" indexed="true" stored="true" required="false"/>
         <field name="marc.001a" type="dbc-faust" indexed="true" stored="true" required="false"/>
         <field name="marc.001b" type="int" indexed="true" stored="true" required="false"/>
