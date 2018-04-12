@@ -204,7 +204,7 @@ public class IndexerTest {
         // check that Marcx record is indexed correctly
         String field003 = (String) doc.getField("marc21.003").getValue();
         String field001 = (String) doc.getField("marc21.001").getValue();
-        String field245 = (String) doc.getField("marc.245a").getValue();
+        String field245 = (String) doc.getField("marc21.245a").getValue();
         String field001a001b = (String) doc.getField("marc.001a001b").getValue();
 
         assertEquals("DLC", field003);
