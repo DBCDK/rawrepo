@@ -205,10 +205,12 @@ public class IndexerTest {
         String field003 = (String) doc.getField("marc21.003").getValue();
         String field001 = (String) doc.getField("marc21.001").getValue();
         String field245 = (String) doc.getField("marc.245a").getValue();
+        String field001a001b = (String) doc.getField("marc.001a001b").getValue();
 
         assertEquals("DLC", field003);
         assertEquals("   94026209 ", field001);
         assertEquals("Research foundations for psychotherapy practice /", field245);
+        assertEquals("   94026209 :DLC", field001a001b);
 
         //TODO fjern - note to self om hvordan testen køres
         //stå i branchen for marc21_proof_of_concept inde i intelliJ

@@ -154,6 +154,7 @@ var createMarc21Index = function ( xmlRecord ) {
     indexObject["marc21.001"] = [ field001 ];
     indexObject["marc21.003"] = [ field003 ];
     indexObject["marc.245a"] = [ field245a ];
+    indexObject["marc.001a001b"] = [ field001 + ":" + field003 ];
     return indexObject
 };
 
