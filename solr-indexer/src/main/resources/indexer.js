@@ -153,7 +153,7 @@ var createMarc21Index = function ( xmlRecord ) {
     var field245a = marcRecord.field("245").subfield("a").value;
     indexObject["marc21.001"] = [ field001 ];
     indexObject["marc21.003"] = [ field003 ];
-    indexObject["marc21.245a"] = [ field245a ];
+    indexObject["marc.245a"] = [ field245a ];
     return indexObject
 };
 
