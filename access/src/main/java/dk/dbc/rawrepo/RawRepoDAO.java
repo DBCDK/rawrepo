@@ -378,15 +378,10 @@ public abstract class RawRepoDAO {
                         autRecords.put(parentId.getBibliographicRecordId(), fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
                     }
                 }
-                logger.info("Amount of authority records to the common record: {}", autRecords.size());
-                if (autRecords.size() > 0) {
-                    logger.info("Found one or more authority records - expanding record");
-                    ExpandCommonMarcRecord.expandRecord(record, autRecords, keepAutField);
-                }
+                ExpandCommonMarcRecord.expandRecord(record, autRecords, keepAutField);
             }
         }
     }
-
 
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
@@ -657,9 +652,9 @@ public abstract class RawRepoDAO {
      *
      * @param provider parameter to pass to enqueue(...)
      * @param recordId the record that has been changed
-     * @Param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
-     *        Default value is 1000
      * @throws RawRepoException done at failure
+     * @Param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
+     * Default value is 1000
      */
     public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException {
         changedRecord(provider, recordId, recordId.getAgencyId(), true, priority);
