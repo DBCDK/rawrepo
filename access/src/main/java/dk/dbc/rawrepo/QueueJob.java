@@ -31,14 +31,16 @@ public class QueueJob {
     RecordId job;
     String worker;
     Timestamp queued;
+    int priority;
 
     QueueJob() {
     }
 
-    QueueJob(String bibliographicRecordId, int agencyId, String worker, Timestamp queued) {
+    QueueJob(String bibliographicRecordId, int agencyId, String worker, Timestamp queued, int priority) {
         this.job = new RecordId(bibliographicRecordId, agencyId);
         this.worker = worker;
         this.queued = queued;
+        this.priority = priority;
     }
 
     public RecordId getJob() {
@@ -51,7 +53,11 @@ public class QueueJob {
 
     @Override
     public String toString() {
-        return "QueueJob{" + "job=" + job + ", worker=" + worker + ", queued=" + queued + '}';
+        return "QueueJob{" +
+                "job=" + job +
+                ", worker='" + worker + '\'' +
+                ", queued=" + queued +
+                ", priority=" + priority +
+                '}';
     }
-
 }

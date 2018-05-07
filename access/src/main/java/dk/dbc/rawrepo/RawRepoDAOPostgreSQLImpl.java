@@ -663,7 +663,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
                             resultSet.getInt("agencyid"),
                             resultSet.getString("worker"),
-                            resultSet.getTimestamp("queued"));
+                            resultSet.getTimestamp("queued"),
+                            resultSet.getInt("priority"));
                     result.add(job);
                     logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
                 }
@@ -691,7 +692,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     QueueJob job = new QueueJob(resultSet.getString("bibliographicrecordid"),
                             resultSet.getInt("agencyid"),
                             resultSet.getString("worker"),
-                            resultSet.getTimestamp("queued"));
+                            resultSet.getTimestamp("queued"),
+                            resultSet.getInt("priority"));
                     logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
                     return job;
                 }

@@ -527,7 +527,7 @@ public class RawRepoDAOIT {
             }
         }
 
-        QueueJob queueJob = new QueueJob("abcdefgh", 123456, "node", new Timestamp(0));
+        QueueJob queueJob = new QueueJob("abcdefgh", 123456, "node", new Timestamp(0), 1000);
         dao.queueFail(queueJob, "What!");
 
         try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
