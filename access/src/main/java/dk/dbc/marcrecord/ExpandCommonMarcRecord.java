@@ -15,6 +15,7 @@ import dk.dbc.common.records.MarcSubField;
 import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.util.Stopwatch;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -26,6 +27,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
@@ -40,18 +42,28 @@ public class ExpandCommonMarcRecord {
      */
     public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException {
         try {
+            Stopwatch stopWatch = new Stopwatch();
             MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(expandableRecord.getContent());
+            logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.decodeRecord(common)", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
+            stopWatch.reset();
 
             Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
             for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
                 authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue().getContent()));
+                logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.decodeRecord(loop)", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
+                stopWatch.reset();
             }
 
             MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
-
+            logger.info("Stopwatch - {} took {} ms", "doExpand", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
+            stopWatch.reset();
             sortFields(expandedMarcRecord);
+            logger.info("Stopwatch - {} took {} ms", "sortFields", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
+            stopWatch.reset();
 
             expandableRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
+            logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.encodeRecord", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
+            stopWatch.reset();
         } catch (JAXBException | UnsupportedEncodingException e) {
             throw new RawRepoException(e);
         }
@@ -69,6 +81,7 @@ public class ExpandCommonMarcRecord {
      * @throws RawRepoException if the collection doesn't contain the necessary records
      */
     public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records, String recordId, boolean keepAutFields) throws RawRepoException {
+        Stopwatch stopWatch = new Stopwatch();
         MarcRecord commonRecord = null;
         Map<String, MarcRecord> authorityRecords = new HashMap<>();
 
@@ -84,6 +97,8 @@ public class ExpandCommonMarcRecord {
                 authorityRecords.put(foundRecordId, new MarcRecord(entry.getValue()));
             }
         }
+
+        logger.info("Stopwatch - {} took {} ms", "expandMarcRecord", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
 
         if (commonRecord == null) {
             throw new RawRepoException("The record collection doesn't contain a common record");
