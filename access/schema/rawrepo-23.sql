@@ -457,6 +457,9 @@ BEGIN
           FOR UPDATE NOWAIT;
           -- By locking the row, we ensure that no worker can take this row until we commit / rollback
           -- Ensuring that even if this job is next, it will not be processed until we're sure our data is used.
+          UPDATE queue SET priority = priority_
+          WHERE bibliographicrecordid = bibliographicrecordid_ AND agencyid = agencyid_ AND worker = row.worker
+                AND priority > priority_;
           r.queued = FALSE;
           RETURN NEXT r;
           EXCEPTION

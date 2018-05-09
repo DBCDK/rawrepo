@@ -455,6 +455,40 @@ public class RawRepoDAOIT {
     }
 
     @Test
+    public void enqueueUpdatePriority() throws SQLException, RawRepoException {
+        setupData(100000, "S1:870970:changed");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        clearQueue();
+        dao.changedRecord("test", new RecordId("S1", 870970), 1000);
+        final Collection<String> queueBeforeRaise = getQueue();
+        assertEquals("Queue size before", 2, queueBeforeRaise.size());
+        dao.changedRecord("test", new RecordId("S1", 870970), 500);
+        final Collection<String> queueAfterRaise = getQueue();
+        assertEquals("Queue size after", 2, queueAfterRaise.size());
+        final QueueJob queueJob = dao.dequeue("changed");
+        assertEquals("Queue job priority", 500, queueJob.priority);
+    }
+
+    @Test
+    public void enqueueKeepPriority() throws SQLException, RawRepoException {
+        setupData(100000, "S1:870970:changed");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        clearQueue();
+        dao.changedRecord("test", new RecordId("S1", 870970), 500);
+        final Collection<String> queueBeforeRaise = getQueue();
+        assertEquals("Queue size before", 2, queueBeforeRaise.size());
+        dao.changedRecord("test", new RecordId("S1", 870970), 1000);
+        final Collection<String> queueAfterRaise = getQueue();
+        assertEquals("Queue size after", 2, queueAfterRaise.size());
+        final QueueJob queueJob = dao.dequeue("changed");
+        assertEquals("Queue job priority", 500, queueJob.priority);
+    }
+
+    @Test
     public void testDequeue() throws SQLException, RawRepoException {
         setupData(100000);
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
