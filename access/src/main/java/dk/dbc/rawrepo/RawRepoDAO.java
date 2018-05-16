@@ -441,9 +441,9 @@ public abstract class RawRepoDAO {
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
                         merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
-                        record.getCreated().after(next.getCreated()) ? record.getCreated() : next.getCreated(),
-                        record.getModified().after(next.getModified()) ? record.getModified() : next.getModified(),
-                        record.getModified().after(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),
+                        record.getCreated().compareTo(next.getCreated()) > 0 ? record.getCreated() : next.getCreated(),
+                        record.getModified().compareTo(next.getModified()) > 0? record.getModified() : next.getModified(),
+                        record.getModified().compareTo(next.getModified()) > 0? record.getTrackingId() : next.getTrackingId(),
                         enrichmentTrail.toString());
             }
         }

@@ -20,10 +20,9 @@
  */
 package dk.dbc.rawrepo;
 
-import java.util.Date;
+import java.time.Instant;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public interface RecordMetaData {
@@ -38,13 +37,13 @@ public interface RecordMetaData {
 
     void setMimeType(String mimeType);
 
-    Date getCreated();
+    Instant getCreated();
 
-    void setCreated(Date created);
+    void setCreated(Instant created);
 
-    Date getModified();
+    Instant getModified();
 
-    void setModified(Date modified);
+    void setModified(Instant modified);
 
     String getTrackingId();
 

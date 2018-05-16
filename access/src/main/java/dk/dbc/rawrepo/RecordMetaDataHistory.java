@@ -20,24 +20,23 @@
  */
 package dk.dbc.rawrepo;
 
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.Instant;
 
 public class RecordMetaDataHistory implements RecordMetaData {
 
     RecordId id;
     boolean deleted;
     String mimeType;
-    Timestamp created;
-    Timestamp modified;
+    Instant created;
+    Instant modified;
     String trackingId;
 
-    public RecordMetaDataHistory(RecordId id, boolean deleted, String mimeType, Timestamp created, Timestamp modified, String trackingId) {
+    public RecordMetaDataHistory(RecordId id, boolean deleted, String mimeType, Instant created, Instant modified, String trackingId) {
         this.id = id;
         this.deleted = deleted;
         this.mimeType = mimeType;
-        this.created = (Timestamp) created.clone();
-        this.modified = (Timestamp) modified.clone();
+        this.created = Instant.from(created);
+        this.modified = Instant.from(modified);
         this.trackingId = trackingId;
     }
 
@@ -67,27 +66,27 @@ public class RecordMetaDataHistory implements RecordMetaData {
     }
 
     @Override
-    public Date getCreated() {
-        return (Date) created.clone();
+    public Instant getCreated() {
+        return Instant.from(created);
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Date getModified() {
-        return (Date) modified.clone();
+    public Instant getModified() {
+        return Instant.from(modified);
     }
 
     @Override
-    public void setModified(Date modified) {
+    public void setModified(Instant modified) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    Timestamp getTimestamp() {
-        return (Timestamp) modified.clone();
+    Instant getTimestamp() {
+        return Instant.from(modified);
     }
 
     @Override

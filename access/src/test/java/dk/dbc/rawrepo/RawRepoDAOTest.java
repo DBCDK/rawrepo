@@ -33,6 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
@@ -323,12 +324,12 @@ public class RawRepoDAOTest {
             }
 
             @Override
-            public Date getCreated() {
-                return new Date();
+            public Instant getCreated() {
+                return Instant.now();
             }
 
             @Override
-            public void setCreated(Date created) {
+            public void setCreated(Instant created) {
             }
 
             @Override
@@ -337,12 +338,12 @@ public class RawRepoDAOTest {
             }
 
             @Override
-            public Date getModified() {
-                return new Date();
+            public Instant getModified() {
+                return Instant.now();
             }
 
             @Override
-            public void setModified(Date modified) {
+            public void setModified(Instant modified) {
             }
 
             @Override
