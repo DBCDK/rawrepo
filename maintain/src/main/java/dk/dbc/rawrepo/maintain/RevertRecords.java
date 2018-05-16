@@ -35,8 +35,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalField;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -119,14 +123,14 @@ public class RevertRecords extends RawRepoWorker {
 
         Record current = dao.fetchRecord(bibliographicRecordId, agencyId);
         RecordId id = current.getId();
-        long currentTime = current.getModified().getTime();
+        long currentTime = current.getModified().toEpochMilli();
         log.trace("currentTime = " + currentTime);
         if (currentTime <= millis) {
             throw new RawRepoException("Record is already older");
         }
         List<RecordMetaDataHistory> history = dao.getRecordHistory(bibliographicRecordId, agencyId);
         for (RecordMetaDataHistory oldRecord : history) {
-            long oldTime = oldRecord.getModified().getTime();
+            long oldTime = oldRecord.getModified().toEpochMilli();
             log.trace("oldTime = " + oldTime);
             if (oldTime <= millis) {
                 Record historicRecord = dao.getHistoricRecord(oldRecord);
@@ -137,7 +141,7 @@ public class RevertRecords extends RawRepoWorker {
                 Set<RecordId> relations = new HashSet<>();
                 dao.setRelationsFrom(id, relations);
                 historicRecord.setTrackingId(trackingId);
-                historicRecord.setModified(UTC());
+                historicRecord.setModified(Instant.now());
                 dao.saveRecord(historicRecord);
                 if (!historicRecord.isDeleted()) {
                     switch (historicRecord.getMimeType()) {
