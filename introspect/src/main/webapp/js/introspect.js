@@ -299,9 +299,25 @@ $('document').ready(function () {
                 } else {
                     f = $('<span title="Status: Active | Mimetype: ' + e['mimetype'] + '"/>');
                 }
-                var modified = e['modified'].length === 22 ? e['modified'] + '0' : e['modified'];
+                var modifiedDate = new Date(e['modified']);
 
-                f.text(modified);
+                var leftPad = function (val, len) {
+                    var output = '' + val; // Convert to string if val isn't already a string
+                    while (output.length < len) {
+                        output = '0' + output;
+                    }
+                    return output;
+                };
+
+                var modifiedStr = modifiedDate.getFullYear() +
+                    '-' + leftPad(modifiedDate.getMonth() + 1, 2) +
+                    '-' + leftPad(modifiedDate.getDate(), 2) +
+                    ' ' + leftPad(modifiedDate.getHours(), 2) +
+                    ':' + leftPad(modifiedDate.getMinutes(), 2) +
+                    ':' + leftPad(modifiedDate.getSeconds(), 2) +
+                    '.' + leftPad(modifiedDate.getMilliseconds(), 3);
+
+                f.text(modifiedStr);
                 f.append('<br>');
                 that.history.append(f);
             });
@@ -796,7 +812,7 @@ $('document').ready(function () {
                 dtys = ty - 3 * Math.sin(theta),
                 l = 8,
                 w = 2.5
-                ;
+            ;
             return "M" + sx + "," + sy +
                 "L" + tx + "," + ty +
                 "M" + dtxs + "," + dtys +
@@ -981,6 +997,7 @@ $('document').ready(function () {
                 this.bibliographicRecordIdChanged();
             }
         };
+
         /**
          * Internal: Callback, for changed record
          *
