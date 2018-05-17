@@ -51,6 +51,10 @@ public class QueueJob {
         return (Timestamp) queued.clone();
     }
 
+    public int getPriority() {
+        return priority;
+    }
+
     @Override
     public String toString() {
         return "QueueJob{" +
