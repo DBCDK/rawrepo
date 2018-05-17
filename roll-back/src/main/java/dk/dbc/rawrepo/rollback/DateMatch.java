@@ -21,14 +21,13 @@
 package dk.dbc.rawrepo.rollback;
 
 import dk.dbc.rawrepo.RecordMetaDataHistory;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -37,10 +36,8 @@ public class DateMatch {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(DateMatch.class);
 
-    private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-    private static synchronized String format(Date date) {
-        return dateFormat.format(date);
+    private static synchronized String format(Instant date) {
+        return date.toString();
     }
 
     private final static Comparator<RecordMetaDataHistory> newestFirst = new Comparator<RecordMetaDataHistory>() {
@@ -91,12 +88,12 @@ public class DateMatch {
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    public static RecordMetaDataHistory beforeOrSame(Date date, List<RecordMetaDataHistory> history) {
+    static RecordMetaDataHistory beforeOrSame(Instant date, List<RecordMetaDataHistory> history) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>(history);
         Collections.sort(newestFirstHistory, newestFirst);
         for (RecordMetaDataHistory element : newestFirstHistory) {
-            if (element.getModified().getTime() <= date.getTime()) {
-                log.debug("Found match {} for {}", element, format(date));
+            if (element.getModified().isBefore(date) || element.getModified().equals(date)) {
+                log.debug("Found match {} for {}", element, date);
                 return element;
             }
         }
@@ -113,12 +110,12 @@ public class DateMatch {
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    public static RecordMetaDataHistory before(Date date, List<RecordMetaDataHistory> history) {
+    static RecordMetaDataHistory before(Instant date, List<RecordMetaDataHistory> history) {
         List<RecordMetaDataHistory> newestFirstHistory = new ArrayList<>(history);
         Collections.sort(newestFirstHistory, newestFirst);
         for (RecordMetaDataHistory element : newestFirstHistory) {
-            if (element.getModified().getTime() < date.getTime()) {
-                log.debug("Found match {} for {}", element, format(date));
+            if (element.getModified().isBefore(date)) {
+                log.debug("Found match {} for {}", element, date);
                 return element;
             }
         }
@@ -135,12 +132,12 @@ public class DateMatch {
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    public static RecordMetaDataHistory afterOrSame(Date date, List<RecordMetaDataHistory> history) {
+    static RecordMetaDataHistory afterOrSame(Instant date, List<RecordMetaDataHistory> history) {
         List<RecordMetaDataHistory> oldestFirstHistory = new ArrayList<>(history);
         Collections.sort(oldestFirstHistory, oldestFirst);
         for (RecordMetaDataHistory element : oldestFirstHistory) {
-            if (element.getModified().getTime() >= date.getTime()) {
-                log.debug("Found match {} for {}", element, format(date));
+            if (element.getModified().isAfter(date) || element.getModified().equals(date)) {
+                log.debug("Found match {} for {}", element, date);
                 return element;
             }
         }
@@ -157,12 +154,12 @@ public class DateMatch {
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    public static RecordMetaDataHistory after(Date date, List<RecordMetaDataHistory> history) {
+    static RecordMetaDataHistory after(Instant date, List<RecordMetaDataHistory> history) {
         List<RecordMetaDataHistory> oldestFirstHistory = new ArrayList<>(history);
         Collections.sort(oldestFirstHistory, oldestFirst);
         for (RecordMetaDataHistory element : oldestFirstHistory) {
-            if (element.getModified().getTime() > date.getTime()) {
-                log.debug("Found match {} for {}", element, format(date));
+            if (element.getModified().isAfter(date)) {
+                log.debug("Found match {} for {}", element, date);
                 return element;
             }
         }
@@ -178,11 +175,11 @@ public class DateMatch {
      * @param history List of record history data
      * @return The first matching record or null if no record matches.
      */
-    public static RecordMetaDataHistory equal(Date date, List<RecordMetaDataHistory> history) {
+    static RecordMetaDataHistory equal(Instant date, List<RecordMetaDataHistory> history) {
         for (RecordMetaDataHistory element : history) {
-            log.debug("Comparing {} to {}", element.getModified().getTime(), date.getTime());
-            if (element.getModified().getTime() == date.getTime()) {
-                log.debug("Found match {} for {}", element, format(date));
+            log.debug("Comparing {} to {}", element.getModified(), date);
+            if (element.getModified().equals(date)) {
+                log.debug("Found match {} for {}", element, date);
                 return element;
             }
         }
