@@ -44,6 +44,18 @@ class RecordImpl implements Record {
         this.deleted = false;
         this.mimeType = "";
         this.content = new byte[0];
+        /*
+            A few notes about Instant and time zones:
+
+            Using Instant.now() relies on the JVM running in the correct time zone. In this case it works because the
+            parent Payara image sets the time zone explicit with 'create-jvm-options -Duser.timezone=CET'
+            If this value is ever changed or removed it will likely have adverse effect on updateservice - but the
+            problem will be bigger then just updateservice.
+
+            We need the time zone as the column in postgres is with time zone. Without setting the time zone in the Java
+            layer the time will be treated as being UTC, which means one or two hours (depending on summer/winter time)
+            will be subtracted from the date.
+         */
         this.created = Instant.now();
         this.modified = Instant.now();
         this.trackingId = "";
