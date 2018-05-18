@@ -36,10 +36,6 @@ public class DateMatch {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(DateMatch.class);
 
-    private static synchronized String format(Instant date) {
-        return date.toString();
-    }
-
     private final static Comparator<RecordMetaDataHistory> newestFirst = new Comparator<RecordMetaDataHistory>() {
         @Override
         public int compare(RecordMetaDataHistory o1, RecordMetaDataHistory o2) {
@@ -97,7 +93,7 @@ public class DateMatch {
                 return element;
             }
         }
-        log.debug("Found no match for {} in {}", format(date), history);
+        log.debug("Found no match for {} in {}", date, history);
         return null;
     }
 
@@ -119,7 +115,7 @@ public class DateMatch {
                 return element;
             }
         }
-        log.debug("Found no match for {} in {}", format(date), history);
+        log.debug("Found no match for {} in {}", date, history);
         return null;
     }
 
@@ -141,7 +137,7 @@ public class DateMatch {
                 return element;
             }
         }
-        log.debug("Found no match for {} in {}", format(date), history);
+        log.debug("Found no match for {} in {}", date, history);
         return null;
     }
 
@@ -163,7 +159,7 @@ public class DateMatch {
                 return element;
             }
         }
-        log.debug("Found no match for {} in {}", format(date), history);
+        log.debug("Found no match for {} in {}", date, history);
         return null;
     }
 
@@ -183,7 +179,7 @@ public class DateMatch {
                 return element;
             }
         }
-        log.debug("Found no match for {} in {}", format(date), history);
+        log.debug("Found no match for {} in {}", date, history);
         return null;
     }
 
