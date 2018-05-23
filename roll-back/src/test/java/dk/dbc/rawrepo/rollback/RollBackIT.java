@@ -26,19 +26,22 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
-import org.junit.After;
+
 import static org.junit.Assert.assertEquals;
-import org.junit.Before;
-import org.junit.Test;
 
 public class RollBackIT {
 
@@ -46,46 +49,33 @@ public class RollBackIT {
     private static final String BIB_RECORD_ID_1 = "a bcd efg h";
     private static final String BIB_RECORD_ID_2 = "q wer tyu i";
 
-    private final static Date NOW;
-    private final static Date DAY_1;
-    private final static Date DAY_2;
-    private final static Date DAY_3;
-    private final static Date DAY_4;
-    private final static Date DAY_5;
-    private final static Date DAY_6;
-    private final static Date DAY_7;
+    private final static Instant NOW;
+    private final static Instant DAY_1;
+    private final static Instant DAY_3;
+    private final static Instant DAY_4;
+    private final static Instant DAY_5;
 
     static {
-        Calendar cal = Calendar.getInstance( TimeZone.getTimeZone( "UTC" ) );
-        NOW = new Date();
-        cal.setTime( NOW );
-        cal.add( Calendar.DATE, -1 );
-        DAY_7 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_6 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_5 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_4 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_3 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_2 = cal.getTime();
-        cal.add( Calendar.DATE, -1 );
-        DAY_1 = cal.getTime();
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        NOW = Instant.now();
+
+        DAY_1 = NOW.minus(7, ChronoUnit.DAYS);
+        DAY_3 = NOW.minus(5, ChronoUnit.DAYS);
+        DAY_4 = NOW.minus(4, ChronoUnit.DAYS);
+        DAY_5 = NOW.minus(3, ChronoUnit.DAYS);
     }
 
     private Connection connection;
 
     @Before
-    public void setup() throws SQLException, ClassNotFoundException {
+    public void setup() throws SQLException {
         String jdbc;
-        String port = System.getProperty( "postgresql.port" );
+        String port = System.getProperty("postgresql.port");
         jdbc = "jdbc:postgresql://localhost:" + port + "/rawrepo";
         Properties properties = new Properties();
 
-        connection = DriverManager.getConnection( jdbc, properties );
-        connection.prepareStatement( "SET log_statement = 'all';" ).execute();
+        connection = DriverManager.getConnection(jdbc, properties);
+        connection.prepareStatement("SET log_statement = 'all';").execute();
         resetDatabase();
     }
 
@@ -95,135 +85,135 @@ public class RollBackIT {
     }
 
     private void resetDatabase() throws SQLException {
-        connection.prepareStatement( "DELETE FROM relations" ).execute();
-        connection.prepareStatement( "DELETE FROM records" ).execute();
-        connection.prepareStatement( "DELETE FROM records_archive" ).execute();
-        connection.prepareStatement( "DELETE FROM queue" ).execute();
-        connection.prepareStatement( "DELETE FROM queuerules" ).execute();
-        connection.prepareStatement( "DELETE FROM queueworkers" ).execute();
-        connection.prepareStatement( "DELETE FROM jobdiag" ).execute();
+        connection.prepareStatement("DELETE FROM relations").execute();
+        connection.prepareStatement("DELETE FROM records").execute();
+        connection.prepareStatement("DELETE FROM records_archive").execute();
+        connection.prepareStatement("DELETE FROM queue").execute();
+        connection.prepareStatement("DELETE FROM queuerules").execute();
+        connection.prepareStatement("DELETE FROM queueworkers").execute();
+        connection.prepareStatement("DELETE FROM jobdiag").execute();
     }
 
     @Test
-    public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
+    public void testHistoricRecord() throws SQLException, RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
-        connection.setAutoCommit( false );
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        connection.setAutoCommit(false);
         Record record;
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        record.setContent( "Version 1".getBytes() );
-        record.setMimeType( "text/plain" );
-        record.setDeleted( false );
-        record.setModified( DAY_1 );
-        dao.saveRecord( record );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        record.setContent("Version 1".getBytes());
+        record.setMimeType("text/plain");
+        record.setDeleted(false);
+        record.setModified(DAY_1);
+        dao.saveRecord(record);
         connection.commit();
 
-        connection.setAutoCommit( false );
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        record.setContent( "Version 2".getBytes() );
-        record.setMimeType( "text/not-so-plain" );
-        record.setDeleted( false );
-        record.setModified( DAY_3 );
-        dao.saveRecord( record );
+        connection.setAutoCommit(false);
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        record.setContent("Version 2".getBytes());
+        record.setMimeType("text/not-so-plain");
+        record.setDeleted(false);
+        record.setModified(DAY_3);
+        dao.saveRecord(record);
         connection.commit();
 
-        connection.setAutoCommit( false );
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        record.setContent( "Version 3".getBytes() );
-        record.setMimeType( "text/really-plain" );
-        record.setDeleted( true );
-        record.setModified( DAY_5 );
-        dao.saveRecord( record );
+        connection.setAutoCommit(false);
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        record.setContent("Version 3".getBytes());
+        record.setMimeType("text/really-plain");
+        record.setDeleted(true);
+        record.setModified(DAY_5);
+        dao.saveRecord(record);
         connection.commit();
 
-        List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( recordHistory.toString(), 3, recordHistory.size() );
+        List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals(recordHistory.toString(), 3, recordHistory.size());
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "Version 3", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("Version 3", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        RollBack.rollbackRecord( connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null );
+        RollBack.rollbackRecord(connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID), DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null);
         connection.commit();
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        RollBack.rollbackRecord( connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID ), DAY_4, DateMatch.Match.After, RollBack.State.Rollback, null );
+        RollBack.rollbackRecord(connection, new RecordId(BIB_RECORD_ID_1, AGENCY_ID), DAY_4, DateMatch.Match.After, RollBack.State.Rollback, null);
         connection.commit();
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "Version 3", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("Version 3", new String(record.getContent(), StandardCharsets.UTF_8));
     }
 
     @Test
     public void testBulkAgency_with2Records() throws SQLException, ClassNotFoundException, RawRepoException {
 
-        RawRepoDAO dao = RawRepoDAO.builder( connection ).build();
-        connection.setAutoCommit( false );
+        RawRepoDAO dao = RawRepoDAO.builder(connection).build();
+        connection.setAutoCommit(false);
         Record record;
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        record.setContent( "Rec 1 Version 1".getBytes() );
-        record.setMimeType( "text/plain" );
-        record.setDeleted( false );
-        record.setModified( DAY_1 );
-        dao.saveRecord( record );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        record.setContent("Rec 1 Version 1".getBytes());
+        record.setMimeType("text/plain");
+        record.setDeleted(false);
+        record.setModified(DAY_1);
+        dao.saveRecord(record);
         connection.commit();
 
-        connection.setAutoCommit( false );
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        record.setContent( "Rec 1 Version 2".getBytes() );
-        record.setMimeType( "text/not-so-plain" );
-        record.setDeleted( false );
-        record.setModified( DAY_4 );
-        dao.saveRecord( record );
+        connection.setAutoCommit(false);
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        record.setContent("Rec 1 Version 2".getBytes());
+        record.setMimeType("text/not-so-plain");
+        record.setDeleted(false);
+        record.setModified(DAY_4);
+        dao.saveRecord(record);
         connection.commit();
 
-        connection.setAutoCommit( false );
-        record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
-        record.setContent( "Rec 2 Version 1".getBytes() );
-        record.setMimeType( "text/really-plain" );
-        record.setDeleted( true );
-        record.setModified( DAY_3 );
-        dao.saveRecord( record );
+        connection.setAutoCommit(false);
+        record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
+        record.setContent("Rec 2 Version 1".getBytes());
+        record.setMimeType("text/really-plain");
+        record.setDeleted(true);
+        record.setModified(DAY_3);
+        dao.saveRecord(record);
         connection.commit();
 
-        connection.setAutoCommit( false );
-        record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
-        record.setContent( "Rec 2 Version 2".getBytes() );
-        record.setMimeType( "text/really-plain" );
-        record.setDeleted( true );
-        record.setModified( DAY_5 );
-        dao.saveRecord( record );
+        connection.setAutoCommit(false);
+        record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
+        record.setContent("Rec 2 Version 2".getBytes());
+        record.setMimeType("text/really-plain");
+        record.setDeleted(true);
+        record.setModified(DAY_5);
+        dao.saveRecord(record);
         connection.commit();
 
-        List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( recordHistory.toString(), 2, recordHistory.size() );
-        recordHistory = dao.getRecordHistory( BIB_RECORD_ID_2, AGENCY_ID );
-        assertEquals( recordHistory.toString(), 2, recordHistory.size() );
+        List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals(recordHistory.toString(), 2, recordHistory.size());
+        recordHistory = dao.getRecordHistory(BIB_RECORD_ID_2, AGENCY_ID);
+        assertEquals(recordHistory.toString(), 2, recordHistory.size());
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "Rec 1 Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("Rec 1 Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
-        assertEquals( "Rec 2 Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
+        assertEquals("Rec 2 Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        RollBack.rollbackAgency( connection, AGENCY_ID, DAY_3, DateMatch.Match.Before, RollBack.State.Rollback, null );
+        RollBack.rollbackAgency(connection, AGENCY_ID, DAY_3, DateMatch.Match.Before, RollBack.State.Rollback, null);
         connection.commit();
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "First record is rolled back",  "Rec 1 Version 1", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("First record is rolled back", "Rec 1 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
-        assertEquals( "Second record is not rolled back", "Rec 2 Version 2", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
+        assertEquals("Second record is not rolled back", "Rec 2 Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        RollBack.rollbackAgency( connection, AGENCY_ID, DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null );
+        RollBack.rollbackAgency(connection, AGENCY_ID, DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null);
         connection.commit();
 
-        record = dao.fetchRecord( BIB_RECORD_ID_1, AGENCY_ID );
-        assertEquals( "First record is rolled back",  "Rec 1 Version 1", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
+        assertEquals("First record is rolled back", "Rec 1 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
 
-        record = dao.fetchRecord( BIB_RECORD_ID_2, AGENCY_ID );
-        assertEquals( "Second record is rolled back", "Rec 2 Version 1", new String ( record.getContent(), StandardCharsets.UTF_8) );
+        record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
+        assertEquals("Second record is rolled back", "Rec 2 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
     }
 
 }

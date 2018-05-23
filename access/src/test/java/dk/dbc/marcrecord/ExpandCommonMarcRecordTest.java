@@ -22,9 +22,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -321,12 +321,12 @@ public class ExpandCommonMarcRecordTest {
             }
 
             @Override
-            public Date getCreated() {
-                return new Date();
+            public Instant getCreated() {
+                return Instant.now();
             }
 
             @Override
-            public void setCreated(Date created) {
+            public void setCreated(Instant created) {
             }
 
             @Override
@@ -335,12 +335,12 @@ public class ExpandCommonMarcRecordTest {
             }
 
             @Override
-            public Date getModified() {
-                return new Date();
+            public Instant getModified() {
+                return Instant.now();
             }
 
             @Override
-            public void setModified(Date modified) {
+            public void setModified(Instant modified) {
             }
 
             @Override

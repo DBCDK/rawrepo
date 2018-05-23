@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=maintain
 cid_file=maintain.cid
-docker_image=docker-os.dbc.dk/rawrepo-maintain-1.9-snapshot
+docker_image=docker-os.dbc.dk/rawrepo-maintain-1.10-snapshot
 version=${USER}
 port=`id -u ${USER}`4
 detached="-d"

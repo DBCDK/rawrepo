@@ -135,6 +135,26 @@ $('document').ready(function () {
             return this;
         };
 
+        var formatDate = function(dateVal) {
+            var leftPad = function (val, len) {
+                var output = '' + val; // Convert to string if val isn't already a string
+                while (output.length < len) {
+                    output = '0' + output;
+                }
+                return output;
+            };
+
+            var date = new Date(dateVal);
+
+            return date.getFullYear() +
+                '-' + leftPad(date.getMonth() + 1, 2) +
+                '-' + leftPad(date.getDate(), 2) +
+                ' ' + leftPad(date.getHours(), 2) +
+                ':' + leftPad(date.getMinutes(), 2) +
+                ':' + leftPad(date.getSeconds(), 2) +
+                '.' + leftPad(date.getMilliseconds(), 3);
+        };
+
         DisplayPane.prototype.lineformat = function () {
             var key = this.idInput.val();
             var arg = key.split(",", 3);
@@ -249,7 +269,7 @@ $('document').ready(function () {
                 data.forEach(function (e, i) {
                     var option = $('<option/>');
                     var deleted = e['deleted'] ? 'DELETED' : ''; // Append "DELETED" if the record is deleted
-                    option.attr({value: i}).text(e['modified'] + " (" + e['mimetype'] + ") " + deleted);
+                    option.attr({value: i}).text(formatDate(e['modified']) + " (" + e['mimetype'] + ") " + deleted);
                     $('#version').append(option);
                     tag.append(option);
                 });
@@ -299,9 +319,7 @@ $('document').ready(function () {
                 } else {
                     f = $('<span title="Status: Active | Mimetype: ' + e['mimetype'] + '"/>');
                 }
-                var modified = e['modified'].length === 22 ? e['modified'] + '0' : e['modified'];
-
-                f.text(modified);
+                f.text(formatDate(e['modified']));
                 f.append('<br>');
                 that.history.append(f);
             });
@@ -796,7 +814,7 @@ $('document').ready(function () {
                 dtys = ty - 3 * Math.sin(theta),
                 l = 8,
                 w = 2.5
-                ;
+            ;
             return "M" + sx + "," + sy +
                 "L" + tx + "," + ty +
                 "M" + dtxs + "," + dtys +
@@ -981,6 +999,7 @@ $('document').ready(function () {
                 this.bibliographicRecordIdChanged();
             }
         };
+
         /**
          * Internal: Callback, for changed record
          *

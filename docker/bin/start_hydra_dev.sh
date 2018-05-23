@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=hydra
 cid_file=hydra.cid
-docker_image=docker-i.dbc.dk/rawrepo-hydra-1.9-snapshot
+docker_image=docker-i.dbc.dk/rawrepo-hydra-1.10-snapshot
 version=${USER}
 port=`id -u ${USER}`9
 detached="-d"

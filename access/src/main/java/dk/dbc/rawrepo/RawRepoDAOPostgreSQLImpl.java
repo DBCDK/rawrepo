@@ -31,6 +31,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -156,8 +157,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     final String mimeType = resultSet.getString("MIMETYPE");
                     final String base64Content = resultSet.getString("CONTENT");
                     byte[] content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
-                    Timestamp created = resultSet.getTimestamp("CREATED");
-                    Timestamp modified = resultSet.getTimestamp("MODIFIED");
+                    Instant created = resultSet.getTimestamp("CREATED").toInstant();
+                    Instant modified = resultSet.getTimestamp("MODIFIED").toInstant();
                     String trackingId = resultSet.getString("TRACKINGID");
                     Record record = new RecordImpl(bibliographicRecordId, agencyId, deleted, mimeType, content, created, modified, trackingId, false);
 
@@ -215,8 +216,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 try (ResultSet resultSet = stmt.executeQuery()) {
                     while (resultSet.next()) {
                         pos = 1;
-                        Timestamp created = resultSet.getTimestamp(pos++);
-                        Timestamp modified = resultSet.getTimestamp(pos++);
+                        Instant created = resultSet.getTimestamp(pos++).toInstant();
+                        Instant modified = resultSet.getTimestamp(pos++).toInstant();
                         boolean deleted = resultSet.getBoolean(pos++);
                         String mimeType = resultSet.getString(pos++);
                         String trackingId = resultSet.getString(pos);
@@ -239,7 +240,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         try {
             int agencyId = recordMetaData.getId().getAgencyId();
             String bibliographicRecordId = recordMetaData.getId().getBibliographicRecordId();
-            Timestamp timestamp = recordMetaData.getTimestamp();
+            Timestamp timestamp = Timestamp.from(recordMetaData.getTimestamp());
             try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_CONTENT)) {
                 int pos = 1;
                 stmt.setInt(pos++, agencyId);
@@ -309,7 +310,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setBoolean(pos++, record.isDeleted());
             stmt.setString(pos++, record.getMimeType());
             stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
+            stmt.setTimestamp(pos++, Timestamp.from(record.getModified()));
             stmt.setString(pos++, record.getTrackingId());
             stmt.setString(pos++, record.getId().getBibliographicRecordId());
             stmt.setInt(pos, record.getId().getAgencyId());
@@ -328,8 +329,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setBoolean(pos++, record.isDeleted());
             stmt.setString(pos++, record.getMimeType());
             stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(pos++, new Timestamp(record.getCreated().getTime()));
-            stmt.setTimestamp(pos++, new Timestamp(record.getModified().getTime()));
+            stmt.setTimestamp(pos++, Timestamp.from(record.getCreated()));
+            stmt.setTimestamp(pos++, Timestamp.from(record.getModified()));
             stmt.setString(pos, record.getTrackingId());
             stmt.execute();
         } catch (SQLException ex) {

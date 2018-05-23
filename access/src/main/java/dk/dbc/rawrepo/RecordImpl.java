@@ -20,12 +20,10 @@
  */
 package dk.dbc.rawrepo;
 
+import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.TimeZone;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 class RecordImpl implements Record {
@@ -34,8 +32,8 @@ class RecordImpl implements Record {
     boolean deleted;
     String mimeType;
     byte[] content;
-    Date created;
-    Date modified;
+    Instant created;
+    Instant modified;
     String trackingId;
     boolean original;
     boolean enriched;
@@ -46,8 +44,20 @@ class RecordImpl implements Record {
         this.deleted = false;
         this.mimeType = "";
         this.content = new byte[0];
-        this.created = UTC();
-        this.modified = UTC();
+        /*
+            A few notes about Instant and time zones:
+
+            Using Instant.now() relies on the JVM running in the correct time zone. In this case it works because the
+            parent Payara image sets the time zone explicit with 'create-jvm-options -Duser.timezone=CET'
+            If this value is ever changed or removed it will likely have adverse effect on updateservice - but the
+            problem will be bigger then just updateservice.
+
+            We need the time zone as the column in postgres is with time zone. Without setting the time zone in the Java
+            layer the time will be treated as being UTC, which means one or two hours (depending on summer/winter time)
+            will be subtracted from the date.
+         */
+        this.created = Instant.now();
+        this.modified = Instant.now();
         this.trackingId = "";
         this.original = true;
         this.enriched = false;
@@ -55,7 +65,7 @@ class RecordImpl implements Record {
     }
 
     /* for mocking */
-    RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Date created, Date modified, String trackingId, boolean original) {
+    RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, boolean original) {
         this.id = new RecordId(id, agencyId);
         this.deleted = deleted;
         this.mimeType = mimeType;
@@ -68,7 +78,7 @@ class RecordImpl implements Record {
         this.enrichmentTrail = String.valueOf(agencyId);
     }
 
-    private RecordImpl(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
+    private RecordImpl(String id, int agencyId, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
         this.id = new RecordId(id, agencyId);
         this.deleted = false;
         this.mimeType = mimeType;
@@ -81,7 +91,7 @@ class RecordImpl implements Record {
         this.enrichmentTrail = enrichmentTrail;
     }
 
-    static RecordImpl enriched(String id, int agencyId, String mimeType, byte[] content, Date created, Date modified, String trackingId, String enrichmentTrail) {
+    static RecordImpl enriched(String id, int agencyId, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
         return new RecordImpl(id, agencyId, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 
@@ -97,7 +107,7 @@ class RecordImpl implements Record {
 
     @Override
     public void setDeleted(boolean deleted) {
-        this.modified = UTC();
+        this.modified = Instant.now();
         this.deleted = deleted;
     }
 
@@ -108,7 +118,7 @@ class RecordImpl implements Record {
 
     @Override
     public void setContent(byte[] content) {
-        this.modified = UTC();
+        this.modified = Instant.now();
         this.content = Arrays.copyOf(content, content.length);
     }
 
@@ -119,31 +129,31 @@ class RecordImpl implements Record {
 
     @Override
     public void setMimeType(String mimeType) {
-        this.modified = UTC();
+        this.modified = Instant.now();
         this.mimeType = mimeType;
     }
 
     @Override
-    public Date getCreated() {
-        return (Date) created.clone();
+    public Instant getCreated() {
+        return Instant.from(created);
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         if (!original) {
             throw new IllegalStateException("Cannot change creation time for objects from the database");
         }
-        this.created = (Date) created.clone();
+        this.created = Instant.from(created);
     }
 
     @Override
-    public Date getModified() {
-        return (Date) modified.clone();
+    public Instant getModified() {
+        return Instant.from(modified);
     }
 
     @Override
-    public void setModified(Date modified) {
-        this.modified = (Date) modified.clone();
+    public void setModified(Instant modified) {
+        this.modified = Instant.from(modified);
     }
 
     @Override
@@ -179,19 +189,6 @@ class RecordImpl implements Record {
     @Override
     public String toString() {
         return "RecordImpl{" + "id=" + id + ", deleted=" + deleted + ", mimeType=" + mimeType + ", content=[...], created=" + created + ", modified=" + modified + ", original=" + original + ", enriched=" + enriched + ", trackingId=" + trackingId + ", enrichmentTrail=" + enrichmentTrail + '}';
-    }
-
-    private static Date UTC(Date date) {
-        TimeZone tz = TimeZone.getDefault();
-        int offset = tz.getRawOffset();
-        if (tz.inDaylightTime(date)) {
-            offset += tz.getDSTSavings();
-        }
-        return new Date(date.getTime() - offset);
-    }
-
-    private static Date UTC() {
-        return UTC(new Date());
     }
 
 }
