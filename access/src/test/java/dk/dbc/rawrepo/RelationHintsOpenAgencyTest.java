@@ -65,6 +65,13 @@ public class RelationHintsOpenAgencyTest {
                         .withBodyFile("openagency_libraryRules_123456.xml")));
         stubFor(post(urlMatching("/openagency/"))
                 .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='861620']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_861620.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
                         matchingXPath("//ns1:agencyId[.='191919']")
                         .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
                 .willReturn(aResponse()
@@ -98,6 +105,12 @@ public class RelationHintsOpenAgencyTest {
 
         agencies = relationHints.get(123456);
         assertEquals(Arrays.asList(123456), agencies);
+
+        agencies = relationHints.getProviderOptions(123456);
+        assertEquals(Arrays.asList(123456), agencies);
+
+        agencies = relationHints.getProviderOptions(861620);
+        assertEquals(Arrays.asList(861620, 870970, 870971, 870979), agencies);
 
         agencies = relationHints.getProviderOptions(870971);
         assertEquals(Arrays.asList(870971, 870979), agencies);

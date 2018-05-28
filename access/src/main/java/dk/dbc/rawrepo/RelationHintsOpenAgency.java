@@ -66,6 +66,7 @@ public class RelationHintsOpenAgency extends RelationHints {
             agencyPriorityList.add(870979);
         } else if (usesCommonAgency(agencyId)) {
             agencyPriorityList.add(870970);
+            agencyPriorityList.add(870971);
             agencyPriorityList.add(870979);
         } else if (usesAuthorityAgency(agencyId)) {
             agencyPriorityList.add(870979);
