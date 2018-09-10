@@ -170,7 +170,7 @@ public abstract class Service {
             }
 
             try (Connection connection = rawrepo.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService(), executorService)).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService())).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 

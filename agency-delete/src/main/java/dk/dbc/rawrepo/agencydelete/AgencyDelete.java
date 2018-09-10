@@ -24,12 +24,10 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.AgencySearchOrder;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RelationHints;
 import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -103,14 +101,12 @@ class AgencyDelete {
                 this.commonAgencies = Collections.EMPTY_LIST;
             }
         } else {
-            builder.relationHints(new RelationHints(null) {
-                @Override
+            builder.relationHints(new RelationHintsOpenAgency(null) {
                 public List<Integer> provide(Integer key) throws Exception {
                     return Arrays.asList(key);
                 }
             });
-            builder.relationHints(new RelationHints() {
-                @Override
+            builder.relationHints(new RelationHintsOpenAgency(null) {
                 public boolean usesCommonAgency(int agencyId) throws RawRepoException {
                     return false;
                 }

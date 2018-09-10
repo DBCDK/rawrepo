@@ -17,19 +17,13 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RelationHintsOpenAgency extends RelationHints {
+public class RelationHintsOpenAgency {
     private final OpenAgencyServiceFromURL openAgencyService;
 
     public RelationHintsOpenAgency(OpenAgencyServiceFromURL openAgencyService) {
         this.openAgencyService = openAgencyService;
     }
 
-    public RelationHintsOpenAgency(OpenAgencyServiceFromURL openAgencyService, ExecutorService es) {
-        super(es);
-        this.openAgencyService = openAgencyService;
-    }
-
-    @Override
     public boolean usesCommonAgency(int agencyId) throws RawRepoException {
         try {
             return openAgencyService.libraryRules().isAllowed(agencyId, LibraryRuleHandler.Rule.USE_ENRICHMENTS);
@@ -42,21 +36,18 @@ public class RelationHintsOpenAgency extends RelationHints {
         return 870970 == agencyId || 870971 == agencyId;
     }
 
-    @Override
-    public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
+    public boolean usesCommonSchoolAgency(int agencyId) {
         return 300000 < agencyId && agencyId <= 399999;
     }
 
-    @Override
-    public List<Integer> provide(Integer agencyId) throws Exception {
+    public List<Integer> get(Integer agencyId) throws RawRepoException {
         if (usesCommonAgency(agencyId)) {
             return Arrays.asList(870970, 870971, 870979);
         }
         return Arrays.asList(agencyId);
     }
 
-    @Override
-    public List<Integer> getProviderOptions(int agencyId) throws RawRepoException {
+    public List<Integer> getAgencyPriority(int agencyId) throws RawRepoException {
         List<Integer> agencyPriorityList = new ArrayList<>();
         agencyPriorityList.add(agencyId); // Always use own agency first
 

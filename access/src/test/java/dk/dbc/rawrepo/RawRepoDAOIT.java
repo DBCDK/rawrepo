@@ -21,8 +21,6 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
-import dk.dbc.gracefulcache.CacheTimeoutException;
-import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -913,8 +911,7 @@ public class RawRepoDAOIT {
             super(null);
         }
 
-        @Override
-        public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
+        public List<Integer> get(int agencyId) {
             switch (agencyId) {
                 case 999999:
                     return Collections.singletonList(999999);
@@ -923,7 +920,6 @@ public class RawRepoDAOIT {
             }
         }
 
-        @Override
         public boolean usesCommonAgency(int agencyId) throws RawRepoException {
             switch (agencyId) {
                 case 999999:

@@ -169,11 +169,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>dk.dbc</groupId>
-            <artifactId>dbc-commons-graceful-cache</artifactId>
-            <version>1.3-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>dk.dbc.commoms.testutils</groupId>
             <artifactId>dbc-commons-testutil-postgres-connection</artifactId>
             <version>1.3-SNAPSHOT</version>
@@ -259,6 +254,11 @@
             <groupId>dk.dbc</groupId>
             <artifactId>stopwatch</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
         </dependency>
     </dependencies>
 </project>

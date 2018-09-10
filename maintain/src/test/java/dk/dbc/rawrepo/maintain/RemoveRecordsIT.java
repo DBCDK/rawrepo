@@ -23,19 +23,20 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoException;
-import java.io.IOException;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-import javax.xml.transform.TransformerException;
 import org.junit.Test;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import javax.sql.DataSource;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.sql.SQLException;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RemoveRecordsIT extends RawRepoTester {
@@ -119,7 +120,7 @@ public class RemoveRecordsIT extends RawRepoTester {
         DataSource dataSource = mock(DataSource.class);
         when(dataSource.getConnection()).thenReturn(pg.getConnection());
 
-        OpenAgencyServiceFromURL openAgency = OpenAgencyServiceFromURL.builder().build("http://openagency.addi.dk/2.33/");
+        OpenAgencyServiceFromURL openAgency = OpenAgencyServiceFromURL.builder().build("http://openagency.addi.dk/2.34/");
         return new RemoveRecords(dataSource, openAgency);
 
     }
