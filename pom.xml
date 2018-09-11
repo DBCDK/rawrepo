@@ -40,7 +40,6 @@
         <module>record-inspector</module>
         <module>record-load</module>
         <module>roll-back</module>
-        <module>solr-indexer</module>
         <module>docker</module> <!-- Disabled while switching to Pipeline Job.-->
         <!-- This needs to be last, otherwise all following tools are not a part of the package -->
         <module>debian</module>

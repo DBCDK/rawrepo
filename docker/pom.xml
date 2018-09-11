@@ -29,8 +29,6 @@
         <module>introspect</module>
         <module>content-service</module>
         <module>maintain</module>
-        <module>solr-indexer</module>
-        <module>solr</module>
         <module>postgres</module>
     </modules>
 
