@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo;
 
-import dk.dbc.gracefulcache.CacheTimeoutException;
-import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import org.hamcrest.core.IsCollectionContaining;
 import org.junit.Test;
@@ -578,7 +576,7 @@ class RawRepoMock {
         return this;
     }
 
-    RawRepoDAO build() throws RawRepoException, CacheTimeoutException, CacheValueException {
+    RawRepoDAO build() throws RawRepoException {
         return build(true);
     }
 
@@ -612,7 +610,7 @@ class RawRepoMock {
                 .collect(toSet());
     }
 
-    private RawRepoDAO build(boolean print) throws RawRepoException, CacheTimeoutException, CacheValueException {
+    private RawRepoDAO build(boolean print) throws RawRepoException {
         RawRepoDAO rawrepo = mock(RawRepoDAO.class);
         when(rawrepo.recordExists(anyString(), anyInt())).then(new Answer<Boolean>() {
             @Override
@@ -700,7 +698,7 @@ class RawRepoMock {
 
         List<Integer> defaultList = Arrays.asList(870970);
 
-        RelationHints relations = mock(RelationHints.class);
+        RelationHintsOpenAgency relations = mock(RelationHintsOpenAgency.class);
         rawrepo.relationHints = relations;
         when(relations.usesCommonAgency(anyInt())).then(new Answer<Boolean>() {
             @Override

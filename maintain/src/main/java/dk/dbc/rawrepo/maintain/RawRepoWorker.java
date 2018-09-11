@@ -72,7 +72,7 @@ public class RawRepoWorker implements AutoCloseable {
         try {
             synchronized (this) {
                 if (dao == null) {
-                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(openAgency, executorService)).build();
+                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(openAgency)).build();
                 }
                 return dao;
             }

@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo;
 
-import dk.dbc.gracefulcache.CacheException;
 import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
@@ -48,7 +47,7 @@ public abstract class RawRepoDAO {
 
     private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAO.class);
 
-    RelationHints relationHints;
+    RelationHintsOpenAgency relationHints;
 
     /**
      * Builder Pattern from RawRepoDAO
@@ -56,7 +55,7 @@ public abstract class RawRepoDAO {
     public static class Builder {
 
         private final Connection connection;
-        private RelationHints builderRelationHints;
+        private RelationHintsOpenAgency builderRelationHints;
 
         private Builder(Connection connection) {
             this.connection = connection;
@@ -70,7 +69,7 @@ public abstract class RawRepoDAO {
          * @param newRelationHints URL to openAgency service
          * @return self
          */
-        public Builder relationHints(RelationHints newRelationHints) {
+        public Builder relationHints(RelationHintsOpenAgency newRelationHints) {
             if (this.builderRelationHints != null) {
                 throw new IllegalStateException("Cannot set relationHints again");
             }
@@ -91,7 +90,7 @@ public abstract class RawRepoDAO {
                 dao.validateConnection();
 
                 if (builderRelationHints == null) {
-                    builderRelationHints = new RelationHints();
+                    builderRelationHints = new RelationHintsOpenAgency(null);
                 }
                 dao.relationHints = builderRelationHints;
 
@@ -254,7 +253,7 @@ public abstract class RawRepoDAO {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         logger.info("agencyFor record {}:{} has record for the following agencies: {}", bibliographicRecordId, originalAgencyId, allAgenciesWithRecord);
 
-        List<Integer> agencyPriorityList = relationHints.getProviderOptions(originalAgencyId);
+        List<Integer> agencyPriorityList = relationHints.getAgencyPriority(originalAgencyId);
 
         for (Integer agencyId : agencyPriorityList) {
             if (!allAgenciesWithRecord.contains(agencyId)) {
@@ -280,23 +279,14 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException if no agency could be found for record
      */
     public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
-        try {
-            if (!relationHints.usesCommonAgency(originalAgencyId)) {
-                throw new RawRepoException("agency " + originalAgencyId + " does not use enrichments (Common agency)");
-            } else {
-                for (Integer agencyId : relationHints.get(originalAgencyId)) {
-                    if (recordExists(bibliographicRecordId, agencyId)) {
-                        return agencyId;
-                    }
+        if (!relationHints.usesCommonAgency(originalAgencyId)) {
+            throw new RawRepoException("agency " + originalAgencyId + " does not use enrichments (Common agency)");
+        } else {
+            for (Integer agencyId : relationHints.get(originalAgencyId)) {
+                if (recordExists(bibliographicRecordId, agencyId)) {
+                    return agencyId;
                 }
             }
-        } catch (CacheException ex) {
-            logger.error("Could not access cache: " + ex.getMessage());
-            Throwable cause = ex.getCause();
-            if (cause != null) {
-                logger.error("Cause: " + cause.getMessage());
-            }
-            throw new RawRepoException("Error accessing relation hints", ex);
         }
         throw new RawRepoExceptionRecordNotFound("Could not find (sibling) relation agency for " + bibliographicRecordId + " from " + originalAgencyId);
     }
@@ -310,27 +300,18 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException if no agency could be found for record
      */
     public int findParentRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
-        try {
-            if (relationHints.usesCommonAgency(originalAgencyId)) {
-                List<Integer> list = relationHints.get(originalAgencyId);
-                if (!list.isEmpty()) {
-                    for (Integer agencyId : list) {
-                        if (recordExists(bibliographicRecordId, agencyId)) {
-                            return agencyId;
-                        }
+        if (relationHints.usesCommonAgency(originalAgencyId)) {
+            List<Integer> list = relationHints.get(originalAgencyId);
+            if (!list.isEmpty()) {
+                for (Integer agencyId : list) {
+                    if (recordExists(bibliographicRecordId, agencyId)) {
+                        return agencyId;
                     }
                 }
             }
-            if (recordExists(bibliographicRecordId, originalAgencyId)) {
-                return originalAgencyId;
-            }
-        } catch (CacheException ex) {
-            logger.error("Could not access cache: " + ex.getMessage());
-            Throwable cause = ex.getCause();
-            if (cause != null) {
-                logger.error("Cause: " + cause.getMessage());
-            }
-            throw new RawRepoException("Error accessing relation hints", ex);
+        }
+        if (recordExists(bibliographicRecordId, originalAgencyId)) {
+            return originalAgencyId;
         }
         throw new RawRepoExceptionRecordNotFound("Could not find (parent) relation agency for " + bibliographicRecordId + " from " + originalAgencyId);
     }

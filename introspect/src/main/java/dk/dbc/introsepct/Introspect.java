@@ -24,7 +24,12 @@ import dk.dbc.common.records.MarcConverter;
 import dk.dbc.common.records.MarcRecord;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RecordMetaDataHistory;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffWriter;
 import org.slf4j.Logger;
@@ -45,10 +50,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @Stateless
@@ -68,8 +77,8 @@ public class Introspect {
     private static final String KEY_SIBLINGS_OUT = "siblings-out";
     private static final String KEY_PARENTS = "parents";
     private static final String KEY_CHILDREN = "children";
-    
-    @Resource( name="env/InstanceName", lookup = "java:app/env/InstanceName")
+
+    @Resource(name = "env/InstanceName", lookup = "java:app/env/InstanceName")
     String InstanceName = "";
 
     @Inject
@@ -86,8 +95,8 @@ public class Introspect {
     @GET
     @Path("dbs")
     public Response getDBs() {
-        if( InstanceName.equalsIgnoreCase("${ENV=INSTANCE_NAME}") ) {
-            InstanceName="Missing InstanceName Environment";
+        if (InstanceName.equalsIgnoreCase("${ENV=INSTANCE_NAME}")) {
+            InstanceName = "Missing InstanceName Environment";
         }
 
         ArrayList<String> response = new ArrayList<>();
@@ -122,35 +131,35 @@ public class Introspect {
         return openagency;
     }
 
-    private Record recordMergedFetcher( Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
+    private Record recordMergedFetcher(Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
         log.trace("Entering recordMergedFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(getOpenagency()) {
                 @Override
-                public List<Integer> provide(Integer key) throws Exception {
+                public List<Integer> get(Integer key) {
                     return Arrays.asList(key);
                 }
             }).build();
             return record = dao.fetchMergedRecord(bibliographicRecordId, agencyId, merger.getMerger(), true);
         } finally {
-            log.trace("Exit recordMergedFetcher : " + record );
+            log.trace("Exit recordMergedFetcher : " + record);
         }
     }
 
-    private Record recordFetcher ( Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
+    private Record recordFetcher(Integer agencyId, String bibliographicRecordId) throws XPathExpressionException, SAXException, IOException, RawRepoException, SQLException, MarcXMergerException {
         log.trace("Entering recordFetcher");
         Record record = null;
         try (Connection connection = globalDataSource.getConnection()) {
             RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(getOpenagency()) {
                 @Override
-                public List<Integer> provide(Integer key) throws Exception {
+                public List<Integer> get(Integer key) {
                     return Arrays.asList(key);
                 }
             }).build();
             return record = dao.fetchRecord(bibliographicRecordId, agencyId);
         } finally {
-            log.trace("Exit recordFetcher : " + record );
+            log.trace("Exit recordFetcher : " + record);
         }
     }
 
@@ -162,8 +171,8 @@ public class Introspect {
                                         @PathParam("id") String bibliographicRecordId) {
         log.info("Enter -> convertToLineFormat");
         try {
-            Record record = recordFetcher ( agencyId, bibliographicRecordId );
-            MarcRecord mcr = MarcConverter.convertFromMarcXChange(new String(record.getContent(),  "UTF-8"));
+            Record record = recordFetcher(agencyId, bibliographicRecordId);
+            MarcRecord mcr = MarcConverter.convertFromMarcXChange(new String(record.getContent(), "UTF-8"));
             return ok(Arrays.asList(mcr.toString()));
         } catch (Exception ex) {
             log.error("Caught", ex);
@@ -180,7 +189,7 @@ public class Introspect {
                                     @PathParam("agency") Integer agencyId,
                                     @PathParam("id") String bibliographicRecordId) {
         try {
-            Record record = recordMergedFetcher (agencyId, bibliographicRecordId );
+            Record record = recordMergedFetcher(agencyId, bibliographicRecordId);
             ArrayList<Object> response = xmlDiff(record, record);
             return ok(response);
         } catch (Exception ex) {

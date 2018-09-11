@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo;
 
-import dk.dbc.gracefulcache.CacheTimeoutException;
-import dk.dbc.gracefulcache.CacheValueException;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -130,7 +128,7 @@ public class RawRepoDAOTest {
     @Test
     public void parentRelationAgency() throws Exception {
         RawRepoDAO mock = mock(RawRepoDAO.class);
-        mock.relationHints = mock(RelationHints.class);
+        mock.relationHints = mock(RelationHintsOpenAgency.class);
         doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
@@ -162,7 +160,7 @@ public class RawRepoDAOTest {
     @Test
     public void siblingRelationAgency() throws Exception {
         RawRepoDAO mock = mock(RawRepoDAO.class);
-        mock.relationHints = mock(RelationHints.class);
+        mock.relationHints = mock(RelationHintsOpenAgency.class);
         doCallRealMethod().when(mock).findSiblingRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
@@ -461,13 +459,13 @@ public class RawRepoDAOTest {
         "H:2,H:870970",
         "H:870970,F:870970"};
 
-    private static class MyRelationHints extends RelationHints {
+    private static class MyRelationHints extends RelationHintsOpenAgency {
 
         MyRelationHints() {
+            super(null);
         }
 
-        @Override
-        public List<Integer> get(int agencyId) throws CacheTimeoutException, CacheValueException {
+        public List<Integer> get(int agencyId)  {
             switch (agencyId) {
                 case 999999:
                     return Collections.singletonList(999999);
@@ -476,7 +474,6 @@ public class RawRepoDAOTest {
             }
         }
 
-        @Override
         public boolean usesCommonAgency(int agencyId) throws RawRepoException {
             switch (agencyId) {
                 case 999999:
@@ -487,12 +484,10 @@ public class RawRepoDAOTest {
             }
         }
 
-        @Override
-        public boolean usesCommonSchoolAgency(int agencyId) throws RawRepoException {
+        public boolean usesCommonSchoolAgency(int agencyId) {
             return false;
         }
 
-        @Override
         public List<Integer> getProviderOptions(int agencyId) throws RawRepoException {
             List<Integer> result = new ArrayList<>();
 

@@ -106,13 +106,13 @@ public class RelationHintsOpenAgencyTest {
         agencies = relationHints.get(123456);
         assertEquals(Arrays.asList(123456), agencies);
 
-        agencies = relationHints.getProviderOptions(123456);
+        agencies = relationHints.getAgencyPriority(123456);
         assertEquals(Arrays.asList(123456), agencies);
 
-        agencies = relationHints.getProviderOptions(861620);
+        agencies = relationHints.getAgencyPriority(861620);
         assertEquals(Arrays.asList(861620, 870970, 870971, 870979), agencies);
 
-        agencies = relationHints.getProviderOptions(870971);
+        agencies = relationHints.getAgencyPriority(870971);
         assertEquals(Arrays.asList(870971, 870979), agencies);
 
     }
