@@ -64,7 +64,7 @@ echo "Starting container"
 container_id=`docker run -it ${detached} -p ${port}:8080 \
         -e RAWREPO_URL="${rr_user} ${rr_user}:${rr_pass}@${rr_conn}" \
         -e HOLDINGS_ITEMS_URL="${hi_user} ${hi_user}:${hi_pass}@${hi_conn}" \
-		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.33/" \
+		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.34/" \
 		-e INSTANCE_NAME="${USER}_dev_basismig" \
 		-e ADD_JVM_ARGS="-Xms2g" \
 		 ${docker_image}:${version}`

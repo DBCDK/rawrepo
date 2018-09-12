@@ -58,7 +58,7 @@ rr_pass=`egrep rawrepo.jdbc.conn.passwd ${HOME}/.ocb-tools/testrun.properties | 
 echo "Starting container"
 container_id=`docker run -it ${detached} -p ${port}:8080 \
 		-e RAWREPO_URL0="${rr_user} ${rr_user}:${rr_pass}@${rr_conn}" \
-		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.33/" \
+		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.34/" \
 		 ${docker_image}:${version}`
 cc=$?
 if [ ${cc} -ne 0 ]

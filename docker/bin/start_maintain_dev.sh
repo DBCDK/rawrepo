@@ -55,7 +55,7 @@ container_id=`docker run -it ${detached} -p ${port}:8080 \
 		-e RAWREPO_URL="${rr_user}:${rr_pass}@${rr_conn}" \
 		-e LOG_AS_JSON=true \
     	-e NAME=ocb-test \
-	    -e OPENAGENCY_URL=http://openagency.addi.dk/test_2.33/ \
+	    -e OPENAGENCY_URL=http://openagency.addi.dk/test_2.34/ \
 		 ${docker_image}:${version}`
 cc=$?
 if [ ${cc} -ne 0 ]
