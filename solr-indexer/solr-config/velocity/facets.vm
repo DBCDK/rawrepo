@@ -1,7 +1,0 @@
-#**
- *  Overall Facet display block
- *  Invokes the 4 facet and 1 cluster template
- *#
-
-#parse('facet_fields.vm')
-##parse('cluster.vm')
