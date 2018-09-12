@@ -23,6 +23,9 @@ package dk.dbc.rawrepo;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.openagency.client.LibraryRuleHandler;
+import dk.dbc.openagency.client.OpenAgencyException;
+import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,12 +35,28 @@ import org.mockito.stubbing.Answer;
 
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -46,34 +65,45 @@ public class RawRepoDAOTest {
     public RawRepoDAOTest() {
     }
 
+    private OpenAgencyServiceFromURL getOpenAgencyService() throws OpenAgencyException {
+        LibraryRuleHandler libraryRuleHandlerMock = mock(LibraryRuleHandler.class);
+        when(libraryRuleHandlerMock.isAllowed(eq(870970), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(libraryRuleHandlerMock.isAllowed(eq(1), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(libraryRuleHandlerMock.isAllowed(eq(2), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(false);
+        OpenAgencyServiceFromURL openAgencyServiceFromURLMock = mock(OpenAgencyServiceFromURL.class);
+        when(openAgencyServiceFromURLMock.libraryRules()).thenReturn(libraryRuleHandlerMock);
+
+        return openAgencyServiceFromURLMock;
+    }
+
     @Test
-    public void testEnrichmentTrail() throws RawRepoException, MarcXMergerException {
+    public void testEnrichmentTrail() throws Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            access.relationHints =  new MyRelationHints();
+            access.relationHints = new RelationHintsOpenAgency(getOpenAgencyService());
             doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             fillMockRelations(access,
-                              "B:870970", // HEAD
-                              "C:870970", // SECTION
-                              "D:870970", "D:1", "D:2", // BIND
-                              "E:870970", "E:1", "E:2", // BIND
-                              "F:870970", // SECTION
-                              "G:870970", "G:1", "G:2", // BIND
-                              "H:870970", "H:1", "H:2");// BIND
+                    "B:870970", // HEAD
+                    "C:870970", // SECTION
+                    "D:870970", "D:1", "D:2", // BIND
+                    "E:870970", "E:1", "E:2", // BIND
+                    "F:870970", // SECTION
+                    "G:870970", "G:1", "G:2", // BIND
+                    "H:870970", "H:1", "H:2");// BIND
             MarcXMerger marcXMerger = new MarcXMerger() {
-                    @Override
-                    public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
-                        return common;
-                    }
+                @Override
+                public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
+                    return common;
+                }
 
-                    @Override
-                    public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
-                        return true;
-                    }
+                @Override
+                public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
+                    return true;
+                }
 
-                };
+            };
 
             Assert.assertEquals("870970", access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail());
             Assert.assertEquals("870970,1", access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail());
@@ -89,30 +119,30 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
 
-            access.relationHints = new MyRelationHints();
+            access.relationHints = new RelationHintsOpenAgency(getOpenAgencyService());
 
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), anyObject());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).findParentRelationAgency(anyString(), anyInt());
             fillMockRelations(access,
-                              "A:870970", "A:1", "A:2",
-                              "B:870970", // HEAD
-                              "C:870970", "C:1", // SECTION
-                              "D:870970", // BIND
-                              "E:870970", "E:2", // BIND
-                              "F:870970", "F:2", // SECTION
-                              "G:870970", "G:1", // BIND
-                              "H:870970");// BIND
+                    "A:870970", "A:1", "A:2",
+                    "B:870970", // HEAD
+                    "C:870970", "C:1", // SECTION
+                    "D:870970", // BIND
+                    "E:870970", "E:2", // BIND
+                    "F:870970", "F:2", // SECTION
+                    "G:870970", "G:1", // BIND
+                    "H:870970");// BIND
             System.out.println("access = " + access);
             MarcXMerger merger = new MarcXMerger() {
 
-                    @Override
-                    public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
-                        return local;
-                    }
+                @Override
+                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                    return local;
+                }
 
-                };
+            };
             recordCollectionIs(access.fetchRecordCollection("A", 870970, merger), "A:870970"); // ENTITY
             recordCollectionIs(access.fetchRecordCollection("A", 1, merger), "A:1"); // ENTITY LOCAL
             recordCollectionIs(access.fetchRecordCollection("D", 870970, merger), "D:870970", "C:870970", "B:870970"); // BIND
@@ -191,6 +221,7 @@ public class RawRepoDAOTest {
     // |  _  |  __/ | |_) |  __/ |    |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
     // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
     //              |_|
+
     /**
      * Fill a mocked dao with relations
      *
@@ -267,7 +298,7 @@ public class RawRepoDAOTest {
             @Override
             public Record answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                String content = ( arguments[0] ) + ":" + ( arguments[1] );
+                String content = (arguments[0]) + ":" + (arguments[1]);
                 System.out.println("content = " + content);
                 Record recordFromContent = recordFromContent(content);
                 System.out.println("recordFromContent = " + recordFromContent);
@@ -288,7 +319,7 @@ public class RawRepoDAOTest {
             boolean enriched = false;
             String mimeType = agencyId == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
             byte[] c = content.getBytes();
-            String trackingId = "Track-" + ( ++trackingIdCounter );
+            String trackingId = "Track-" + (++trackingIdCounter);
 
             @Override
             public byte[] getContent() {
@@ -435,78 +466,28 @@ public class RawRepoDAOTest {
      * (b)   G
      * (b)   H
      */
-    private static final String[] RELATIONS = new String[] {
-        "A:1,A:870970",
-        "A:2,A:870970",
-        "B:1,B:870970",
-        "B:2,B:870970",
-        "C:1,C:870970",
-        "C:2,C:870970",
-        "C:870970,B:870970",
-        "D:1,D:870970",
-        "D:2,D:870970",
-        "D:870970,C:870970",
-        "E:1,E:870970",
-        "E:2,E:870970",
-        "E:870970,C:870970",
-        "F:1,F:870970",
-        "F:2,F:870970",
-        "F:870970,B:870970",
-        "G:1,G:870970",
-        "G:2,G:870970",
-        "G:870970,F:870970",
-        "H:1,H:870970",
-        "H:2,H:870970",
-        "H:870970,F:870970"};
-
-    private static class MyRelationHints extends RelationHintsOpenAgency {
-
-        MyRelationHints() {
-            super(null);
-        }
-
-        public List<Integer> get(int agencyId)  {
-            switch (agencyId) {
-                case 999999:
-                    return Collections.singletonList(999999);
-                default:
-                    return Arrays.asList(870970, 870971, 870979);
-            }
-        }
-
-        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-            switch (agencyId) {
-                case 999999:
-                case 2:
-                    return false;
-                default:
-                    return true;
-            }
-        }
-
-        public boolean usesCommonSchoolAgency(int agencyId) {
-            return false;
-        }
-
-        public List<Integer> getProviderOptions(int agencyId) throws RawRepoException {
-            List<Integer> result = new ArrayList<>();
-
-            switch (agencyId) {
-                case 2:
-                    result.add(2);
-                    break;
-                case 999999:
-                    result.add(999999);
-                    break;
-                default:
-                    result.add(agencyId);
-                    result.add(870970);
-                    result.add(870979);
-            }
-
-            return result;
-        }
-
-    }
+    private static final String[] RELATIONS = new String[]{
+            "A:1,A:870970",
+            "A:2,A:870970",
+            "B:1,B:870970",
+            "B:2,B:870970",
+            "C:1,C:870970",
+            "C:2,C:870970",
+            "C:870970,B:870970",
+            "D:1,D:870970",
+            "D:2,D:870970",
+            "D:870970,C:870970",
+            "E:1,E:870970",
+            "E:2,E:870970",
+            "E:870970,C:870970",
+            "F:1,F:870970",
+            "F:2,F:870970",
+            "F:870970,B:870970",
+            "G:1,G:870970",
+            "G:2,G:870970",
+            "G:870970,F:870970",
+            "H:1,H:870970",
+            "H:2,H:870970",
+            "H:870970,F:870970"};
 
 }
