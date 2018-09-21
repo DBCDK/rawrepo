@@ -358,7 +358,7 @@ CREATE TABLE queue (-- V2
   agencyid              NUMERIC(6)               NOT NULL,
   worker                VARCHAR(32)              NOT NULL, -- name of designated worker
   queued                TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timeofday() :: TIMESTAMP, -- timestamp for when it has been put into the queue
-  priority              NUMERIC(4)               NOT NULL DEFAULT 1000,
+  priority              NUMERIC(4)               NOT NULL DEFAULT 500,
   CONSTRAINT queue_fk_worker FOREIGN KEY (worker) REFERENCES queueworkers (worker)
   -- NO primary key
   -- if it's claimed by worker
@@ -372,7 +372,7 @@ CREATE TABLE jobdiag (-- V17
   worker                VARCHAR(32)              NOT NULL, -- name of designated worker
   error                 TEXT                     NOT NULL, -- errormessage
   queued                TIMESTAMP WITH TIME ZONE NOT NULL, -- timestamp for when it has been put into the queue
-  priority              NUMERIC(4)               NOT NULL DEFAULT 1000
+  priority              NUMERIC(4)               NOT NULL DEFAULT 500
   -- NO primary key
   -- if it's claimed by worker
   -- a new job should be reinserted
@@ -488,7 +488,7 @@ CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64), agencyid_
   RETURNS SETOF VARCHAR(32) AS $$ -- V3, V8, V22
 BEGIN
   SELECT *
-  FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
+  FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 500);
 END
 $$
 LANGUAGE plpgsql;
@@ -504,7 +504,7 @@ CREATE OR REPLACE FUNCTION enqueue(bibliographicrecordid_ VARCHAR(64),
 BEGIN
   RETURN QUERY
   SELECT *
-  FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 1000);
+  FROM enqueue(bibliographicrecordid_, agencyid_, provider_, changed_, leaf_, 500);
 END
 $$
 LANGUAGE plpgsql;
@@ -530,7 +530,7 @@ BEGIN
                  provider_ [elements_current],
                  changed_ [elements_current],
                  leaf_ [elements_current],
-                 1000) AS e -- When bulk enqueuing we always want to use default priority
+                 500) AS e -- When bulk enqueuing we always want to use default priority
     LOOP
       bibliographicrecordid = bibliographicrecordid_ [elements_current];
       agencyid = agencyid_ [elements_current];
