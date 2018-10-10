@@ -34,10 +34,6 @@ INSERT INTO version VALUES (21);
 INSERT INTO version VALUES (22);
 INSERT INTO version VALUES (23);
 
-CREATE TABLE configurations (-- V23
-  key VARCHAR NOT NULL,
-  value VARCHAR NOT NULL DEFAULT ''
-);
 
 -- records:
 -- Primary objective: bibliographicrecordid, agencyid => content(blob)

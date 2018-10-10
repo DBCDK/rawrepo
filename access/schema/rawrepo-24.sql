@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP
 --
 -- dbc-rawrepo-access
 -- Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
@@ -32,6 +33,7 @@ INSERT INTO version VALUES (19);
 INSERT INTO version VALUES (21);
 INSERT INTO version VALUES (22);
 INSERT INTO version VALUES (23);
+INSERT INTO version VALUES (24);
 
 CREATE TABLE configurations (-- V23
   key VARCHAR PRIMARY KEY NOT NULL,
