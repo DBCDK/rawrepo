@@ -9,7 +9,7 @@ DO
 $$
 DECLARE
   currentversion INTEGER = 24;
-  brokenversion  INTEGER = 20;
+  brokenversion  INTEGER = 23;
   OLDversion     INTEGER;
 BEGIN
   SELECT MAX(version)
@@ -34,8 +34,18 @@ CREATE TABLE configurations (-- V23
   value VARCHAR NOT NULL DEFAULT ''
 );
 
-ALTER TABLE records
-  ADD COLUMN contentcache TEXT;
+CREATE TABLE records_cache (-- V2
+  bibliographicrecordid VARCHAR(64)              NOT NULL,
+  agencyid              NUMERIC(6)               NOT NULL,
+  cachekey              TEXT                     NOT NULL,
+  deleted               BOOLEAN                  NOT NULL DEFAULT FALSE, -- V3
+  mimetype              VARCHAR(128)             NOT NULL DEFAULT 'text/marcxchange', -- V3
+  content               TEXT, -- base64 encoded
+  created               TIMESTAMP WITH TIME ZONE NOT NULL,
+  modified              TIMESTAMP WITH TIME ZONE NOT NULL,
+  trackingId            VARCHAR(256)             NOT NULL DEFAULT '',
+  CONSTRAINT records_cache_pk PRIMARY KEY (bibliographicrecordid, agencyid, cachekey)
+);
 
 ALTER TABLE ONLY queue ALTER COLUMN priority SET DEFAULT 500;
 ALTER TABLE ONLY jobdiag ALTER COLUMN priority SET DEFAULT 500;

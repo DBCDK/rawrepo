@@ -131,6 +131,19 @@ public abstract class RawRepoDAO {
     public abstract Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException;
 
     /**
+     * Fetches a record from the cache table if the record is found.
+     *
+     * In addition to the bibliographicRecordId and agencyId a cacheKey must be given as well.
+     *
+     * @param bibliographicRecordId String with record id
+     * @param agencyId library number
+     * @param cacheKey key defining the origin of the saved record
+     * @return fetched record or null
+     * @throws RawRepoException done at failure
+     */
+    public abstract Record fetchRecordCache(String bibliographicRecordId, int agencyId, String cacheKey) throws RawRepoException;
+
+    /**
      * Find the mimetype of a record
      *
      * @param bibliographicRecordId record id to be examined
@@ -196,16 +209,58 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws RawRepoException, MarcXMergerException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
-        fetchRecordCollection(collection, bibliographicRecordId, agencyId, merger, false);
-
-        for (String key : collection.keySet()) {
-            expandRecord(collection.get(key), false);
-        }
+        fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, includeAutRecords, keepAutFields);
 
         return collection;
+    }
+
+    private String generateExpandedRecordCacheKey(MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("EXPAND_");
+        sb.append(merger.getName().toUpperCase());
+        sb.append(Boolean.toString(includeAutRecords)).append("_");
+        sb.append(Boolean.toString(keepAutFields));
+
+        return sb.toString();
+    }
+
+    private void fetchRecordCollectionExpanded(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws
+            RawRepoException, MarcXMergerException {
+        if (!collection.containsKey(bibliographicRecordId)) {
+            final String cacheKey = generateExpandedRecordCacheKey(merger, includeAutRecords, keepAutFields);
+            Record record = fetchRecordCache(bibliographicRecordId, agencyId, cacheKey);
+            if (record == null) {
+                record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
+
+                expandRecord(record, keepAutFields);
+
+                saveRecordCache(record, cacheKey);
+            }
+
+            collection.put(bibliographicRecordId, record);
+
+            int mostCommonAgency = findParentRelationAgency(bibliographicRecordId, agencyId);
+            Set<RecordId> parents = getRelationsParents(new RecordId(bibliographicRecordId, mostCommonAgency));
+            for (RecordId parent : parents) {
+                // If this parent is an authority record and includeAut is false then skip parent
+                if (870979 == parent.agencyId && !includeAutRecords) {
+                    continue;
+                }
+                fetchRecordCollectionExpanded(collection, parent.getBibliographicRecordId(), agencyId, merger, includeAutRecords, keepAutFields);
+            }
+        }
+    }
+
+    private String generateMergeRecordCacheKey(MarcXMerger merger, boolean includeAutRecords) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("MERGE_");
+        sb.append(merger.getName().toUpperCase());
+        sb.append(Boolean.toString(includeAutRecords));
+
+        return sb.toString();
     }
 
     /**
@@ -224,7 +279,13 @@ public abstract class RawRepoDAO {
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAut) throws
             RawRepoException, MarcXMergerException {
         if (!collection.containsKey(bibliographicRecordId)) {
-            Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
+            final String cacheKey = generateMergeRecordCacheKey(merger, includeAut);
+            Record record = fetchRecordCache(bibliographicRecordId, agencyId, cacheKey);
+            if (record == null) {
+                record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
+
+                saveRecordCache(record, cacheKey);
+            }
             collection.put(bibliographicRecordId, record);
 
             int mostCommonAgency = findParentRelationAgency(bibliographicRecordId, agencyId);
@@ -473,6 +534,15 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException done at failure
      */
     public abstract void saveRecord(Record record) throws RawRepoException;
+
+    /**
+     * Save a record to the cache table
+     *
+     * @param record   the record to cache
+     * @param cacheKey the key which defines the parameter of the value saves
+     * @throws RawRepoException done at failure
+     */
+    public abstract void saveRecordCache(Record record, String cacheKey) throws RawRepoException;
 
     /**
      * Get a collection of my "dependencies".
