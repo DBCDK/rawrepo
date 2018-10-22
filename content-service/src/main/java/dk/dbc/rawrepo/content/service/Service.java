@@ -322,7 +322,7 @@ public abstract class Service {
             String overwrite = "004;005;013;014;017;035;036;240;243;247;300;008 009 038 039 100 110 239 245 652 654";
 
             FieldRules customFieldRules = new FieldRules(immutable, overwrite, FieldRules.INVALID_DEFAULT, FieldRules.VALID_REGEX_DANMARC2);
-            MarcXMerger merger = new MarcXMerger(customFieldRules);
+            MarcXMerger merger = new MarcXMerger(customFieldRules, "CONTENT_SERVICE");
 
             boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, merger, allowDeleted);
