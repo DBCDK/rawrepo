@@ -445,6 +445,14 @@ public abstract class RawRepoDAO {
         }
     }
 
+    public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean keepAutFields)
+            throws RawRepoException, MarcXMergerException {
+        Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
+
+        expandRecord(record, keepAutFields);
+
+        return record;
+    }
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
             throws RawRepoException, MarcXMergerException {
