@@ -199,12 +199,12 @@ public abstract class RawRepoDAO {
 
     /**
      * Get a collection of all the records related to the input record
-     * - All applicable records are expanded with aut data
-     * - Aut records are not included in the collection
      *
      * @param bibliographicRecordId String with record id
      * @param agencyId              library number
      * @param merger                marc merger function
+     * @param includeAutRecords     indicates if authority record should be included in the collection
+     * @param keepAutFields         indicates if the *5 and *6 subfields should remain after authority expansion
      * @return a collection of Record
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
@@ -217,10 +217,30 @@ public abstract class RawRepoDAO {
         return collection;
     }
 
+    /**
+     * Get a collection of all the records related to the input record
+     * - All applicable records are expanded with aut data
+     * - Aut records are not included in the collection
+     *
+     * @param bibliographicRecordId String with record id
+     * @param agencyId              library number
+     * @param merger                marc merger function
+     * @return a collection of Record
+     * @throws RawRepoException     done at failure
+     * @throws MarcXMergerException done at failure
+     */
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+        logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
+        HashMap<String, Record> collection = new HashMap<>();
+        fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, false, false);
+
+        return collection;
+    }
+
     private String generateExpandedRecordCacheKey(MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) {
         StringBuilder sb = new StringBuilder();
         sb.append("EXPAND_");
-        sb.append(merger.getName().toUpperCase());
+        sb.append(merger.getName().toUpperCase()).append("_");
         sb.append(Boolean.toString(includeAutRecords)).append("_");
         sb.append(Boolean.toString(keepAutFields));
 
@@ -257,7 +277,7 @@ public abstract class RawRepoDAO {
     private String generateMergeRecordCacheKey(MarcXMerger merger, boolean includeAutRecords) {
         StringBuilder sb = new StringBuilder();
         sb.append("MERGE_");
-        sb.append(merger.getName().toUpperCase());
+        sb.append(merger.getName().toUpperCase()).append("_");
         sb.append(Boolean.toString(includeAutRecords));
 
         return sb.toString();
