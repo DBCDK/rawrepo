@@ -548,7 +548,7 @@ BEGIN
                  provider_ [elements_current],
                  changed_ [elements_current],
                  leaf_ [elements_current],
-                 500) AS e -- When bulk enqueuing we always want to use default priority
+                 1000) AS e
     LOOP
       bibliographicrecordid = bibliographicrecordid_ [elements_current];
       agencyid = agencyid_ [elements_current];
