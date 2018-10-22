@@ -37,6 +37,7 @@ pipeline {
                     findbugs canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', pattern: '', unHealthy: ''
                     archiveArtifacts 'access/schema/*.sql, access/schema/*.md5, **/target/*.jar, **/target/*.war, **/target/*.zip, **/target/*.md5, docs/RR-documentation.pdf'
                     warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'Java Compiler (javac)']], defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
+                    sh "mvn -pl access deploy"
                 }
             }
         }
@@ -84,7 +85,6 @@ pipeline {
             }
             steps {
                 sh "mvn -pl debian install"
-                sh "mvn -pl access deploy"
             }
         }
     }
