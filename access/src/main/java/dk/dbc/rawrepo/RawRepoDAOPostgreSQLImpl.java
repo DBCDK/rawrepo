@@ -414,9 +414,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error saving record", ex);
         }
-        if (record instanceof RecordImpl) {
-            ((RecordImpl) record).original = false;
-        }
     }
 
     @Override
