@@ -59,6 +59,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String UPDATE_RECORD_CACHE = "UPDATE records_cache SET deleted=?, mimetype=?, content=?, modified=?, trackingId=? WHERE bibliographicrecordid=? AND agencyid=? AND cachekey=?";
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String DELETE_RECORD_CACHE = "DELETE FROM records_cache WHERE bibliographicrecordid=? AND agencyid=?";
 
     private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?" +
             " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
@@ -711,11 +712,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                         logger.info("Queued: worker = {}; job = {}; skipped - already on queue", resultSet.getString(1), job);
                     }
                 }
-
             }
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
+        }
+        try (PreparedStatement stmt = connection.prepareStatement(DELETE_RECORD_CACHE)) {
+            stmt.setString(1, job.getBibliographicRecordId());
+            stmt.setInt(2, job.getAgencyId());
+            stmt.execute();
+        } catch (SQLException ex) {
+            logger.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error deleting cache", ex);
         }
     }
 
