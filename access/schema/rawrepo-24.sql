@@ -32,6 +32,7 @@ INSERT INTO version VALUES (18);
 INSERT INTO version VALUES (19);
 INSERT INTO version VALUES (21);
 INSERT INTO version VALUES (22);
+INSERT INTO version VALUES (23);
 INSERT INTO version VALUES (24);
 
 CREATE TABLE configurations (-- V23

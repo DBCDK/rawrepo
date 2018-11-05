@@ -9,7 +9,7 @@ DO
 $$
 DECLARE
   currentversion INTEGER = 24;
-  brokenversion  INTEGER = 23;
+  brokenversion  INTEGER = 20;
   OLDversion     INTEGER;
 BEGIN
   SELECT MAX(version)
