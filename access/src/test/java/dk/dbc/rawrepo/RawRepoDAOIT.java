@@ -658,6 +658,26 @@ public class RawRepoDAOIT {
     }
 
     @Test
+    public void testMergeCache() throws Exception {
+        setupData(100000, "A:870970", "A:191919");
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+
+        Record record1 = dao.fetchMergedRecord("A", 191919, getMarcXMerger(), false);
+        record1.setContent("HELLO".getBytes());
+        record1.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
+        dao.saveRecord(record1);
+        connection.commit();
+        connection.setAutoCommit(false);
+
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM records_cache where bibliographicrecordid=? and agencyid=? and cachekey=?");
+        stmt.setString(1,"1 234 567 8");
+        stmt.setInt(2, 123456);
+        stmt.setString(3, "MERGED_DEFAULT_FALSE");
+        ResultSet resultSet = stmt.executeQuery();
+    }
+
+    @Test
     public void testGetAllAgencies() throws Exception {
         setupData(100000, "A:870970,101-deleted,102", "B:870970-deleted,200");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -696,7 +716,7 @@ public class RawRepoDAOIT {
 // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 //              |_|
     private void resetDatabase() throws SQLException {
-        postgres.clearTables("relations", "records", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
+        postgres.clearTables("relations", "records", "records_cache", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
 
         PreparedStatement stmt = connection.prepareStatement("INSERT INTO queueworkers(worker) VALUES(?)");
         stmt.setString(1, "changed");

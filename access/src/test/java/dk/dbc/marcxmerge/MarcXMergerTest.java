@@ -125,14 +125,14 @@ public class MarcXMergerTest {
         byte[] local = resource.get(base + "/local");
         byte[] result = resource.get(base + "/result");
 
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
         byte[] merge = marcxMerger.merge(common, local, isFinal);
         marcXCompare.compare(result, merge);
     }
 
     @Test
     public void testCanMerge() throws MarcXMergerException {
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
 
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), true);
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), true);
@@ -144,7 +144,7 @@ public class MarcXMergerTest {
 
     @Test
     public void testMergedMimetype() throws MarcXMergerException {
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate);
+        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
 
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MARCXCHANGE);
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.ARTICLE);

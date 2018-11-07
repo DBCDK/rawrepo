@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=introspect
 cid_file=introspect.cid
-docker_image=docker-os.dbc.dk/rawrepo-introspect-1.10-snapshot
+docker_image=docker-os.dbc.dk/rawrepo-introspect-1.11-SNAPSHOT
 version=${USER}
 port=`id -u ${USER}`1
 detached="-d"

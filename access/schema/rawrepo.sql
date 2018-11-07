@@ -32,6 +32,7 @@ INSERT INTO version VALUES (19);
 INSERT INTO version VALUES (21);
 INSERT INTO version VALUES (22);
 INSERT INTO version VALUES (23);
+INSERT INTO version VALUES (24);
 
 CREATE TABLE configurations (-- V23
   key VARCHAR PRIMARY KEY NOT NULL,
@@ -56,6 +57,19 @@ CREATE UNIQUE INDEX records_relation_id
   ON records (bibliographicrecordid, agencyid, deleted); -- V10
 CREATE INDEX records_agencyid
   ON records (agencyid); -- V13
+
+CREATE TABLE records_cache (-- V2
+  bibliographicrecordid VARCHAR(64)              NOT NULL,
+  agencyid              NUMERIC(6)               NOT NULL,
+  cachekey              TEXT                     NOT NULL,
+  deleted               BOOLEAN                  NOT NULL DEFAULT FALSE, -- V3
+  mimetype              VARCHAR(128)             NOT NULL DEFAULT 'text/marcxchange', -- V3
+  content               TEXT, -- base64 encoded
+  created               TIMESTAMP WITH TIME ZONE NOT NULL,
+  modified              TIMESTAMP WITH TIME ZONE NOT NULL,
+  trackingId            VARCHAR(256)             NOT NULL DEFAULT '',
+  CONSTRAINT records_cache_pk PRIMARY KEY (bibliographicrecordid, agencyid, cachekey)
+);
 
 CREATE TABLE records_archive (-- V2
   bibliographicrecordid VARCHAR(64)              NOT NULL,
