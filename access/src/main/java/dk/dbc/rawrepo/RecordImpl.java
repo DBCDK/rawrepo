@@ -91,8 +91,25 @@ class RecordImpl implements Record {
         this.enrichmentTrail = enrichmentTrail;
     }
 
+    private RecordImpl(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
+        this.id = new RecordId(id, agencyId);
+        this.deleted = deleted;
+        this.mimeType = mimeType;
+        this.content = content;
+        this.created = created;
+        this.modified = modified;
+        this.trackingId = trackingId;
+        this.original = false;
+        this.enriched = true;
+        this.enrichmentTrail = enrichmentTrail;
+    }
+
     static RecordImpl enriched(String id, int agencyId, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
         return new RecordImpl(id, agencyId, mimeType, content, created, modified, trackingId, enrichmentTrail);
+    }
+
+    static RecordImpl enriched(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
+        return new RecordImpl(id, agencyId, deleted, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 
     @Override
