@@ -43,7 +43,6 @@ import java.util.Set;
 public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAOPostgreSQLImpl.class);
-    private static final org.slf4j.Logger logQueue = LoggerFactory.getLogger("dk.dbc.rawrepo.RawRepoDAO#queue");
 
     private final Connection connection;
 
@@ -694,7 +693,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException {
-        logQueue.debug("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
+        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
 
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
@@ -749,7 +748,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                             resultSet.getTimestamp("queued"),
                             resultSet.getInt("priority"));
                     result.add(job);
-                    logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
+                    logger.debug("Dequeued job = {}; worker = {}", job, worker);
                 }
                 return result;
             }
@@ -777,7 +776,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                             resultSet.getString("worker"),
                             resultSet.getTimestamp("queued"),
                             resultSet.getInt("priority"));
-                    logQueue.debug("Dequeued job = {}; worker = {}", job, worker);
+                    logger.debug("Dequeued job = {}; worker = {}", job, worker);
                     return job;
                 }
                 return null;
