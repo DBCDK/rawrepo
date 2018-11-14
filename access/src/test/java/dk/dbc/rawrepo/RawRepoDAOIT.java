@@ -487,6 +487,15 @@ public class RawRepoDAOIT {
     }
 
     @Test
+    public void testCheckProvider() throws RawRepoException {
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+
+        // The test database is initialized with provider 'test'
+        assertTrue(dao.checkProvider("test"));
+        assertFalse(dao.checkProvider("not-found"));
+    }
+
+    @Test
     public void testDequeue() throws SQLException, RawRepoException {
         setupData(100000);
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();

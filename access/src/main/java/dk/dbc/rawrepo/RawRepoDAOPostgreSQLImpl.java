@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -86,6 +85,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
     private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
+    private static final String CHECK_PROVIDER = "SELECT count(*) FROM queuerules WHERE provider = ?";
 
     private static final String TIME_ZONE = "SET TIME ZONE UTC";
 
@@ -723,6 +723,26 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting cache", ex);
+        }
+    }
+
+    public boolean checkProvider(String provider) throws RawRepoException {
+        logger.info("Check provider: {}", provider);
+
+        int count = 0;
+
+        try (CallableStatement stmt = connection.prepareCall(CHECK_PROVIDER)) {
+            stmt.setString(1, provider);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    count = resultSet.getInt(1);
+                }
+            }
+
+            return count > 0;
+        } catch (SQLException ex) {
+            logger.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error checking provider", ex);
         }
     }
 
