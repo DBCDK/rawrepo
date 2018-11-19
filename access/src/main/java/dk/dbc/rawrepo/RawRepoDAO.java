@@ -668,6 +668,8 @@ public abstract class RawRepoDAO {
 
     public abstract void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException;
 
+    public abstract boolean checkProvider(String provider) throws RawRepoException;
+
     /**
      * Pull a job from the queue
      * <p>
