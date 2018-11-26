@@ -23,6 +23,11 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,14 +36,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
-import javax.sql.DataSource;
-
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RawRepoWorker implements AutoCloseable {
@@ -119,7 +118,7 @@ public class RawRepoWorker implements AutoCloseable {
         return agencies;
     }
 
-        protected static Date UTC(Date date) {
+    protected static Date UTC(Date date) {
         TimeZone tz = TimeZone.getDefault();
         int offset = tz.getRawOffset();
         if (tz.inDaylightTime(date)) {
@@ -127,6 +126,7 @@ public class RawRepoWorker implements AutoCloseable {
         }
         return new Date(date.getTime() - offset);
     }
+
     protected static Date UTC() {
         return UTC(new Date());
     }

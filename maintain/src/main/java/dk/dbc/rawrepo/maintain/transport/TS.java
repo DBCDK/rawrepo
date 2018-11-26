@@ -20,20 +20,19 @@
  */
 package dk.dbc.rawrepo.maintain.transport;
 
-import java.util.Date;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Date;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS, name = "timestamp")
 public class TS {
     @XmlElements(value = {
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "datetime", type = Date.class),
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "millis", type = Long.class)})
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "datetime", type = Date.class),
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "millis", type = Long.class)})
     public Object ts;
 
     public TS() {
@@ -53,7 +52,7 @@ public class TS {
             return (Long) ts;
         }
         if (ts instanceof Date) {
-            return ( (Date) ts ).getTime();
+            return ((Date) ts).getTime();
         }
         throw new IllegalStateException("arg");
     }

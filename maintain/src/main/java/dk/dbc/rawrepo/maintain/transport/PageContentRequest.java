@@ -20,15 +20,14 @@
  */
 package dk.dbc.rawrepo.maintain.transport;
 
-import java.util.ArrayList;
 import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)

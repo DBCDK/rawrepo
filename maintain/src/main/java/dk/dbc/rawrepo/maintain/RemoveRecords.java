@@ -61,10 +61,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
-public class RemoveRecords extends RawRepoWorker {
+class RemoveRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(RemoveRecords.class);
 
@@ -72,21 +71,21 @@ public class RemoveRecords extends RawRepoWorker {
     private final Transformer transformer;
     private final MarcXMerger marcXMerger;
 
-    public RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
+    RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
         super(dataSource, openAgency, executorService);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
         this.marcXMerger = new MarcXMerger();
     }
 
-    public RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
+    RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
         super(dataSource, openAgency, null);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
         this.marcXMerger = new MarcXMerger();
     }
 
-    public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
+    HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
         HashMap<String, ArrayList<String>> values = new HashMap<>();
 
         try {
@@ -97,11 +96,11 @@ public class RemoveRecords extends RawRepoWorker {
         return values;
     }
 
-    public Object removeRecords(Integer agencyId, List<String> ids, String provider, String trackingId) {
+    Object removeRecords(Integer agencyId, List<String> ids, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
-                  "; ids = " + ids +
-                  "; provider = " + provider +
-                  "; trackingId = " + trackingId);
+                "; ids = " + ids +
+                "; provider = " + provider +
+                "; trackingId = " + trackingId);
         ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;
@@ -115,8 +114,7 @@ public class RemoveRecords extends RawRepoWorker {
                     removeRecord(agencyId, id, provider, trackingId);
                     connection.commit();
                     success++;
-                } catch (RawRepoException | DOMException | IOException | MarcXMergerException |
-                         SAXException | TransformerException ex) {
+                } catch (RawRepoException | DOMException | IOException | SAXException | TransformerException ex) {
                     failed++;
                     diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
                     Throwable cause = ex.getCause();
@@ -148,7 +146,7 @@ public class RemoveRecords extends RawRepoWorker {
         }
     }
 
-    void removeRecord(Integer agencyId, String id, String provider, String trackingId) throws SQLException, RawRepoException, MarcXMergerException, SAXException, TransformerException, DOMException, IOException {
+    void removeRecord(Integer agencyId, String id, String provider, String trackingId) throws RawRepoException, SAXException, TransformerException, DOMException, IOException {
         RawRepoDAO dao = getDao();
 
         int agencyIdFor = dao.agencyFor(id, agencyId, true);
@@ -188,13 +186,13 @@ public class RemoveRecords extends RawRepoWorker {
         Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
         Element marcx = dom.getDocumentElement();
         Node child = marcx.getFirstChild();
-        for (;;) {
+        for (; ; ) {
             if (child == null ||
-                ( child.getNodeType() == Node.ELEMENT_NODE &&
-                  "datafield".equals(child.getLocalName()) )) {
+                    (child.getNodeType() == Node.ELEMENT_NODE &&
+                            "datafield".equals(child.getLocalName()))) {
                 int cmp = -1;
                 if (child != null) {
-                    String tag = ( (Element) child ).getAttribute("tag");
+                    String tag = ((Element) child).getAttribute("tag");
                     cmp = "004".compareTo(tag);
                 }
                 if (child == null || cmp < 0) {
@@ -207,14 +205,14 @@ public class RemoveRecords extends RawRepoWorker {
                 }
                 if (cmp <= 0) {
                     Node subChild = child.getFirstChild();
-                    for (;;) {
+                    for (; ; ) {
                         // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
                         // r is 1st field
-                        if (subChild == null || ( subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                                  "subfield".equals(subChild.getLocalName()) )) {
+                        if (subChild == null || (subChild.getNodeType() == Node.ELEMENT_NODE &&
+                                "subfield".equals(subChild.getLocalName()))) {
                             boolean isR = false;
                             if (subChild != null) {
-                                String code = ( (Element) subChild ).getAttribute("code");
+                                String code = ((Element) subChild).getAttribute("code");
                                 isR = "r".equals(code);
                             }
                             if (!isR) {
@@ -231,8 +229,8 @@ public class RemoveRecords extends RawRepoWorker {
                             while (subChild != null) {
                                 Node next = subChild.getNextSibling();
                                 if (subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                    "subfield".equals(subChild.getLocalName()) &&
-                                    "r".equals(( (Element) subChild ).getAttribute("code"))) {
+                                        "subfield".equals(subChild.getLocalName()) &&
+                                        "r".equals(((Element) subChild).getAttribute("code"))) {
                                     child.removeChild(subChild);
                                 }
                                 subChild = next;
@@ -258,10 +256,10 @@ public class RemoveRecords extends RawRepoWorker {
     /**
      * Create an xml document parser
      *
-     * @return
-     * @throws ParserConfigurationException
+     * @return new document
+     * @throws MarcXMergerException
      */
-    static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
+    private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
             synchronized (DocumentBuilderFactory.class) {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -280,11 +278,9 @@ public class RemoveRecords extends RawRepoWorker {
      * Create an xml transformer for writing a document
      *
      * @return new transformer
-     * @throws TransformerConfigurationException
-     * @throws TransformerFactoryConfigurationError
-     * @throws IllegalArgumentException
+     * @throws MarcXMergerException
      */
-    static Transformer newTransformer() throws MarcXMergerException {
+    private static Transformer newTransformer() throws MarcXMergerException {
         try {
             synchronized (TransformerFactory.class) {
                 TransformerFactory transformerFactory = TransformerFactory.newInstance();

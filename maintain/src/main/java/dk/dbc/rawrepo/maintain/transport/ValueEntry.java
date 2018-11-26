@@ -20,12 +20,11 @@
  */
 package dk.dbc.rawrepo.maintain.transport;
 
-import java.util.ArrayList;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS, name = "entry")

@@ -24,11 +24,9 @@ import dk.dbc.rawrepo.maintain.QueueRules;
 import dk.dbc.rawrepo.maintain.QueueRules.Provider;
 import dk.dbc.rawrepo.maintain.QueueRules.Worker;
 import dk.dbc.rawrepo.maintain.transport.C;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import javax.ws.rs.GET;
@@ -36,11 +34,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Properties;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @Path("/")
@@ -57,7 +57,7 @@ public class Rest {
     @Path("/redirect/{name}")
     public Response redirect(@PathParam("name") String name) {
         log.info("HERE");
-        if(properties.containsKey("redirect-" + name)) {
+        if (properties.containsKey("redirect-" + name)) {
             try {
                 return Response.seeOther(new URI(properties.getProperty("redirect-" + name))).build();
             } catch (URISyntaxException ex) {
@@ -74,8 +74,8 @@ public class Rest {
     @GET
     @Path("queuerules")
     @Produces("text/html")
-    public String getQueuerules() throws SQLException{
-        try(QueueRules q = new QueueRules(rawrepo)){
+    public String getQueuerules() throws SQLException {
+        try (QueueRules q = new QueueRules(rawrepo)) {
             ArrayList<Provider> providers = q.getQueueRules();
             log.debug("Found '{}' providers", providers.size());
             StringBuilder sb = new StringBuilder();
@@ -94,17 +94,17 @@ public class Rest {
                 for (int i = 0; i < provider.getWorkers().size(); i++) {
 
                     boolean first = i == 0;
-                    boolean last = i == provider.getWorkers().size()-1;
+                    boolean last = i == provider.getWorkers().size() - 1;
 
                     Worker w = provider.getWorkers().get(i);
 
-                    if(last){
+                    if (last) {
                         sb.append("<tr class=\"last\">");
-                    }else{
+                    } else {
                         sb.append("<tr>");
                     }
 
-                    if(first){
+                    if (first) {
                         sb.append("<td rowspan=\"").append(provider.getWorkers().size()).append("\">").append(provider.getProvider()).append("</td>");
                     }
                     sb.append("<td>").append(w.getWorker()).append("</td>");

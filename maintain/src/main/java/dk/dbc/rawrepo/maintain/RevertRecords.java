@@ -23,7 +23,11 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.marcx.MarcXParser;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RecordMetaDataHistory;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +40,15 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalField;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RevertRecords extends RawRepoWorker {
@@ -67,10 +72,10 @@ public class RevertRecords extends RawRepoWorker {
 
     public Object revertRecords(Integer agencyId, List<String> ids, long millis, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
-                  "; ids = " + ids +
-                  "; time = " + new Date(millis) +
-                  "; provider = " + provider +
-                  "; trackingId = " + trackingId);
+                "; ids = " + ids +
+                "; time = " + new Date(millis) +
+                "; provider = " + provider +
+                "; trackingId = " + trackingId);
         ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;

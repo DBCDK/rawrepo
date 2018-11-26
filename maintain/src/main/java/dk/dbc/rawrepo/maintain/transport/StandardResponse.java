@@ -21,8 +21,7 @@
 package dk.dbc.rawrepo.maintain.transport;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.ArrayList;
-import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlElement;
@@ -30,17 +29,18 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)
 public class StandardResponse {
 
     @XmlElements({
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "result", type = Result.class),
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "error", type = ResponseError.class)
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "result", type = Result.class),
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "error", type = ResponseError.class)
     })
     public Object out;
 
@@ -58,7 +58,9 @@ public class StandardResponse {
         public static enum Status {
 
             SUCCESS, PARTIAL, FAILURE
-        };
+        }
+
+        ;
 
         @XmlElement(namespace = C.NS, required = true, nillable = false)
         public Status status;
