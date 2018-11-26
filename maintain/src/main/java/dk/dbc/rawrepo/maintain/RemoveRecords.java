@@ -151,7 +151,8 @@ public class RemoveRecords extends RawRepoWorker {
     void removeRecord(Integer agencyId, String id, String provider, String trackingId) throws SQLException, RawRepoException, MarcXMergerException, SAXException, TransformerException, DOMException, IOException {
         RawRepoDAO dao = getDao();
 
-        Record record = dao.fetchRecordOrMergedRecord(id, agencyId, marcXMerger);
+        int agencyIdFor = dao.agencyFor(id, agencyId, true);
+        Record record = dao.fetchRecord(id, agencyIdFor);
 
         if (record.isDeleted()) {
             throw new RawRepoException("Record already deleted");
