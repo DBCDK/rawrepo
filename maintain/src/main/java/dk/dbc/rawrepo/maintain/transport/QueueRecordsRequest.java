@@ -26,7 +26,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)

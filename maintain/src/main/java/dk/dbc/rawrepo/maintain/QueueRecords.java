@@ -25,18 +25,18 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import javax.sql.DataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class QueueRecords extends RawRepoWorker {
@@ -60,9 +60,9 @@ public class QueueRecords extends RawRepoWorker {
 
     public Object queueRecords(Integer agencyId, List<String> ids, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
-                  "; ids = " + ids +
-                  "; provider = " + provider +
-                  "; trackingId = " + trackingId);
+                "; ids = " + ids +
+                "; provider = " + provider +
+                "; trackingId = " + trackingId);
         ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;

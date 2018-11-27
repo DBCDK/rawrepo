@@ -21,13 +21,13 @@
 package dk.dbc.rawrepo.maintain.transport;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS, name = "responseError")

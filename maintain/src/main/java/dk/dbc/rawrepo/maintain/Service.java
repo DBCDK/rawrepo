@@ -20,22 +20,20 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.rawrepo.maintain.transport.ResponseError;
-import dk.dbc.rawrepo.maintain.transport.C;
 import com.sun.xml.ws.developer.SchemaValidation;
 import dk.dbc.commons.webservice.WsdlValidationErrorHandler;
 import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.rawrepo.maintain.transport.C;
 import dk.dbc.rawrepo.maintain.transport.PageContentResponse;
 import dk.dbc.rawrepo.maintain.transport.RecordIds;
+import dk.dbc.rawrepo.maintain.transport.ResponseError;
 import dk.dbc.rawrepo.maintain.transport.TS;
 import dk.dbc.rawrepo.maintain.transport.ValueEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
@@ -50,12 +48,14 @@ import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @WebService(targetNamespace = C.NS, serviceName = C.SERVICE, portName = C.PORT)
@@ -114,10 +114,10 @@ public class Service {
                 }
             }
             log.debug("Remote IP: " + getIp() +
-                      "; module = " + method +
-                      "; map = " + valuesSet +
-                      "; leaving = " + leaving +
-                      "; trackingId = " + trackingId.value);
+                    "; module = " + method +
+                    "; map = " + valuesSet +
+                    "; leaving = " + leaving +
+                    "; trackingId = " + trackingId.value);
 
             HashMap<String, ArrayList<String>> valuesOut;
 

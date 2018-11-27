@@ -21,7 +21,6 @@
 package dk.dbc.rawrepo.maintain.transport;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class C {

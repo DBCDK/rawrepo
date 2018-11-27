@@ -21,23 +21,23 @@
 package dk.dbc.rawrepo.maintain.transport;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.ArrayList;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlRootElement(namespace = C.NS)
 public class PageContentResponse {
 
     @XmlElements({
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "result", type = Result.class),
-        @XmlElement(namespace = C.NS, required = true, nillable = false, name = "error", type = ResponseError.class)
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "result", type = Result.class),
+            @XmlElement(namespace = C.NS, required = true, nillable = false, name = "error", type = ResponseError.class)
     })
     public Object out;
 
