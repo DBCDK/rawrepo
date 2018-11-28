@@ -29,6 +29,7 @@ $$;
 --
 --
 
+DELETE FROM records_cache;
 ALTER TABLE records_cache ADD COLUMN enrichmenttrail TEXT;
 
 COMMIT TRANSACTION;
