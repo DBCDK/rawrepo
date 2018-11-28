@@ -44,7 +44,6 @@ CREATE TABLE records_cache (-- V2
   created               TIMESTAMP WITH TIME ZONE NOT NULL,
   modified              TIMESTAMP WITH TIME ZONE NOT NULL,
   trackingId            VARCHAR(256)             NOT NULL DEFAULT '',
-  enrichmenttrail       TEXT,
   CONSTRAINT records_cache_pk PRIMARY KEY (bibliographicrecordid, agencyid, cachekey)
 );
 
