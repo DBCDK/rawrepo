@@ -9,7 +9,7 @@ SOLR_PORT=${SOLR_PORT:-WHAT}
 
 package=solr-indexer
 cid_file=solr-indexer.cid
-docker_image=docker-os.dbc.dk/rawrepo-solr-indexer-1.11-SNAPSHOT
+docker_image=docker-os.dbc.dk/rawrepo-solr-indexer-1.11.1-SNAPSHOT
 version=${USER}
 port=`id -u ${USER}`3
 detached="-d"

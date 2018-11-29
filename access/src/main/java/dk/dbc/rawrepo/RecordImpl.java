@@ -108,7 +108,7 @@ class RecordImpl implements Record {
         return new RecordImpl(id, agencyId, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 
-    static RecordImpl enriched(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
+    static RecordImpl fromCache(String id, int agencyId, boolean deleted, String mimeType, byte[] content, Instant created, Instant modified, String trackingId, String enrichmentTrail) {
         return new RecordImpl(id, agencyId, deleted, mimeType, content, created, modified, trackingId, enrichmentTrail);
     }
 
