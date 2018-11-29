@@ -84,7 +84,7 @@ pipeline {
             }
             steps {
                 sh "mvn -pl debian install"
-                sh "mvn -pl access deploy"
+                sh "mvn -pl rawrepo access deploy"
             }
         }
     }
