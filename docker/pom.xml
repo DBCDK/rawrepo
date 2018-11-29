@@ -9,7 +9,7 @@
 
     <artifactId>rawrepo-docker</artifactId>
     <packaging>pom</packaging>
-    <version>1.11.1-SNAPSHOT</version>
+    <version>1.12-SNAPSHOT</version>
 
     <parent>
         <groupId>dk.dbc</groupId>
