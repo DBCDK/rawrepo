@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=content-service
 cid_file=contentservice_dev.cid
-docker_image="docker-os.dbc.dk/rawrepo-content-service-1.12-SNAPSHOT"
+docker_image="docker-os.dbc.dk/rawrepo-content-service-1.13-SNAPSHOT"
 version=${USER}
 port=`id -u ${USER}`2
 detached="-d"
