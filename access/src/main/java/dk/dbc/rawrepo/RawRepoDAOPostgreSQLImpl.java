@@ -45,19 +45,18 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 25;
-    private static final int SCHEMA_VERSION_COMPATIBLE = 25;
+    private static final int SCHEMA_VERSION = 26;
+    private static final int SCHEMA_VERSION_COMPATIBLE = 26;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";
     private static final String SELECT_RECORD = "SELECT deleted, mimetype, content, created, modified, trackingId FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_RECORD_CACHE = "SELECT deleted, mimetype, content, created, modified, trackingId, enrichmenttrail FROM records_cache WHERE bibliographicrecordid=? AND agencyid=? AND cachekey=?";
     private static final String INSERT_RECORD = "INSERT INTO records(bibliographicrecordid, agencyid, deleted, mimetype, content, created, modified, trackingId) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String INSERT_RECORD_CACHE = "INSERT INTO records_cache(bibliographicrecordid, agencyid, cachekey, deleted, mimetype, content, created, modified, trackingId, enrichmentTrail) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_RECORD = "UPDATE records SET deleted=?, mimetype=?, content=?, modified=?, trackingId=? WHERE bibliographicrecordid=? AND agencyid=?";
-    private static final String UPDATE_RECORD_CACHE = "UPDATE records_cache SET deleted=?, mimetype=?, content=?, modified=?, trackingId=?, enrichmentTrail=? WHERE bibliographicrecordid=? AND agencyid=? AND cachekey=?";
     private static final String SELECT_DELETED = "SELECT deleted FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String SELECT_MIMETYPE = "SELECT mimetype FROM records WHERE bibliographicrecordid=? AND agencyid=?";
     private static final String DELETE_RECORD_CACHE = "DELETE FROM records_cache WHERE bibliographicrecordid=? AND agencyid=?";
+    private static final String CALL_UPSERT_RECORDS_CACHE = "SELECT * FROM upsert_records_cache(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String HISTORIC_METADATA = "SELECT created, modified, deleted, mimetype, trackingId FROM records WHERE agencyid=? AND bibliographicrecordid=?" +
             " UNION SELECT created, modified, deleted, mimetype, trackingId FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?" +
@@ -381,28 +380,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         if (record.getMimeType().isEmpty()) {
             throw new RawRepoException("Record has unset mimetype, cannot save");
         }
-        try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD_CACHE)) {
-            int pos = 1;
-            // SET values
-            stmt.setBoolean(pos++, record.isDeleted());
-            stmt.setString(pos++, record.getMimeType());
-            stmt.setString(pos++, DatatypeConverter.printBase64Binary(record.getContent()));
-            stmt.setTimestamp(pos++, Timestamp.from(record.getModified()));
-            stmt.setString(pos++, record.getTrackingId());
-            stmt.setString(pos++, record.getEnrichmentTrail());
-            // WHERE values
-            stmt.setString(pos++, record.getId().getBibliographicRecordId());
-            stmt.setInt(pos++, record.getId().getAgencyId());
-            stmt.setString(pos, cacheKey);
-            if (stmt.executeUpdate() > 0) {
-                stmt.close();
-                return;
-            }
-        } catch (SQLException ex) {
-            logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error updating record", ex);
-        }
-        try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD_CACHE)) {
+        try (PreparedStatement stmt = connection.prepareCall(CALL_UPSERT_RECORDS_CACHE)) {
             int pos = 1;
             stmt.setString(pos++, record.getId().getBibliographicRecordId());
             stmt.setInt(pos++, record.getId().getAgencyId());
@@ -417,7 +395,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.execute();
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
-            throw new RawRepoException("Error saving record", ex);
+            throw new RawRepoException("Error updating record", ex);
         }
     }
 
