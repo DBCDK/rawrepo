@@ -20,13 +20,16 @@
  */
 package dk.dbc.marcx;
 
-import java.io.InputStream;
+import dk.dbc.rawrepo.RecordId;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXParserTest {
@@ -44,4 +47,17 @@ public class MarcXParserTest {
         return getClass().getClassLoader().getResourceAsStream(name);
     }
 
+    @Test
+    public void testAutValues() throws Exception {
+        List<RecordId> res = MarcXParser.getAuthorityLinks(getFile("marcxparser/with-authority.xml"));
+
+        assertEquals(Arrays.asList(new RecordId("68359775", 870979)), res);
+    }
+
+    @Test
+    public void testAutNoValues() throws Exception {
+        List<RecordId> res = MarcXParser.getAuthorityLinks(getFile("marcxparser/without-authority.xml"));
+
+        assertEquals(Arrays.asList(), res);
+    }
 }

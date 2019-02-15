@@ -69,6 +69,8 @@ class RawRepoTester {
         RelationHintsOpenAgency relationHints = mock(RelationHintsOpenAgency.class);
         when(relationHints.get(anyInt())).thenReturn(Arrays.asList());
         when(relationHints.usesCommonAgency(anyInt())).thenReturn(Boolean.FALSE);
+        when(relationHints.usesCommonAgency(870970)).thenReturn(Boolean.TRUE);
+        when(relationHints.usesCommonAgency(870979)).thenReturn(Boolean.TRUE);
 
 
         return RawRepoDAO.builder(pg.getConnection()).relationHints(relationHints).build();

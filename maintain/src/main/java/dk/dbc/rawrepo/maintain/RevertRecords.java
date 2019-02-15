@@ -157,6 +157,11 @@ public class RevertRecords extends RawRepoWorker {
                                     int parentAgencyId = dao.findParentRelationAgency(parent, agencyId);
                                     relations.add(new RecordId(parent, parentAgencyId));
                                 }
+
+                                List<RecordId> authorityLinks = MarcXParser.getAuthorityLinks(new ByteArrayInputStream(historicRecord.getContent()));
+                                if (authorityLinks.size() > 0) {
+                                    relations.addAll(authorityLinks);
+                                }
                             } catch (ParserConfigurationException | SAXException | IOException ex) {
                                 log.error(ex.getMessage());
                                 throw new RawRepoException("Cannot parse record for parent relation");

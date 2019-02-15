@@ -23,20 +23,28 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RevertRecordsIT extends RawRepoTester {
@@ -58,6 +66,20 @@ public class RevertRecordsIT extends RawRepoTester {
         Record recordAfter = dao.fetchRecord("H1", 100000);
         long incarnationAfter = getNumber(recordAfter.getContent());
         assertEquals("New incarnation", 1, incarnationAfter);
+    }
+
+    @Test
+    public void testRevertRecordsWithAuthority() throws Exception {
+        System.out.println("testRevertRecordsWithAuthority");
+        RevertRecords mock = makeRevertRecords();
+        RawRepoDAO dao = getDao();
+        Set<RecordId> existingRelationsFrom = dao.getRelationsFrom(new RecordId("54248229", 870970));
+        assertEquals("Existing relations count", 0, existingRelationsFrom.size());
+        mock.revertRecord(870970, "54248229", ts("2019-02-07 04:00:00.000"), "", "Track");
+
+        Set<RecordId> newRelationsFrom = dao.getRelationsFrom(new RecordId("54248229", 870970));
+        assertEquals("New relations count", 1, newRelationsFrom.size());
+        assertTrue("New relations", newRelationsFrom.contains(new RecordId("68359775", 870979)));
     }
 
     @Test(expected = RawRepoException.class)

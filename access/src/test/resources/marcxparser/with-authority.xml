@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<record xsi:schemaLocation="http://www.loc.gov/standards/iso25577/marcxchange-1-1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="info:lc/xmlns/marcxchange-v1">
+    <leader>00000n    2200000   4500</leader>
+    <datafield ind1="0" ind2="0" tag="001">
+        <subfield code="a">54248229</subfield>
+        <subfield code="b">870970</subfield>
+        <subfield code="c">20181124102241</subfield>
+        <subfield code="d">20180622</subfield>
+        <subfield code="f">a</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="004">
+        <subfield code="r">n</subfield>
+        <subfield code="a">e</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="008">
+        <subfield code="t">m</subfield>
+        <subfield code="u">f</subfield>
+        <subfield code="a">2014</subfield>
+        <subfield code="b">dk</subfield>
+        <subfield code="d">y</subfield>
+        <subfield code="l">dan</subfield>
+        <subfield code="n">b</subfield>
+        <subfield code="x">06</subfield>
+        <subfield code="v">9</subfield>
+        <subfield code="w">1</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="009">
+        <subfield code="a">a</subfield>
+        <subfield code="g">xe</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="021">
+        <subfield code="e">9788799773817</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="032">
+        <subfield code="x">ACC201825</subfield>
+        <subfield code="a">DBR201828</subfield>
+        <subfield code="x">BKM201828</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="100">
+        <subfield code="5">870979</subfield>
+        <subfield code="6">68359775</subfield>
+        <subfield code="4">aut</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="245">
+        <subfield code="a">En ¤ren forbindelse</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="260">
+        <subfield code="b">Stemningshotellets Forlag</subfield>
+        <subfield code="g">[sælges på internettet]</subfield>
+        <subfield code="c">2014</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="300">
+        <subfield code="a">384 sider</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="504">
+        <subfield code="b">1</subfield>
+        <subfield code="a">Blahblah</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="512">
+        <subfield code="a">Downloades i EPUB-format</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="512">
+        <subfield code="a">Maskinelt dannet beskrivelse baseret på distributørdata og beskrivelsen af et fysisk forlæg</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="520">
+        <subfield code="a">Digitalisering af trykt bog</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="652">
+        <subfield code="m">15.4</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="666">
+        <subfield code="0"/>
+        <subfield code="f">polyamory</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="666">
+        <subfield code="0"/>
+        <subfield code="f">kærlighed</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="666">
+        <subfield code="0"/>
+        <subfield code="f">parforhold</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="990">
+        <subfield code="o">201828</subfield>
+        <subfield code="b">l</subfield>
+        <subfield code="b">v</subfield>
+        <subfield code="u">nt</subfield>
+    </datafield>
+    <datafield ind1="0" ind2="0" tag="996">
+        <subfield code="a">DBC</subfield>
+    </datafield>
+</record>

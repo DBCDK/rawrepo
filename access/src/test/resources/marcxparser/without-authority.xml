@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<marcx:record format="danMARC2" type="Bibliographic" xmlns:marcx="info:lc/xmlns/marcxchange-v1">
+    <marcx:leader>00000n    2200000   4500</marcx:leader>
+    <marcx:datafield ind1="0" ind2="0" tag="001">
+        <marcx:subfield code="a">01447661</marcx:subfield>
+        <marcx:subfield code="b">870970</marcx:subfield>
+        <marcx:subfield code="c">19900312</marcx:subfield>
+        <marcx:subfield code="d">19761228</marcx:subfield>
+        <marcx:subfield code="f">a</marcx:subfield>
+        <marcx:subfield code="o">c</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="004">
+        <marcx:subfield code="r">n</marcx:subfield>
+        <marcx:subfield code="a">e</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="008">
+        <marcx:subfield code="t">m</marcx:subfield>
+        <marcx:subfield code="u">f</marcx:subfield>
+        <marcx:subfield code="a">1974</marcx:subfield>
+        <marcx:subfield code="b">de</marcx:subfield>
+        <marcx:subfield code="l">ger</marcx:subfield>
+        <marcx:subfield code="v">4</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="009">
+        <marcx:subfield code="a">a</marcx:subfield>
+        <marcx:subfield code="g">xx</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="021">
+        <marcx:subfield code="a">3-423-07146-X</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="032">
+        <marcx:subfield code="x">DIS197605</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="100">
+        <marcx:subfield code="a">Aiken</marcx:subfield>
+        <marcx:subfield code="h">Joan</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="245">
+        <marcx:subfield code="a">Wölfe ums Schloss</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="260">
+        <marcx:subfield code="a">München</marcx:subfield>
+        <marcx:subfield code="b">Deutscher Taschenbuch Verlag</marcx:subfield>
+        <marcx:subfield code="c">1974</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="300">
+        <marcx:subfield code="a">155 sider</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="m">84</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="652">
+        <marcx:subfield code="p">83.2</marcx:subfield>
+    </marcx:datafield>
+    <marcx:datafield ind1="0" ind2="0" tag="996">
+        <marcx:subfield code="a">DBC</marcx:subfield>
+    </marcx:datafield>
+</marcx:record>

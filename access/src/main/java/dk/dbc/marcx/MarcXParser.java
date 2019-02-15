@@ -20,27 +20,31 @@
  */
 package dk.dbc.marcx;
 
-import java.io.IOException;
-import java.io.InputStream;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import dk.dbc.rawrepo.RecordId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXParser extends DefaultHandler {
 
-    public interface FieldProcesssor {
+    public interface FieldProcessor {
 
         void field(String datafield, String subfield, String value);
     }
 
-    public static class ParentField implements FieldProcesssor {
+    public static class ParentField implements FieldProcessor {
 
         String parent;
 
@@ -65,29 +69,62 @@ public class MarcXParser extends DefaultHandler {
 
     }
 
+    public static class AuthorityFields implements FieldProcessor {
+        private static final List<String> FIELDS_MAY_HAVE_AUT = Arrays.asList("100", "600", "700");
+        List<RecordId> authorityLinks;
+
+        public AuthorityFields() {
+            this.authorityLinks = new ArrayList<>();
+        }
+
+        public List<RecordId> getAuthorityLinks() {
+            return authorityLinks;
+        }
+
+        public boolean hasAut() {
+            return authorityLinks.size() > 0;
+        }
+
+        @Override
+        public void field(String datafield, String subfield, String value) {
+            if (FIELDS_MAY_HAVE_AUT.contains(datafield) && "6".equals(subfield)) {
+                authorityLinks.add(new RecordId(value, 870979));
+            }
+        }
+
+    }
+
+
     private static final SAXParserFactory parserFactory = makeParserFactory();
 
-    FieldProcesssor processsor;
+    FieldProcessor processor;
     private String datafield;
     private String subfield;
 
-    public MarcXParser(FieldProcesssor processor) {
-        processsor = processor;
-        datafield = null;
-        subfield = null;
+    public MarcXParser(FieldProcessor processor) {
+        this.processor = processor;
+        this.datafield = null;
+        this.subfield = null;
     }
 
-    public static void parse(InputStream is, FieldProcesssor processor) throws ParserConfigurationException, SAXException, IOException {
+    public static void parse(InputStream is, FieldProcessor processor) throws ParserConfigurationException, SAXException, IOException {
         MarcXParser marcXParser = new MarcXParser(processor);
         SAXParser parser = parserFactory.newSAXParser();
         parser.parse(is, marcXParser);
     }
 
     public static String getParent(InputStream is) throws ParserConfigurationException, SAXException, IOException {
-        ParentField processsor = new ParentField();
-        parse(is, processsor);
-        return processsor.getParent();
+        ParentField processor = new ParentField();
+        parse(is, processor);
+        return processor.getParent();
     }
+
+    public static List<RecordId> getAuthorityLinks(InputStream is) throws ParserConfigurationException, SAXException, IOException {
+        AuthorityFields processor = new AuthorityFields();
+        parse(is, processor);
+        return processor.getAuthorityLinks();
+    }
+
 
     private static SAXParserFactory makeParserFactory() {
         synchronized (SAXParserFactory.class) {
@@ -103,7 +140,7 @@ public class MarcXParser extends DefaultHandler {
         super.characters(ch, start, length);
         if (datafield != null && subfield != null) {
             String value = new String(ch, start, length);
-            processsor.field(datafield, subfield, value);
+            processor.field(datafield, subfield, value);
         }
 
     }
