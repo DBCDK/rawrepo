@@ -226,7 +226,7 @@ public class MarcXMerger {
             Element targetRootElement = commonRootElement;
 
             FieldRules.RuleSet ruleSet = fieldRulesIntermediate.newRuleSet();
-            logger.info("ruleSet before: {}", ruleSet.toString());
+            logger.debug("ruleSet before: {}", ruleSet.toString());
 
             removeEmptyText(commonDom.getDocumentElement()); // cleanup nodes
             removeEmptyText(localDom.getDocumentElement()); // cleanup nodes
@@ -236,7 +236,7 @@ public class MarcXMerger {
 
             removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom, includeAllFields); // sets up which common fields, that should be removed
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
-            logger.info("ruleSet after: {}", ruleSet.toString());
+            logger.debug("ruleSet after: {}", ruleSet.toString());
 
             mergeCommonAndLocalIntoTarget(localFields, commonFields, targetRootElement);
 
