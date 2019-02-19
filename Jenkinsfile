@@ -11,7 +11,8 @@ pipeline {
     environment {
         MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dorg.slf4j.simpleLogger.showThreadName=true"
         JAVA_OPTS = "-XX:-UseSplitVerifier"
-        PROJECT_VERSION=readMavenPom().getVersion()
+        PROJECT_VERSION = readMavenPom().getVersion()
+        PROJECT_VERSION = PROJECT_VERSION.toLower()
         DOCKER_IMAGE_VERSION = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         DOCKER_IMAGE_DIT_VERSION = "DIT-${env.BUILD_NUMBER}"
     }
@@ -58,8 +59,11 @@ pipeline {
             steps {
                 script {
                     def repo = "docker-io.dbc.dk"
-                    def dockerPostgres = docker.build("${repo}/rawrepo-postgres-${PROJECT_VERSION}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./access')
-                    def dockerIntrospect = docker.build("${repo}/rawrepo-introspect-${PROJECT_VERSION}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./introspect ')
+                    def imageNamePostgres = "rawrepo-postgres-${PROJECT_VERSION}".toLowerCase()
+                    def imageNameIntrospect = "rawrepo-introspect-${PROJECT_VERSION}".toLowerCase()
+
+                    def dockerPostgres = docker.build("${repo}/${imageNamePostgres}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./access')
+                    def dockerIntrospect = docker.build("${repo}/${imageNameIntrospect}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./introspect ')
 
                     dockerPostgres.push()
                     dockerIntrospect.push()
