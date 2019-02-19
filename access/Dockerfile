@@ -1,5 +1,4 @@
 FROM docker.dbc.dk/dbc-postgres:9.5
-MAINTAINER iscrum
 
 ENV POSTGRES_DB=rawrepo
 ENV POSTGRES_USER=rawrepo
@@ -14,3 +13,4 @@ USER $POSTGRES_LINUX_USER
 LABEL POSTGRES_DB="Name of db (optional). Default is 'rawrepo'" \
       POSTGRES_USER="(optional). Default is 'rawrepo'" \
       POSTGRES_PASSWORD="(optional). Default is 'rawrepo'"
+LABEL MAINTAINER="metascrum"
