@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
-    private static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "700");
+    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "700");
 
     /**
      * This function performs authority expansion on a rawrepo Record.

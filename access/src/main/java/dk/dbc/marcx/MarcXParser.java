@@ -20,6 +20,7 @@
  */
 package dk.dbc.marcx;
 
+import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.rawrepo.RecordId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -70,7 +71,6 @@ public class MarcXParser extends DefaultHandler {
     }
 
     public static class AuthorityFields implements FieldProcessor {
-        private static final List<String> FIELDS_MAY_HAVE_AUT = Arrays.asList("100", "600", "700");
         List<RecordId> authorityLinks;
 
         public AuthorityFields() {
@@ -87,7 +87,7 @@ public class MarcXParser extends DefaultHandler {
 
         @Override
         public void field(String datafield, String subfield, String value) {
-            if (FIELDS_MAY_HAVE_AUT.contains(datafield) && "6".equals(subfield)) {
+            if (ExpandCommonMarcRecord.AUTHORITY_FIELD_LIST.contains(datafield) && "6".equals(subfield)) {
                 authorityLinks.add(new RecordId(value, 870979));
             }
         }
