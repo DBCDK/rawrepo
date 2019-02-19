@@ -1,6 +1,6 @@
 FROM docker.dbc.dk/payara-micro:latest
 
-ADD config.d/* config.d
-ADD *.war wars/
+ADD docker/config.d/* config.d
+ADD target/rawrepo-introspect-*-SNAPSHOT.war wars/
 
 LABEL OPENAGENCY_URL="Url to openagency (required)"
