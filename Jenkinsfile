@@ -57,8 +57,8 @@ pipeline {
             steps {
                 script {
                     def repo = "docker-io.dbc.dk"
-                    def dockerPostgres = docker.build("${repo}/rawrepo-postgres:${DOCKER_IMAGE_VERSION}")
-                    def dockerIntrospect = docker.build("${repo}/rawrepo-introspect:${DOCKER_IMAGE_VERSION}")
+                    def dockerPostgres = docker.build("${repo}/rawrepo-postgres:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./access')
+                    def dockerIntrospect = docker.build("${repo}/rawrepo-introspect:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./introspect ')
 
                     dockerPostgres.push()
                     dockerIntrospect.push()
