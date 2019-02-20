@@ -1,0 +1,2 @@
+The folder docker-entrypoint.d must be present in the file structure, and in order for a folder to exist in git there
+must be a file in that folder, hence this file.
