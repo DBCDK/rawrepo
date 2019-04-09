@@ -96,18 +96,13 @@ class AgencyDelete {
             RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
             if (relationHints.usesCommonAgency(agencyid)) {
                 this.commonAgencies = relationHints.get(agencyid);
-
             } else {
                 this.commonAgencies = Collections.EMPTY_LIST;
             }
         } else {
             builder.relationHints(new RelationHintsOpenAgency(null) {
-                public List<Integer> provide(Integer key) throws Exception {
-                    return Arrays.asList(key);
-                }
-            });
-            builder.relationHints(new RelationHintsOpenAgency(null) {
-                public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+                @Override
+                public boolean usesCommonAgency(int agencyId) {
                     return false;
                 }
             });
