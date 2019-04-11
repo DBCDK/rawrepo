@@ -1,0 +1,8 @@
+{
+  "appName": "rawrepo-introspect",
+  "jdbc": {
+    "jdbc/rawrepo": {
+      "url": "${RAWREPO_URL}"
+    }
+  }
+}
