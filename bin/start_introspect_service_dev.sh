@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=introspect
 cid_file=introspect.cid
-docker_image=docker-os.dbc.dk/rawrepo-introspect-1.13-SNAPSHOT
+docker_image=docker-os.dbc.dk/rawrepo-introspect-1.13-snapshot
 version=${USER}
 port=`id -u ${USER}`1
 detached="-d"
@@ -32,19 +32,7 @@ fi
 
 if [ "$version" = "${USER}" ]
 then
-	hop=`pwd`
-    cd ../../${package}
-	mvn package > /tmp/mvn.out.${USER}.${package}
-    cd src/main/docker/
-    rm *.war
-    cp ../../../target/*war .
-    docker build -t ${docker_image}:${USER} .
-    cc=$?
-    if [ ${cc} -ne 0 ]
-    then
-        echo "Couldn't build image"
-        exit 1
-    fi
+    docker build -t ${docker_image}:${USER} introspect/.
 fi
 
 if [ -f ${HOME}/.ocb-tools/${cid_file} ]
@@ -56,9 +44,12 @@ rr_conn=`egrep rawrepo.jdbc.conn.url ${HOME}/.ocb-tools/testrun.properties | tr 
 rr_user=`egrep rawrepo.jdbc.conn.user ${HOME}/.ocb-tools/testrun.properties | tr -d " " | cut -d"=" -f2`
 rr_pass=`egrep rawrepo.jdbc.conn.passwd ${HOME}/.ocb-tools/testrun.properties | tr -d " " | cut -d"=" -f2`
 echo "Starting container"
+
 container_id=`docker run -it ${detached} -p ${port}:8080 \
-		-e RAWREPO_URL0="${rr_user} ${rr_user}:${rr_pass}@${rr_conn}" \
+		-e RAWREPO_URL="${rr_user}:${rr_pass}@${rr_conn}" \
 		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.34/" \
+		-e INSTANCE_NAME="dev" \
+		-e JAVA_MAX_HEAP_SIZE="2G" \
 		 ${docker_image}:${version}`
 cc=$?
 if [ ${cc} -ne 0 ]

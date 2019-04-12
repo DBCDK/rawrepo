@@ -87,7 +87,7 @@ public class Introspect {
     @Inject
     JSONStreamer streamer;
 
-    @Resource(lookup = "jdbc/rr")
+    @Resource(lookup = "jdbc/rawrepo")
     DataSource globalDataSource;
 
     OpenAgencyServiceFromURL openagency;
