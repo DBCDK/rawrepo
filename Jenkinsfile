@@ -6,8 +6,11 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
         timestamps()
     }
-    triggers { pollSCM('H/03 * * * *') }
-
+    triggers {
+        pollSCM('H/03 * * * *')
+        upstream(upstreamProjects: "Docker-payara5-bump-trigger",
+                threshold: hudson.model.Result.SUCCESS)
+    }
     environment {
         MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dorg.slf4j.simpleLogger.showThreadName=true"
         JAVA_OPTS = "-XX:-UseSplitVerifier"
@@ -15,11 +18,9 @@ pipeline {
         DOCKER_IMAGE_VERSION = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         DOCKER_IMAGE_DIT_VERSION = "DIT-${env.BUILD_NUMBER}"
     }
-
     tools {
         maven 'maven 3.5'
     }
-
     stages {
         stage("Clean Workspace") {
             steps {
@@ -27,7 +28,6 @@ pipeline {
                 checkout scm
             }
         }
-
         stage('Build') {
             steps {
                 script {
@@ -48,7 +48,6 @@ pipeline {
                 }
             }
         }
-
         stage('Docker') {
             when {
                 expression {
@@ -74,7 +73,6 @@ pipeline {
                 }
             }
         }
-
         stage('dpkg') {
             when {
                 expression { env.BRANCH_NAME == 'master' }
@@ -85,5 +83,4 @@ pipeline {
             }
         }
     }
-
 }
