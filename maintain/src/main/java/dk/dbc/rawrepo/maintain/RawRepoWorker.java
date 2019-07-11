@@ -46,14 +46,12 @@ public class RawRepoWorker implements AutoCloseable {
 
     private final DataSource dataSource;
     private final OpenAgencyServiceFromURL openAgency;
-    private final ExecutorService executorService;
     private Connection connection;
     private RawRepoDAO dao;
 
     public RawRepoWorker(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
         this.dataSource = dataSource;
         this.openAgency = openAgency;
-        this.executorService = executorService;
         this.connection = null;
         this.dao = null;
     }

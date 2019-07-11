@@ -22,7 +22,6 @@ package dk.dbc.rawrepo.maintain;
 
 import com.sun.xml.ws.developer.SchemaValidation;
 import dk.dbc.commons.webservice.WsdlValidationErrorHandler;
-import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.maintain.transport.C;
 import dk.dbc.rawrepo.maintain.transport.PageContentResponse;
@@ -61,37 +60,32 @@ import java.util.concurrent.Executors;
 @WebService(targetNamespace = C.NS, serviceName = C.SERVICE, portName = C.PORT)
 @SchemaValidation(handler = WsdlValidationErrorHandler.class)
 public class Service {
-
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
     @Resource
     WebServiceContext webServiceContext;
 
-    @Resource(lookup = C.DATASOURCE)
-    DataSource rawrepo;
+    @Resource(lookup = "jdbc/rawrepo")
+    private DataSource dataSource;
 
-    @Inject
-    @EEConfig.Url
-    String openAgencyUrl;
+    private String name;
 
-    @Inject
-    @EEConfig.Name(C.NAME)
-    String name;
+    private ExecutorService executorService;
 
-    ExecutorService executorService;
-
-    OpenAgencyServiceFromURL openAgency = null;
-    ResponseErrorException openAgencyError = null;
+    private OpenAgencyServiceFromURL openAgency = null;
+    private ResponseErrorException openAgencyError = null;
 
     @PostConstruct
     public void init() {
         log.info("init()");
-        if (openAgencyUrl != null) {
-            this.openAgency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
-        } else {
-            log.error("openAgencyUrl is not defined");
-            openAgencyError = new ResponseErrorException("Misconfiguration of server", ResponseError.Type.INTERNAL_SERVER_ERROR);
+
+        if (System.getenv(C.OPENAGENCY_URL) == null) {
+            throw new RuntimeException("OPENAGENCY_URL not configured!");
         }
+        String openAgencyUrl = System.getenv(C.OPENAGENCY_URL);
+
+        this.name = System.getenv(C.NAME);
+        this.openAgency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
         this.executorService = Executors.newFixedThreadPool(2);
     }
 
@@ -123,17 +117,17 @@ public class Service {
 
             switch (method) {
                 case "queueRecords":
-                    try (QueueRecords queueRecords = new QueueRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (QueueRecords queueRecords = new QueueRecords(dataSource, getOpenAgency(), executorService)) {
                         valuesOut = queueRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "removeRecords":
-                    try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (RemoveRecords removeRecords = new RemoveRecords(dataSource, getOpenAgency(), executorService)) {
                         valuesOut = removeRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "revertRecords":
-                    try (RevertRecords revertRecords = new RevertRecords(rawrepo, getOpenAgency(), executorService)) {
+                    try (RevertRecords revertRecords = new RevertRecords(dataSource, getOpenAgency(), executorService)) {
                         valuesOut = revertRecords.getValues(valuesSet, leaving);
                     }
                     break;
@@ -177,7 +171,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (QueueRecords queueRecords = new QueueRecords(rawrepo, getOpenAgency(), executorService)) {
+            try (QueueRecords queueRecords = new QueueRecords(dataSource, getOpenAgency(), executorService)) {
                 out.value = queueRecords.queueRecords(agencyId, ids.list, provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {
@@ -202,7 +196,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RemoveRecords removeRecords = new RemoveRecords(rawrepo, getOpenAgency(), executorService)) {
+            try (RemoveRecords removeRecords = new RemoveRecords(dataSource, getOpenAgency(), executorService)) {
                 out.value = removeRecords.removeRecords(agencyId, ids.list, provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {
@@ -228,7 +222,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RevertRecords revertRecords = new RevertRecords(rawrepo, getOpenAgency(), executorService)) {
+            try (RevertRecords revertRecords = new RevertRecords(dataSource, getOpenAgency(), executorService)) {
                 out.value = revertRecords.revertRecords(agencyId, ids.list, time.getMillis(), provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {
