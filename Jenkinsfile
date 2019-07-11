@@ -59,9 +59,11 @@ pipeline {
                     def repo = "docker-io.dbc.dk"
                     def imageNamePostgres = "rawrepo-postgres-${PROJECT_VERSION}".toLowerCase()
                     def imageNameIntrospect = "rawrepo-introspect-${PROJECT_VERSION}".toLowerCase()
+                    def imageNameMaintain = "rawrepo-maintain-${PROJECT_VERSION}".toLowerCase()
 
                     def dockerPostgres = docker.build("${repo}/${imageNamePostgres}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./access')
                     def dockerIntrospect = docker.build("${repo}/${imageNameIntrospect}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./introspect ')
+                    def dockerMaintain = docker.build("${repo}/${imageNameMaintain}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./maintain ')
 
                     dockerPostgres.push()
                     dockerIntrospect.push()
@@ -69,6 +71,7 @@ pipeline {
                     if (env.BRANCH_NAME == 'master') {
                         dockerPostgres.push("${DOCKER_IMAGE_DIT_VERSION}")
                         dockerIntrospect.push("${DOCKER_IMAGE_DIT_VERSION}")
+                        dockerMaintain.push("${DOCKER_IMAGE_DIT_VERSION}")
                     }
                 }
             }
