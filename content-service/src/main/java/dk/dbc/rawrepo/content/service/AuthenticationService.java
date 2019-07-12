@@ -20,20 +20,17 @@
  */
 package dk.dbc.rawrepo.content.service;
 
-import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.forsrights.client.ForsRights;
 import dk.dbc.forsrights.client.ForsRightsException;
 import dk.dbc.forsrights.client.ForsRightsServiceFromURL;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
-import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
-import javax.inject.Inject;
-import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.ejb.Singleton;
+
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @Singleton
@@ -41,62 +38,49 @@ public class AuthenticationService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
-    @Inject
-    @EEConfig.Name(C.FORS.DISABLED)
-    @EEConfig.Default(C.FORS.DISABLED_DEFAULT)
-    boolean disabled;
+    private boolean disabled;
+    private String rightsName;
+    private String rightsRight;
 
-    @Inject
-    @EEConfig.Name(C.FORS.URL)
-    @EEConfig.Default(C.FORS.URL_DEFAULT)
-    @EEConfig.Url
-    String forsRightsUrl;
-
-    @Inject
-    @EEConfig.Name(C.FORS.CONNECT_TIMEOUT)
-    @EEConfig.Default(C.FORS.CONNECT_TIMEOUT_DEFAULT)
-    @Min(1)
-    int connectTimeout;
-
-    @Inject
-    @EEConfig.Name(C.FORS.REQUEST_TIMEOUT)
-    @EEConfig.Default(C.FORS.REQUEST_TIMEOUT_DEFAULT)
-    @Min(1)
-    int requestTimeout;
-
-    @Inject
-    @EEConfig.Name(C.FORS.CACHE)
-    @EEConfig.Default(C.FORS.CACHE_DEFAULT)
-    @Min(1)
-    long cacheAgeSeconds;
-
-    @Inject
-    @EEConfig.Name(C.FORS.RIGHTS_NAME)
-    @EEConfig.Default(C.FORS.RIGHTS_NAME_DEFAULT)
-    String rightsName;
-
-    @Inject
-    @EEConfig.Name(C.FORS.RIGHTS_RIGHT)
-    @EEConfig.Default(C.FORS.RIGHTS_RIGHT_DEFAULT)
-    String rightsRight;
-
-
-    ForsRightsServiceFromURL service;
-    ForsRights forsRights;
+    private ForsRights forsRights;
 
     @PostConstruct
     public void init() {
         log.debug("init()");
+
+        disabled = Boolean.parseBoolean(System.getenv().getOrDefault(
+                C.FORS.DISABLED,
+                C.FORS.DISABLED_DEFAULT));
+
         if (disabled) {
             log.info("Validation disabled");
             return;
         }
 
-        service = ForsRightsServiceFromURL.builder()
-        .connectTimeout(connectTimeout)
-        .requestTimeout(requestTimeout)
-        .build(forsRightsUrl);
-        log.debug("forsrights url = " + forsRightsUrl);
+        if (!System.getenv().containsKey(C.FORS.URL)) {
+            throw new RuntimeException("FORSRIGHTS_URL must have a value");
+        }
+
+        rightsName = System.getenv().getOrDefault(
+                C.FORS.RIGHTS_NAME,
+                C.FORS.RIGHTS_NAME_DEFAULT);
+
+        rightsRight = System.getenv().getOrDefault(
+                C.FORS.RIGHTS_RIGHT,
+                C.FORS.RIGHTS_RIGHT_DEFAULT);
+
+        ForsRightsServiceFromURL service = ForsRightsServiceFromURL.builder()
+                .connectTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                        C.FORS.CONNECT_TIMEOUT,
+                        C.FORS.CONNECT_TIMEOUT_DEFAULT)))
+                .requestTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                        C.FORS.REQUEST_TIMEOUT,
+                        C.FORS.REQUEST_TIMEOUT_DEFAULT)))
+                .build(System.getenv(C.FORS.URL));
+
+        long cacheAgeSeconds = Integer.parseInt(System.getenv().getOrDefault(
+                C.FORS.CACHE,
+                C.FORS.CACHE_DEFAULT));
 
         ForsRights.RightsCache rightsCache = new ForsRights.RightsCache(cacheAgeSeconds * 1000);
         log.debug("cacheAgeSeconds = " + cacheAgeSeconds);
@@ -120,7 +104,6 @@ public class AuthenticationService {
         }
         log.debug("validate(user/group/password)");
         ForsRights.RightSet rights = forsRights.lookupRight(authentication.user, authentication.group, authentication.password, "");
-        System.out.println("rights = " + rights);
         return rights.hasRight(rightsName, rightsRight);
     }
 

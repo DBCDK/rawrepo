@@ -69,20 +69,17 @@ class RemoveRecords extends RawRepoWorker {
 
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
-    private final MarcXMerger marcXMerger;
 
     RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
         super(dataSource, openAgency, executorService);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
-        this.marcXMerger = new MarcXMerger();
     }
 
     RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
         super(dataSource, openAgency, null);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
-        this.marcXMerger = new MarcXMerger();
     }
 
     HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {

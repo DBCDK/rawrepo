@@ -45,11 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.anyObject;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.eq;
@@ -81,7 +80,6 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
             access.relationHints = new RelationHintsOpenAgency(getOpenAgencyService());
-            doCallRealMethod().when(access).changedRecord(anyString(), any(RecordId.class));
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             fillMockRelations(access,
@@ -162,13 +160,11 @@ public class RawRepoDAOTest {
         doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
-        when(mock.relationHints.get(654321)).thenReturn(Collections.emptyList());
         when(mock.relationHints.usesCommonAgency(654321)).thenReturn(Boolean.FALSE);
         when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
         when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("PRIVATE", 654321)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 870970)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 654321)).thenReturn(Boolean.TRUE);
         int parentRelationAgency;
         parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 123456);
@@ -195,12 +191,8 @@ public class RawRepoDAOTest {
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists(anyString(), anyInt())).thenReturn(Boolean.FALSE);
-        when(mock.recordExists("PRIVATE", 123456)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("COMMON", 870970)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("COMMON", 123456)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("INTERM", 870970)).thenReturn(Boolean.TRUE);
         when(mock.recordExists("INTERM", 300000)).thenReturn(Boolean.TRUE);
-        when(mock.recordExists("INTERM", 123456)).thenReturn(Boolean.TRUE);
         int siblingRelationAgency;
         siblingRelationAgency = mock.findSiblingRelationAgency("COMMON", 123456);
         System.out.println("parentRelationAgency = " + siblingRelationAgency);
@@ -274,9 +266,6 @@ public class RawRepoDAOTest {
             }
 
             when(access.getRelationsParents(recordId)).thenReturn(parents);
-            when(access.getRelationsFrom(recordId)).thenReturn(all);
-            when(access.getRelationsChildren(recordId)).thenReturn(children);
-            when(access.getRelationsSiblingsToMe(recordId)).thenReturn(siblingsToMe);
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
             when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
             when(access.recordExistsMaybeDeleted(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);

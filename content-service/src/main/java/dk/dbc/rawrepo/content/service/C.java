@@ -31,52 +31,37 @@ public class C {
     public static final String VERSION = "1.0";
 
     public static final String PORT = SERVICE + "/" + VERSION;
-    public static final String ACTION_PATH = NS + "/" + SERVICE + "/";
 
     public static final String OPERATION_FETCH = "fetch";
-
-    public static final String PROPERTIES_LOOKUP = "rawrepo-content-service";
 
     public static final String X_FORWARDED_FOR = "x-forwarded-for";
 
     public static class FORS {
+        public static final String URL = "FORSRIGHTS_URL";
 
-        public static final String URL = "forsRightsUrl";
-        public static final String URL_DEFAULT = "http://forsrights.addi.dk/1.2/";
-
-        public static final String CONNECT_TIMEOUT = "forsRightsConnectTimeout";
+        public static final String CONNECT_TIMEOUT = "FORSRIGHTS_CONNECT_TIMEOUT";
         public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
-        public static final String REQUEST_TIMEOUT = "forsRightsRequestTimeout";
+        public static final String REQUEST_TIMEOUT = "FORSRIGHTS_REQUEST_TIMEOUT";
         public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
-
-        public static final String CACHE = "forsRightsCache";
+        public static final String CACHE = "FORSRIGHTS_CACHE";
         public static final String CACHE_DEFAULT = "7200";
-
-        public static final String DISABLED = "forsRightsDisabled";
+        public static final String DISABLED = "FORSRIGHTS_DISABLED";
         public static final String DISABLED_DEFAULT = "false";
-
-        public static final String RIGHTS_NAME = "forsRightsName";
+        public static final String RIGHTS_NAME = "FORSRIGHTS_NAME";
         public static final String RIGHTS_NAME_DEFAULT = "*";
-        public static final String RIGHTS_RIGHT = "forsRightsRight";
+        public static final String RIGHTS_RIGHT = "FORSRIGHTS_RIGHT";
         public static final String RIGHTS_RIGHT_DEFAULT = "*";
-
-    }
-
-    public static class RAWREPO {
-
-        public static final String DATASOURCE = "jdbc/rawrepocontentservice/rawrepo";
     }
 
     public static class OPENAGENCY {
+        public static final String URL = "OPENAGENCY_URL";
 
-        public static final String URL = "openAgencyUrl";
-        public static final String URL_DEFAULT = "http://openagency.addi.dk/2.33/";
-
-        public static final String CONNECT_TIMEOUT = "openAgencyConnectTimeout";
+        public static final String CONNECT_TIMEOUT = "OPENAGENCY_CONNECT_TIMEOUT";
         public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
-        public static final String REQUEST_TIMEOUT = "openAgencyRequestTimeout";
+        public static final String REQUEST_TIMEOUT = "OPENAGENCY_REQUEST_TIMEOUT";
         public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
-
+        public static final String CACHE_AGE = "OPENAGENCY_CACHE_AGE";
+        public static final String CACHE_AGE_DEFAULT = String.valueOf(8);
     }
 
 }

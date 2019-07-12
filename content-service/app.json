@@ -1,0 +1,9 @@
+{
+  "appName": "rawrepo-content-service",
+  "jdbc": {
+    "jdbc/rawrepo": {
+      "url": "${RAWREPO_DB_URL}"
+    }
+  }
+}
+

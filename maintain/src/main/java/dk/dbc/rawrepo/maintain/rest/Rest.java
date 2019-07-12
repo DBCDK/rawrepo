@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,35 +48,14 @@ import java.util.Properties;
 public class Rest {
     private static final Logger log = LoggerFactory.getLogger(Rest.class);
 
-    @Resource(lookup = C.PROPERTIES)
-    Properties properties;
-
-    @Resource(lookup = C.DATASOURCE)
-    DataSource rawrepo;
-
-    @GET
-    @Path("/redirect/{name}")
-    public Response redirect(@PathParam("name") String name) {
-        log.info("HERE");
-        if (properties.containsKey("redirect-" + name)) {
-            try {
-                return Response.seeOther(new URI(properties.getProperty("redirect-" + name))).build();
-            } catch (URISyntaxException ex) {
-                log.error("Cound not parse: " + properties.getProperty("redirect-" + name) + " from redirect-" + name);
-                return Response.serverError().build();
-            }
-        } else {
-            log.warn("Redirecting nod declared for: redirect-" + name);
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-
-    }
+    @Resource(lookup = "jdbc/rawrepo")
+    private DataSource dataSource;
 
     @GET
     @Path("queuerules")
     @Produces("text/html")
     public String getQueuerules() throws SQLException {
-        try (QueueRules q = new QueueRules(rawrepo)) {
+        try (QueueRules q = new QueueRules(dataSource)) {
             ArrayList<Provider> providers = q.getQueueRules();
             log.debug("Found '{}' providers", providers.size());
             StringBuilder sb = new StringBuilder();
@@ -108,7 +88,6 @@ public class Rest {
                         sb.append("<td rowspan=\"").append(provider.getWorkers().size()).append("\">").append(provider.getProvider()).append("</td>");
                     }
                     sb.append("<td>").append(w.getWorker()).append("</td>");
-                    sb.append("<td>").append(w.getDescription()).append("</td>");
                     sb.append("</tr>");
                 }
             }
