@@ -60,18 +60,23 @@ pipeline {
                     def imageNamePostgres = "rawrepo-postgres-${PROJECT_VERSION}".toLowerCase()
                     def imageNameIntrospect = "rawrepo-introspect-${PROJECT_VERSION}".toLowerCase()
                     def imageNameMaintain = "rawrepo-maintain-${PROJECT_VERSION}".toLowerCase()
+                    def imageNameContentService = "rawrepo-content-service-${PROJECT_VERSION}".toLowerCase()
 
                     def dockerPostgres = docker.build("${repo}/${imageNamePostgres}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./access')
                     def dockerIntrospect = docker.build("${repo}/${imageNameIntrospect}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./introspect ')
                     def dockerMaintain = docker.build("${repo}/${imageNameMaintain}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./maintain ')
+                    def dockerContentService = docker.build("${repo}/${imageNameContentService}:${DOCKER_IMAGE_VERSION}", '--pull --no-cache ./content-service ')
 
                     dockerPostgres.push()
                     dockerIntrospect.push()
+                    dockerMaintain.push()
+                    dockerContentService.push()
 
                     if (env.BRANCH_NAME == 'master') {
                         dockerPostgres.push("${DOCKER_IMAGE_DIT_VERSION}")
                         dockerIntrospect.push("${DOCKER_IMAGE_DIT_VERSION}")
                         dockerMaintain.push("${DOCKER_IMAGE_DIT_VERSION}")
+                        dockerContentService.push("${DOCKER_IMAGE_DIT_VERSION}")
                     }
                 }
             }
