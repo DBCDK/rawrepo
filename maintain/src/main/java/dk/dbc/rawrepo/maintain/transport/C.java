@@ -37,5 +37,15 @@ public class C {
     public static final String OPERATION_QUEUE_RECORDS = "queueRecords";
     public static final String OPERATION_REMOVE_RECORDS = "removeRecords";
     public static final String OPERATION_REVERT_RECORDS = "revertRecords";
-    public static final String OPENAGENCY_URL = "OPENAGENCY_URL";
+
+    public static class OPENAGENCY {
+        public static final String URL = "OPENAGENCY_URL";
+
+        public static final String CONNECT_TIMEOUT = "OPENAGENCY_CONNECT_TIMEOUT";
+        public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
+        public static final String REQUEST_TIMEOUT = "OPENAGENCY_REQUEST_TIMEOUT";
+        public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
+        public static final String CACHE_AGE = "OPENAGENCY_CACHE_AGE";
+        public static final String CACHE_AGE_DEFAULT = String.valueOf(8);
+    }
 }

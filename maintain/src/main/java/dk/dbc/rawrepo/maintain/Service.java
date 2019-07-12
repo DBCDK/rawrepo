@@ -35,7 +35,6 @@ import org.xml.sax.SAXException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -79,13 +78,25 @@ public class Service {
     public void init() {
         log.info("init()");
 
-        if (System.getenv(C.OPENAGENCY_URL) == null) {
-            throw new RuntimeException("OPENAGENCY_URL not configured!");
+        if (!System.getenv().containsKey(C.OPENAGENCY.URL)) {
+            throw new RuntimeException("OPENAGENCY_URL must have a value");
         }
-        String openAgencyUrl = System.getenv(C.OPENAGENCY_URL);
+
+        OpenAgencyServiceFromURL.Builder builder = OpenAgencyServiceFromURL.builder();
+
+        builder = builder.
+                connectTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                        C.OPENAGENCY.CONNECT_TIMEOUT,
+                        C.OPENAGENCY.CONNECT_TIMEOUT_DEFAULT))).
+                requestTimeout(Integer.parseInt(System.getenv().getOrDefault(
+                        C.OPENAGENCY.REQUEST_TIMEOUT,
+                        C.OPENAGENCY.REQUEST_TIMEOUT_DEFAULT))).
+                setCacheAge(Integer.parseInt(System.getenv().getOrDefault(
+                        C.OPENAGENCY.CACHE_AGE,
+                        C.OPENAGENCY.CACHE_AGE_DEFAULT)));
 
         this.name = System.getenv(C.NAME);
-        this.openAgency = OpenAgencyServiceFromURL.builder().build(openAgencyUrl);
+        this.openAgency = builder.build(System.getenv().get(C.OPENAGENCY.URL));
         this.executorService = Executors.newFixedThreadPool(2);
     }
 
