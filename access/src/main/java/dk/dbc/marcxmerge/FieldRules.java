@@ -120,7 +120,7 @@ public class FieldRules {
          * Register the presence of a local field, and all the fields in it's
          * collection
          *
-         * @param field
+         * @param field Name of the field
          */
         public void registerLocalField(String field) {
             if (overwriteCollections.containsKey(field)) {
@@ -131,7 +131,7 @@ public class FieldRules {
         /**
          * The presence of this field is not wanted
          *
-         * @param field
+         * @param field Name of the field
          * @param includeAllFields Do not restrict to validRegex
          * @return boolean
          */
@@ -142,7 +142,7 @@ public class FieldRules {
         /**
          * Remove this field from the common data
          *
-         * @param field
+         * @param field Name of the field to remove, e.g. 065
          * @return boolean
          */
         public boolean removeField(String field) {
@@ -152,7 +152,7 @@ public class FieldRules {
         /**
          * This field cannot be overwritten by a local value
          *
-         * @param field
+         * @param field Name of the field to keep, e.g. 065
          * @return boolean
          */
         public boolean immutableField(String field) {
@@ -214,14 +214,14 @@ public class FieldRules {
     }
 
     /**
-     * @return
+     * @return Ruleset
      */
     public RuleSet newRuleSet() {
         return new RuleSet(immutable, remove);
     }
 
     /**
-     * @return
+     * @return List of MarcXFixups
      */
     public List<MarcXFixup> getFixups() {
         return Arrays.asList(fixups);
@@ -248,9 +248,9 @@ public class FieldRules {
     public interface MarcXFixup {
 
         /**
-         * @param target
-         * @param common
-         * @param enrich
+         * @param target The target document
+         * @param common The common document (typically a 870970 record)
+         * @param enrich The enrichment document
          */
         void fix(Document target, Document common, Document enrich);
     }

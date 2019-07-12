@@ -73,7 +73,7 @@ public class MarcXMerger {
     /**
      * Default constructor, sets up FieldRules according to std rules
      *
-     * @throws MarcXMergerException
+     * @throws MarcXMergerException when something goes wrong
      */
     public MarcXMerger() throws MarcXMergerException {
         this.documentBuilder = newDocumentBuilder();
@@ -86,7 +86,7 @@ public class MarcXMerger {
      * Constructor for custom FieldRules
      *
      * @param fieldRulesIntermediate ruleset for merging records
-     * @throws MarcXMergerException
+     * @throws MarcXMergerException when something goes wrong
      */
     public MarcXMerger(FieldRules fieldRulesIntermediate, String name) throws MarcXMergerException {
         this.documentBuilder = newDocumentBuilder();
@@ -148,8 +148,8 @@ public class MarcXMerger {
     /**
      * Create an xml document parser
      *
-     * @return
-     * @throws ParserConfigurationException
+     * @return New DocumentBuilder
+     * @throws MarcXMergerException when something goes wrong
      */
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
@@ -170,9 +170,8 @@ public class MarcXMerger {
      * Create an xml transformer for writing a document
      *
      * @return new transformer
-     * @throws TransformerConfigurationException
-     * @throws TransformerFactoryConfigurationError
-     * @throws IllegalArgumentException
+     * @throws TransformerFactoryConfigurationError when something goes wrong
+     * @throws IllegalArgumentException             when something goes wrong
      */
     private static Transformer newTransformer() throws MarcXMergerException {
         try {
@@ -197,9 +196,9 @@ public class MarcXMerger {
      *
      * @param common           the base of the result
      * @param local            the additional data
-     * @param includeAllFields
+     * @param includeAllFields should all fields be included
      * @return a merged record
-     * @throws MarcXMergerException
+     * @throws MarcXMergerException when something goes wrong
      */
     public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
         try {
@@ -254,7 +253,7 @@ public class MarcXMerger {
     /**
      * Traverse an xml document element removing empty text/cdata nodes
      *
-     * @param element
+     * @param element The element
      */
     private static void removeEmptyText(Element element) {
         Node child = element.getFirstChild();

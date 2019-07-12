@@ -733,8 +733,8 @@ public abstract class RawRepoDAO {
      *
      * @param provider parameter to pass to enqueue(...)
      * @param recordId the record that has been changed
+     * @param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
      * @throws RawRepoException done at failure
-     * @Param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
      * Default value is 1000
      */
     public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException {
