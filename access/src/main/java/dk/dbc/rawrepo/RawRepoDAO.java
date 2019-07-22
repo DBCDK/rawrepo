@@ -405,35 +405,38 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException done at failure
      */
     public void expandRecord(Record record, boolean keepAutField) throws RawRepoException {
-        RecordId recordId = record.getId();
-        String bibliographicRecordId = recordId.getBibliographicRecordId();
-        Integer agencyId = recordId.getAgencyId();
+        final RecordId recordId = record.getId();
+        final String bibliographicRecordId = recordId.getBibliographicRecordId();
+        final int agencyId = recordId.getAgencyId();
 
         // Only get record collection if the record exist (there are no relations if the record doesn't exist or is deleted)
-        // Only 870970 and 870971 records can have authority records so authority is only relevant if the 870970 or 870971
         if (recordExists(bibliographicRecordId, agencyId)) {
             logger.info("Record exists - checking if there is a 870970/870971 record");
-            RecordId commonRecordId = new RecordId(bibliographicRecordId, 870970);
-            RecordId articleRecordId = new RecordId(bibliographicRecordId, 870971);
             RecordId expandableRecordId = null;
 
-            List<Integer> dbcAgencies = Arrays.asList(870970, 870971);
+            // Only these agencies can have authority parents
+            final List<Integer> expandableAgencies = Arrays.asList(190002, 190004, 870970, 870971, 870974);
 
-            if (dbcAgencies.contains(recordId.agencyId)) {
+            if (expandableAgencies.contains(recordId.agencyId)) {
                 expandableRecordId = recordId;
-            } else if (getRelationsSiblingsFromMe(recordId).contains(commonRecordId)) {
-                expandableRecordId = commonRecordId;
-            } else if (getRelationsSiblingsFromMe(recordId).contains(articleRecordId)) {
-                expandableRecordId = articleRecordId;
+            } else {
+                Set<RecordId> relationsSiblings = getRelationsSiblingsFromMe(recordId);
+                for (int expandableAgencyId : expandableAgencies) {
+                    RecordId potentialExpandableRecordId = new RecordId(bibliographicRecordId, expandableAgencyId);
+                    if (relationsSiblings.contains(potentialExpandableRecordId)) {
+                        expandableRecordId = potentialExpandableRecordId;
+                        break;
+                    }
+                }
             }
 
             if (expandableRecordId != null) {
                 logger.info("Expandable record found ({}) - continuing expanding", expandableRecordId.toString());
 
-                Set<RecordId> autParents = getRelationsParents(expandableRecordId);
+                final Set<RecordId> autParents = getRelationsParents(expandableRecordId);
                 logger.info("Found {} parents to the expandable record", autParents.size());
 
-                Map<String, Record> autRecords = new HashMap<>();
+                final Map<String, Record> autRecords = new HashMap<>();
                 for (RecordId parentId : autParents) {
                     if ("870979".equals(Integer.toString(parentId.getAgencyId()))) {
                         logger.info("Found parent authority record: {}", parentId.toString());
@@ -735,7 +738,7 @@ public abstract class RawRepoDAO {
      * @param recordId the record that has been changed
      * @param priority the priority of how fast the record should be dequeued - lower number = fast dequeue.
      * @throws RawRepoException done at failure
-     * Default value is 1000
+     *                          Default value is 1000
      */
     public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException {
         changedRecord(provider, recordId, recordId.getAgencyId(), true, priority);
