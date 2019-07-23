@@ -332,7 +332,7 @@ public abstract class RawRepoDAO {
      */
     public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
-        logger.info("agencyFor record {}:{} has record for the following agencies: {}", bibliographicRecordId, originalAgencyId, allAgenciesWithRecord);
+        logger.debug("agencyFor record {}:{} has record for the following agencies: {}", bibliographicRecordId, originalAgencyId, allAgenciesWithRecord);
 
         List<Integer> agencyPriorityList = relationHints.getAgencyPriority(originalAgencyId);
 
