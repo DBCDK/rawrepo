@@ -43,7 +43,7 @@ public class MarcXBlock {
 
     /**
      *
-     * @param processor
+     * @param processor The MarcXProcessor object
      */
     public MarcXBlock(MarcXProcessor processor) {
         this.processor = processor;

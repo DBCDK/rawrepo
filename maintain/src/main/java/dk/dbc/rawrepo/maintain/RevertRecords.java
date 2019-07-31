@@ -55,11 +55,11 @@ public class RevertRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(RevertRecords.class);
 
-    public RevertRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
+    RevertRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
         super(dataSource, openAgency, executorService);
     }
 
-    public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
+    HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
         HashMap<String, ArrayList<String>> values = new HashMap<>();
 
         try {
@@ -70,7 +70,7 @@ public class RevertRecords extends RawRepoWorker {
         return values;
     }
 
-    public Object revertRecords(Integer agencyId, List<String> ids, long millis, String provider, String trackingId) {
+    Object revertRecords(Integer agencyId, List<String> ids, long millis, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
                 "; ids = " + ids +
                 "; time = " + new Date(millis) +

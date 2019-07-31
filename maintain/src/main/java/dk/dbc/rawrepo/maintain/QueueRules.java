@@ -37,8 +37,6 @@ import java.util.Map;
  */
 public class QueueRules extends RawRepoWorker {
 
-    private static final Logger log = LoggerFactory.getLogger(QueueRules.class);
-
     public QueueRules(DataSource dataSource) {
         super(dataSource, null, null);
     }

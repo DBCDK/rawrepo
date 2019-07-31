@@ -38,6 +38,7 @@ public class ExpandCommonMarcRecord {
      *
      * @param expandableRecord The record which should be expanded
      * @param authorityRecords List of authority records to be used for expanding
+     * @param keepAutFields If true the  *5 and *6 fields remains in the output record
      * @throws RawRepoException When expansion fails (usually due to missing authority record)
      */
     public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException {
@@ -107,6 +108,14 @@ public class ExpandCommonMarcRecord {
         return doExpand(commonRecord, authorityRecords, keepAutFields);
     }
 
+    /**
+     * The function takes a set of  records and return a common marc record expanded with authority fields (if any)
+     *
+     * @param records The collection of records
+     * @param recordId The id of the record to expand
+     * @return a single common record expanded with authority data
+     * @throws RawRepoException if the collection doesn't contain the necessary records
+     */
     public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records, String recordId) throws RawRepoException {
         return expandMarcRecord(records, recordId, false);
     }

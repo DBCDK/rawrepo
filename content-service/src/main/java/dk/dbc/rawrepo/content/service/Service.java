@@ -22,7 +22,6 @@ package dk.dbc.rawrepo.content.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import dk.dbc.eeconfig.EEConfig;
 import dk.dbc.forsrights.client.ForsRightsException;
 import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
@@ -70,8 +69,8 @@ import java.util.regex.Pattern;
 public abstract class Service {
     private static final XLogger logger = XLoggerFactory.getXLogger(Service.class);
 
-    @Resource(lookup = C.RAWREPO.DATASOURCE)
-    DataSource rawrepo;
+    @Resource(lookup = "jdbc/rawrepo")
+    private DataSource dataSource;
 
     @Inject
     AuthenticationService forsRights;
@@ -115,10 +114,6 @@ public abstract class Service {
     @Inject
     Timer fetchCollection;
 
-    @Inject
-    @EEConfig.Name(C.X_FORWARDED_FOR)
-    @EEConfig.Default("")
-    String xForwardedFor;
 
     List<IPRange> ipRanges;
 
@@ -128,7 +123,10 @@ public abstract class Service {
     public void init() {
         logger.info("init()");
         ipRanges = new ArrayList<>();
-        if (!xForwardedFor.isEmpty()) {
+
+        String xForwardedFor = System.getenv(C.X_FORWARDED_FOR);
+
+        if (xForwardedFor != null) {
             for (String range : xForwardedFor.split("[,;:\\s]+")) {
                 try {
                     ipRanges.add(new IPRange(range));
@@ -169,7 +167,7 @@ public abstract class Service {
                 throw new ErrorException("Authentication denied", FetchResponseError.Type.AUTHENTICATION_DENIED);
             }
 
-            try (Connection connection = rawrepo.getConnection()) {
+            try (Connection connection = dataSource.getConnection()) {
                 RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService())).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();

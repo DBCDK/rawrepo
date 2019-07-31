@@ -28,19 +28,24 @@ public class C {
     public static final String NS = "http://rawrepo.dbc.dk/maintain/";
     public static final String SERVICE = "Maintain";
     public static final String VERSION = "1.0";
-    public static final String NAME = "name";
+    public static final String NAME = "INSTANCE_NAME";
 
     public static final String PORT = SERVICE + "/" + VERSION;
     public static final String ACTION_PATH = NS + SERVICE + "/";
-
-    public static final String DATASOURCE = "jdbc/rawrepomaintain/rawrepo";
-    public static final String PROPERTIES = "rawrepo-maintain";
 
     public static final String OPERATION_PAGE_CONTENT = "pageContent";
     public static final String OPERATION_QUEUE_RECORDS = "queueRecords";
     public static final String OPERATION_REMOVE_RECORDS = "removeRecords";
     public static final String OPERATION_REVERT_RECORDS = "revertRecords";
-    public static final String OPEN_AGENCY_URL = "openAgencyUrl";
 
+    public static class OPENAGENCY {
+        public static final String URL = "OPENAGENCY_URL";
 
+        public static final String CONNECT_TIMEOUT = "OPENAGENCY_CONNECT_TIMEOUT";
+        public static final String CONNECT_TIMEOUT_DEFAULT = "2500";
+        public static final String REQUEST_TIMEOUT = "OPENAGENCY_REQUEST_TIMEOUT";
+        public static final String REQUEST_TIMEOUT_DEFAULT = "10000";
+        public static final String CACHE_AGE = "OPENAGENCY_CACHE_AGE";
+        public static final String CACHE_AGE_DEFAULT = String.valueOf(8);
+    }
 }
