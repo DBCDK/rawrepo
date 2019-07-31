@@ -118,6 +118,12 @@ public class MarcXMerger {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return true;
                 }
+
+            case MarcXChangeMimeType.LITANALYSIS:
+                switch (enrichmentMimeType) {
+                    case MarcXChangeMimeType.ENRICHMENT:
+                        return true;
+                }
         }
         return false;
     }
@@ -141,6 +147,13 @@ public class MarcXMerger {
                     case MarcXChangeMimeType.ENRICHMENT:
                         return MarcXChangeMimeType.AUTHORITY;
                 }
+
+            case MarcXChangeMimeType.LITANALYSIS:
+                switch (enrichmentMimeType) {
+                    case MarcXChangeMimeType.ENRICHMENT:
+                        return MarcXChangeMimeType.LITANALYSIS;
+                }
+
         }
         throw new IllegalStateException("Cannot figure out mimetype of: " + originalMimeType + "&" + enrichmentMimeType);
     }

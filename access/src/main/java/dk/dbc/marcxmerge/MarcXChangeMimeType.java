@@ -21,15 +21,16 @@
 package dk.dbc.marcxmerge;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class MarcXChangeMimeType {
 
     public static final String MARCXCHANGE = "text/marcxchange";
-    public static final String ENRICHMENT = "text/enrichment+marcxchange";
     public static final String ARTICLE = "text/article+marcxchange";
     public static final String AUTHORITY = "text/authority+marcxchange";
+    public static final String LITANALYSIS = "text/litanalysis+marcxchange";
+
+    public static final String ENRICHMENT = "text/enrichment+marcxchange";
     public static final String UNKNOWN = "unknown/unknown";
 
     public static boolean isMarcXChange(String mimetype) {
@@ -40,6 +41,7 @@ public class MarcXChangeMimeType {
             case MARCXCHANGE:
             case ARTICLE:
             case AUTHORITY:
+            case LITANALYSIS:
                 return true;
             default:
                 return false;
@@ -64,6 +66,30 @@ public class MarcXChangeMimeType {
         }
         switch (mimetype) {
             case ARTICLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isAuthority(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
+        switch (mimetype) {
+            case AUTHORITY:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isLitAnalysis(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
+        switch (mimetype) {
+            case LITANALYSIS:
                 return true;
             default:
                 return false;
