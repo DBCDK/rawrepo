@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'devel8' }
+    agent { label 'devel9' }
     options {
         buildDiscarder(logRotator(numToKeepStr: '20', daysToKeepStr: '20'))
         disableConcurrentBuilds()
