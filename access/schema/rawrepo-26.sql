@@ -176,7 +176,7 @@ BEGIN
   ELSEIF NEW.mimetype = 'text/enrichment+marcxchange'
     THEN -- Handle enrichment
       _enrichment_count := _enrichment_count + 1;
-  ELSEIF NEW.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange')
+  ELSEIF NEW.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange', 'text/litanalysis+marcxchange')
     THEN -- Handle original record
       _original_count := _original_count + 1;
   END IF;
@@ -215,7 +215,7 @@ BEGIN
     IF NEW.mimetype = 'text/enrichment+marcxchange'
     THEN
       _enrichment_count := _enrichment_count + 1;
-    ELSEIF NEW.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange')
+    ELSEIF NEW.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange', 'text/litanalysis+marcxchange')
       THEN
         _original_count := _original_count + 1;
     END IF;
@@ -226,7 +226,7 @@ BEGIN
       IF OLD.mimetype = 'text/enrichment+marcxchange'
       THEN
         _enrichment_count := _enrichment_count - 1;
-      ELSEIF OLD.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange')
+      ELSEIF OLD.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange', 'text/litanalysis+marcxchange')
         THEN
           _original_count := _original_count - 1;
       END IF;
@@ -268,7 +268,7 @@ BEGIN
   ELSEIF OLD.mimetype = 'text/enrichment+marcxchange'
     THEN
       _enrichment_count := _enrichment_count - 1;
-  ELSEIF OLD.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange')
+  ELSEIF OLD.mimetype IN ('text/marcxchange', 'text/article+marcxchange', 'text/authority+marcxchange', 'text/litanalysis+marcxchange')
     THEN
       _original_count := _original_count - 1;
   END IF;
