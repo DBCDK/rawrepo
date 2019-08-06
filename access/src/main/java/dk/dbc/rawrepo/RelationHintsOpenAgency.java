@@ -33,7 +33,7 @@ public class RelationHintsOpenAgency {
     }
 
     private boolean usesAuthorityAgency(int agencyId) {
-        return 870970 == agencyId || 870971 == agencyId;
+        return 870970 == agencyId || 870971 == agencyId|| 870974 == agencyId;
     }
 
     public boolean usesCommonSchoolAgency(int agencyId) {
@@ -42,7 +42,7 @@ public class RelationHintsOpenAgency {
 
     public List<Integer> get(Integer agencyId) throws RawRepoException {
         if (usesCommonAgency(agencyId)) {
-            return Arrays.asList(870970, 870971, 870979);
+            return Arrays.asList(870970, 870971, 870974, 870979);
         }
         return Arrays.asList(agencyId);
     }
@@ -58,6 +58,7 @@ public class RelationHintsOpenAgency {
         } else if (usesCommonAgency(agencyId)) {
             agencyPriorityList.add(870970);
             agencyPriorityList.add(870971);
+            agencyPriorityList.add(870974);
             agencyPriorityList.add(870979);
         } else if (usesAuthorityAgency(agencyId)) {
             agencyPriorityList.add(870979);
