@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
-    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "700", "770", "780");
+    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "700", "770");
 
     /**
      * This function performs authority expansion on a rawrepo Record.
@@ -124,11 +124,11 @@ public class ExpandCommonMarcRecord {
         MarcRecord expandedRecord = new MarcRecord();
         /*
          * Okay, here are (some) of the rules for expanding with auth records:
-         * Fields that can contain AUT are: 100, 600, 700, 770 or 780
+         * Fields that can contain AUT are: 100, 600, 700 or 770
          * AUT reference are located in *5 and *6
          *
          * A field points to AUT data if:
-         * Field name is either 100, 600, 700, 770 or 780
+         * Field name is either 100, 600, 700 or 770
          * And contains subfields *5 and *6
          *
          * Rules for expanding are:
@@ -147,7 +147,6 @@ public class ExpandCommonMarcRecord {
         handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields);
         handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields);
         handleRepeatableField(reader.getFieldAll("770"), expandedRecord, authorityRecords, keepAutFields);
-        handleRepeatableField(reader.getFieldAll("780"), expandedRecord, authorityRecords, keepAutFields);
 
         for (MarcField field : commonRecord.getFields()) {
             if (!AUTHORITY_FIELD_LIST.contains(field.getName())) {
