@@ -197,12 +197,19 @@ public class ExpandCommonMarcRecord {
 
                 if (authRecordReader.hasField("400") || authRecordReader.hasField("500")) {
                     String indicator = field.getName();
-                    expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authIndicator)));
-                    indicator += "/" + Integer.toString(authIndicator);
+                    // If the field doesn't have *å then it will be added and new indicator generate
+                    // But if the field already have *å then use that value
+                    // If multiple fields have same *å value the 900 references will be weird/wrong, but we won't handle that
+                    if (!fieldReader.hasSubfield("å")) {
+                        expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authIndicator)));
+                        indicator += "/" + authIndicator;
+                        authIndicator++;
+                    } else {
+                        indicator += "/" + fieldReader.getValue("å");
+                    }
+
                     addAdditionalFields(expandedRecord, authRecordReader.getFieldAll("400"), indicator);
                     addAdditionalFields(expandedRecord, authRecordReader.getFieldAll("500"), indicator);
-
-                    authIndicator++;
                 }
 
                 expandedRecord.getFields().add(new MarcField(expandedField));
