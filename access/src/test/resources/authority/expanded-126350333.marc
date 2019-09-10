@@ -1,0 +1,19 @@
+001 00 *a 126350333 *b 870974 *c 20190902122216 *d 20050401 *f a *t FAUST
+004 00 *r n *a i
+016 00 *a 25692780 *5 870970
+032 00 *x LIT200519
+600 00 *å 1 *a Andersen *h H. C. *c f. 1805
+600 00 *å 1 *a Klitgård Povlsen *h Steen
+666 00 *å 1 *f dansk litteraur
+770 00 *å 1 *a Andersen *h H. C. *c f. 1805
+795 00 *å 1 *a Andersen *c kort sagt *l s. 7-20
+900 00 *a Andersen *h Hans Christian *c f. 1805 *z 600/1
+900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *z 600/1
+900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *z 600/1
+900 00 *a Antusheng *z 600/1
+900 00 *a Povlsen *h Steen Klitgård *z 600/1
+900 00 *a Andersen *h Hans Christian *c f. 1805 *z 770/1
+900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *z 770/1
+900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *z 770/1
+900 00 *a Antusheng *z 770/1
+996 00 *a DBC
