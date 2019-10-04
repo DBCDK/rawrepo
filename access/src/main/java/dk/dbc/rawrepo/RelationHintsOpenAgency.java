@@ -12,7 +12,6 @@ import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -33,7 +32,7 @@ public class RelationHintsOpenAgency {
     }
 
     private boolean usesAuthorityAgency(int agencyId) {
-        return 870970 == agencyId || 870971 == agencyId|| 870974 == agencyId;
+        return 870970 == agencyId || 870971 == agencyId || 870974 == agencyId;
     }
 
     public boolean usesCommonSchoolAgency(int agencyId) {
@@ -42,7 +41,7 @@ public class RelationHintsOpenAgency {
 
     public List<Integer> get(Integer agencyId) throws RawRepoException {
         if (usesCommonAgency(agencyId)) {
-            return Arrays.asList(870970, 870971, 870974, 870979);
+            return Arrays.asList(870970, 870971, 870974, 870979, 190002, 190004);
         }
         return Arrays.asList(agencyId);
     }
@@ -60,6 +59,8 @@ public class RelationHintsOpenAgency {
             agencyPriorityList.add(870971);
             agencyPriorityList.add(870974);
             agencyPriorityList.add(870979);
+            agencyPriorityList.add(190002);
+            agencyPriorityList.add(190004);
         } else if (usesAuthorityAgency(agencyId)) {
             agencyPriorityList.add(870979);
         }
