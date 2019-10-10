@@ -17,13 +17,6 @@
         <version>1.13-SNAPSHOT</version>
     </parent>
 
-    <repositories>
-        <repository>
-            <id>mavenrepo.dbc.dk</id>
-            <url>http://mavenrepo.dbc.dk/content/groups/public</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -37,10 +30,17 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-ext</artifactId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>dk.dbc</groupId>
@@ -53,7 +53,6 @@
             <version>2.0.1</version>
             <type>jar</type>
         </dependency>
-
         <dependency>
             <groupId>org.glassfish.mq</groupId>
             <artifactId>imq</artifactId>
@@ -89,29 +88,29 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
                 <executions>
                     <execution>
-                        <id>build-jar</id>
+                        <id>jar-with-dependencies</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>rawrepo-queue-bulkload</finalName>
+                            <finalName>${project.name}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <archive>
+                                <manifest>
+                                    <mainClass>dk.dbc.rawrepo.queuebulkload.BulkQueueMain</mainClass>
+                                </manifest>
+                            </archive>
                         </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>dk.dbc.rawrepo.queuebulkload.BulkQueueMain</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
