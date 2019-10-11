@@ -86,7 +86,7 @@ pipeline {
                 expression { env.BRANCH_NAME == 'master' }
             }
             steps {
-                //sh "mvn -pl debian deploy"
+                sh "mvn -pl debian deploy"
                 sh "mvn -pl access deploy"
             }
         }
