@@ -88,7 +88,9 @@ public class AgencyDeleteMain {
                 return;
             }
 
-            final BibliographicRecordIdIterator iterator = new BibliographicRecordIdIterator(ids, 1000);
+            // TODO Take slize size from parameters or default to 1000?
+            final int sliceSize = 1000;
+            final BibliographicRecordIdIterator iterator = new BibliographicRecordIdIterator(ids, sliceSize);
 
             String provider = null;
             if (commandLine.hasOption("role")) {
@@ -106,6 +108,7 @@ public class AgencyDeleteMain {
                 agencyDelete.deleteRecords(slice);
 
                 agencyDelete.commit();
+                log.info("Deleted and queued " + sliceSize + " records");
             }
         } catch (Exception ex) {
             log.error(ex.getMessage());
