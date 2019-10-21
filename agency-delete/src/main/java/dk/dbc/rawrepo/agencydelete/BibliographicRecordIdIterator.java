@@ -1,39 +1,36 @@
 package dk.dbc.rawrepo.agencydelete;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class BibliographicRecordIdIterator {
 
     private final int sliceSize;
-    private Set<String> bibliographicRecordIdSet;
-    private int index;
+    private Iterator<String> bibliographicRecordIdSetIterator;
+    private int size;
 
-    public BibliographicRecordIdIterator(Set<String> bibliographicRecordIdSet, int sliceSize) {
-        this.bibliographicRecordIdSet = bibliographicRecordIdSet;
+    public BibliographicRecordIdIterator(Set<String> bibliographicRecordIdSetIterator, int sliceSize) {
+        this.bibliographicRecordIdSetIterator = bibliographicRecordIdSetIterator.iterator();
+        this.size = bibliographicRecordIdSetIterator.size();
         this.sliceSize = sliceSize;
-        this.index = 0;
     }
 
     public int size() {
-        return bibliographicRecordIdSet.size();
+        return size;
     }
 
     public boolean hasNext() {
-        return index < bibliographicRecordIdSet.size();
+        return bibliographicRecordIdSetIterator.hasNext();
     }
 
     public Set<String> next() {
         synchronized (this) {
-            Set<String> slice = bibliographicRecordIdSet.stream()
-                    .skip(index)
-                    .limit(sliceSize)
-                    .collect(Collectors.toSet());
-
-            index += sliceSize;
-
+            final Set<String> slice = new HashSet<>(sliceSize);
+            while (bibliographicRecordIdSetIterator.hasNext()) {
+                slice.add(bibliographicRecordIdSetIterator.next());
+            }
             return slice;
         }
     }
-
 }
