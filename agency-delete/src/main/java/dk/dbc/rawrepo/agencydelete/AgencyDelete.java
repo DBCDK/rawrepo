@@ -245,25 +245,15 @@ class AgencyDelete {
     }
 
     void queueRecords(Set<String> ids, String role) throws RawRepoException, IOException, SQLException {
-        int no = 0;
-
         for (String id : ids) {
             dao.changedRecord(role, new RecordId(id, agencyid));
-            if (++no % 1000 == 0) {
-                log.info("Queued: " + no);
-            }
         }
-        log.info("Queued: " + no);
     }
 
     void deleteRecords(Set<String> ids) throws RawRepoException, MarcXMergerException, SAXException, IOException, TransformerException {
-        int no = 0;
         log.debug("Setting content of records to deleted");
         for (String id : ids) {
             dao.deleteRelationsFrom(new RecordId(id, agencyid));
-            if (++no % 1000 == 0) {
-                log.info("Deleted relations: " + no);
-            }
         }
         for (String id : ids) {
             Record record = dao.fetchMergedRecord(id, agencyid, marcXMerger, true);
@@ -278,12 +268,7 @@ class AgencyDelete {
             record.setContent(content);
             record.setDeleted(true);
             dao.saveRecord(record);
-
-            if (++no % 1000 == 0) {
-                log.info("Deleted record: " + no);
-            }
         }
-        log.info("Deleted: " + no);
     }
 
     byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {

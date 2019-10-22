@@ -24,16 +24,16 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class AgencyDeleteMain {
@@ -88,14 +88,28 @@ public class AgencyDeleteMain {
                 return;
             }
 
-            agencyDelete.begin();
-            if (commandLine.hasOption("role")) {
-                String role = (String) commandLine.getOption("role");
-                agencyDelete.queueRecords(ids, role);
-            }
-            agencyDelete.deleteRecords(ids);
+            // TODO Take slize size from parameters or default to 1000?
+            final int sliceSize = 1000;
+            final BibliographicRecordIdIterator iterator = new BibliographicRecordIdIterator(ids, sliceSize);
 
-            agencyDelete.commit();
+            String provider = null;
+            if (commandLine.hasOption("role")) {
+                provider = (String) commandLine.getOption("role");
+            }
+
+            agencyDelete.begin();
+            while (iterator.hasNext()) {
+                final Set<String> slice = iterator.next();
+
+                if (provider != null) {
+                    agencyDelete.queueRecords(slice, provider);
+                }
+
+                agencyDelete.deleteRecords(slice);
+
+                agencyDelete.commit();
+                log.info("Deleted and queued " + sliceSize + " records");
+            }
         } catch (Exception ex) {
             log.error(ex.getMessage());
             System.exit(1);
