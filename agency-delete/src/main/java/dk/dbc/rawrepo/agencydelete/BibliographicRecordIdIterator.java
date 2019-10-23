@@ -27,7 +27,8 @@ public class BibliographicRecordIdIterator {
     public Set<String> next() {
         synchronized (this) {
             final Set<String> slice = new HashSet<>(sliceSize);
-            while (bibliographicRecordIdSetIterator.hasNext()) {
+            while (bibliographicRecordIdSetIterator.hasNext()
+                    && slice.size() <= sliceSize) {
                 slice.add(bibliographicRecordIdSetIterator.next());
             }
             return slice;
