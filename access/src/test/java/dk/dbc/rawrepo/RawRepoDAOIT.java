@@ -314,6 +314,14 @@ public class RawRepoDAOIT {
         connection.commit();
     }
 
+        /*
+                    B 870970 1 2
+                  /   \
+                C       F
+               /  \    /  \
+             D     E G      H
+     */
+
     @Test
     public void testQueueEntityWithout() throws SQLException, RawRepoException {
         setupData(100000, "A:870970");
@@ -391,6 +399,106 @@ public class RawRepoDAOIT {
                 "F:870970:node", "F:2:node",
                 "G:870970:leaf", "G:1:leaf", "G:2:leaf",
                 "H:870970:leaf", "H:2:leaf");
+        connection.commit();
+    }
+
+    @Test
+    public void testQueueHeadWithComplexLocalHead() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", "B:1", "B:2", // HEAD
+                "C:870970", "C:1", "C:2",// SECTION
+                "D:870970", "D:1", "D:2", // BIND
+                "E:870970", "E:1", "E:2",// BIND
+                "F:870970", "F:1", "F:2", // SECTION
+                "G:870970", "G:1", "G:2", // BIND
+                "H:870970", "H:1", "H:2");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("B:1"));
+        collectionIs(getQueue(),
+                "B:1:changed", "B:1:node",
+                "C:1:node",
+                "D:1:leaf",
+                "E:1:leaf",
+                "F:1:node",
+                "G:1:leaf",
+                "H:1:leaf");
+        connection.commit();
+    }
+
+    @Test
+    public void testQueueHeadWithComplexLocalHeadNoEnrichments() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", "B:1", "B:2", // HEAD
+                "C:870970", "C:2",// SECTION
+                "D:870970", "D:2", // BIND
+                "E:870970", "E:2",// BIND
+                "F:870970", "F:2", // SECTION
+                "G:870970", "G:2", // BIND
+                "H:870970", "H:2");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("B:1"));
+        collectionIs(getQueue(),
+                "B:1:changed", "B:1:node",
+                "C:1:node",
+                "D:1:leaf",
+                "E:1:leaf",
+                "F:1:node",
+                "G:1:leaf",
+                "H:1:leaf");
+        connection.commit();
+    }
+
+    @Test
+    public void testQueueHeadWithComplexLocalSection() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", "B:1", "B:2", // HEAD
+                "C:870970", "C:1", "C:2",// SECTION
+                "D:870970", "D:1", "D:2", // BIND
+                "E:870970", "E:1", "E:2",// BIND
+                "F:870970", "F:1", "F:2", // SECTION
+                "G:870970", "G:1", "G:2", // BIND
+                "H:870970", "H:1", "H:2");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("C:1"));
+        collectionIs(getQueue(),
+                "C:1:changed", "C:1:node",
+                "D:1:leaf",
+                "E:1:leaf");
+        connection.commit();
+    }
+
+    @Test
+    public void testQueueHeadWithComplexLocalVolume() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", "B:1", "B:2", // HEAD
+                "C:870970", "C:1", "C:2",// SECTION
+                "D:870970", "D:1", "D:2", // BIND
+                "E:870970", "E:1", "E:2",// BIND
+                "F:870970", "F:1", "F:2", // SECTION
+                "G:870970", "G:1", "G:2", // BIND
+                "H:870970", "H:1", "H:2");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("D:1"));
+        collectionIs(getQueue(),
+                "D:1:changed", "D:1:leaf");
+        connection.commit();
+    }
+
+    @Test
+    public void testQueueHeadWithComplexCommonVolume() throws SQLException, RawRepoException {
+        setupData(100000, "B:870970", "B:1", "B:2", // HEAD
+                "C:870970", "C:1", "C:2",// SECTION
+                "D:870970", "D:1", "D:2", // BIND
+                "E:870970", "E:1", "E:2",// BIND
+                "F:870970", "F:1", "F:2", // SECTION
+                "G:870970", "G:1", "G:2", // BIND
+                "H:870970", "H:1", "H:2");// BIND
+        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        dao.changedRecord("test", recordIdFromString("D:870970"));
+        collectionIs(getQueue(),
+                "D:870970:changed", "D:870970:leaf",
+                "D:1:leaf", "D:2:leaf");
         connection.commit();
     }
 
@@ -680,7 +788,7 @@ public class RawRepoDAOIT {
         connection.setAutoCommit(false);
 
         PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM records_cache where bibliographicrecordid=? and agencyid=? and cachekey=?");
-        stmt.setString(1,"1 234 567 8");
+        stmt.setString(1, "1 234 567 8");
         stmt.setInt(2, 123456);
         stmt.setString(3, "MERGED_DEFAULT_FALSE");
         ResultSet resultSet = stmt.executeQuery();

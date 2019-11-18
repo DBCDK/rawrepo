@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -217,6 +218,35 @@ public class AgencyDeleteIT {
         assertTrue("has B", nodes.contains("B"));
         assertTrue("has E", nodes.contains("E"));
         assertEquals("has no extras", 4, nodes.size());
+    }
+
+    @Test
+    public void testRecordOrder() throws Exception {
+        {
+            RawRepoDAO dao = RawRepoDAO.builder(connection)
+                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
+                    .build();
+            connection.setAutoCommit(false);
+            setupRecord(dao, "H-local", 888888);
+            setupRecord(dao, "B1", 888888, "H-local:888888");
+            setupRecord(dao, "B2", 888888, "H-local:888888");
+            connection.commit();
+        }
+
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+
+        assertEquals("Sibling size", 0, agencyDelete.getSiblingRelations().size());
+
+        Set<String> ids = agencyDelete.getIds();
+
+        assertEquals("ids size", 3, ids.size());
+
+        Iterator<String> itr = ids.iterator();
+
+        assertEquals("Order of records, B2", "B2", itr.next());
+        assertEquals("Order of records, B1", "B1", itr.next());
+        assertEquals("Order of records, H", "H-local", itr.next());
+
     }
 
     private static final String TMPL = new String(getResource("tmpl.xml"), StandardCharsets.UTF_8);

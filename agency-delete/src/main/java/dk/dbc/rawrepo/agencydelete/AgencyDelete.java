@@ -20,7 +20,6 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
-import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
@@ -40,11 +39,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -140,24 +139,24 @@ class AgencyDelete {
             }
         }
         Map<String, Collection<String>> children = getChildrenRelationMap();
-        Set<String> nodes = new HashSet<>();
+        LinkedHashSet<String> nodes = new LinkedHashSet<>();
         for (String id : ids) {
             expandChildren(id, children, nodes);
         }
         return nodes;
     }
 
-    private static void expandChildren(String bibliographicRecordId, Map<String, Collection<String>> children, Set<String> nodes) {
+    private static void expandChildren(String bibliographicRecordId, Map<String, Collection<String>> children, LinkedHashSet<String> nodes) {
         if (nodes.contains(bibliographicRecordId)) {
             return;
         }
-        nodes.add(bibliographicRecordId);
         Collection<String> childIds = children.get(bibliographicRecordId);
         if (childIds != null) {
             for (String childId : childIds) {
                 expandChildren(childId, children, nodes);
             }
         }
+        nodes.add(bibliographicRecordId);
     }
 
     private Map<String, Collection<String>> getChildrenRelationMap() throws SQLException {
