@@ -1,5 +1,7 @@
+def workerNode = "devel9"
+
 pipeline {
-    agent { label 'devel9' }
+    agent { label workerNode }
     options {
         buildDiscarder(logRotator(numToKeepStr: '20', daysToKeepStr: '20'))
         disableConcurrentBuilds()
