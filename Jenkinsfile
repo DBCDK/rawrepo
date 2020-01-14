@@ -17,6 +17,7 @@ pipeline {
         PROJECT_VERSION = readMavenPom().getVersion()
         DOCKER_IMAGE_VERSION = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         DOCKER_IMAGE_DIT_VERSION = "DIT-${env.BUILD_NUMBER}"
+        GITLAB_PRIVATE_TOKEN = credentials("metascrum-gitlab-api-token")
     }
     tools {
         maven 'maven 3.5'
