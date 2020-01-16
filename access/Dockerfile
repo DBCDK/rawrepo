@@ -7,6 +7,7 @@ ENV POSTGRES_PASSWORD=rawrepo
 USER root
 ADD schema/rawrepo.sql /docker-entrypoint.d/10-rawrepo.sql
 ADD schema/queuerules.sql /docker-entrypoint.d/11-queuerules.sql
+ADD schema/configurations.sql /docker-entrypoint.d/11-configurations.sql
 RUN chown -R $POSTGRES_LINUX_USER:$POSTGRES_LINUX_USER /docker-entrypoint.d/
 USER $POSTGRES_LINUX_USER
 

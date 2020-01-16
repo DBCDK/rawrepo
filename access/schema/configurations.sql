@@ -1,0 +1,2 @@
+INSERT INTO configurations (key, value) VALUES ('RECORD_SERVICE_URL', 'http://rawrepo-record-service');
+INSERT INTO configurations (key, value) VALUES ('OPENAGENCY_URL', 'http://openagency.addi.dk/test_2.34/');
