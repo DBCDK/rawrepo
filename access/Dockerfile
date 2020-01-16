@@ -12,7 +12,7 @@ RUN chown -R $POSTGRES_LINUX_USER:$POSTGRES_LINUX_USER /docker-entrypoint.d/
 USER $POSTGRES_LINUX_USER
 
 # Enable XA transactions
-RUN echo "max_prepared_transactions=40" >> /etc/postgresql/9.5/main/postgresql.conf
+RUN echo "max_prepared_transactions=50" >> /etc/postgresql/9.5/main/postgresql.conf
 
 LABEL POSTGRES_DB="Name of db (optional). Default is 'rawrepo'" \
       POSTGRES_USER="(optional). Default is 'rawrepo'" \
