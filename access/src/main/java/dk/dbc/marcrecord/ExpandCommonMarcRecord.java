@@ -22,8 +22,6 @@ import org.slf4j.ext.XLoggerFactory;
 import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +41,7 @@ public class ExpandCommonMarcRecord {
      */
     public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException {
         final Map<String, byte[]> authorityContent = new HashMap<>();
-        for (Map.Entry<String, Record> entry: authorityRecords.entrySet()) {
+        for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
             authorityContent.put(entry.getKey(), entry.getValue().getContent());
         }
 
@@ -55,7 +53,7 @@ public class ExpandCommonMarcRecord {
     /**
      * This function performs authority expansion on a rawrepo Record.
      *
-     * @param content The record content which should be expanded
+     * @param content          The record content which should be expanded
      * @param authorityContent List of authority record content to be used for expanding
      * @param keepAutFields    If true the  *5 and *6 fields remains in the output record
      * @throws RawRepoException When expansion fails (usually due to missing authority record)
@@ -101,15 +99,15 @@ public class ExpandCommonMarcRecord {
      * @throws RawRepoException if the collection doesn't contain the necessary records
      */
     public static MarcRecord expandMarcRecord(Map<String, MarcRecord> records, String recordId, boolean keepAutFields) throws RawRepoException {
-        Stopwatch stopWatch = new Stopwatch();
+        final Stopwatch stopWatch = new Stopwatch();
         MarcRecord commonRecord = null;
-        Map<String, MarcRecord> authorityRecords = new HashMap<>();
+        final Map<String, MarcRecord> authorityRecords = new HashMap<>();
 
         // Key is the recordId and value is the record. AgencyId have to be found in the record
         for (Map.Entry<String, MarcRecord> entry : records.entrySet()) {
-            MarcRecordReader reader = new MarcRecordReader(entry.getValue());
-            String foundRecordId = reader.getRecordId();
-            String foundAgencyId = reader.getAgencyId();
+            final MarcRecordReader reader = new MarcRecordReader(entry.getValue());
+            final String foundRecordId = reader.getRecordId();
+            final String foundAgencyId = reader.getAgencyId();
             logger.info("Found record in expand collection: {}:{}", foundRecordId, foundAgencyId);
             if (recordId.equals(foundRecordId)) {
                 commonRecord = new MarcRecord(entry.getValue());
@@ -140,7 +138,7 @@ public class ExpandCommonMarcRecord {
     }
 
     private static MarcRecord doExpand(MarcRecord commonRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
-        MarcRecord expandedRecord = new MarcRecord();
+        final MarcRecord expandedRecord = new MarcRecord();
         /*
          * Okay, here are (some) of the rules for expanding with auth records:
          * Fields that can contain AUT are: 100, 600, 700, 770 or 780
@@ -161,7 +159,7 @@ public class ExpandCommonMarcRecord {
             return commonRecord;
         }
 
-        MarcRecordReader reader = new MarcRecordReader(commonRecord);
+        final MarcRecordReader reader = new MarcRecordReader(commonRecord);
         handleNonRepeatableField(reader.getField("100"), expandedRecord, authorityRecords, keepAutFields);
         handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields);
         handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields);
@@ -180,15 +178,15 @@ public class ExpandCommonMarcRecord {
     private static void handleRepeatableField(List<MarcField> fields, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
         int authIndicator = 0;
         for (MarcField field : fields) {
-            MarcFieldReader fieldReader = new MarcFieldReader(field);
+            final MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("å")) {
                 try {
-                    int indicator = Integer.parseInt(fieldReader.getValue("å"));
+                    final int indicator = Integer.parseInt(fieldReader.getValue("å"));
                     if (indicator > authIndicator) {
                         authIndicator = indicator;
                     }
                 } catch (NumberFormatException ex) {
-                    String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal med fik '%s'", field.getName(), fieldReader.getValue("å"));
+                    final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal med fik '%s'", field.getName(), fieldReader.getValue("å"));
                     throw new RawRepoException(message, ex);
                 }
             }
@@ -196,21 +194,21 @@ public class ExpandCommonMarcRecord {
         authIndicator++;
 
         for (MarcField field : fields) {
-            MarcFieldReader fieldReader = new MarcFieldReader(field);
+            final MarcFieldReader fieldReader = new MarcFieldReader(field);
 
             if (fieldReader.hasSubfield("5") && fieldReader.hasSubfield("6")) {
-                String authRecordId = fieldReader.getValue("6");
+                final String authRecordId = fieldReader.getValue("6");
 
-                MarcRecord authRecord = authorityRecords.get(authRecordId);
+                final MarcRecord authRecord = authorityRecords.get(authRecordId);
 
                 if (authRecord == null) {
-                    String message = String.format("Autoritetsposten '%s' blev ikke fundet i forbindelse med ekspandering af fællesskabsposten", authRecordId);
+                    final String message = String.format("Autoritetsposten '%s' blev ikke fundet i forbindelse med ekspandering af fællesskabsposten", authRecordId);
                     logger.error(message);
                     throw new RawRepoException(message);
                 }
 
-                MarcField expandedField = new MarcField(field);
-                MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
+                final MarcField expandedField = new MarcField(field);
+                final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
 
                 addMainField(expandedField, new MarcField(authRecordReader.getField("100")), keepAutFields);
 
@@ -239,21 +237,21 @@ public class ExpandCommonMarcRecord {
     }
 
     private static void handleNonRepeatableField(MarcField field, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
-        MarcFieldReader fieldReader = new MarcFieldReader(field);
+        final MarcFieldReader fieldReader = new MarcFieldReader(field);
         if (field != null) {
             if (fieldReader.hasSubfield("5") && fieldReader.hasSubfield("6")) {
-                String authRecordId = fieldReader.getValue("6");
+                final String authRecordId = fieldReader.getValue("6");
 
-                MarcRecord authRecord = authorityRecords.get(authRecordId);
+                final MarcRecord authRecord = authorityRecords.get(authRecordId);
 
                 if (authRecord == null) {
-                    String message = String.format("Autoritetsposten '%s' blev ikke fundet i forbindelse med ekspandering af fællesskabsposten", authRecordId);
+                    final String message = String.format("Autoritetsposten '%s' blev ikke fundet i forbindelse med ekspandering af fællesskabsposten", authRecordId);
                     logger.error(message);
                     throw new RawRepoException(message);
                 }
 
-                MarcField expandedField = new MarcField(field);
-                MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
+                final MarcField expandedField = new MarcField(field);
+                final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
 
                 addMainField(expandedField, new MarcField(authRecordReader.getField("100")), keepAutFields);
 
@@ -282,7 +280,7 @@ public class ExpandCommonMarcRecord {
             // If we are keeping *5 and *6 then move the aut data 2 fields "back"
             authSubfieldIndex += 2;
         } else {
-            MarcFieldWriter expandedFieldWriter = new MarcFieldWriter(field);
+            final MarcFieldWriter expandedFieldWriter = new MarcFieldWriter(field);
             expandedFieldWriter.removeSubfield("5");
             expandedFieldWriter.removeSubfield("6");
         }
@@ -294,7 +292,7 @@ public class ExpandCommonMarcRecord {
 
     private static void addAdditionalFields(MarcRecord record, List<MarcField> authFields, String indicator) {
         for (MarcField field : authFields) {
-            MarcField additionalField = new MarcField("900", "00");
+            final MarcField additionalField = new MarcField("900", "00");
             additionalField.getSubfields().addAll(field.getSubfields());
             additionalField.getSubfields().add(new MarcSubField("z", indicator));
             record.getFields().add(additionalField);
@@ -303,26 +301,24 @@ public class ExpandCommonMarcRecord {
 
     private static void sortFields(MarcRecord record) {
         // First sort by field name then sort by subfield å
-        Collections.sort(record.getFields(), new Comparator<MarcField>() {
-            public int compare(MarcField m1, MarcField m2) {
-                if (m1.getName().equals(m2.getName())) {
-                    MarcFieldReader fr1 = new MarcFieldReader(m1);
-                    MarcFieldReader fr2 = new MarcFieldReader(m2);
+        record.getFields().sort((m1, m2) -> {
+            if (m1.getName().equals(m2.getName())) {
+                final MarcFieldReader fr1 = new MarcFieldReader(m1);
+                final MarcFieldReader fr2 = new MarcFieldReader(m2);
 
-                    String aa1 = fr1.hasSubfield("å") ? fr1.getValue("å") : "";
-                    String aa2 = fr2.hasSubfield("å") ? fr2.getValue("å") : "";
+                final String aa1 = fr1.hasSubfield("å") ? fr1.getValue("å") : "";
+                final String aa2 = fr2.hasSubfield("å") ? fr2.getValue("å") : "";
 
-                    return aa1.compareTo(aa2);
-                }
-
-                return m1.getName().compareTo(m2.getName());
+                return aa1.compareTo(aa2);
             }
+
+            return m1.getName().compareTo(m2.getName());
         });
     }
 
     private static boolean hasAutFields(MarcRecord record) {
         for (MarcField field : record.getFields()) {
-            MarcFieldReader fieldReader = new MarcFieldReader(field);
+            final MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("5") && fieldReader.hasSubfield("6")) {
                 return true;
             }
