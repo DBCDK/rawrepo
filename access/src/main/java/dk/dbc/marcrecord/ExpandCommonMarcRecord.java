@@ -38,33 +38,52 @@ public class ExpandCommonMarcRecord {
      *
      * @param expandableRecord The record which should be expanded
      * @param authorityRecords List of authority records to be used for expanding
-     * @param keepAutFields If true the  *5 and *6 fields remains in the output record
+     * @param keepAutFields    If true the  *5 and *6 fields remains in the output record
      * @throws RawRepoException When expansion fails (usually due to missing authority record)
      */
     public static void expandRecord(Record expandableRecord, Map<String, Record> authorityRecords, boolean keepAutFields) throws RawRepoException {
+        final Map<String, byte[]> authorityContent = new HashMap<>();
+        for (Map.Entry<String, Record> entry: authorityRecords.entrySet()) {
+            authorityContent.put(entry.getKey(), entry.getValue().getContent());
+        }
+
+        final byte[] content = expandRecord(expandableRecord.getContent(), authorityContent, keepAutFields);
+
+        expandableRecord.setContent(content);
+    }
+
+    /**
+     * This function performs authority expansion on a rawrepo Record.
+     *
+     * @param content The record content which should be expanded
+     * @param authorityContent List of authority record content to be used for expanding
+     * @param keepAutFields    If true the  *5 and *6 fields remains in the output record
+     * @throws RawRepoException When expansion fails (usually due to missing authority record)
+     */
+    public static byte[] expandRecord(byte[] content, Map<String, byte[]> authorityContent, boolean keepAutFields) throws RawRepoException {
         try {
-            Stopwatch stopWatch = new Stopwatch();
-            MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(expandableRecord.getContent());
+            final Stopwatch stopWatch = new Stopwatch();
+            final MarcRecord commonMarcRecord = RecordContentTransformer.decodeRecord(content);
             logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.decodeRecord(common)", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
 
-            Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
-            for (Map.Entry<String, Record> entry : authorityRecords.entrySet()) {
-                authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue().getContent()));
+            final Map<String, MarcRecord> authorityMarcRecords = new HashMap<>();
+            for (Map.Entry<String, byte[]> entry : authorityContent.entrySet()) {
+                authorityMarcRecords.put(entry.getKey(), RecordContentTransformer.decodeRecord(entry.getValue()));
                 logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.decodeRecord(loop)", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
                 stopWatch.reset();
             }
 
-            MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
+            final MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
             logger.info("Stopwatch - {} took {} ms", "doExpand", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
             sortFields(expandedMarcRecord);
             logger.info("Stopwatch - {} took {} ms", "sortFields", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
 
-            expandableRecord.setContent(RecordContentTransformer.encodeRecord(expandedMarcRecord));
             logger.info("Stopwatch - {} took {} ms", "RecordContentTransformer.encodeRecord", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
+            return RecordContentTransformer.encodeRecord(expandedMarcRecord);
         } catch (JAXBException | UnsupportedEncodingException e) {
             throw new RawRepoException(e);
         }
@@ -111,7 +130,7 @@ public class ExpandCommonMarcRecord {
     /**
      * The function takes a set of  records and return a common marc record expanded with authority fields (if any)
      *
-     * @param records The collection of records
+     * @param records  The collection of records
      * @param recordId The id of the record to expand
      * @return a single common record expanded with authority data
      * @throws RawRepoException if the collection doesn't contain the necessary records
