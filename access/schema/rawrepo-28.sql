@@ -174,10 +174,10 @@ BEGIN
            count(*) FILTER (WHERE deleted = 'F' AND mimetype = 'text/enrichment+marcxchange') AS enrichment_count,
            count(*) FILTER (WHERE deleted = 'T') AS deleted_count,
            max(modified) AS ajour_date
-  FROM records
+    FROM records
     INTO row
     WHERE agencyId = agencyid_
-  GROUP BY agencyid
+    GROUP BY agencyid
     ORDER BY agencyid;
 
     INSERT INTO records_summary (agencyId, original_count, enrichment_count, deleted_count, ajour_date) VALUES (agencyid_, row.original_count , row.enrichment_count, row.deleted_count, row.ajour_date)
