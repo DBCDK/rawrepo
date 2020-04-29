@@ -29,6 +29,7 @@ public class MarcXChangeMimeType {
     public static final String ARTICLE = "text/article+marcxchange";
     public static final String AUTHORITY = "text/authority+marcxchange";
     public static final String LITANALYSIS = "text/litanalysis+marcxchange";
+    public static final String MATVURD = "text/matvurd+marcxchange";
 
     public static final String ENRICHMENT = "text/enrichment+marcxchange";
     public static final String UNKNOWN = "unknown/unknown";
@@ -42,6 +43,7 @@ public class MarcXChangeMimeType {
             case ARTICLE:
             case AUTHORITY:
             case LITANALYSIS:
+            case MATVURD:
                 return true;
             default:
                 return false;
@@ -90,6 +92,18 @@ public class MarcXChangeMimeType {
         }
         switch (mimetype) {
             case LITANALYSIS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isMatVurd(String mimetype) {
+        if (mimetype == null) {
+            return false;
+        }
+        switch (mimetype) {
+            case MATVURD:
                 return true;
             default:
                 return false;
