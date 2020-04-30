@@ -166,7 +166,7 @@ public class ValidateRelations {
 
     /**
      * Validates the relations from a material evaluation record (MATVURD)
-     * A MATVURD record is allow to point to zero or more marcxchange record only
+     * A MATVURD record is allowed to point to zero or more marcxchange records only
      *
      * @return Validator which validates the relations for a MATVURD record.
      */
