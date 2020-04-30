@@ -140,6 +140,7 @@ public class MarcXMergerTest {
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ARTICLE), false);
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.MARCXCHANGE), false);
         assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), true);
+        assertEquals(marcxMerger.canMerge(MarcXChangeMimeType.MATVURD, MarcXChangeMimeType.ENRICHMENT), true);
 
         assertEquals(true, marcxMerger.canMerge(MarcXChangeMimeType.LITANALYSIS, MarcXChangeMimeType.ENRICHMENT));
         assertEquals(false, marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.LITANALYSIS));
@@ -153,6 +154,7 @@ public class MarcXMergerTest {
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.ARTICLE);
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.AUTHORITY);
         assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.LITANALYSIS, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.LITANALYSIS);
+        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MATVURD, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MATVURD);
     }
 
 

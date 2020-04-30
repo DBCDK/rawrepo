@@ -256,9 +256,8 @@ public class RawRepoDAOIT {
     public void testFetchRecordCollectionNoCommonLibrary() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "B:1", "C:1", "D:1", "E:1", "F:1", "G:1", "H:1");
         setupRelations("C:1,B:1", "D:1,C:1", "E:1,C:1", "F:1,B:1", "G:1,F:1", "H:1,F:1");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
-        MarcXMerger merger = new MarcXMerger();
         collectionIs(idsFromCollection(dao.fetchRecordCollection("D", 1, getMarcXMerger())), "B:1", "C:1", "D:1");
     }
 
@@ -266,26 +265,43 @@ public class RawRepoDAOIT {
     public void testFetchRecordCollectionArticle() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "A:870970", "B:870971");
         setupRelations("B:870971,A:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
-        MarcXMerger merger = new MarcXMerger();
         collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870971, getMarcXMerger())), "A:870970", "B:870971");
+    }
+
+    @Test
+    public void testFetchRecordCollectionLittolk() throws SQLException, RawRepoException, MarcXMergerException {
+        setupData(0, "A:870970", "B:870974");
+        setupRelations("B:870974,A:870970");
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870974, getMarcXMerger())), "A:870970", "B:870974");
+    }
+
+    @Test
+    public void testFetchRecordCollectionMatvurd() throws SQLException, RawRepoException, MarcXMergerException {
+        setupData(0, "A:870970", "B:870976", "C:870970");
+        setupRelations("B:870976,A:870970");
+        setupRelations("B:870976,C:870970");
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        connection.setAutoCommit(false);
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870976, getMarcXMerger())), "A:870970", "B:870976", "C:870970");
     }
 
     @Test
     public void testFetchRecordCollectionAuthority() throws SQLException, RawRepoException, MarcXMergerException {
         setupData(0, "A:870979", "B:870979", "C:870970");
         setupRelations("C:870970,A:870979", "C:870970,B:870979");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
-        MarcXMerger merger = new MarcXMerger();
         collectionIs(idsFromCollection(dao.fetchRecordCollection("C", 870970, getMarcXMerger())), "C:870970", "A:870979", "B:870979");
     }
 
     @Test
     public void testDeleteRecord() throws SQLException, RawRepoException {
         setupData(100000, "A:870970", "B:870970");
-        RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
+        final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
         //Ensure record is in base
@@ -808,17 +824,19 @@ public class RawRepoDAOIT {
 
     @Test
     public void testGetMimeTypes() throws Exception {
-        setupData(100000, "X:000111", "A:870970", "B:870971", "C:870979", "D:898989");
+        setupData(100000, "X:000111", "A:870970", "B:870971", "C:870979", "D:898989", "E:870974", "F:870976");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
+
         assertEquals(MarcXChangeMimeType.MARCXCHANGE, dao.getMimeTypeOfSafe("A", 870970));
         assertEquals(MarcXChangeMimeType.ARTICLE, dao.getMimeTypeOfSafe("B", 870971));
         assertEquals(MarcXChangeMimeType.AUTHORITY, dao.getMimeTypeOfSafe("C", 870979));
         assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOfSafe("D", 898989));
         assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOfSafe("E", 898989));
+        assertEquals(MarcXChangeMimeType.LITANALYSIS, dao.getMimeTypeOfSafe("E", 870974));
+        assertEquals(MarcXChangeMimeType.MATVURD, dao.getMimeTypeOfSafe("F", 870976));
         assertEquals(MarcXChangeMimeType.ENRICHMENT, dao.getMimeTypeOfSafe("X", 111));
 
-        assertEquals(MarcXChangeMimeType.UNKNOWN, dao.getMimeTypeOf("D", 898989));
         try {
             logger.info("Nothing should be written here " + dao.getMimeTypeOf("E", 898989));
         } catch (RawRepoExceptionRecordNotFound t) {
@@ -895,6 +913,10 @@ public class RawRepoDAOIT {
                     mimeType = MarcXChangeMimeType.ARTICLE;
                 } else if (recordId.getAgencyId() == 870970) {
                     mimeType = MarcXChangeMimeType.MARCXCHANGE;
+                } else if (recordId.getAgencyId() == 870974) {
+                    mimeType = MarcXChangeMimeType.LITANALYSIS;
+                } else if (recordId.getAgencyId() == 870976) {
+                    mimeType = MarcXChangeMimeType.MATVURD;
                 } else {
                     mimeType = MarcXChangeMimeType.UNKNOWN;
                 }
