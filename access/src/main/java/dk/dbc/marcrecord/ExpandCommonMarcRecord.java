@@ -189,7 +189,7 @@ public class ExpandCommonMarcRecord {
                         authIndicator = indicator + 1;
                     }
                 } catch (NumberFormatException ex) {
-                    final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal med fik '%s'", field.getName(), fieldReader.getValue("å"));
+                    final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal men fik '%s'", field.getName(), fieldReader.getValue("å"));
                     throw new RawRepoException(message, ex);
                 }
             }
