@@ -1,31 +1,31 @@
-001 00 *a5 302 575 7*b870970*c20170602112629*d20170315*fa
-004 00 *rn*ae
-008 00 *ts*uf*a2017*bdk*dy*ldan*x06*v0
-009 00 *aa*gxx
-021 00 *e9788799740598*chf.
-032 00 *xACC201711*aDBF201715*xBKM201715*xDAT201717*xDAT201725
-245 00 *aDe ¤flygtede*c22 personlige fortællinger om at være ung flygtning i Danmark
-250 00 *a1. og eneste udgave*b1. udgave
-260 00 *a[Kbh.]*d[Gothersgade 156 Kld., 1123]*bUngdomsbureauet*c2017
-300 00 *a150 sider*bill.
-440 00 *0*aDe-serien
-521 00 *b1. oplag*c2017*kSpecialtrykkeriet Viborg
-530 00 *&1*aIndhold: Ungdomsflugt / Olav Hesseldahl og Sara Ridder. Samir Hassan: Step Up. Amanuel Solomon: Kan du høre, når jeg kalder, mor? Jomana Salem: Mit våben. Ahmad Hood: Livets Lærdom. Jasmin Bishara: Hjertet i hjertet i Jasmin. Lokua Mabweni: At forandre verden gennem dans. Idil Ibrahim: De siger, jeg er kriminel - er jeg det? Siavash Aria: Frihed er det eneste, jeg mangler. Mohamed Hassan: Her er mit danske liv. Aras Omar: Livet stopper jo ikke. Tomi Faniel: Frihed. Tameem Al Shami: En rejse for livet. Mohammad Ahmadi: Jeg elsker mit land, som jeg elsker min mor. Ahmed Rahim: Drømmetræet. Videre, videre, videre. Muhammed Shareef: Når det ikke er muligt at tie stille. Mehdi Ahmadi: Livet begynder igen. Hakoma Aldnmarki: Min flugt. Nana Mansour: At tage chancer. Amlesom Teklemariam: Min vej mod frihed. Nailah Saeed: Musik er min udvej. Kashif Bahtti: Forfulgt af en frygtsom forsigtighed. Rosalinde Mynster: Det unge sind kan ikke undertrykkes
-652 00 *m32.6
-666 00 *0*funge
-666 00 *0*fflygtninge
-666 00 *0*fflugt
-666 00 *0*eDanmark
-700 00 *aHesseldahl*hOlav*4edt*4led
-700 00 *å1*aFehr Therkildsen*hMartin*4edt
-700 00 *aRidder*hSara*4edt
-710 00 *aUngdomsbureauet
-900 00 *aTherkildsen*hMartin Fehr*z700/1
-990 00 *o201715*bv*unt
-991 00 *oOnlineversion optaget i denne uges BKM (5 301 504 2)
-d08 00 *ohni*oeko*kosh*reko*a245c rettet
-f06 00 *bv
-n51 00 *a20170405
-s10 00 *aDBC
-s12 00 *tTeamBMV201712
-z99 00 *aeko
+001 00 *a 5 302 575 7 *b 870970 *c 20170602112629 *d 20170315 *f a
+004 00 *r n *a e
+008 00 *t s *u f *a 2017 *b dk *d y *l dan *x 06 *v 0
+009 00 *a a *g xx
+021 00 *e 9788799740598 *c hf.
+032 00 *x ACC201711 *a DBF201715 *x BKM201715 *x DAT201717 *x DAT201725
+245 00 *a De ¤flygtede *c 22 personlige fortællinger om at være ung flygtning i Danmark
+250 00 *a 1. og eneste udgave *b 1. udgave
+260 00 *a [Kbh.] *d [Gothersgade 156 Kld., 1123] *b Ungdomsbureauet *c 2017
+300 00 *a 150 sider *b ill.
+440 00 *0  *a De-serien
+521 00 *b 1. oplag *c 2017 *k Specialtrykkeriet Viborg
+530 00 *& 1 *a Indhold: Ungdomsflugt / Olav Hesseldahl og Sara Ridder. Samir Hassan: Step Up. Amanuel Solomon: Kan du høre, når jeg kalder, mor? Jomana Salem: Mit våben. Ahmad Hood: Livets Lærdom. Jasmin Bishara: Hjertet i hjertet i Jasmin. Lokua Mabweni: At forandre verden gennem dans. Idil Ibrahim: De siger, jeg er kriminel - er jeg det? Siavash Aria: Frihed er det eneste, jeg mangler. Mohamed Hassan: Her er mit danske liv. Aras Omar: Livet stopper jo ikke. Tomi Faniel: Frihed. Tameem Al Shami: En rejse for livet. Mohammad Ahmadi: Jeg elsker mit land, som jeg elsker min mor. Ahmed Rahim: Drømmetræet. Videre, videre, videre. Muhammed Shareef: Når det ikke er muligt at tie stille. Mehdi Ahmadi: Livet begynder igen. Hakoma Aldnmarki: Min flugt. Nana Mansour: At tage chancer. Amlesom Teklemariam: Min vej mod frihed. Nailah Saeed: Musik er min udvej. Kashif Bahtti: Forfulgt af en frygtsom forsigtighed. Rosalinde Mynster: Det unge sind kan ikke undertrykkes
+652 00 *m 32.6
+666 00 *0  *f unge
+666 00 *0  *f flygtninge
+666 00 *0  *f flugt
+666 00 *0  *e Danmark
+700 00 *a Hesseldahl *h Olav *4 edt *4 led
+700 00 *å 1001 *a Fehr Therkildsen *h Martin *4 edt
+700 00 *a Ridder *h Sara *4 edt
+710 00 *a Ungdomsbureauet
+900 00 *a Therkildsen *h Martin Fehr *x se *w Fehr Therkildsen, Martin *z 700/1001
+990 00 *o 201715 *b v *u nt
+991 00 *o Onlineversion optaget i denne uges BKM (5 301 504 2)
+d08 00 *o hni *o eko *k osh *r eko *a 245c rettet
+f06 00 *b v
+n51 00 *a 20170405
+s10 00 *a DBC
+s12 00 *t TeamBMV201712
+z99 00 *a eko

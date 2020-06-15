@@ -11,7 +11,7 @@
 300 00 *a 239 sider *b ill. (nogle i farver)
 504 00 *& 1 *a Uddrag fra nogle af statsminister Anders Fogh Rasmussen taler gennem de sidste 30 år med temaerne: Fra Venstres Ungdoms landsformand til Venstres formand ; liberalisme - den tredje vej! ; Kulturkamp ; Frihed og ansvar - Grundtvig og Kierkegꜳrd ; Sikring af frihedsrettighederne ; Opgør med samarbejds- og tilpasningspolitikken ; En aktiv udenrigs- og sikkerhedspolitik ; Statsminister
 521 00 *& REX *b 1. oplag *c 2006
-600 00 *å 1 *a Fogh Rasmussen *h Anders
+600 00 *å 1001 *a Fogh Rasmussen *h Anders
 610 00 *1  *a Venstre
 652 00 *m 96.72
 652 00 *p 96.8
@@ -24,7 +24,7 @@
 666 00 *0  *i 2000-2009
 666 00 *0  *e Danmark
 666 00 *0  *o taler
-900 00 *a Rasmussen *h Anders Fogh *z 100
-900 00 *a Rasmussen *h Anders Fogh *z 600/1
+900 00 *a Rasmussen *h Anders Fogh *x se *w Fogh Rasmussen, Anders *z 100
+900 00 *a Rasmussen *h Anders Fogh *x se *w Fogh Rasmussen, Anders *z 600/1001
 990 00 *a SFD *b L *c A *o 200644
 996 00 *a DBC

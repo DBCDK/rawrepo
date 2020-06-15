@@ -7,13 +7,13 @@
 666 00 *å 1 *f dansk litteraur
 770 00 *å 1 *a Andersen *h H. C. *c f. 1805
 795 00 *å 1 *a Andersen *c kort sagt *l s. 7-20
-900 00 *a Andersen *h Hans Christian *c f. 1805 *z 600/1
-900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *z 600/1
-900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *z 600/1
-900 00 *a Antusheng *z 600/1
-900 00 *a Povlsen *h Steen Klitgård *z 600/1
-900 00 *a Andersen *h Hans Christian *c f. 1805 *z 770/1
-900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *z 770/1
-900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *z 770/1
-900 00 *a Antusheng *z 770/1
+900 00 *a Andersen *h Hans Christian *c f. 1805 *x se *w Andersen, H. C. (f. 1805) *z 600/1
+900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *x se *w Andersen, H. C. (f. 1805) *z 600/1
+900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *x se *w Andersen, H. C. (f. 1805) *z 600/1
+900 00 *a Antusheng *x se *w Andersen, H. C. (f. 1805) *z 600/1
+900 00 *a Povlsen *h Steen Klitgård *x se *w Klitgård Povlsen, Steen *z 600/1
+900 00 *a Andersen *h Hans Christian *c f. 1805 *x se *w Andersen, H. C. (f. 1805) *z 770/1
+900 00 *a Ānḍarsan *h Hāns Krı̄sṭin *x se *w Andersen, H. C. (f. 1805) *z 770/1
+900 00 *a Āndirsin *h Hāns Krı̄stı̄yan *x se *w Andersen, H. C. (f. 1805) *z 770/1
+900 00 *a Antusheng *x se *w Andersen, H. C. (f. 1805) *z 770/1
 996 00 *a DBC

@@ -1,23 +1,23 @@
-001 00 *a5 284 694 3*b870970*c20170131132027*d20161229*fa
-004 00 *rn*ae
-008 00 *ts*uf*a2016*bdk*dy*lmul*x06*v0
-009 00 *aa*gxx
-021 00 *e9788799479931*x9788799479937
-032 00 *aDBF201707*xACC201652
-041 00 *pdan*peng
-245 00 *aProject Disc*cTopsil-sagen 2016*pProject Disc*cthe Topsil case 2016
-260 00 *a[Kbh.]*d[Rådhuspladsen 4, 1550 V]*bLETT*c[2016]
-300 00 *a129, 129 sider*bill. i farver
-508 00 *aParallelle tekster på dansk og engelsk
-512 00 *aTrykt tête-bêche
-521 00 *b1. oplag*c[2016]*ku.st.
-652 00 *m62.37
-700 00 *aBorring*hCarsten*4ctb*g1
-700 00 *å1*aKrøger-Petersen*hAnna Christine*4edt*4led
-710 00 *aLETT
-720 00 *oGina Ginelli*4edt
-900 00 *aPetersen*hAnna Christine Krøger-*z700/1
-d08 00 *ocko*rnk*aonlineversion i 2 dele: 5 285 044 4 og 5 285 048 7*ols*a720 medtaget på trods af at der i kol. står redaktionssekretær. På engelsk står der editorial assistent
-s10 00 *aDBC
-s12 00 *tTeamBAR201705
-z99 00 *als
+001 00 *a 5 284 694 3 *b 870970 *c 20170131132027 *d 20161229 *f a
+004 00 *r n *a e
+008 00 *t s *u f *a 2016 *b dk *d y *l mul *x 06 *v 0
+009 00 *a a *g xx
+021 00 *e 9788799479931 *x 9788799479937
+032 00 *a DBF201707 *x ACC201652
+041 00 *p dan *p eng
+245 00 *a Project Disc *c Topsil-sagen 2016 *p Project Disc *c the Topsil case 2016
+260 00 *a [Kbh.] *d [Rådhuspladsen 4, 1550 V] *b LETT *c [2016]
+300 00 *a 129, 129 sider *b ill. i farver
+508 00 *a Parallelle tekster på dansk og engelsk
+512 00 *a Trykt tête-bêche
+521 00 *b 1. oplag *c [2016] *k u.st.
+652 00 *m 62.37
+700 00 *a Borring *h Carsten *4 ctb *g 1
+700 00 *å 1001 *a Krøger-Petersen *h Anna Christine *4 edt *4 led
+710 00 *a LETT
+720 00 *o Gina Ginelli *4 edt
+900 00 *a Petersen *h Anna Christine Krøger- *x se *w Krøger-Petersen, Anna Christine *z 700/1001
+d08 00 *o cko *r nk *a onlineversion i 2 dele: 5 285 044 4 og 5 285 048 7 *o ls *a 720 medtaget på trods af at der i kol. står redaktionssekretær. På engelsk står der editorial assistent
+s10 00 *a DBC
+s12 00 *t TeamBAR201705
+z99 00 *a ls

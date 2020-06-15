@@ -42,6 +42,7 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUT_RAW_53214827 = "authority/raw-53214827.marc";
     private static final String AUT_RAW_90004158 = "authority/raw-90004158.marc";
     private static final String AUT_RAW_126350333 = "authority/raw-126350333.marc";
+    private static final String AUT_RAW_126850298 = "authority/raw-126850298.marc";
 
     private static final String AUT_EXPANDED_26443784 = "authority/expanded-26443784.marc";
     private static final String AUT_EXPANDED_52846943 = "authority/expanded-52846943.marc";
@@ -53,6 +54,7 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUT_EXPANDED_53214827 = "authority/expanded-53214827.marc";
     private static final String AUT_EXPANDED_90004158 = "authority/expanded-90004158.marc";
     private static final String AUT_EXPANDED_126350333 = "authority/expanded-126350333.marc";
+    private static final String AUT_EXPANDED_126850298 = "authority/expanded-126850298.marc";
 
     private static final String AUTHORITY_19024687 = "authority/authority-19024687.marc";
     private static final String AUTHORITY_19024709 = "authority/authority-19024709.marc";
@@ -76,6 +78,10 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUTHORITY_69094139 = "authority/authority-69094139.marc";
     private static final String AUTHORITY_69294685 = "authority/authority-69294685.marc";
     private static final String AUTHORITY_69328776 = "authority/authority-69328776.marc";
+    private static final String AUTHORITY_68046335 = "authority/authority-68046335.marc";
+    private static final String AUTHORITY_68139864 = "authority/authority-68139864.marc";
+    private static final String AUTHORITY_68619858 = "authority/authority-68619858.marc";
+    private static final String AUTHORITY_68679265 = "authority/authority-68679265.marc";
 
     private static final String COMMON_SINGLE_RECORD_RESOURCE = "authority/common_enrichment.marc";
 
@@ -272,6 +278,28 @@ public class ExpandCommonMarcRecordTest {
         collection.put("68560985", authority2);
 
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126350333")), equalTo(expanded));
+    }
+
+    @Test
+    public void expandLittolkRecordWithExistingReference() throws Exception {
+        MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
+
+        MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
+        MarcRecord authority2 = loadMarcRecord(AUTHORITY_68139864);
+        MarcRecord authority3 = loadMarcRecord(AUTHORITY_68619858);
+        MarcRecord authority4 = loadMarcRecord(AUTHORITY_68679265);
+
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_126850298);
+
+        Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("126850298", raw);
+
+        collection.put("68046335", authority1);
+        collection.put("68139864", authority2);
+        collection.put("68619858", authority3);
+        collection.put("68679265", authority4);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
     }
 
     private MarcRecord sortRecord(MarcRecord record) {
