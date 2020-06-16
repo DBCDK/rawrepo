@@ -1,35 +1,35 @@
-001 00 *a5 316 151 0*b870970*c20170614180728*d20170511*fa
-004 00 *rn*ae
-008 00 *tm*uf*a2017*bdk*då*dy*ldan*x06*v0
-009 00 *aa*gxx
-021 00 *e9788791779534*chf.
-032 00 *xACC201719*aDBF201725*xBKM201725
-245 00 *aDanmarks kystklitter
-260 00 *a@Århus*bNaturhistorisk Museum*c2017
-300 00 *a35 sider*bill. i farver
-440 00 *0*aNatur og museum*z0028-0585*V56 1*v56. årgang, nr. 1
-530 00 *&1*aIndhold: Det danske klitland ; Hvordan dannes en klit? ; Fredning af klitområder ; Styring af publikum? ; Kysttilbagerykning ; Klitlandets planter ; Dyrelivets udfordringer ; Fremtidsscenarie for klitområder ; Klittyper ud fra habitatdirektivet
-532 00 *&1*aMed litteraturhenvisninger
-652 00 *m50.26
-666 00 *0*fklitter
-666 00 *0*fkyster
-666 00 *0*fkystområder
-666 00 *0*fnaturforhold
-666 00 *0*fgeomorfologi
-666 00 *0*fgeologi
-700 00 *aWind*hPeter*4aut
-700 00 *å1*aBarfod*hAnders*4aut
-700 00 *aBrunbjerg*hAne Kirstine*4aut
-710 00 *aNaturhistorisk Museum
-720 00 *oMorten D.D. Hansen*4edt
-720 00 *oNina Seirup*4edt
-720 00 *oJens Erik Møller*4edt
-900 00 *aBarfod*hAnders S.*z700/1
-990 00 *o201725*bl*bv*unt
-d08 00 *osah*osb*kpbh
-f06 00 *bl*bv
-n51 00 *a20170614
-s10 00 *aDBC
-s12 00 *tTeamBAR201722
-z98 00 *aMinus korrekturprint
-z99 00 *apbh
+001 00 *a 5 316 151 0 *b 870970 *c 20170614180728 *d 20170511 *f a
+004 00 *r n *a e
+008 00 *t m *u f *a 2017 *b dk *d å *d y *l dan *x 06 *v 0
+009 00 *a a *g xx
+021 00 *e 9788791779534 *c hf.
+032 00 *x ACC201719 *a DBF201725 *x BKM201725
+245 00 *a Danmarks kystklitter
+260 00 *a @Århus *b Naturhistorisk Museum *c 2017
+300 00 *a 35 sider *b ill. i farver
+440 00 *0  *a Natur og museum *z 0028-0585 *V 56 1 *v 56. årgang, nr. 1
+530 00 *& 1 *a Indhold: Det danske klitland ; Hvordan dannes en klit? ; Fredning af klitområder ; Styring af publikum? ; Kysttilbagerykning ; Klitlandets planter ; Dyrelivets udfordringer ; Fremtidsscenarie for klitområder ; Klittyper ud fra habitatdirektivet
+532 00 *& 1 *a Med litteraturhenvisninger
+652 00 *m 50.26
+666 00 *0  *f klitter
+666 00 *0  *f kyster
+666 00 *0  *f kystområder
+666 00 *0  *f naturforhold
+666 00 *0  *f geomorfologi
+666 00 *0  *f geologi
+700 00 *a Wind *h Peter *4 aut
+700 00 *å 1001 *a Barfod *h Anders *4 aut
+700 00 *a Brunbjerg *h Ane Kirstine *4 aut
+710 00 *a Naturhistorisk Museum
+720 00 *o Morten D.D. Hansen *4 edt
+720 00 *o Nina Seirup *4 edt
+720 00 *o Jens Erik Møller *4 edt
+900 00 *a Barfod *h Anders S. *x se *w Barfod, Anders *z 700/1001
+990 00 *o 201725 *b l *b v *u nt
+d08 00 *o sah *o sb *k pbh
+f06 00 *b l *b v
+n51 00 *a 20170614
+s10 00 *a DBC
+s12 00 *t TeamBAR201722
+z98 00 *a Minus korrekturprint
+z99 00 *a pbh
