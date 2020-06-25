@@ -320,7 +320,11 @@ public class ExpandCommonMarcRecord {
             if (hasSubfieldw) {
                 additionalField.getSubfields().add(new MarcSubField("x", "se også under det senere navn"));
             } else {
-                additionalField.getSubfields().add(new MarcSubField("x", "se"));
+                if (Arrays.asList("500", "510").contains(authField.getName())) {
+                    additionalField.getSubfields().add(new MarcSubField("x", "se også"));
+                } else {
+                    additionalField.getSubfields().add(new MarcSubField("x", "se"));
+                }
             }
 
             final StringBuilder sb = new StringBuilder();
