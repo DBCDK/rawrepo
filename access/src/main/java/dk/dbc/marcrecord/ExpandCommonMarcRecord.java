@@ -308,17 +308,23 @@ public class ExpandCommonMarcRecord {
     private static void addAdditionalFields(String fieldName, MarcRecord record, List<MarcField> authFields, MarcField authField100, String indicator) {
         for (MarcField authField : authFields) {
             final MarcField additionalField = new MarcField(fieldName, "00");
-            boolean hasSubfieldw = false;
+            String subfieldwValue = null;
             for (MarcSubField authSubfield : authField.getSubfields()) {
                 if ("w".equals(authSubfield.getName())) {
-                    hasSubfieldw = true;
+                    subfieldwValue = authSubfield.getValue();
                 } else {
                     additionalField.getSubfields().add(new MarcSubField(authSubfield));
                 }
             }
 
-            if (hasSubfieldw) {
-                additionalField.getSubfields().add(new MarcSubField("x", "se også under det senere navn"));
+            if (subfieldwValue != null) {
+                if ("tidligere navn".equals(subfieldwValue)) {
+                    additionalField.getSubfields().add(new MarcSubField("x", "se også under det senere navn"));
+                } else if ("senere navn".equals(subfieldwValue)) {
+                    additionalField.getSubfields().add(new MarcSubField("x", "se også under det tidligere navn"));
+                } else {
+                    additionalField.getSubfields().add(new MarcSubField("x", subfieldwValue));
+                }
             } else {
                 if (Arrays.asList("500", "510").contains(authField.getName())) {
                     additionalField.getSubfields().add(new MarcSubField("x", "se også"));
