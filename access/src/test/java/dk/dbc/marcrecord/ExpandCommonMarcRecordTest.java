@@ -10,6 +10,7 @@ import dk.dbc.common.records.MarcField;
 import dk.dbc.common.records.MarcRecord;
 import dk.dbc.common.records.MarcRecordFactory;
 import dk.dbc.common.records.MarcRecordReader;
+import dk.dbc.common.records.MarcRecordWriter;
 import dk.dbc.common.records.utils.IOUtils;
 import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
@@ -281,7 +282,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandLittolkRecordWithExistingReference() throws Exception {
+    public void expandLittolkRecordWithExistingReferenceEarlierName() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
 
         MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
@@ -290,6 +291,58 @@ public class ExpandCommonMarcRecordTest {
         MarcRecord authority4 = loadMarcRecord(AUTHORITY_68679265);
 
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_126850298);
+
+        Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("126850298", raw);
+
+        collection.put("68046335", authority1);
+        collection.put("68139864", authority2);
+        collection.put("68619858", authority3);
+        collection.put("68679265", authority4);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
+    }
+
+    @Test
+    public void expandLittolkRecordWithExistingReferenceLaterName() throws Exception {
+        MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
+
+        MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
+        MarcRecord authority2 = loadMarcRecord(AUTHORITY_68139864);
+        MarcRecord authority3 = loadMarcRecord(AUTHORITY_68619858);
+        MarcRecord authority4 = loadMarcRecord(AUTHORITY_68679265);
+
+        MarcRecordWriter authority3RecordWriter = new MarcRecordWriter(authority3);
+        authority3RecordWriter.addOrReplaceSubfield("500", "w", "senere navn");
+
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_126850298);
+        expanded.getFields().get(19).getSubfields().get(2).setValue("se også under det tidligere navn");
+
+        Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("126850298", raw);
+
+        collection.put("68046335", authority1);
+        collection.put("68139864", authority2);
+        collection.put("68619858", authority3);
+        collection.put("68679265", authority4);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
+    }
+
+    @Test
+    public void expandLittolkRecordWithExistingReferenceCustomText() throws Exception {
+        MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
+
+        MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
+        MarcRecord authority2 = loadMarcRecord(AUTHORITY_68139864);
+        MarcRecord authority3 = loadMarcRecord(AUTHORITY_68619858);
+        MarcRecord authority4 = loadMarcRecord(AUTHORITY_68679265);
+
+        MarcRecordWriter authority3RecordWriter = new MarcRecordWriter(authority3);
+        authority3RecordWriter.addOrReplaceSubfield("500", "w", "også kendt som");
+
+        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_126850298);
+        expanded.getFields().get(19).getSubfields().get(2).setValue("også kendt som");
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("126850298", raw);
