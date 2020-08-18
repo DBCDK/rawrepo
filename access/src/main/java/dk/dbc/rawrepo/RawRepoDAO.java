@@ -956,7 +956,7 @@ public abstract class RawRepoDAO {
         String parent = getMimeTypeOf(parentId.getBibliographicRecordId(), parentId.getAgencyId());
         if (MarcXChangeMimeType.isArticle(current)) {
             return MarcXChangeMimeType.isArticle(parent);
-        } else if (MarcXChangeMimeType.isMatVurd(current)) {
+        } else if (MarcXChangeMimeType.isMatVurd(current) || MarcXChangeMimeType.isLitAnalysis(current)) {
             return false;
         } else return MarcXChangeMimeType.isMarcXChange(current) ||
                 MarcXChangeMimeType.isEnrichment(current);

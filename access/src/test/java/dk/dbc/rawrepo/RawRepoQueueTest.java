@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.ARTICLE;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.AUTHORITY;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.ENRICHMENT;
+import static dk.dbc.marcxmerge.MarcXChangeMimeType.LITANALYSIS;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.MATVURD;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -432,6 +433,23 @@ public class RawRepoQueueTest {
     }
 
     @Test
+    public void testEnqueueArticleHierarchy() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .add("870970:H")
+                .add("870970:S:870970:H")
+                .add("870970:B:870970:S")
+                .add("870971:A1:870970:B#" + ARTICLE)
+                .add("870971:A2:870971:A1#" + ARTICLE)
+                .build();
+        dao.changedRecord("PRO", recordFromString("870971:A1"));
+        System.out.println("enqueued = " + enqueued);
+        enqueuedIs(enqueued,
+                "870971:A1:C-",
+                "870971:A2:-L");
+    }
+
+    @Test
     public void testEnqueueArticleEnrichment() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
 
@@ -459,7 +477,26 @@ public class RawRepoQueueTest {
                 .add("870970:29778795:870979:68369444")
                 .add("191919:29778795:870970:29778795#" + ENRICHMENT)
                 .add("715700:29778795:870970:29778795#" + ENRICHMENT)
-                .add("870974:126341873:870970:29778795#" + MATVURD)
+                .add("870976:126341873:870970:29778795#" + MATVURD)
+                .add("191919:126341873:870976:126341873#" + ENRICHMENT)
+                .build();
+
+        dao.changedRecord("PRO", recordFromString("191919:126341873"));
+        System.out.println("enqueued = " + enqueued);
+        enqueuedIs(enqueued,
+                "191919:126341873:CL");
+    }
+
+    @Test
+    public void testEnqueueLitAnalysisEnrichment() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .add("870979:68369444#" + AUTHORITY)
+                .add("870970:29778795:870979:68369444")
+                .add("191919:29778795:870970:29778795#" + ENRICHMENT)
+                .add("715700:29778795:870970:29778795#" + ENRICHMENT)
+                .add("870974:126341873:870970:29778795#" + LITANALYSIS)
                 .add("191919:126341873:870974:126341873#" + ENRICHMENT)
                 .build();
 
