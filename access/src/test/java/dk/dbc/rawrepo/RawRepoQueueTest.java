@@ -432,40 +432,26 @@ public class RawRepoQueueTest {
     }
 
     @Test
-    public void testEnqueueMatVurd() throws Exception {
+    public void testEnqueueArticleEnrichment() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
 
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .add("870970:C")
-                .add("123456:C:870970:C")
-                .add("870974:M:870970:C#" + MATVURD)
+                .add("870979:68369444#" + AUTHORITY)
+                .add("870970:29778795:870979:68369444")
+                .add("191919:29778795:870970:29778795#" + ENRICHMENT)
+                .add("715700:29778795:870970:29778795#" + ENRICHMENT)
+                .add("870971:126341873:870970:29778795#" + ARTICLE)
+                .add("191919:126341873:870971:126341873#" + ENRICHMENT)
                 .build();
 
-        dao.changedRecord("PRO", recordFromString("870974:M"));
+        dao.changedRecord("PRO", recordFromString("191919:126341873"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                "870974:M:CL");
+                "191919:126341873:CL");
     }
 
     @Test
-    public void testEnqueueMatVurdHead() throws Exception {
-        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
-
-        RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .add("870970:H")
-                .add("870970:C:870970:H")
-                .add("123456:C:870970:C")
-                .add("870974:M:870970:H#" + MATVURD)
-                .build();
-
-        dao.changedRecord("PRO", recordFromString("870974:M"));
-        System.out.println("enqueued = " + enqueued);
-        enqueuedIs(enqueued,
-                "870974:M:CL");
-    }
-
-    @Test
-    public void testEnqueueMatVurd2() throws Exception {
+    public void testEnqueueMatVurdEnrichment() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
 
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
@@ -480,30 +466,8 @@ public class RawRepoQueueTest {
         dao.changedRecord("PRO", recordFromString("191919:126341873"));
         System.out.println("enqueued = " + enqueued);
         enqueuedIs(enqueued,
-                "191919:126341873:CL",
-                "715700:126341873:-L");
+                "191919:126341873:CL");
     }
-
-    @Test
-    public void falseVolumes1() throws Exception {
-        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
-
-        RawRepoDAO dao = RawRepoMock.builder(enqueued)
-                .add("870970:05723620")
-                .add("716100:05723620")
-                .add("763000:05723620")
-                .add("715700:05723620")
-                .add("700400:05723620")
-                .add("870974:126423713:870970:05723620#" + MATVURD)
-                .build();
-
-        dao.changedRecord("PRO", recordFromString("870974:126423713"));
-        System.out.println("enqueued = " + enqueued);
-        enqueuedIs(enqueued,
-                "870974:126423713:CL");
-    }
-
-    //05723620
 
     /*
      *     ______          __
