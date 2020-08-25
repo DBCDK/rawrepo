@@ -178,7 +178,7 @@ public class ExpandCommonMarcRecord {
         return expandedRecord;
     }
 
-    private static int findMaxAuthIndicator(List<MarcField> fields) throws RawRepoException {
+    private static int findMaxAuthIndicator(List<MarcField> fields) {
         int authIndicator = 1001;
         for (MarcField field : fields) {
             final MarcFieldReader fieldReader = new MarcFieldReader(field);
@@ -189,8 +189,8 @@ public class ExpandCommonMarcRecord {
                         authIndicator = indicator + 1;
                     }
                 } catch (NumberFormatException ex) {
-                    final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal men fik '%s'", field.getName(), fieldReader.getValue("å"));
-                    throw new RawRepoException(message, ex);
+                    final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal men fik '%s' - ignorerer", field.getName(), fieldReader.getValue("å"));
+                    logger.debug(message);
                 }
             }
         }
