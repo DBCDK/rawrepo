@@ -132,12 +132,12 @@ public abstract class RawRepoDAO {
 
     /**
      * Fetches a record from the cache table if the record is found.
-     *
+     * <p>
      * In addition to the bibliographicRecordId and agencyId a cacheKey must be given as well.
      *
      * @param bibliographicRecordId String with record id
-     * @param agencyId library number
-     * @param cacheKey key defining the origin of the saved record
+     * @param agencyId              library number
+     * @param cacheKey              key defining the origin of the saved record
      * @return fetched record or null
      * @throws RawRepoException done at failure
      */
@@ -750,7 +750,7 @@ public abstract class RawRepoDAO {
         if (recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             if (recordExists(bibliographicRecordId, agencyId)) {
                 HashSet<Integer> agencyIds = findParentsSiblingsFilter(bibliographicRecordId, agencyId);
-                changedRecord(provider, bibliographicRecordId, agencyIds, originalAgencyId, true, changed, priority);
+                changedRecord(provider, bibliographicRecordId, agencyIds, originalAgencyId, changed, priority);
             } else {
                 enqueue(recordId, provider, true, true);
             }
@@ -762,7 +762,7 @@ public abstract class RawRepoDAO {
         }
     }
 
-    private void changedRecord(String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean traverse, boolean changed, int priority)
+    private void changedRecord(String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean changed, int priority)
             throws RawRepoException {
         Set<Integer> agencies = new HashSet<>();
         for (Integer agencyId : agencyIds) {
@@ -794,8 +794,6 @@ public abstract class RawRepoDAO {
                         if (agencies.contains(searchAgency)) {
                             children.add(recordId);
                         } else {
-
-                            //??????????????
                             for (Integer agency : agencies) {
                                 minorChildren.add(new RecordId(recordId.getBibliographicRecordId(), agency));
                             }
@@ -809,11 +807,11 @@ public abstract class RawRepoDAO {
         // Find all children only by major sibling search
         // Filter out those by direct reference... there should be none?
         Set<Integer> directChildAgencies = new HashSet<>();
-        children.stream().map(r -> r.getAgencyId()).forEach(a -> directChildAgencies.add(a));
-        foreignChildren.stream().map(r -> r.getAgencyId()).forEach(a -> directChildAgencies.add(a));
+        children.stream().map(RecordId::getAgencyId).forEach(directChildAgencies::add);
+        foreignChildren.stream().map(RecordId::getAgencyId).forEach(directChildAgencies::add);
         minorChildren.stream()
                 .filter(r -> !directChildAgencies.contains(r.getAgencyId()))
-                .forEach(r -> children.add(r));
+                .forEach(children::add);
 
         for (Integer agency : agencies) {
             RecordId recordId = new RecordId(bibliographicRecordId, agency);
@@ -822,18 +820,15 @@ public abstract class RawRepoDAO {
                     children.isEmpty(),
                     priority);
         }
-        if (traverse) {
-            Set<String> bi = children.stream()
-                    .filter(r -> agencies.contains(r.getAgencyId()))
-                    .map(r -> r.getBibliographicRecordId())
-                    .distinct()
-                    .collect(Collectors.toSet());
-            for (String b : bi) {
-                changedRecord(provider, b, agencies, -1, true, true, priority);
-            }
-            for (RecordId child : foreignChildren) {
-                changedRecord(provider, child, child.getAgencyId(), false, priority);
-            }
+        Set<String> bi = children.stream()
+                .filter(r -> agencies.contains(r.getAgencyId()))
+                .map(RecordId::getBibliographicRecordId)
+                .collect(Collectors.toSet());
+        for (String b : bi) {
+            changedRecord(provider, b, agencies, -1, true, priority);
+        }
+        for (RecordId child : foreignChildren) {
+            changedRecord(provider, child, child.getAgencyId(), false, priority);
         }
     }
 
