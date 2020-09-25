@@ -263,39 +263,42 @@ public class RawRepoDAOIT {
 
     @Test
     public void testFetchRecordCollectionArticle() throws SQLException, RawRepoException, MarcXMergerException {
-        setupData(0, "A:870970", "B:870971");
-        setupRelations("B:870971,A:870970");
+        setupData(800000, "A:870970", "B:870971", "B:191919");
+        setupRelations("B:870971,A:870970", "B:191919,B:870971");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870971, getMarcXMerger())), "A:870970", "B:870971");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 191919, getMarcXMerger())), "A:870970", "B:191919");
     }
 
     @Test
     public void testFetchRecordCollectionLittolk() throws SQLException, RawRepoException, MarcXMergerException {
-        setupData(0, "A:870970", "B:870974");
-        setupRelations("B:870974,A:870970");
+        setupData(800000, "A:870970", "B:870974", "B:191919");
+        setupRelations("B:870974,A:870970", "B:191919,B:870974");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870974, getMarcXMerger())), "A:870970", "B:870974");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 191919, getMarcXMerger())), "A:870970", "B:191919");
     }
 
     @Test
     public void testFetchRecordCollectionMatvurd() throws SQLException, RawRepoException, MarcXMergerException {
-        setupData(0, "A:870970", "B:870976", "C:870970");
-        setupRelations("B:870976,A:870970");
-        setupRelations("B:870976,C:870970");
+        setupData(800000, "A:870970", "B:870976", "B:191919", "C:870970");
+        setupRelations("B:870976,A:870970", "B:870976,C:870970", "B:191919,B:870976");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 870976, getMarcXMerger())), "A:870970", "B:870976", "C:870970");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("B", 191919, getMarcXMerger())), "A:870970", "B:191919", "C:870970");
     }
 
     @Test
     public void testFetchRecordCollectionAuthority() throws SQLException, RawRepoException, MarcXMergerException {
-        setupData(0, "A:870979", "B:870979", "C:870970");
-        setupRelations("C:870970,A:870979", "C:870970,B:870979");
+        setupData(800000, "A:870979", "A:191919", "B:870979", "C:870970");
+        setupRelations("C:870970,A:870979", "C:870970,B:870979", "A:191919,A:870979");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         collectionIs(idsFromCollection(dao.fetchRecordCollection("C", 870970, getMarcXMerger())), "C:870970", "A:870979", "B:870979");
+        collectionIs(idsFromCollection(dao.fetchRecordCollection("A", 191919, getMarcXMerger())), "A:191919");
     }
 
     @Test

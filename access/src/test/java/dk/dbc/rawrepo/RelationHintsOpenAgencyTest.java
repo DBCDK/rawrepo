@@ -27,14 +27,20 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RelationHintsOpenAgencyTest {
@@ -42,14 +48,15 @@ public class RelationHintsOpenAgencyTest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(getPort()).withRootDirectory(getPath()));
 
-    static int fallbackPort = (int) ( 15000.0 * Math.random() ) + 15000;
+    static int fallbackPort = (int) (15000.0 * Math.random()) + 15000;
 
     static int getPort() {
         int port = Integer.parseInt(System.getProperty("wiremock.port", "0"));
-        if(port == 0)
+        if (port == 0)
             port = fallbackPort;
         return port;
     }
+
     static String getPath() {
         return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
     }
@@ -59,7 +66,7 @@ public class RelationHintsOpenAgencyTest {
         stubFor(post(urlMatching("/openagency/"))
                 .withRequestBody(
                         matchingXPath("//ns1:agencyId[.='123456']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBodyFile("openagency_libraryRules_123456.xml")));
@@ -73,10 +80,17 @@ public class RelationHintsOpenAgencyTest {
         stubFor(post(urlMatching("/openagency/"))
                 .withRequestBody(
                         matchingXPath("//ns1:agencyId[.='191919']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBodyFile("openagency_libraryRules_191919.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='870970']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_870970.xml")));
         stubFor(post(urlMatching("/openagency/"))
                 .withRequestBody(
                         matchingXPath("//ns1:agencyId[.='870971']")
@@ -84,6 +98,41 @@ public class RelationHintsOpenAgencyTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBodyFile("openagency_libraryRules_870971.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='870974']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_870974.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='870976']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_870976.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='870979']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_870979.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='190002']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_190002.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='190004']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_190004.xml")));
     }
 
     @Test
@@ -94,27 +143,44 @@ public class RelationHintsOpenAgencyTest {
 
         boolean usesCommonAgency;
         usesCommonAgency = relationHints.usesCommonAgency(191919);
-        assertEquals(true, usesCommonAgency);
+        assertTrue(usesCommonAgency);
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertEquals(Arrays.asList(870970, 870971, 870974, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
-        assertEquals(false, usesCommonAgency);
+        assertFalse(usesCommonAgency);
 
         agencies = relationHints.get(123456);
-        assertEquals(Arrays.asList(123456), agencies);
+        assertEquals(Collections.singletonList(123456), agencies);
 
         agencies = relationHints.getAgencyPriority(123456);
-        assertEquals(Arrays.asList(123456), agencies);
+        assertEquals(Collections.singletonList(123456), agencies);
 
         agencies = relationHints.getAgencyPriority(861620);
-        assertEquals(Arrays.asList(861620, 870970, 870971, 870974, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(861620, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+
+        agencies = relationHints.getAgencyPriority(870970);
+        assertEquals(Arrays.asList(870970, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
 
         agencies = relationHints.getAgencyPriority(870971);
-        assertEquals(Arrays.asList(870971, 870979), agencies);
+        assertEquals(Arrays.asList(870971, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
 
+        agencies = relationHints.getAgencyPriority(870974);
+        assertEquals(Arrays.asList(870974, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+
+        agencies = relationHints.getAgencyPriority(870976);
+        assertEquals(Arrays.asList(870976, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+
+        agencies = relationHints.getAgencyPriority(870979);
+        assertEquals(Arrays.asList(870979, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+
+        agencies = relationHints.getAgencyPriority(190002);
+        assertEquals(Arrays.asList(190002, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+
+        agencies = relationHints.getAgencyPriority(190004);
+        assertEquals(Arrays.asList(190004, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
     }
 
 }
