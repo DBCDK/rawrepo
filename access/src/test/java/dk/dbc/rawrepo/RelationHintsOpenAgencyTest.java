@@ -100,6 +100,13 @@ public class RelationHintsOpenAgencyTest {
                         .withBodyFile("openagency_libraryRules_870971.xml")));
         stubFor(post(urlMatching("/openagency/"))
                 .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='870975']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_870975.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
                         matchingXPath("//ns1:agencyId[.='870974']")
                                 .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
                 .willReturn(aResponse()
@@ -133,6 +140,13 @@ public class RelationHintsOpenAgencyTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBodyFile("openagency_libraryRules_190004.xml")));
+        stubFor(post(urlMatching("/openagency/"))
+                .withRequestBody(
+                        matchingXPath("//ns1:agencyId[.='190007']")
+                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("openagency_libraryRules_190007.xml")));
     }
 
     @Test
@@ -147,7 +161,7 @@ public class RelationHintsOpenAgencyTest {
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertEquals(Arrays.asList(870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
         assertFalse(usesCommonAgency);
@@ -159,28 +173,34 @@ public class RelationHintsOpenAgencyTest {
         assertEquals(Collections.singletonList(123456), agencies);
 
         agencies = relationHints.getAgencyPriority(861620);
-        assertEquals(Arrays.asList(861620, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(861620, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(870970);
-        assertEquals(Arrays.asList(870970, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870970, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(870971);
-        assertEquals(Arrays.asList(870971, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870971, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(870974);
-        assertEquals(Arrays.asList(870974, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870974, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+
+        agencies = relationHints.getAgencyPriority(870975);
+        assertEquals(Arrays.asList(870975, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(870976);
-        assertEquals(Arrays.asList(870976, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870976, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(870979);
-        assertEquals(Arrays.asList(870979, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(870979, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(190002);
-        assertEquals(Arrays.asList(190002, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(190002, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
 
         agencies = relationHints.getAgencyPriority(190004);
-        assertEquals(Arrays.asList(190004, 870970, 870971, 870974, 870976, 870979, 190002, 190004), agencies);
+        assertEquals(Arrays.asList(190004, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+
+        agencies = relationHints.getAgencyPriority(190007);
+        assertEquals(Arrays.asList(190007, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
     }
 
 }

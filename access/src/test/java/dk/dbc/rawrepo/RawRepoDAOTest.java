@@ -67,6 +67,7 @@ public class RawRepoDAOTest {
     private OpenAgencyServiceFromURL getOpenAgencyService() throws OpenAgencyException {
         LibraryRuleHandler libraryRuleHandlerMock = mock(LibraryRuleHandler.class);
         when(libraryRuleHandlerMock.isAllowed(eq(870970), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(libraryRuleHandlerMock.isAllowed(eq(870975), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
         when(libraryRuleHandlerMock.isAllowed(eq(1), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
         when(libraryRuleHandlerMock.isAllowed(eq(2), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(false);
         OpenAgencyServiceFromURL openAgencyServiceFromURLMock = mock(OpenAgencyServiceFromURL.class);
@@ -131,7 +132,8 @@ public class RawRepoDAOTest {
                     "E:870970", "E:2", // BIND
                     "F:870970", "F:2", // SECTION
                     "G:870970", "G:1", // BIND
-                    "H:870970");// BIND
+                    "H:870970", // BIND
+                    "I:870975");
             System.out.println("access = " + access);
             MarcXMerger merger = new MarcXMerger() {
 
@@ -147,6 +149,7 @@ public class RawRepoDAOTest {
             recordCollectionIs(access.fetchRecordCollection("D", 1, merger), "D:870970", "C:1", "B:870970"); // BIND LOCAL SECTION
             recordCollectionIs(access.fetchRecordCollection("G", 1, merger), "G:1", "F:870970", "B:870970"); // BIND LOCAL BIND
             recordCollectionIs(access.fetchRecordCollection("F", 2, merger), "F:2"); // NO COMMON AGENCY
+            recordCollectionIs(access.fetchRecordCollection("I", 870975, merger), "I:870975", "D:870970", "C:870970", "B:870970");
 
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -477,6 +480,7 @@ public class RawRepoDAOTest {
             "G:870970,F:870970",
             "H:1,H:870970",
             "H:2,H:870970",
-            "H:870970,F:870970"};
+            "H:870970,F:870970",
+            "I:870975,D:870970"};
 
 }
