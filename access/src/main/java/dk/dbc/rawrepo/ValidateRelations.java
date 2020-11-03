@@ -24,10 +24,13 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class ValidateRelations {
@@ -42,123 +45,136 @@ public class ValidateRelations {
     }
 
     private interface Validator {
-
         void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException;
     }
 
     private static final Map<String, Validator> validators = initializeValidators();
 
     private static Map<String, Validator> initializeValidators() {
-        HashMap<String, Validator> tmp = new HashMap<>();
+        final HashMap<String, Validator> tmp = new HashMap<>();
         tmp.put(MarcXChangeMimeType.MARCXCHANGE, makeValidatorMarcXchange());
         tmp.put(MarcXChangeMimeType.ARTICLE, makeValidatorArticle());
         tmp.put(MarcXChangeMimeType.AUTHORITY, makeValidatorAuthority());
         tmp.put(MarcXChangeMimeType.ENRICHMENT, makeValidatorEnrichment());
+        tmp.put(MarcXChangeMimeType.HOSTPUB, makeValidatorHostPub());
         tmp.put(MarcXChangeMimeType.LITANALYSIS, makeValidatorLitAnalysis());
         tmp.put(MarcXChangeMimeType.MATVURD, makeValidatorMatVurd());
+        tmp.put(MarcXChangeMimeType.SIMPLE, makeValidatorSimple());
         return tmp;
     }
 
     private static Validator makeValidatorMarcXchange() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                ArrayList<String> parentMimeTypes = new ArrayList<>();
-                for (RecordId refer : refers) {
-                    if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many sibling relations for MARCXCHANGE (text/(decentral+)marcxchange > 0)");
-                    } else {
-                        String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
-                        parentMimeTypes.add(mimeType);
-                    }
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many sibling relations for MARCXCHANGE (text/(decentral+)marcxchange > 0)");
+                } else {
+                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                    parentMimeTypes.add(mimeType);
                 }
-                if (parentMimeTypes.size() > 0) {
-                    int marcxCount = parentMimeTypes.size();
-                    parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    marcxCount -= parentMimeTypes.size();
-                    if (marcxCount > 1) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
-                    }
+            }
+            if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                marcxCount -= parentMimeTypes.size();
+                if (marcxCount > 1) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
+                }
 
-                    // A record can have multiple AUTHORITY parents so we have to use removeAll() as remove() only takes care of the first occurrence
-                    parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
-                    if (parentMimeTypes.size() > 0) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        logger.error("Mimetypes: " + parentMimeTypes.toString());
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VMX");
-                    }
+                // A record can have multiple AUTHORITY parents so we have to use removeAll() as remove() only takes care of the first occurrence
+                parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
+                if (parentMimeTypes.size() > 0) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    logger.error("Mimetypes: " + parentMimeTypes.toString());
+                    throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VMX");
                 }
             }
         };
     }
 
     private static Validator makeValidatorArticle() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                ArrayList<String> parentMimeTypes = new ArrayList<>();
-                for (RecordId refer : refers) {
-                    if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many sibling relations for ARTICLE (text/(decentral+)marcxchange > 0)");
-                    } else {
-                        String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
-                        parentMimeTypes.add(mimeType);
-                    }
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many sibling relations for ARTICLE (text/(decentral+)marcxchange > 0)");
+                } else {
+                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                    parentMimeTypes.add(mimeType);
                 }
+            }
+            if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                parentMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
+                parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
+                marcxCount -= parentMimeTypes.size();
                 if (parentMimeTypes.size() > 0) {
-                    int marcxCount = parentMimeTypes.size();
-                    parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    parentMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
-                    parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
-                    marcxCount -= parentMimeTypes.size();
-                    if (parentMimeTypes.size() > 0) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
-                    }
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
                 }
             }
         };
     }
 
     private static Validator makeValidatorAuthority() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                if (!refers.isEmpty()) {
+        return (dao, recordId, refers) -> {
+            if (!refers.isEmpty()) {
+                logger.error("Validate constraint: " + recordId + " -> " + refers);
+                throw new RawRepoException("AUTHORITY records cannot have outbound relations");
+            }
+        };
+    }
+
+    private static Validator makeValidatorHostPub() {
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
                     logger.error("Validate constraint: " + recordId + " -> " + refers);
-                    throw new RawRepoException("authority records cannot have outbound relations");
+                    throw new RawRepoException("Error setting relations, too many sibling relations for HOSTPUB (text/(decentral+)marcxchange > 0)");
+                } else {
+                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                    parentMimeTypes.add(mimeType);
+                }
+            }
+            if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                marcxCount -= parentMimeTypes.size();
+                if (parentMimeTypes.size() > 0) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
                 }
             }
         };
     }
 
     private static Validator makeValidatorLitAnalysis() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                ArrayList<String> parentMimeTypes = new ArrayList<>();
-                for (RecordId refer : refers) {
-                    if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many sibling relations for LITANALYSIS (text/(decentral+)marcxchange > 0)");
-                    } else {
-                        String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
-                        parentMimeTypes.add(mimeType);
-                    }
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many sibling relations for LITANALYSIS (text/(decentral+)marcxchange > 0)");
+                } else {
+                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                    parentMimeTypes.add(mimeType);
                 }
+            }
+            if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                parentMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
+                parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
+                marcxCount -= parentMimeTypes.size();
                 if (parentMimeTypes.size() > 0) {
-                    int marcxCount = parentMimeTypes.size();
-                    parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    parentMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
-                    parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.AUTHORITY));
-                    marcxCount -= parentMimeTypes.size();
-                    if (parentMimeTypes.size() > 0) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
-                    }
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
                 }
             }
         };
@@ -171,80 +187,87 @@ public class ValidateRelations {
      * @return Validator which validates the relations for a MATVURD record.
      */
     private static Validator makeValidatorMatVurd() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                ArrayList<String> parentMimeTypes = new ArrayList<>();
-                for (RecordId refer : refers) {
-                    if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many sibling relations for MATVURD (text/(decentral+)marcxchange > 0)");
-                    } else {
-                        String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
-                        parentMimeTypes.add(mimeType);
-                    }
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many sibling relations for MATVURD (text/(decentral+)marcxchange > 0)");
+                } else {
+                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                    parentMimeTypes.add(mimeType);
                 }
+            }
+            if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.MARCXCHANGE));
+                marcxCount -= parentMimeTypes.size();
                 if (parentMimeTypes.size() > 0) {
-                    int marcxCount = parentMimeTypes.size();
-                    parentMimeTypes.removeAll(Collections.singleton(MarcXChangeMimeType.MARCXCHANGE));
-                    marcxCount -= parentMimeTypes.size();
-                    if (parentMimeTypes.size() > 0) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
-                    }
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations: " + marcxCount);
                 }
             }
         };
     }
 
+    private static Validator makeValidatorSimple() {
+        return (dao, recordId, refers) -> {
+            if (!refers.isEmpty()) {
+                logger.error("Validate constraint: " + recordId + " -> " + refers);
+                throw new RawRepoException("SIMPLE records cannot have outbound relations");
+            }
+        };
+    }
+
     private static Validator makeValidatorEnrichment() {
-        return new Validator() {
-            @Override
-            public void validate(RawRepoDAO dao, RecordId recordId, Set<RecordId> refers) throws RawRepoException {
-                ArrayList<String> parentMimeTypes = new ArrayList<>();
-                ArrayList<String> siblingMimeTypes = new ArrayList<>();
-                for (RecordId refer : refers) {
-                    String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
-                    if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
-                        siblingMimeTypes.add(mimeType);
-                    } else {
-                        parentMimeTypes.add(mimeType);
-                    }
+        return (dao, recordId, refers) -> {
+            ArrayList<String> parentMimeTypes = new ArrayList<>();
+            ArrayList<String> siblingMimeTypes = new ArrayList<>();
+            for (RecordId refer : refers) {
+                String mimeType = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.getAgencyId());
+                if (recordId.getBibliographicRecordId().equals(refer.getBibliographicRecordId())) {
+                    siblingMimeTypes.add(mimeType);
+                } else {
+                    parentMimeTypes.add(mimeType);
                 }
-                if (siblingMimeTypes.size() > 1) {
+            }
+            if (siblingMimeTypes.size() > 1) {
+                logger.error("Validate constraint: " + recordId + " -> " + refers);
+                throw new RawRepoException("Error setting relations, too many sibling relations (text/enrichment+marcxchange > 1)");
+            } else if (siblingMimeTypes.size() > 0) {
+                siblingMimeTypes.remove(MarcXChangeMimeType.ENRICHMENT);
+                siblingMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                siblingMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
+                siblingMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
+                siblingMimeTypes.remove(MarcXChangeMimeType.HOSTPUB);
+                siblingMimeTypes.remove(MarcXChangeMimeType.LITANALYSIS);
+                siblingMimeTypes.remove(MarcXChangeMimeType.MATVURD);
+                siblingMimeTypes.remove(MarcXChangeMimeType.SIMPLE);
+                if (!siblingMimeTypes.isEmpty()) {
                     logger.error("Validate constraint: " + recordId + " -> " + refers);
-                    throw new RawRepoException("Error setting relations, too many sibling relations (text/enrichment+marcxchange > 1)");
-                } else if (siblingMimeTypes.size() > 0) {
-                    siblingMimeTypes.remove(MarcXChangeMimeType.ENRICHMENT);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.ARTICLE);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.LITANALYSIS);
-                    siblingMimeTypes.remove(MarcXChangeMimeType.MATVURD);
-                    if (!siblingMimeTypes.isEmpty()) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");
-                    }
-                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
-                    if (!parentMimeTypes.isEmpty()) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE1");
-                    }
-                } else if (parentMimeTypes.size() > 0) {
-                    int marcxCount = parentMimeTypes.size();
-                    parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
-                    marcxCount -= parentMimeTypes.size();
-                    if (marcxCount > 1) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, too many parent relations");
-                    }
-                    parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
-                    if (parentMimeTypes.size() > 0) {
-                        logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE2");
-                    }
+                    throw new RawRepoException("Error setting relations, sibling relation of invalid mimetype");
+                }
+                parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
+                if (!parentMimeTypes.isEmpty()) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE1");
+                }
+            } else if (parentMimeTypes.size() > 0) {
+                int marcxCount = parentMimeTypes.size();
+                parentMimeTypes.remove(MarcXChangeMimeType.MARCXCHANGE);
+                marcxCount -= parentMimeTypes.size();
+                if (marcxCount > 1) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, too many parent relations");
+                }
+                parentMimeTypes.remove(MarcXChangeMimeType.AUTHORITY);
+                if (parentMimeTypes.size() > 0) {
+                    logger.error("Validate constraint: " + recordId + " -> " + refers);
+                    throw new RawRepoException("Error setting relations, parent relation of invalid mimetype - VE2");
                 }
             }
         };
     }
+
+
 }

@@ -46,8 +46,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.ListIterator;
 
@@ -61,7 +61,6 @@ public class MarcXMerger {
     private static final String ATTRIBUTE_TAG = "tag";
     private static final String ELEMENT_RECORD = "record";
     private static final String ELEMENT_DATAFIELD = "datafield";
-    private static final String UTF8 = "UTF-8";
 
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
@@ -102,32 +101,35 @@ public class MarcXMerger {
     public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
         switch (originalMimeType) {
             case MarcXChangeMimeType.MARCXCHANGE:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return true;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
                 }
 
             case MarcXChangeMimeType.ARTICLE:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return true;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
                 }
 
             case MarcXChangeMimeType.AUTHORITY:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return true;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
                 }
 
             case MarcXChangeMimeType.LITANALYSIS:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return true;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
                 }
             case MarcXChangeMimeType.MATVURD:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return true;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
+                }
+            case MarcXChangeMimeType.HOSTPUB:
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
+                }
+            case MarcXChangeMimeType.SIMPLE:
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return true;
                 }
         }
         return false;
@@ -136,33 +138,38 @@ public class MarcXMerger {
     public String mergedMimetype(String originalMimeType, String enrichmentMimeType) {
         switch (originalMimeType) {
             case MarcXChangeMimeType.MARCXCHANGE:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return MarcXChangeMimeType.MARCXCHANGE;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.MARCXCHANGE;
                 }
 
             case MarcXChangeMimeType.ARTICLE:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return MarcXChangeMimeType.ARTICLE;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.ARTICLE;
                 }
 
             case MarcXChangeMimeType.AUTHORITY:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return MarcXChangeMimeType.AUTHORITY;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.AUTHORITY;
                 }
 
             case MarcXChangeMimeType.LITANALYSIS:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return MarcXChangeMimeType.LITANALYSIS;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.LITANALYSIS;
                 }
 
             case MarcXChangeMimeType.MATVURD:
-                switch (enrichmentMimeType) {
-                    case MarcXChangeMimeType.ENRICHMENT:
-                        return MarcXChangeMimeType.MATVURD;
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.MATVURD;
+                }
+
+            case MarcXChangeMimeType.HOSTPUB:
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.HOSTPUB;
+                }
+
+            case MarcXChangeMimeType.SIMPLE:
+                if (MarcXChangeMimeType.ENRICHMENT.equals(enrichmentMimeType)) {
+                    return MarcXChangeMimeType.SIMPLE;
                 }
         }
         throw new IllegalStateException("Cannot figure out mimetype of: " + originalMimeType + "&" + enrichmentMimeType);
@@ -177,7 +184,7 @@ public class MarcXMerger {
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
             synchronized (DocumentBuilderFactory.class) {
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 documentBuilderFactory.setIgnoringComments(true);
                 documentBuilderFactory.setIgnoringElementContentWhitespace(true);
@@ -199,8 +206,8 @@ public class MarcXMerger {
     private static Transformer newTransformer() throws MarcXMergerException {
         try {
             synchronized (TransformerFactory.class) {
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
+                final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                final Transformer transformer = transformerFactory.newTransformer();
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
                 transformer.setOutputProperty(OutputKeys.METHOD, "xml");
                 transformer.setOutputProperty(OutputKeys.INDENT, "no");
@@ -225,10 +232,10 @@ public class MarcXMerger {
      */
     public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
         try {
-            Document commonDom = documentBuilder.parse(new ByteArrayInputStream(common));
-            Document localDom = documentBuilder.parse(new ByteArrayInputStream(local));
-            Element commonRootElement = commonDom.getDocumentElement();
-            Element localRootElement = localDom.getDocumentElement();
+            final Document commonDom = documentBuilder.parse(new ByteArrayInputStream(common));
+            final Document localDom = documentBuilder.parse(new ByteArrayInputStream(local));
+            final Element commonRootElement = commonDom.getDocumentElement();
+            final Element localRootElement = localDom.getDocumentElement();
 
             if (!commonRootElement.getLocalName().equals(ELEMENT_RECORD)
                     || !commonRootElement.getNamespaceURI().equals(MARCX_NS)) {
@@ -244,17 +251,17 @@ public class MarcXMerger {
                         + " Expected {" + MARCX_NS + "}" + ELEMENT_RECORD);
             }
 
-            Document targetDom = commonDom; // reuse common dom's leader
-            Element targetRootElement = commonRootElement;
+            final Document targetDom = commonDom; // reuse common dom's leader
+            final Element targetRootElement = commonRootElement;
 
-            FieldRules.RuleSet ruleSet = fieldRulesIntermediate.newRuleSet();
+            final FieldRules.RuleSet ruleSet = fieldRulesIntermediate.newRuleSet();
             logger.debug("ruleSet before: {}", ruleSet.toString());
 
             removeEmptyText(commonDom.getDocumentElement()); // cleanup nodes
             removeEmptyText(localDom.getDocumentElement()); // cleanup nodes
 
-            ArrayList<Node> localFields = getDatafields(localDom.getDocumentElement());
-            ArrayList<Node> commonFields = getDatafields(commonDom.getDocumentElement());
+            final ArrayList<Node> localFields = getDatafields(localDom.getDocumentElement());
+            final ArrayList<Node> commonFields = getDatafields(commonDom.getDocumentElement());
 
             removeRegisterAndImportLocalFields(localFields, ruleSet, targetDom, includeAllFields); // sets up which common fields, that should be removed
             removeAndImportCommonFields(commonFields, ruleSet, targetDom);
@@ -281,7 +288,7 @@ public class MarcXMerger {
     private static void removeEmptyText(Element element) {
         Node child = element.getFirstChild();
         while (child != null) {
-            Node nextSibling = child.getNextSibling();
+            final Node nextSibling = child.getNextSibling();
             if (child.getNodeType() == Node.TEXT_NODE) {
                 if (child.getNodeValue().trim().equals("")) {
                     element.removeChild(child);
@@ -313,8 +320,8 @@ public class MarcXMerger {
      */
     private static void removeRegisterAndImportLocalFields(ArrayList<Node> localFields, FieldRules.RuleSet ruleSet, Document targetDom, boolean includeAllFields) throws DOMException {
         for (ListIterator<Node> it = localFields.listIterator(); it.hasNext(); ) {
-            Element element = (Element) it.next();
-            String tag = element.getAttribute(ATTRIBUTE_TAG);
+            final Element element = (Element) it.next();
+            final String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
             if (ruleSet.immutableField(tag) || ruleSet.invalidField(tag, includeAllFields)) {
                 it.remove();
@@ -339,8 +346,8 @@ public class MarcXMerger {
      */
     private static void removeAndImportCommonFields(ArrayList<Node> commonFields, FieldRules.RuleSet ruleSet, Document targetDom) throws DOMException {
         for (ListIterator<Node> it = commonFields.listIterator(); it.hasNext(); ) {
-            Element element = (Element) it.next();
-            String tag = element.getAttribute(ATTRIBUTE_TAG);
+            final Element element = (Element) it.next();
+            final String tag = element.getAttribute(ATTRIBUTE_TAG);
             element.getParentNode().removeChild(element);
             if (ruleSet.invalidField(tag, false) || ruleSet.removeField(tag)) {
                 it.remove();
@@ -357,14 +364,14 @@ public class MarcXMerger {
      * @throws DOMException
      */
     private static void mergeCommonAndLocalIntoTarget(ArrayList<Node> localFields, ArrayList<Node> commonFields, Element targetElement) throws DOMException {
-        ListIterator<Node> localIterator = localFields.listIterator();
-        ListIterator<Node> commonIterator = commonFields.listIterator();
+        final ListIterator<Node> localIterator = localFields.listIterator();
+        final ListIterator<Node> commonIterator = commonFields.listIterator();
 
         while (commonIterator.hasNext() && localIterator.hasNext()) {
-            Element commonElement = (Element) commonIterator.next();
-            String commonTag = commonElement.getAttribute(ATTRIBUTE_TAG);
-            Element localElement = (Element) localIterator.next();
-            String localTag = localElement.getAttribute(ATTRIBUTE_TAG);
+            final Element commonElement = (Element) commonIterator.next();
+            final String commonTag = commonElement.getAttribute(ATTRIBUTE_TAG);
+            final Element localElement = (Element) localIterator.next();
+            final String localTag = localElement.getAttribute(ATTRIBUTE_TAG);
             if (commonTag.compareTo(localTag) <= 0) {
                 localIterator.previous();
                 targetElement.appendChild(commonElement);
@@ -374,11 +381,11 @@ public class MarcXMerger {
             }
         }
         while (commonIterator.hasNext()) {
-            Element element = (Element) commonIterator.next();
+            final Element element = (Element) commonIterator.next();
             targetElement.appendChild(element);
         }
         while (localIterator.hasNext()) {
-            Element element = (Element) localIterator.next();
+            final Element element = (Element) localIterator.next();
             targetElement.appendChild(element);
         }
     }
@@ -386,19 +393,16 @@ public class MarcXMerger {
     /**
      * Implementation to sort datafields by tag
      */
-    private static Comparator<Node> NODE_TAG_COMPARE = new Comparator<Node>() {
-        @Override
-        public int compare(Node o1, Node o2) {
-            if (o1.getNodeType() == Node.ELEMENT_NODE
-                    && o2.getNodeType() == Node.ELEMENT_NODE
-                    && ((Element) o1).hasAttribute(ATTRIBUTE_TAG)
-                    && ((Element) o2).hasAttribute(ATTRIBUTE_TAG)) {
-                String o1Tag = ((Element) o1).getAttribute(ATTRIBUTE_TAG);
-                String o2Tag = ((Element) o2).getAttribute(ATTRIBUTE_TAG);
-                return o1Tag.compareTo(o2Tag);
-            } else {
-                return o2.hashCode() - o1.hashCode();
-            }
+    private static final Comparator<Node> NODE_TAG_COMPARE = (o1, o2) -> {
+        if (o1.getNodeType() == Node.ELEMENT_NODE
+                && o2.getNodeType() == Node.ELEMENT_NODE
+                && ((Element) o1).hasAttribute(ATTRIBUTE_TAG)
+                && ((Element) o2).hasAttribute(ATTRIBUTE_TAG)) {
+            String o1Tag = ((Element) o1).getAttribute(ATTRIBUTE_TAG);
+            String o2Tag = ((Element) o2).getAttribute(ATTRIBUTE_TAG);
+            return o1Tag.compareTo(o2Tag);
+        } else {
+            return o2.hashCode() - o1.hashCode();
         }
     };
 
@@ -409,12 +413,12 @@ public class MarcXMerger {
      * @return
      */
     private static ArrayList<Node> getDatafields(Element element) {
-        NodeList nodeList = element.getElementsByTagNameNS(MARCX_NS, ELEMENT_DATAFIELD);
-        ArrayList<Node> ret = new ArrayList<>(nodeList.getLength());
+        final NodeList nodeList = element.getElementsByTagNameNS(MARCX_NS, ELEMENT_DATAFIELD);
+        final ArrayList<Node> ret = new ArrayList<>(nodeList.getLength());
         for (int i = 0; i < nodeList.getLength(); i++) {
             ret.add(nodeList.item(i));
         }
-        Collections.sort(ret, NODE_TAG_COMPARE);
+        ret.sort(NODE_TAG_COMPARE);
         return ret;
     }
 
@@ -427,9 +431,9 @@ public class MarcXMerger {
      * @throws TransformerException
      */
     private byte[] documentToBytes(Document dom) throws UnsupportedEncodingException, TransformerException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
         transformer.transform(new DOMSource(dom),
-                new StreamResult(new OutputStreamWriter(os, UTF8)));
+                new StreamResult(new OutputStreamWriter(os, StandardCharsets.UTF_8)));
         return os.toByteArray();
     }
 }
