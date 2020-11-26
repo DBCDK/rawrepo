@@ -45,5 +45,5 @@ INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('solr-sync-bulk
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','basis-decentral','Y','A');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','broend-sync','A','Y');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','socl-sync','Y','A');
-INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr-sync','socl-sync','Y','N');
-INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr-sync','solr-sync-basis','A','N');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr','socl-sync','Y','N');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr','solr-sync-basis','A','N');
