@@ -64,7 +64,6 @@ import java.util.concurrent.ExecutorService;
  * @author DBC {@literal <dbc.dk>}
  */
 class RemoveRecords extends RawRepoWorker {
-
     private static final Logger log = LoggerFactory.getLogger(RemoveRecords.class);
 
     private final DocumentBuilder documentBuilder;
@@ -93,28 +92,28 @@ class RemoveRecords extends RawRepoWorker {
         return values;
     }
 
-    Object removeRecords(Integer agencyId, List<String> ids, String provider, String trackingId) {
+    Object removeRecords(Integer agencyId, List<String> bibliographicRecordIds, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
-                "; ids = " + ids +
+                "; bibliographicRecordIds = " + bibliographicRecordIds +
                 "; provider = " + provider +
                 "; trackingId = " + trackingId);
-        ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
+        final ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;
         try {
-            Connection connection = getConnection();
+            final Connection connection = getConnection();
 
-            for (String id : ids) {
-                log.info("remove: " + id + ":" + agencyId);
+            for (String bibliographicRecordId : bibliographicRecordIds) {
+                log.info("remove: " + bibliographicRecordId + ":" + agencyId);
                 connection.setAutoCommit(false);
                 try {
-                    removeRecord(agencyId, id, provider, trackingId);
+                    removeRecord(agencyId, bibliographicRecordId, provider, trackingId);
                     connection.commit();
                     success++;
                 } catch (RawRepoException | DOMException | IOException | SAXException | TransformerException ex) {
                     failed++;
-                    diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
-                    Throwable cause = ex.getCause();
+                    diags.add(new StandardResponse.Result.Diag("Record: " + bibliographicRecordId, ex.getMessage()));
+                    final Throwable cause = ex.getCause();
                     if (cause != null) {
                         log.warn("Record remove error: " + ex.getMessage());
                     }
@@ -128,7 +127,7 @@ class RemoveRecords extends RawRepoWorker {
                 }
             }
             StandardResponse.Result.Status status = Status.SUCCESS;
-            StringBuilder message = new StringBuilder();
+            final StringBuilder message = new StringBuilder();
             message.append("Done!");
             message.append("\n  * Successfully removed: ").append(success).append(" records.");
             if (failed != 0) {
@@ -143,32 +142,28 @@ class RemoveRecords extends RawRepoWorker {
         }
     }
 
-    void removeRecord(Integer agencyId, String id, String provider, String trackingId) throws RawRepoException, SAXException, TransformerException, DOMException, IOException {
-        RawRepoDAO dao = getDao();
+    void removeRecord(Integer agencyId, String bibliographicRecordId, String provider, String trackingId) throws RawRepoException, SAXException, TransformerException, DOMException, IOException {
+        final RawRepoDAO dao = getDao();
 
-        int agencyIdFor = dao.agencyFor(id, agencyId, true);
-        Record record = dao.fetchRecord(id, agencyIdFor);
+        if (!dao.recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
+            throw new RawRepoException("Record doesn't exist");
+        }
+
+        final Record record = dao.fetchRecord(bibliographicRecordId, agencyId);
 
         if (record.isDeleted()) {
             throw new RawRepoException("Record already deleted");
         }
         if (!dao.getRelationsChildren(record.getId()).isEmpty()) {
-            throw new RawRepoException("There's relations to this record (has children)");
+            throw new RawRepoException("There are relations to this record (has children)");
         }
         if (!dao.getRelationsSiblingsToMe(record.getId()).isEmpty()) {
-            throw new RawRepoException("There's relations to this record (has siblings)");
+            throw new RawRepoException("There are relations to this record (has siblings)");
         }
 
         dao.changedRecord(provider, record.getId());
 
-        if (record.getId().getAgencyId() != agencyId) {
-            log.debug("Creating record for: " + id);
-            Record r = dao.fetchRecord(id, agencyId);
-            r.setContent(record.getContent());
-            r.setMimeType(record.getMimeType());
-            record = r;
-        }
-        byte[] content = markMarcContentDeleted(record.getContent());
+        final byte[] content = markMarcContentDeleted(record.getContent());
         record.setContent(content);
         record.setDeleted(true);
         if (trackingId != null) {
@@ -176,12 +171,11 @@ class RemoveRecords extends RawRepoWorker {
         }
         dao.deleteRelationsFrom(record.getId());
         dao.saveRecord(record);
-
     }
 
     private byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {
-        Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
-        Element marcx = dom.getDocumentElement();
+        final Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
+        final Element marcx = dom.getDocumentElement();
         Node child = marcx.getFirstChild();
         for (; ; ) {
             if (child == null ||
@@ -189,11 +183,11 @@ class RemoveRecords extends RawRepoWorker {
                             "datafield".equals(child.getLocalName()))) {
                 int cmp = -1;
                 if (child != null) {
-                    String tag = ((Element) child).getAttribute("tag");
+                    final String tag = ((Element) child).getAttribute("tag");
                     cmp = "004".compareTo(tag);
                 }
                 if (child == null || cmp < 0) {
-                    Element n = dom.createElementNS("info:lc/xmlns/marcxchange-v1", "datafield");
+                    final Element n = dom.createElementNS("info:lc/xmlns/marcxchange-v1", "datafield");
                     n.setAttribute("tag", "004");
                     n.setAttribute("ind1", "0");
                     n.setAttribute("ind2", "0");
@@ -259,7 +253,7 @@ class RemoveRecords extends RawRepoWorker {
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
             synchronized (DocumentBuilderFactory.class) {
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 documentBuilderFactory.setIgnoringComments(true);
                 documentBuilderFactory.setIgnoringElementContentWhitespace(true);
@@ -280,8 +274,8 @@ class RemoveRecords extends RawRepoWorker {
     private static Transformer newTransformer() throws MarcXMergerException {
         try {
             synchronized (TransformerFactory.class) {
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
+                final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                final Transformer transformer = transformerFactory.newTransformer();
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
                 transformer.setOutputProperty(OutputKeys.METHOD, "xml");
                 transformer.setOutputProperty(OutputKeys.INDENT, "no");
