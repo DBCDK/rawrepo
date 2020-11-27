@@ -48,7 +48,7 @@ public class QueueRecords extends RawRepoWorker {
     }
 
     public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
-        HashMap<String, ArrayList<String>> values = new HashMap<>();
+        final HashMap<String, ArrayList<String>> values = new HashMap<>();
 
         try {
             values.put("provider", getProviders());
@@ -63,11 +63,11 @@ public class QueueRecords extends RawRepoWorker {
                 "; ids = " + ids +
                 "; provider = " + provider +
                 "; trackingId = " + trackingId);
-        ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
+        final ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;
         try {
-            Connection connection = getConnection();
+            final Connection connection = getConnection();
             for (String id : ids) {
                 connection.setAutoCommit(false);
                 try {
@@ -77,7 +77,7 @@ public class QueueRecords extends RawRepoWorker {
                 } catch (RawRepoException ex) {
                     failed++;
                     diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
-                    Throwable cause = ex.getCause();
+                    final Throwable cause = ex.getCause();
                     if (cause != null) {
                         log.warn("Record remove error: " + ex.getMessage());
                     }
@@ -91,7 +91,7 @@ public class QueueRecords extends RawRepoWorker {
                 }
             }
             StandardResponse.Result.Status status = StandardResponse.Result.Status.SUCCESS;
-            StringBuilder message = new StringBuilder();
+            final StringBuilder message = new StringBuilder();
             message.append("Done!");
             message.append("\n  * Successfully queued: ").append(success).append(" records.");
             if (failed != 0) {
@@ -107,7 +107,11 @@ public class QueueRecords extends RawRepoWorker {
     }
 
     void queueRecord(Integer agencyId, String bibliographicRecordId, String provider) throws RawRepoException {
-        RawRepoDAO dao = getDao();
+        final RawRepoDAO dao = getDao();
+
+        if (!dao.recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
+            throw new RawRepoException("Record doesn't exist");
+        }
 
         dao.changedRecord(provider, new RecordId(bibliographicRecordId, agencyId));
     }

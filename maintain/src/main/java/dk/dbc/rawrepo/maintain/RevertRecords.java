@@ -60,7 +60,7 @@ public class RevertRecords extends RawRepoWorker {
     }
 
     HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
-        HashMap<String, ArrayList<String>> values = new HashMap<>();
+        final HashMap<String, ArrayList<String>> values = new HashMap<>();
 
         try {
             values.put("provider", getProviders());
@@ -70,26 +70,26 @@ public class RevertRecords extends RawRepoWorker {
         return values;
     }
 
-    Object revertRecords(Integer agencyId, List<String> ids, long millis, String provider, String trackingId) {
+    Object revertRecords(Integer agencyId, List<String> bibliographicRecordIds, long millis, String provider, String trackingId) {
         log.debug("agencyId = " + agencyId +
-                "; ids = " + ids +
+                "; bibliographicRecordIds = " + bibliographicRecordIds +
                 "; time = " + new Date(millis) +
                 "; provider = " + provider +
                 "; trackingId = " + trackingId);
-        ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
+        final ArrayList<StandardResponse.Result.Diag> diags = new ArrayList<>();
         int success = 0;
         int failed = 0;
         try {
-            Connection connection = getConnection();
-            for (String id : ids) {
+            final Connection connection = getConnection();
+            for (String bibliographicRecordId : bibliographicRecordIds) {
                 connection.setAutoCommit(false);
                 try {
-                    revertRecord(agencyId, id, millis, provider, trackingId);
+                    revertRecord(agencyId, bibliographicRecordId, millis, provider, trackingId);
                     connection.commit();
                     success++;
                 } catch (RawRepoException ex) {
                     failed++;
-                    diags.add(new StandardResponse.Result.Diag("Record: " + id, ex.getMessage()));
+                    diags.add(new StandardResponse.Result.Diag("Record: " + bibliographicRecordId, ex.getMessage()));
                     Throwable cause = ex.getCause();
                     if (cause != null) {
                         log.warn("Record remove error: " + ex.getMessage());
@@ -104,7 +104,7 @@ public class RevertRecords extends RawRepoWorker {
                 }
             }
             StandardResponse.Result.Status status = StandardResponse.Result.Status.SUCCESS;
-            StringBuilder message = new StringBuilder();
+            final StringBuilder message = new StringBuilder();
             message.append("Done!");
             message.append("\n* Successfully reverted: ").append(success).append(" records.");
             if (failed != 0) {
@@ -120,30 +120,30 @@ public class RevertRecords extends RawRepoWorker {
     }
 
     void revertRecord(Integer agencyId, String bibliographicRecordId, long millis, String provider, String trackingId) throws RawRepoException {
-        RawRepoDAO dao = getDao();
+        final RawRepoDAO dao = getDao();
         log.trace("millis = " + millis);
         if (!dao.recordExistsMaybeDeleted(bibliographicRecordId, agencyId)) {
             throw new RawRepoException("Record does not exist");
         }
 
-        Record current = dao.fetchRecord(bibliographicRecordId, agencyId);
-        RecordId id = current.getId();
+        final Record current = dao.fetchRecord(bibliographicRecordId, agencyId);
+        final RecordId id = current.getId();
         long currentTime = current.getModified().toEpochMilli();
         log.trace("currentTime = " + currentTime);
         if (currentTime <= millis) {
             throw new RawRepoException("Record is already older");
         }
-        List<RecordMetaDataHistory> history = dao.getRecordHistory(bibliographicRecordId, agencyId);
+        final List<RecordMetaDataHistory> history = dao.getRecordHistory(bibliographicRecordId, agencyId);
         for (RecordMetaDataHistory oldRecord : history) {
-            long oldTime = oldRecord.getModified().toEpochMilli();
+            final long oldTime = oldRecord.getModified().toEpochMilli();
             log.trace("oldTime = " + oldTime);
             if (oldTime <= millis) {
-                Record historicRecord = dao.getHistoricRecord(oldRecord);
+                final Record historicRecord = dao.getHistoricRecord(oldRecord);
                 if (historicRecord.isDeleted() && !current.isDeleted() && provider != null) {
                     dao.changedRecord(provider, id);
                 }
 
-                Set<RecordId> relations = new HashSet<>();
+                final Set<RecordId> relations = new HashSet<>();
                 dao.setRelationsFrom(id, relations);
                 historicRecord.setTrackingId(trackingId);
                 historicRecord.setModified(Instant.now());
@@ -152,13 +152,13 @@ public class RevertRecords extends RawRepoWorker {
                     switch (historicRecord.getMimeType()) {
                         case MarcXChangeMimeType.MARCXCHANGE:
                             try {
-                                String parent = MarcXParser.getParent(new ByteArrayInputStream(historicRecord.getContent()));
+                                final String parent = MarcXParser.getParent(new ByteArrayInputStream(historicRecord.getContent()));
                                 if (parent != null) {
                                     int parentAgencyId = dao.findParentRelationAgency(parent, agencyId);
                                     relations.add(new RecordId(parent, parentAgencyId));
                                 }
 
-                                List<RecordId> authorityLinks = MarcXParser.getAuthorityLinks(new ByteArrayInputStream(historicRecord.getContent()));
+                                final List<RecordId> authorityLinks = MarcXParser.getAuthorityLinks(new ByteArrayInputStream(historicRecord.getContent()));
                                 if (authorityLinks.size() > 0) {
                                     relations.addAll(authorityLinks);
                                 }
