@@ -107,7 +107,6 @@ pipeline {
 
                             set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-content-service-deploy ${DOCKER_IMAGE_DIT_VERSION} -b basismig
                             set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-content-service-deploy ${DOCKER_IMAGE_DIT_VERSION} -b fbstest
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-content-service-deploy ${DOCKER_IMAGE_DIT_VERSION} -b metascrum-staging
                         """
                     }
                 }
