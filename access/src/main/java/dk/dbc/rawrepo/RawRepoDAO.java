@@ -24,6 +24,7 @@ import dk.dbc.marcrecord.ExpandCommonMarcRecord;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.marcxmerge.MarcXMimeTypeMerger;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -504,7 +505,7 @@ public abstract class RawRepoDAO {
 
             while (iterator.hasNext()) {
                 Record next = iterator.next();
-                if (!merger.canMerge(record.getMimeType(), next.getMimeType())) {
+                if (!MarcXMimeTypeMerger.canMerge(record.getMimeType(), next.getMimeType())) {
                     logger.error("Cannot merge: " + record.getMimeType() + " and " + next.getMimeType());
                     throw new MarcXMergerException("Cannot merge enrichment");
                 }
@@ -513,7 +514,7 @@ public abstract class RawRepoDAO {
                 enrichmentTrail.append(',').append(next.getId().getAgencyId());
 
                 record = RecordImpl.enriched(bibliographicRecordId, next.getId().getAgencyId(),
-                        merger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
+                        MarcXMimeTypeMerger.mergedMimetype(record.getMimeType(), next.getMimeType()), content,
                         record.getCreated().isAfter(next.getCreated()) ? record.getCreated() : next.getCreated(),
                         record.getModified().isAfter(next.getModified()) ? record.getModified() : next.getModified(),
                         record.getModified().isAfter(next.getModified()) ? record.getTrackingId() : next.getTrackingId(),

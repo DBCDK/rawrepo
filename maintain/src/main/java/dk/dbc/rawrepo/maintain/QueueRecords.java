@@ -20,11 +20,11 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +43,8 @@ public class QueueRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(QueueRecords.class);
 
-    public QueueRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
-        super(dataSource, openAgency, executorService);
+    public QueueRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) {
+        super(dataSource, vipCoreLibraryRulesConnector, executorService);
     }
 
     public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {

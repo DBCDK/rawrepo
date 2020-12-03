@@ -47,7 +47,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     private final Connection connection;
 
-    private static final int SCHEMA_VERSION = 26;
+    private static final int SCHEMA_VERSION = 28;
     private static final int SCHEMA_VERSION_COMPATIBLE = 26;
 
     private static final String VALIDATE_SCHEMA = "SELECT warning FROM version WHERE version=?";

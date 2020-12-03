@@ -20,140 +20,150 @@
  */
 package dk.dbc.rawrepo;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import dk.dbc.httpclient.HttpClient;
+import dk.dbc.vipcore.VipCoreConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
+import javax.ws.rs.client.Client;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author DBC {@literal <dbc.dk>}
  */
 public class RelationHintsOpenAgencyTest {
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(getPort()).withRootDirectory(getPath()));
+    private static WireMockServer wireMockServer;
+    private static String wireMockHost;
 
-    static int fallbackPort = (int) (15000.0 * Math.random()) + 15000;
+    final static Client CLIENT = HttpClient.newClient(new ClientConfig()
+            .register(new JacksonFeature()));
+    private static VipCoreLibraryRulesConnector connector;
 
-    static int getPort() {
-        int port = Integer.parseInt(System.getProperty("wiremock.port", "0"));
-        if (port == 0)
-            port = fallbackPort;
-        return port;
+    @BeforeAll
+    static void startWireMockServer() {
+        System.out.println("BeforeAll 1");
+        wireMockServer = new WireMockServer(options().dynamicPort()
+                .dynamicHttpsPort()
+        .withRootDirectory(wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath()));
+        wireMockServer.start();
+        wireMockHost = "http://localhost:" + wireMockServer.port();
+        configureFor("localhost", wireMockServer.port());
+
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"123456\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_123456.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"861620\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_861620.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{'agencyId':'191919'}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_191919.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870970\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870970.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870971\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870971.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870974\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870974.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870975\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870975.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870976\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870976.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"870979\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_870979.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"190002\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_190002.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"190004\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_190004.json")));
+        stubFor(post(urlMatching("/libraryrules"))
+                .withRequestBody(equalToJson("{\"agencyId\":\"190007\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-type", "application/json")
+                        .withHeader("Content-type", "application/json")
+                        .withBodyFile("vipcore_libraryrules_190007.json")));
     }
 
-    static String getPath() {
-        return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
+    @BeforeAll
+    static void setConnector() {
+        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, VipCoreConnector.TimingLogLevel.INFO);
     }
 
-    @Before
-    public void setUp() {
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='123456']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_123456.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='861620']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_861620.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='191919']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_191919.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870970']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870970.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870971']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870971.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870975']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870975.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870974']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870974.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870976']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870976.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='870979']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_870979.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='190002']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_190002.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='190004']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_190004.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:agencyId[.='190007']")
-                                .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_190007.xml")));
+    @AfterAll
+    static void stopWireMockServer() {
+        System.out.println("AfterAll");
+        wireMockServer.stop();
     }
 
     @Test
     public void testUsesCommonAgency() throws Exception {
-        OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/");
+        final RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(connector);
 
-        RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
+        System.out.println("0 " + (relationHints == null));
+        relationHints.usesCommonSchoolAgency(191919);
 
         boolean usesCommonAgency;
         usesCommonAgency = relationHints.usesCommonAgency(191919);
@@ -161,46 +171,46 @@ public class RelationHintsOpenAgencyTest {
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertEquals(Arrays.asList(870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
         assertFalse(usesCommonAgency);
 
         agencies = relationHints.get(123456);
-        assertEquals(Collections.singletonList(123456), agencies);
+        assertThat(Collections.singletonList(123456), is(agencies));
 
         agencies = relationHints.getAgencyPriority(123456);
-        assertEquals(Collections.singletonList(123456), agencies);
+        assertThat(Collections.singletonList(123456), is(agencies));
 
         agencies = relationHints.getAgencyPriority(861620);
-        assertEquals(Arrays.asList(861620, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(861620, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870970);
-        assertEquals(Arrays.asList(870970, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870970, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870971);
-        assertEquals(Arrays.asList(870971, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870971, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870974);
-        assertEquals(Arrays.asList(870974, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870974, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870975);
-        assertEquals(Arrays.asList(870975, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870975, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870976);
-        assertEquals(Arrays.asList(870976, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870976, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870979);
-        assertEquals(Arrays.asList(870979, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(870979, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190002);
-        assertEquals(Arrays.asList(190002, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(190002, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190004);
-        assertEquals(Arrays.asList(190004, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(190004, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190007);
-        assertEquals(Arrays.asList(190007, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), agencies);
+        assertThat(Arrays.asList(190007, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
     }
 
 }

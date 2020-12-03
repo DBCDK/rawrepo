@@ -24,10 +24,9 @@ import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -45,13 +44,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -64,8 +66,8 @@ public class RawRepoDAOIT {
 
     private MarcXMerger merger;
 
-    @Before
-    public void setup() throws SQLException, ClassNotFoundException {
+    @BeforeEach
+    void setup() throws SQLException {
         postgres = new PostgresITConnection("rawrepo");
         connection = postgres.getConnection();
         // Don't do this unless you know what you are doing. You need to be superuser in the database
@@ -74,13 +76,13 @@ public class RawRepoDAOIT {
         resetDatabase();
     }
 
-    @After
-    public void teardown() throws SQLException {
+    @AfterEach
+    void teardown() throws SQLException {
         postgres.close();
     }
 
     @Test
-    public void testReadWriteRecord() throws SQLException, ClassNotFoundException, RawRepoException, InterruptedException {
+    public void testReadWriteRecord() throws SQLException, RawRepoException, InterruptedException {
         setupData(100000, "A:870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
 
@@ -124,9 +126,9 @@ public class RawRepoDAOIT {
         //
         // Validate created, modified and content for the 2 records
         //
-        assertFalse(recordTest2.getModified().equals(recordTest1.getModified()));
-        assertTrue(recordTest2.getCreated().equals(recordTest1.getCreated()));
-        assertFalse(new String(recordTest2.getContent()).equals(new String(recordTest1.getContent())));
+        assertNotEquals(recordTest1.getModified(), recordTest2.getModified());
+        assertEquals(recordTest1.getCreated(), recordTest2.getCreated());
+        assertNotEquals(new String(recordTest1.getContent()), new String(recordTest2.getContent()));
 
         connection.commit();
         connection.setAutoCommit(false);
@@ -140,11 +142,11 @@ public class RawRepoDAOIT {
 
         boolean recordExists = dao.recordExists("C", 12);
         logger.info("recordExists = " + recordExists);
-        assertTrue("Record agencyid=12 exists", recordExists);
+        assertTrue(recordExists);
     }
 
     @Test
-    public void testHistoricRecord() throws SQLException, ClassNotFoundException, RawRepoException {
+    public void testHistoricRecord() throws SQLException, RawRepoException {
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
         Record record;
@@ -174,17 +176,17 @@ public class RawRepoDAOIT {
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory("a bcd efg h", 100000);
         assertEquals(recordHistory.size(), 3);
 
-        assertEquals("newest deleted", false, recordHistory.get(0).isDeleted());
-        assertEquals("modified deleted", true, recordHistory.get(1).isDeleted());
-        assertEquals("oldest deleted", false, recordHistory.get(2).isDeleted());
+        assertFalse(recordHistory.get(0).isDeleted());
+        assertTrue(recordHistory.get(1).isDeleted());
+        assertFalse(recordHistory.get(2).isDeleted());
 
-        assertEquals("newest mimetype", "text/really-plain", recordHistory.get(0).getMimeType());
-        assertEquals("modified mimetype", "text/not-so-plain", recordHistory.get(1).getMimeType());
-        assertEquals("oldest mimetype", "text/plain", recordHistory.get(2).getMimeType());
+        assertThat("newest mimetype", recordHistory.get(0).getMimeType(), is("text/really-plain"));
+        assertThat("modified mimetype", recordHistory.get(1).getMimeType(), is("text/not-so-plain"));
+        assertThat("oldest mimetype", recordHistory.get(2).getMimeType(), is("text/plain"));
 
-        assertArrayEquals("newest content", "Version 3".getBytes(), dao.getHistoricRecord(recordHistory.get(0)).getContent());
-        assertArrayEquals("modified content", "Version 2".getBytes(), dao.getHistoricRecord(recordHistory.get(1)).getContent());
-        assertArrayEquals("oldest content", "Version 1".getBytes(), dao.getHistoricRecord(recordHistory.get(2)).getContent());
+        assertThat("newest content", dao.getHistoricRecord(recordHistory.get(0)).getContent(), is("Version 3".getBytes()));
+        assertThat("modified content", dao.getHistoricRecord(recordHistory.get(1)).getContent(), is("Version 2".getBytes()));
+        assertThat("oldest content", dao.getHistoricRecord(recordHistory.get(2)).getContent(), is("Version 1".getBytes()));
     }
 
     @Test
@@ -233,7 +235,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, ClassNotFoundException {
+    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException {
         setupData(100000, "B:2,870970", "C:870970", "D:1,870970", "E:870970", "F:1,870970", "G:870970", "H:1,870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -588,12 +590,12 @@ public class RawRepoDAOIT {
         clearQueue();
         dao.changedRecord("test", new RecordId("S1", 870970), 1000);
         final Collection<String> queueBeforeRaise = getQueue();
-        assertEquals("Queue size before", 2, queueBeforeRaise.size());
+        assertThat("Queue size before", queueBeforeRaise.size(), is(2));
         dao.changedRecord("test", new RecordId("S1", 870970), 500);
         final Collection<String> queueAfterRaise = getQueue();
-        assertEquals("Queue size after", 2, queueAfterRaise.size());
+        assertThat("Queue size after", queueAfterRaise.size(), is(2));
         final QueueJob queueJob = dao.dequeue("changed");
-        assertEquals("Queue job priority", 500, queueJob.priority);
+        assertThat(queueJob.priority, is(500));
     }
 
     @Test
@@ -605,12 +607,12 @@ public class RawRepoDAOIT {
         clearQueue();
         dao.changedRecord("test", new RecordId("S1", 870970), 500);
         final Collection<String> queueBeforeRaise = getQueue();
-        assertEquals("Queue size before", 2, queueBeforeRaise.size());
+        assertThat("Queue size before", queueBeforeRaise.size(), is(2));
         dao.changedRecord("test", new RecordId("S1", 870970), 1000);
         final Collection<String> queueAfterRaise = getQueue();
-        assertEquals("Queue size after", 2, queueAfterRaise.size());
+        assertThat("Queue size after", queueAfterRaise.size(), is(2));
         final QueueJob queueJob = dao.dequeue("changed");
-        assertEquals("Queue job priority", 500, queueJob.priority);
+        assertThat("Queue job priority", queueJob.priority, is(500));
     }
 
     @Test
@@ -634,7 +636,7 @@ public class RawRepoDAOIT {
                 "A:1:changed:1", "A:1:leaf:1");
 
         QueueJob job = dao.dequeue("changed");
-        assertNotNull(job);
+        assertThat(job, notNullValue());
     }
 
     @Test
@@ -690,7 +692,7 @@ public class RawRepoDAOIT {
         try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (!resultSet.next() || resultSet.getInt(1) != 0) {
-                    Assert.fail("jobdiag is not empty before test");
+                    fail("jobdiag is not empty before test");
                 }
             }
         }
@@ -701,7 +703,7 @@ public class RawRepoDAOIT {
         try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM jobdiag")) {
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (!resultSet.next() || resultSet.getInt(1) != 1) {
-                    Assert.fail("jobdiag is not set after test");
+                    fail("jobdiag is not set after test");
                 }
             }
         }
@@ -790,7 +792,7 @@ public class RawRepoDAOIT {
 
         ResultSet resultSet = connection.prepareStatement("SELECT COUNT(*) FROM records_archive").executeQuery();
         resultSet.next();
-        assertTrue("Archived records", resultSet.getInt(1) > 0);
+        assertThat(resultSet.getInt(1), greaterThan(0));
     }
 
     @Test
@@ -810,7 +812,7 @@ public class RawRepoDAOIT {
         stmt.setString(1, "1 234 567 8");
         stmt.setInt(2, 123456);
         stmt.setString(3, "MERGED_DEFAULT_FALSE");
-        ResultSet resultSet = stmt.executeQuery();
+        stmt.executeQuery();
     }
 
     @Test
@@ -848,11 +850,11 @@ public class RawRepoDAOIT {
     }
 
     //  _   _      _                   _____                 _   _
-// | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
-// | |_| |/ _ \ | '_ \ / _ \ '__| | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
-// |  _  |  __/ | |_) |  __/ |    |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
-// |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
-//              |_|
+    // | | | | ___| |_ __   ___ _ __  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
+    // | |_| |/ _ \ | '_ \ / _ \ '__| | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+    // |  _  |  __/ | |_) |  __/ |    |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
+    // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+    //              |_|
     private void resetDatabase() throws SQLException {
         postgres.clearTables("relations", "records", "records_cache", "records_archive", "queue", "queuerules", "queueworkers", "jobdiag");
 
@@ -1057,7 +1059,7 @@ public class RawRepoDAOIT {
         if (merger == null) {
             merger = new MarcXMerger() {
                 @Override
-                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                public byte[] merge(byte[] common, byte[] local, boolean isFinal) {
                     return local;
                 }
             };
@@ -1074,21 +1076,14 @@ public class RawRepoDAOIT {
         }
 
         public List<Integer> get(int agencyId) {
-            switch (agencyId) {
-                case 999999:
-                    return Collections.singletonList(999999);
-                default:
-                    return Arrays.asList(870970, 870971, 870979);
+            if (agencyId == 999999) {
+                return Collections.singletonList(999999);
             }
+            return Arrays.asList(870970, 870971, 870979);
         }
 
-        public boolean usesCommonAgency(int agencyId) throws RawRepoException {
-            switch (agencyId) {
-                case 999999:
-                    return false;
-                default:
-                    return true;
-            }
+        public boolean usesCommonAgency(int agencyId) {
+            return agencyId != 999999;
         }
     }
 

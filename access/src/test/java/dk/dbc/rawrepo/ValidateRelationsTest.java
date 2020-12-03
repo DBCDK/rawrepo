@@ -6,15 +6,16 @@
 package dk.dbc.rawrepo;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -53,7 +54,7 @@ public class ValidateRelationsTest {
     private final Set<RecordId> matvurdParent = new HashSet<>(Collections.singletonList(matvurd));
     private final Set<RecordId> simpleParent = new HashSet<>(Collections.singletonList(simple));
 
-    @BeforeClass
+    @BeforeAll
     public static void before() throws Exception {
         when(dao.getMimeTypeOf(anyString(), eq(agencyIdMarcxchange))).thenReturn(MarcXChangeMimeType.MARCXCHANGE);
         when(dao.getMimeTypeOf(anyString(), eq(agencyIdArticle))).thenReturn(MarcXChangeMimeType.ARTICLE);
@@ -67,7 +68,7 @@ public class ValidateRelationsTest {
     private void testInvalidParent(int childAgencyId, Set<RecordId> parentSet) {
         try {
             ValidateRelations.validate(dao, new RecordId("child", childAgencyId), parentSet);
-            Assert.fail("Expected RawRepoException");
+            fail("Expected RawRepoException");
         } catch (RawRepoException e) {
             // Ok, do nothing
         }

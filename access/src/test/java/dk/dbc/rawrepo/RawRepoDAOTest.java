@@ -22,15 +22,9 @@ package dk.dbc.rawrepo;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
-import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.LibraryRuleHandler;
-import dk.dbc.openagency.client.OpenAgencyException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import dk.dbc.vipcore.exception.VipCoreException;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 import java.sql.SQLException;
@@ -45,9 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -58,30 +55,27 @@ import static org.mockito.Mockito.when;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-@RunWith(MockitoJUnitRunner.class)
 public class RawRepoDAOTest {
 
     public RawRepoDAOTest() {
     }
 
-    private OpenAgencyServiceFromURL getOpenAgencyService() throws OpenAgencyException {
-        LibraryRuleHandler libraryRuleHandlerMock = mock(LibraryRuleHandler.class);
-        when(libraryRuleHandlerMock.isAllowed(eq(870970), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
-        when(libraryRuleHandlerMock.isAllowed(eq(870975), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
-        when(libraryRuleHandlerMock.isAllowed(eq(1), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(true);
-        when(libraryRuleHandlerMock.isAllowed(eq(2), eq(LibraryRuleHandler.Rule.USE_ENRICHMENTS))).thenReturn(false);
-        OpenAgencyServiceFromURL openAgencyServiceFromURLMock = mock(OpenAgencyServiceFromURL.class);
-        when(openAgencyServiceFromURLMock.libraryRules()).thenReturn(libraryRuleHandlerMock);
+    private VipCoreLibraryRulesConnector getVipCoreConnector() throws VipCoreException {
+        VipCoreLibraryRulesConnector vipCoreLibraryRulesConnectorMock = mock(VipCoreLibraryRulesConnector.class);
+        when(vipCoreLibraryRulesConnectorMock.hasFeature(eq(870970), eq(VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(vipCoreLibraryRulesConnectorMock.hasFeature(eq(870975), eq(VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(vipCoreLibraryRulesConnectorMock.hasFeature(eq(1), eq(VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS))).thenReturn(true);
+        when(vipCoreLibraryRulesConnectorMock.hasFeature(eq(2), eq(VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS))).thenReturn(false);
 
-        return openAgencyServiceFromURLMock;
+        return vipCoreLibraryRulesConnectorMock;
     }
 
     @Test
     public void testEnrichmentTrail() throws Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            access.relationHints = new RelationHintsOpenAgency(getOpenAgencyService());
-            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
+            access.relationHints = new RelationHintsOpenAgency(getVipCoreConnector());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), any(MarcXMerger.class), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             fillMockRelations(access,
                     "B:870970", // HEAD
@@ -93,19 +87,13 @@ public class RawRepoDAOTest {
                     "H:870970", "H:1", "H:2");// BIND
             MarcXMerger marcXMerger = new MarcXMerger() {
                 @Override
-                public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) throws MarcXMergerException {
+                public byte[] merge(byte[] common, byte[] local, boolean includeAllFields) {
                     return common;
                 }
-
-                @Override
-                public boolean canMerge(String originalMimeType, String enrichmentMimeType) {
-                    return true;
-                }
-
             };
 
-            Assert.assertEquals("870970", access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail());
-            Assert.assertEquals("870970,1", access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail());
+            assertThat(access.fetchMergedRecord("D", 870970, marcXMerger, true).getEnrichmentTrail(), is("870970"));
+            assertThat(access.fetchMergedRecord("D", 1, marcXMerger, true).getEnrichmentTrail(), is("870970,1"));
 
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -118,11 +106,11 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
 
-            access.relationHints = new RelationHintsOpenAgency(getOpenAgencyService());
+            access.relationHints = new RelationHintsOpenAgency(getVipCoreConnector());
 
-            doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), anyObject());
+            doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), any(MarcXMerger.class));
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
-            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), anyObject(), anyBoolean());
+            doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), any(MarcXMerger.class), anyBoolean());
             doCallRealMethod().when(access).findParentRelationAgency(anyString(), anyInt());
             fillMockRelations(access,
                     "A:870970", "A:1", "A:2",
@@ -138,7 +126,7 @@ public class RawRepoDAOTest {
             MarcXMerger merger = new MarcXMerger() {
 
                 @Override
-                public byte[] merge(byte[] common, byte[] local, boolean isFinal) throws MarcXMergerException {
+                public byte[] merge(byte[] common, byte[] local, boolean isFinal) {
                     return local;
                 }
 
@@ -171,16 +159,16 @@ public class RawRepoDAOTest {
         when(mock.recordExists("COMMON", 654321)).thenReturn(Boolean.TRUE);
         int parentRelationAgency;
         parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 123456);
-        Assert.assertEquals(123456, parentRelationAgency);
+        assertThat(parentRelationAgency, is(123456));
         parentRelationAgency = mock.findParentRelationAgency("COMMON", 123456);
-        Assert.assertEquals(870970, parentRelationAgency);
+        assertThat(parentRelationAgency, is(870970));
         parentRelationAgency = mock.findParentRelationAgency("PRIVATE", 654321);
-        Assert.assertEquals(654321, parentRelationAgency);
+        assertThat(parentRelationAgency, is(654321));
         parentRelationAgency = mock.findParentRelationAgency("COMMON", 654321);
-        Assert.assertEquals(654321, parentRelationAgency);
+        assertThat(parentRelationAgency, is(654321));
         try {
             mock.findParentRelationAgency("NA", 123456);
-            Assert.fail("Expected RawRepoExceptionRecordNotFound");
+            fail("Expected RawRepoExceptionRecordNotFound");
         } catch (RawRepoExceptionRecordNotFound ex) {
             System.out.println("Didn't find record " + ex.getMessage());
         }
@@ -199,12 +187,12 @@ public class RawRepoDAOTest {
         int siblingRelationAgency;
         siblingRelationAgency = mock.findSiblingRelationAgency("COMMON", 123456);
         System.out.println("parentRelationAgency = " + siblingRelationAgency);
-        Assert.assertEquals(870970, siblingRelationAgency);
+        assertThat(siblingRelationAgency, is(870970));
         siblingRelationAgency = mock.findSiblingRelationAgency("INTERM", 123456);
-        Assert.assertEquals(300000, siblingRelationAgency);
+        assertThat(siblingRelationAgency, is(300000));
         try {
             mock.findSiblingRelationAgency("PRIVATE", 123456);
-            Assert.fail("Expected RawRepoExceptionRecordNotFound");
+            fail("Expected RawRepoExceptionRecordNotFound");
         } catch (RawRepoExceptionRecordNotFound ex) {
             System.out.println("Didn't find record " + ex.getMessage());
         }
@@ -245,29 +233,16 @@ public class RawRepoDAOTest {
         }
         for (String id : filter) {
             RecordId recordId = recordIdFromString(id);
-            HashSet<RecordId> all = new HashSet<>();
             HashSet<RecordId> parents = new HashSet<>();
-            HashSet<RecordId> siblingsToMe = new HashSet<>();
             HashSet<RecordId> siblingsFromMe = new HashSet<>();
-            HashSet<RecordId> children = new HashSet<>();
             for (String target : from.get(id)) {
                 RecordId rec = recordIdFromString(target);
-                all.add(rec);
                 if (rec.getBibliographicRecordId().equals(recordId.getBibliographicRecordId())) {
                     siblingsFromMe.add(rec);
                 } else {
                     parents.add(rec);
                 }
             }
-            for (String target : to.get(id)) {
-                RecordId rec = recordIdFromString(target);
-                if (rec.getBibliographicRecordId().equals(recordId.getBibliographicRecordId())) {
-                    siblingsToMe.add(rec);
-                } else {
-                    children.add(rec);
-                }
-            }
-
             when(access.getRelationsParents(recordId)).thenReturn(parents);
             when(access.getRelationsSiblingsFromMe(recordId)).thenReturn(siblingsFromMe);
             when(access.recordExists(recordId.getBibliographicRecordId(), recordId.getAgencyId())).thenReturn(Boolean.TRUE);
@@ -285,17 +260,13 @@ public class RawRepoDAOTest {
             when(access.allAgenciesForBibliographicRecordId(key)).thenReturn(allAgenciesFor.get(key));
         }
 
-        doAnswer(new Answer<Record>() {
-
-            @Override
-            public Record answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                String content = (arguments[0]) + ":" + (arguments[1]);
-                System.out.println("content = " + content);
-                Record recordFromContent = recordFromContent(content);
-                System.out.println("recordFromContent = " + recordFromContent);
-                return recordFromContent;
-            }
+        doAnswer((Answer<Record>) invocation -> {
+            Object[] arguments = invocation.getArguments();
+            String content = (arguments[0]) + ":" + (arguments[1]);
+            System.out.println("content = " + content);
+            Record recordFromContent = recordFromContent(content);
+            System.out.println("recordFromContent = " + recordFromContent);
+            return recordFromContent;
         }).when(access).fetchRecord(anyString(), anyInt());
     }
 
@@ -311,7 +282,7 @@ public class RawRepoDAOTest {
             boolean enriched = false;
             String mimeType = agencyId == 870970 ? MarcXChangeMimeType.MARCXCHANGE : MarcXChangeMimeType.ENRICHMENT;
             byte[] c = content.getBytes();
-            String trackingId = "Track-" + (++trackingIdCounter);
+            final String trackingId = "Track-" + (++trackingIdCounter);
 
             @Override
             public byte[] getContent() {
