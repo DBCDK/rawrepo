@@ -22,7 +22,6 @@ package dk.dbc.rawrepo.agencydump;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
@@ -41,6 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,12 +55,12 @@ public class AgencyDump implements AutoCloseable {
     private final Connection connection;
     final RawRepoDAO dao;
 
-    AgencyDump(String db, int agencyid, String openAgencyUrl) throws RawRepoException, SQLException {
+    AgencyDump(String db, int agencyid, String vipCoreUrl) throws RawRepoException, SQLException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
-        if(openAgencyUrl != null) {
-            builder.relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build(openAgencyUrl)));
+        if(vipCoreUrl != null) {
+            builder.relationHints(new RelationHintsOpenAgency(VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl)));
         }
         this.dao = builder.build();
     }

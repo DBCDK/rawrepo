@@ -26,9 +26,9 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -36,12 +36,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
-import java.util.TimeZone;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class RollBackIT {
 
@@ -56,7 +57,6 @@ public class RollBackIT {
     private final static Instant DAY_5;
 
     static {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         NOW = Instant.now();
 
         DAY_1 = NOW.minus(7, ChronoUnit.DAYS);
@@ -67,7 +67,7 @@ public class RollBackIT {
 
     private Connection connection;
 
-    @Before
+    @BeforeEach
     public void setup() throws SQLException {
         String jdbc;
         String port = System.getProperty("postgresql.port");
@@ -79,7 +79,7 @@ public class RollBackIT {
         resetDatabase();
     }
 
-    @After
+    @AfterEach
     public void teardown() throws SQLException {
         connection.close();
     }
@@ -127,7 +127,7 @@ public class RollBackIT {
         connection.commit();
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(BIB_RECORD_ID_1, AGENCY_ID);
-        assertEquals(recordHistory.toString(), 3, recordHistory.size());
+        assertThat(recordHistory.toString(), recordHistory.size(), is(3));
 
         record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
         assertEquals("Version 3", new String(record.getContent(), StandardCharsets.UTF_8));
@@ -146,8 +146,7 @@ public class RollBackIT {
     }
 
     @Test
-    public void testBulkAgency_with2Records() throws SQLException, ClassNotFoundException, RawRepoException {
-
+    public void testBulkAgency_with2Records() throws SQLException, RawRepoException {
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         Record record;
@@ -187,9 +186,9 @@ public class RollBackIT {
         connection.commit();
 
         List<RecordMetaDataHistory> recordHistory = dao.getRecordHistory(BIB_RECORD_ID_1, AGENCY_ID);
-        assertEquals(recordHistory.toString(), 2, recordHistory.size());
+        assertThat(recordHistory.toString(), recordHistory.size(), is(2));
         recordHistory = dao.getRecordHistory(BIB_RECORD_ID_2, AGENCY_ID);
-        assertEquals(recordHistory.toString(), 2, recordHistory.size());
+        assertThat(recordHistory.toString(), recordHistory.size(), is(2));
 
         record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
         assertEquals("Rec 1 Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
@@ -201,19 +200,19 @@ public class RollBackIT {
         connection.commit();
 
         record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
-        assertEquals("First record is rolled back", "Rec 1 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
+        assertThat("First record is rolled back", new String(record.getContent(), StandardCharsets.UTF_8), is("Rec 1 Version 1"));
 
         record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
-        assertEquals("Second record is not rolled back", "Rec 2 Version 2", new String(record.getContent(), StandardCharsets.UTF_8));
+        assertThat("Second record is not rolled back", new String(record.getContent(), StandardCharsets.UTF_8), is("Rec 2 Version 2"));
 
         RollBack.rollbackAgency(connection, AGENCY_ID, DAY_4, DateMatch.Match.Before, RollBack.State.Rollback, null);
         connection.commit();
 
         record = dao.fetchRecord(BIB_RECORD_ID_1, AGENCY_ID);
-        assertEquals("First record is rolled back", "Rec 1 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
+        assertThat("First record is rolled back", new String(record.getContent(), StandardCharsets.UTF_8), is("Rec 1 Version 1"));
 
         record = dao.fetchRecord(BIB_RECORD_ID_2, AGENCY_ID);
-        assertEquals("Second record is rolled back", "Rec 2 Version 1", new String(record.getContent(), StandardCharsets.UTF_8));
+        assertThat("Second record is rolled back", new String(record.getContent(), StandardCharsets.UTF_8), is("Rec 2 Version 1"));
     }
 
 }

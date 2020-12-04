@@ -29,11 +29,13 @@ import java.io.InputStream;
 import java.sql.Connection;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
+
 
 /**
  *

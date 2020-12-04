@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public abstract class CommandLine {
@@ -45,36 +44,6 @@ public abstract class CommandLine {
     public interface DefaultArgument {
 
         Object parse(String argument);
-    }
-
-    static class DefaultString implements DefaultArgument {
-
-        private final String value;
-
-        public DefaultString(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public Object parse(String argument) {
-            return value;
-        }
-
-    }
-
-    static class DefaultInteger implements DefaultArgument {
-
-        private final int value;
-
-        public DefaultInteger(int value) {
-            this.value = value;
-        }
-
-        @Override
-        public Object parse(String argument) {
-            return value;
-        }
-
     }
 
     private static final Pattern OPTION = Pattern.compile("^--([^=]+)(=(.*))?$", Pattern.MULTILINE | Pattern.DOTALL);
@@ -151,7 +120,7 @@ public abstract class CommandLine {
         missing.removeAll(seen);
         if (!missing.isEmpty()) {
             StringBuilder text = new StringBuilder();
-            for (Iterator<String> it = missing.iterator(); it.hasNext();) {
+            for (Iterator<String> it = missing.iterator(); it.hasNext(); ) {
                 String option = it.next();
                 text.append(option);
                 if (it.hasNext()) {
@@ -165,7 +134,7 @@ public abstract class CommandLine {
 
     @SuppressWarnings("PMD.UselessParentheses")
     public String usage() {
-        String[] options = knownOptions.toArray(new String[knownOptions.size()]);
+        String[] options = knownOptions.toArray(new String[0]);
         Arrays.sort(options);
         int max = 0;
         HashMap<String, String> optionsList = new HashMap<>();
@@ -193,7 +162,7 @@ public abstract class CommandLine {
 
         text.append("Usage: ").append(usageCommandLine()).append("\n\n");
         for (String option : options) {
-            text.append((optionsList.get(option) + spaces).substring(0, max));
+            text.append((optionsList.get(option) + spaces), 0, max);
             text.append(requiredOptions.contains(option) ? " [1:" : " [0:")
                     .append(repeatableOptions.contains(option) ? "*] " : "1] ");
 
@@ -231,13 +200,6 @@ public abstract class CommandLine {
         return parsedArguments.get(key).get(0);
     }
 
-    public List<Object> getOptions(String key) {
-        if (!parsedArguments.containsKey(key)) {
-            return new ArrayList<>();
-        }
-        return parsedArguments.get(key);
-    }
-
     public List<String> getExtraArguments() {
         return extraArguments;
     }
@@ -265,45 +227,6 @@ public abstract class CommandLine {
 
     }
 
-    public static final ArgumentParser string = new ArgumentParser() {
-        @Override
-        public Object parse(String argument, String value) {
-            return value;
-        }
-    };
-    public static final ArgumentParser integer = new ArgumentParser() {
-        @Override
-        public Object parse(String argument, String value) {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException("option: " + argument + " argument:" + value + " is not a number");
-            }
-        }
-    };
-
-    public static final DefaultArgument yes = new DefaultArgument() {
-        @Override
-        public Object parse(String argument) {
-            return "yes";
-        }
-    };
-    public static final DefaultArgument no = new DefaultArgument() {
-        @Override
-        public Object parse(String argument) {
-            return "no";
-        }
-    };
-    public static final DefaultArgument yesBool = new DefaultArgument() {
-        @Override
-        public Object parse(String argument) {
-            return true;
-        }
-    };
-    public static final DefaultArgument noBool = new DefaultArgument() {
-        @Override
-        public Object parse(String argument) {
-            return false;
-        }
-    };
+    public static final ArgumentParser string = (argument, value) -> value;
+    public static final DefaultArgument yes = argument -> "yes";
 }

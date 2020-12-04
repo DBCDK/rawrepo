@@ -20,10 +20,10 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +45,13 @@ public class RawRepoWorker implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(RawRepoWorker.class);
 
     private final DataSource dataSource;
-    private final OpenAgencyServiceFromURL openAgency;
+    private final VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
     private Connection connection;
     private RawRepoDAO dao;
 
-    public RawRepoWorker(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) {
+    public RawRepoWorker(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) {
         this.dataSource = dataSource;
-        this.openAgency = openAgency;
+        this.vipCoreLibraryRulesConnector = vipCoreLibraryRulesConnector;
         this.connection = null;
         this.dao = null;
     }
@@ -69,7 +69,7 @@ public class RawRepoWorker implements AutoCloseable {
         try {
             synchronized (this) {
                 if (dao == null) {
-                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(openAgency)).build();
+                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
                 }
                 return dao;
             }

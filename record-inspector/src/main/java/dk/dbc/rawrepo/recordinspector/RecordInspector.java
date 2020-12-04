@@ -22,9 +22,16 @@ package dk.dbc.rawrepo.recordinspector;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -39,12 +46,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.bind.DatatypeConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RecordInspector implements Closeable {
@@ -53,8 +56,8 @@ public class RecordInspector implements Closeable {
     private final RawRepoDAO dao;
     private Connection connection;
 
-    public RecordInspector(String url, OpenAgencyServiceFromURL aso) throws SQLException, RawRepoException {
-        dao = openDatabase(url, aso);
+    public RecordInspector(String url, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) throws SQLException, RawRepoException {
+        dao = openDatabase(url, vipCoreLibraryRulesConnector);
         connection.setAutoCommit(false);
     }
 
@@ -73,7 +76,6 @@ public class RecordInspector implements Closeable {
     }
 
     public static class RecordDescription {
-
         private final Timestamp timestamp;
         private final boolean deleted;
         private final String mimeType;
@@ -88,17 +90,9 @@ public class RecordInspector implements Closeable {
             return (Timestamp) timestamp.clone();
         }
 
-        public boolean isDeleted() {
-            return deleted;
-        }
-
-        public String getMimeType() {
-            return mimeType;
-        }
-
         @Override
         public String toString() {
-            return timestamp + ( deleted ? " deleted" : "" ) + " (" + mimeType + ')';
+            return timestamp + (deleted ? " deleted" : "") + " (" + mimeType + ')';
         }
 
     }
@@ -106,13 +100,13 @@ public class RecordInspector implements Closeable {
     public ArrayList<RecordDescription> timestamps(int agencyId, String bibliographicRecordId) throws SQLException {
         ArrayList<RecordDescription> ret = new ArrayList<>();
         try (PreparedStatement stmt = connection.prepareStatement("SELECT modified, deleted, mimetype FROM records WHERE agencyid=? AND bibliographicrecordid=?"
-                                                                  + " UNION SELECT modified, deleted, mimetype FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
-                                                                  + " ORDER BY modified DESC");) {
+                + " UNION SELECT modified, deleted, mimetype FROM records_archive WHERE agencyid=? AND bibliographicrecordid=?"
+                + " ORDER BY modified DESC")) {
             stmt.setInt(1, agencyId);
             stmt.setString(2, bibliographicRecordId);
             stmt.setInt(3, agencyId);
             stmt.setString(4, bibliographicRecordId);
-            try (ResultSet resultSet = stmt.executeQuery();) {
+            try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     Timestamp timestamp = resultSet.getTimestamp(1);
                     boolean deleted = resultSet.getBoolean(2);
@@ -131,14 +125,14 @@ public class RecordInspector implements Closeable {
     public byte[] get(int agencyId, String bibliographicRecordId, Timestamp timestamp) throws SQLException {
         byte[] content = null;
         try (PreparedStatement stmt = connection.prepareStatement("SELECT content FROM records WHERE agencyid=? AND bibliographicrecordid=? AND modified=?"
-                                                                  + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?");) {
+                + " UNION SELECT content FROM records_archive WHERE agencyid=? AND bibliographicrecordid=? AND modified=?")) {
             stmt.setInt(1, agencyId);
             stmt.setString(2, bibliographicRecordId);
             stmt.setTimestamp(3, timestamp);
             stmt.setInt(4, agencyId);
             stmt.setString(5, bibliographicRecordId);
             stmt.setTimestamp(6, timestamp);
-            try (ResultSet resultSet = stmt.executeQuery();) {
+            try (ResultSet resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
                     final String base64Content = resultSet.getString(1);
                     content = base64Content == null ? null : DatatypeConverter.parseBase64Binary(base64Content);
@@ -175,7 +169,7 @@ public class RecordInspector implements Closeable {
     private static final int urlPatternPassword = 3;
     private static final int urlPatternHostPortDb = 4;
 
-    private RawRepoDAO openDatabase(String url, OpenAgencyServiceFromURL aso) throws SQLException, RawRepoException {
+    private RawRepoDAO openDatabase(String url, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) throws SQLException, RawRepoException {
         Matcher matcher = urlPattern.matcher(url);
         if (!matcher.find()) {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
@@ -195,7 +189,7 @@ public class RecordInspector implements Closeable {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(aso)).build();
+        return RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
     }
 
 }

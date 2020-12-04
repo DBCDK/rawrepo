@@ -38,6 +38,7 @@ import dk.dbc.rawrepo.content.service.transport.FetchResponseError;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecord;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.xml.sax.SAXParseException;
@@ -76,7 +77,7 @@ public abstract class Service {
     AuthenticationService forsRights;
 
     @Inject
-    OpenAgencyEJB openAgency;
+    VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
     @Inject
     MarcXMergerEJB marcXMerger;
@@ -168,7 +169,7 @@ public abstract class Service {
             }
 
             try (Connection connection = dataSource.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService())).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 

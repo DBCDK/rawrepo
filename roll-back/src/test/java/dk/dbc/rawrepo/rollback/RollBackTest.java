@@ -21,32 +21,34 @@
 package dk.dbc.rawrepo.rollback;
 
 import dk.dbc.rawrepo.Record;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RollBackTest {
 
-    Record mockRecord( boolean isDeleted ) {
-        Record mockRec = mock( Record.class );
-        when( mockRec.isDeleted() ).thenReturn( isDeleted );
+    Record mockRecord(boolean isDeleted) {
+        Record mockRec = mock(Record.class);
+        when(mockRec.isDeleted()).thenReturn(isDeleted);
         return mockRec;
     }
 
     @Test
     public void testGetNewState() {
-        assertFalse( RollBack.getNewDeleted( RollBack.State.Active, mockRecord( false ), mockRecord( false ) ) );
-        assertTrue( RollBack.getNewDeleted( RollBack.State.Delete, mockRecord( true ), mockRecord( true ) ) );
+        assertFalse(RollBack.getNewDeleted(RollBack.State.Active, mockRecord(false), mockRecord(false)));
+        assertTrue(RollBack.getNewDeleted(RollBack.State.Delete, mockRecord(true), mockRecord(true)));
 
-        assertTrue( RollBack.getNewDeleted( RollBack.State.Keep, mockRecord( true ), mockRecord( false ) ) );
-        assertFalse( RollBack.getNewDeleted( RollBack.State.Keep, mockRecord( false ), mockRecord( true ) ) );
+        assertTrue(RollBack.getNewDeleted(RollBack.State.Keep, mockRecord(true), mockRecord(false)));
+        assertFalse(RollBack.getNewDeleted(RollBack.State.Keep, mockRecord(false), mockRecord(true)));
 
-        assertFalse( RollBack.getNewDeleted( RollBack.State.Rollback, mockRecord( true ), mockRecord( false ) ) );
-        assertTrue( RollBack.getNewDeleted( RollBack.State.Rollback, mockRecord( false ), mockRecord( true ) ) );
+        assertFalse(RollBack.getNewDeleted(RollBack.State.Rollback, mockRecord(true), mockRecord(false)));
+        assertTrue(RollBack.getNewDeleted(RollBack.State.Rollback, mockRecord(false), mockRecord(true)));
     }
 
 }

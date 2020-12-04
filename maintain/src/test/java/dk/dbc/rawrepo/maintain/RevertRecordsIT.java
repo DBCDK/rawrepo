@@ -24,7 +24,8 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 
 import java.nio.charset.StandardCharsets;
@@ -35,14 +36,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -59,13 +62,13 @@ public class RevertRecordsIT extends RawRepoTester {
         RawRepoDAO dao = getDao();
         Record recordBefore = dao.fetchRecord("H1", 100000);
         long incarnationBefore = getNumber(recordBefore.getContent());
-        assertEquals("Old incarnation", 3, incarnationBefore);
+        assertThat("Old incarnation", incarnationBefore, is(3L));
 
         mock.revertRecord(100000, "H1", ts("2015-01-01 00:30:00.000"), "", "Track");
 
         Record recordAfter = dao.fetchRecord("H1", 100000);
         long incarnationAfter = getNumber(recordAfter.getContent());
-        assertEquals("New incarnation", 1, incarnationAfter);
+        assertThat("New incarnation", incarnationAfter, is(1L));
     }
 
     @Test
@@ -74,36 +77,36 @@ public class RevertRecordsIT extends RawRepoTester {
         RevertRecords mock = makeRevertRecords();
         RawRepoDAO dao = getDao();
         Set<RecordId> existingRelationsFrom = dao.getRelationsFrom(new RecordId("54248229", 870970));
-        assertEquals("Existing relations count", 0, existingRelationsFrom.size());
+        assertThat("Existing relations count", existingRelationsFrom.size(), is(0));
         mock.revertRecord(870970, "54248229", ts("2019-02-07 04:00:00.000"), "", "Track");
 
         Set<RecordId> newRelationsFrom = dao.getRelationsFrom(new RecordId("54248229", 870970));
-        assertEquals("New relations count", 1, newRelationsFrom.size());
-        assertTrue("New relations", newRelationsFrom.contains(new RecordId("68359775", 870979)));
+        assertThat("New relations count", newRelationsFrom.size(), is(1));
+        assertTrue(newRelationsFrom.contains(new RecordId("68359775", 870979)));
     }
 
-    @Test(expected = RawRepoException.class)
+    @Test
     public void testRevertRecordsNewest() throws Exception {
         System.out.println("testRevertRecordsNewest");
         RevertRecords mock = makeRevertRecords();
 
-        mock.revertRecord(100000, "H1", ts("2015-06-01 00:30:00.000"), "", "Track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "H1", ts("2015-06-01 00:30:00.000"), "", "Track"));
     }
 
-    @Test(expected = RawRepoException.class)
+    @Test
     public void testRevertRecordsAncient() throws Exception {
         System.out.println("testRevertRecordsAncient");
         RevertRecords mock = makeRevertRecords();
 
-        mock.revertRecord(100000, "H1", ts("2010-01-01 12:34:56.789"), "", "Track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "H1", ts("2010-01-01 12:34:56.789"), "", "Track"));
     }
 
-    @Test(expected = RawRepoException.class)
+    @Test
     public void testRevertRecordsNotFound() throws Exception {
         System.out.println("testRevertRecordsNotFound");
         RevertRecords mock = makeRevertRecords();
 
-        mock.revertRecord(100000, "NONE", ts("2015-01-01 00:30:00.000"), "", "Track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "NONE", ts("2015-01-01 00:30:00.000"), "", "Track"));
     }
 
     /*
