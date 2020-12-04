@@ -48,7 +48,7 @@ public abstract class RawRepoDAO {
 
     private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAO.class);
 
-    RelationHintsOpenAgency relationHints;
+    RelationHintsVipCore relationHints;
 
     /**
      * Builder Pattern from RawRepoDAO
@@ -56,7 +56,7 @@ public abstract class RawRepoDAO {
     public static class Builder {
 
         private final Connection connection;
-        private RelationHintsOpenAgency builderRelationHints;
+        private RelationHintsVipCore builderRelationHints;
 
         private Builder(Connection connection) {
             this.connection = connection;
@@ -67,10 +67,10 @@ public abstract class RawRepoDAO {
          * use
          * with a static service, to facilitate caching
          *
-         * @param newRelationHints URL to openAgency service
+         * @param newRelationHints URL to vipcore service
          * @return self
          */
-        public Builder relationHints(RelationHintsOpenAgency newRelationHints) {
+        public Builder relationHints(RelationHintsVipCore newRelationHints) {
             if (this.builderRelationHints != null) {
                 throw new IllegalStateException("Cannot set relationHints again");
             }
@@ -91,7 +91,7 @@ public abstract class RawRepoDAO {
                 dao.validateConnection();
 
                 if (builderRelationHints == null) {
-                    builderRelationHints = new RelationHintsOpenAgency(null);
+                    builderRelationHints = new RelationHintsVipCore(null);
                 }
                 dao.relationHints = builderRelationHints;
 
@@ -327,7 +327,7 @@ public abstract class RawRepoDAO {
      * @param bibliographicRecordId record
      * @param originalAgencyId      agency requesting record
      * @param fetchDeleted          allow deleted records
-     *                              first in openagency
+     *                              first in vipcore
      * @return agency that has the wanted record
      * @throws RawRepoException if no agency could be found
      */
@@ -348,8 +348,7 @@ public abstract class RawRepoDAO {
             }
         }
 
-        throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + bibliographicRecordId + ":" + originalAgencyId +
-                " No agency has this record that is located in openagency showOrder");
+        throw new RawRepoExceptionRecordNotFound("Could not find base agency for " + bibliographicRecordId + ":" + originalAgencyId);
     }
 
     /**

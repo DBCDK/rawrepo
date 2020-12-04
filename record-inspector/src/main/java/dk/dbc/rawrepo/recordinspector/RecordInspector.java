@@ -26,7 +26,7 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,7 +189,7 @@ public class RecordInspector implements Closeable {
         log.debug("Connecting");
         connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
         log.debug("Connected");
-        return RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
+        return RawRepoDAO.builder(connection).relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector)).build();
     }
 
 }

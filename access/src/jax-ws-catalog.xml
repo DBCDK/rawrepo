@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
-    <system systemId="src/main/resources/openagency.wsdl" uri="wsdl/openagency.wsdl"/>
-    <system systemId="src/main/resources/openagency.xsd" uri="wsdl/openagency.xsd"/>
-</catalog>

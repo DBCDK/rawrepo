@@ -16,10 +16,10 @@ import java.util.List;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RelationHintsOpenAgency {
+public class RelationHintsVipCore {
     private final VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
-    public RelationHintsOpenAgency(VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
+    public RelationHintsVipCore(VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
         this.vipCoreLibraryRulesConnector = vipCoreLibraryRulesConnector;
     }
 
@@ -27,7 +27,7 @@ public class RelationHintsOpenAgency {
         try {
             return vipCoreLibraryRulesConnector.hasFeature(agencyId, VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS);
         } catch (VipCoreException ex) {
-            throw new RawRepoException("Cannot access openagency", ex);
+            throw new RawRepoException("Cannot access vipcore", ex);
         }
     }
 

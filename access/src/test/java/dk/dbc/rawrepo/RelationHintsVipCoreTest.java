@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RelationHintsOpenAgencyTest {
+public class RelationHintsVipCoreTest {
 
     private static WireMockServer wireMockServer;
     private static String wireMockHost;
@@ -67,7 +67,7 @@ public class RelationHintsOpenAgencyTest {
 
     @BeforeAll
     static void setConnector() {
-        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, VipCoreConnector.TimingLogLevel.INFO);
+        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, 0, VipCoreConnector.TimingLogLevel.INFO);
     }
 
     @AfterAll
@@ -77,7 +77,7 @@ public class RelationHintsOpenAgencyTest {
 
     @Test
     public void testUsesCommonAgency() throws Exception {
-        final RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(connector);
+        final RelationHintsVipCore relationHints = new RelationHintsVipCore(connector);
 
         relationHints.usesCommonSchoolAgency(191919);
 

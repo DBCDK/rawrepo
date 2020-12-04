@@ -1069,7 +1069,7 @@ public class RawRepoDAOIT {
     }
 
 
-    private static class MyRelationHints extends RelationHintsOpenAgency {
+    private static class MyRelationHints extends RelationHintsVipCore {
 
         MyRelationHints() {
             super(null);

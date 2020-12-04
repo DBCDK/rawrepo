@@ -100,12 +100,12 @@ public class AgencyDumpMain {
                 return;
             }
 
-            String openAgency = null;
+            String vipCoreUrl = null;
             if (commandLine.hasOption("open-agency")) {
-                openAgency = (String) commandLine.getOption("open-agency");
+                vipCoreUrl = (String) commandLine.getOption("open-agency");
             }
 
-            try (AgencyDump agencyDump = new AgencyDump((String) commandLine.getOption("db"), agencyid, openAgency)) {
+            try (AgencyDump agencyDump = new AgencyDump((String) commandLine.getOption("db"), agencyid, vipCoreUrl)) {
 
                 List<String> bibliographicRecordIds;
                 if (commandLine.hasOption("enrichment")) {
@@ -150,7 +150,7 @@ public class AgencyDumpMain {
             addOption("db", "connectstring for database", true, false, string, null);
             addOption("output", "name of outputbase (default: stdout)", false, false, string, null);
             addOption("merged", "merge enrichment records", false, false, null, yes);
-            addOption("open-agency", "url of openagency (default: fallback) only valid if --merged is set", false, false, string, null);
+            addOption("vipcore", "url of vipcore service (default: fallback) only valid if --merged is set", false, false, string, null);
             addOption("enrichment", "enrichment records only", false, false, null, yes);
             addOption("entity", "no enrichment records", false, false, null, yes);
             addOption("debug", "turn on debug logging", false, false, null, yes);

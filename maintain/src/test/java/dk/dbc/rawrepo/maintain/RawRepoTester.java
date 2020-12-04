@@ -23,7 +23,7 @@ package dk.dbc.rawrepo.maintain;
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -68,7 +68,7 @@ class RawRepoTester {
     @SuppressFBWarnings(value = {"UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"},
             justification = "connection initliazed in @Before")
     protected RawRepoDAO getDao() throws RawRepoException {
-        RelationHintsOpenAgency relationHints = mock(RelationHintsOpenAgency.class);
+        RelationHintsVipCore relationHints = mock(RelationHintsVipCore.class);
         when(relationHints.get(anyInt())).thenReturn(Collections.emptyList());
         when(relationHints.usesCommonAgency(anyInt())).thenReturn(Boolean.FALSE);
         when(relationHints.usesCommonAgency(870970)).thenReturn(Boolean.TRUE);

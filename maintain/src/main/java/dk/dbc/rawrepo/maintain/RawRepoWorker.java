@@ -22,7 +22,7 @@ package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class RawRepoWorker implements AutoCloseable {
         try {
             synchronized (this) {
                 if (dao == null) {
-                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
+                    dao = RawRepoDAO.builder(getConnection()).relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector)).build();
                 }
                 return dao;
             }

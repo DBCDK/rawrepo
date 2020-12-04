@@ -69,13 +69,13 @@ public class AgencyDeleteMain {
             return;
         }
 
-        String openAgencyURL = null;
-        if (commandLine.hasOption("openagency")) {
-            openAgencyURL = (String) commandLine.getOption("openagency");
+        String vipCoreUrl = null;
+        if (commandLine.hasOption("vipcore")) {
+            vipCoreUrl = (String) commandLine.getOption("vipcore");
         }
 
         try {
-            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, openAgencyURL);
+            AgencyDelete agencyDelete = new AgencyDelete((String) commandLine.getOption("db"), agencyid, vipCoreUrl);
             Set<String> ids = agencyDelete.getIds();
             Set<String> siblingRelations = agencyDelete.getSiblingRelations();
             if (!siblingRelations.isEmpty()) {
@@ -133,7 +133,7 @@ public class AgencyDeleteMain {
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
             addOption("role", "name of enqueue software (provider: agency-delete)", false, false, string, null);
-            addOption("openagency", "url", false, false, string, null);
+            addOption("vipcore", "url", false, false, string, null);
 
             addOption("debug", "turn on debug logging", false, false, null, yes);
         }

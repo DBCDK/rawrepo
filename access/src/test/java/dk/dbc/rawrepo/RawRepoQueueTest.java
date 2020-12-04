@@ -728,7 +728,7 @@ class RawRepoMock {
 
         List<Integer> defaultList = Collections.singletonList(870970);
 
-        RelationHintsOpenAgency relations = mock(RelationHintsOpenAgency.class);
+        RelationHintsVipCore relations = mock(RelationHintsVipCore.class);
         rawrepo.relationHints = relations;
         when(relations.usesCommonAgency(anyInt())).then((Answer<Boolean>) invocation -> {
             int agencyid = (int) invocation.getArguments()[0];

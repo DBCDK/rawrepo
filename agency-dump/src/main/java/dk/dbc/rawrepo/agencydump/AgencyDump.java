@@ -39,7 +39,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class AgencyDump implements AutoCloseable {
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if(vipCoreUrl != null) {
-            builder.relationHints(new RelationHintsOpenAgency(VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl)));
+            builder.relationHints(new RelationHintsVipCore(VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl)));
         }
         this.dao = builder.build();
     }

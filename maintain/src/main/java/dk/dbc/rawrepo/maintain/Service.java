@@ -75,15 +75,9 @@ public class Service {
     @Inject
     private VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
-    private ResponseErrorException openAgencyError = null;
-
     @PostConstruct
     public void init() {
         log.info("init()");
-
-        if (!System.getenv().containsKey(C.OPENAGENCY.URL)) {
-            throw new RuntimeException("OPENAGENCY_URL must have a value");
-        }
 
         this.name = System.getenv(C.NAME);
         this.executorService = Executors.newFixedThreadPool(2);

@@ -74,7 +74,7 @@ public class RawRepoDAOTest {
     public void testEnrichmentTrail() throws Exception {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
-            access.relationHints = new RelationHintsOpenAgency(getVipCoreConnector());
+            access.relationHints = new RelationHintsVipCore(getVipCoreConnector());
             doCallRealMethod().when(access).fetchMergedRecord(anyString(), anyInt(), any(MarcXMerger.class), anyBoolean());
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
             fillMockRelations(access,
@@ -106,7 +106,7 @@ public class RawRepoDAOTest {
         try {
             RawRepoDAO access = mock(RawRepoDAO.class);
 
-            access.relationHints = new RelationHintsOpenAgency(getVipCoreConnector());
+            access.relationHints = new RelationHintsVipCore(getVipCoreConnector());
 
             doCallRealMethod().when(access).fetchRecordCollection(anyString(), anyInt(), any(MarcXMerger.class));
             doCallRealMethod().when(access).agencyFor(anyString(), anyInt(), anyBoolean());
@@ -147,7 +147,7 @@ public class RawRepoDAOTest {
     @Test
     public void parentRelationAgency() throws Exception {
         RawRepoDAO mock = mock(RawRepoDAO.class);
-        mock.relationHints = mock(RelationHintsOpenAgency.class);
+        mock.relationHints = mock(RelationHintsVipCore.class);
         doCallRealMethod().when(mock).findParentRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);
@@ -177,7 +177,7 @@ public class RawRepoDAOTest {
     @Test
     public void siblingRelationAgency() throws Exception {
         RawRepoDAO mock = mock(RawRepoDAO.class);
-        mock.relationHints = mock(RelationHintsOpenAgency.class);
+        mock.relationHints = mock(RelationHintsVipCore.class);
         doCallRealMethod().when(mock).findSiblingRelationAgency(anyString(), anyInt());
         when(mock.relationHints.get(123456)).thenReturn(Arrays.asList(300000, 870970));
         when(mock.relationHints.usesCommonAgency(123456)).thenReturn(Boolean.TRUE);

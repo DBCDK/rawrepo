@@ -29,7 +29,7 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.vipcore.VipCoreConnector;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.glassfish.jersey.client.ClientConfig;
@@ -64,7 +64,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author DBC {@literal <dbc.dk>}
  */
 public class AgencyDeleteIT {
-
     private static WireMockServer wireMockServer;
     private static String wireMockHost;
     private static String jdbcUrl;
@@ -86,16 +85,12 @@ public class AgencyDeleteIT {
 
     @BeforeAll
     static void setConnector() {
-        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, VipCoreConnector.TimingLogLevel.INFO);
+        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, 0, VipCoreConnector.TimingLogLevel.INFO);
     }
 
     @AfterAll
     static void stopWireMockServer() {
         wireMockServer.stop();
-    }
-
-
-    public AgencyDeleteIT() {
     }
 
     @BeforeEach
@@ -133,7 +128,7 @@ public class AgencyDeleteIT {
         agencyDelete.commit();
 
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                .relationHints(new RelationHintsOpenAgency(connector))
+                .relationHints(new RelationHintsVipCore(connector))
                 .build();
 
         countQueued("leaf", 2);
@@ -158,7 +153,7 @@ public class AgencyDeleteIT {
     public void testQueue() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(connector))
+                    .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
@@ -181,7 +176,7 @@ public class AgencyDeleteIT {
     public void textGetIds() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(connector))
+                    .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "H", 888888, "S:870970");
@@ -205,7 +200,7 @@ public class AgencyDeleteIT {
     public void testRecordOrder() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(connector))
+                    .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "H-local", 888888);
@@ -254,7 +249,7 @@ public class AgencyDeleteIT {
 
     private static void setupRecords() throws RawRepoException, SQLException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                .relationHints(new RelationHintsOpenAgency(connector))
+                .relationHints(new RelationHintsVipCore(connector))
                 .build();
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
@@ -290,7 +285,6 @@ public class AgencyDeleteIT {
         setupRecord(dao, "E", 777777);
 
         connection.commit();
-
     }
 
     private static void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException {

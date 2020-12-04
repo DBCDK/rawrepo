@@ -26,7 +26,7 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.slf4j.Logger;
@@ -92,15 +92,15 @@ class AgencyDelete {
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if (vipCoreUrl != null) {
             VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector = VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl);
-            builder.relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector));
-            RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(vipCoreLibraryRulesConnector);
+            builder.relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector));
+            RelationHintsVipCore relationHints = new RelationHintsVipCore(vipCoreLibraryRulesConnector);
             if (relationHints.usesCommonAgency(agencyid)) {
                 this.commonAgencies = relationHints.get(agencyid);
             } else {
                 this.commonAgencies = Collections.emptyList();
             }
         } else {
-            builder.relationHints(new RelationHintsOpenAgency(null) {
+            builder.relationHints(new RelationHintsVipCore(null) {
                 @Override
                 public boolean usesCommonAgency(int agencyId) {
                     return false;

@@ -31,7 +31,7 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestRecord;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseError;
@@ -169,7 +169,7 @@ public abstract class Service {
             }
 
             try (Connection connection = dataSource.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(vipCoreLibraryRulesConnector)).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector)).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 
