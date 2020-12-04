@@ -24,7 +24,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import dk.dbc.httpclient.HttpClient;
 import dk.dbc.vipcore.VipCoreConnector;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
-import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.junit.jupiter.api.AfterAll;
@@ -36,13 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.hamcrest.CoreMatchers.is;
@@ -64,87 +57,12 @@ public class RelationHintsOpenAgencyTest {
 
     @BeforeAll
     static void startWireMockServer() {
-        System.out.println("BeforeAll 1");
         wireMockServer = new WireMockServer(options().dynamicPort()
                 .dynamicHttpsPort()
-        .withRootDirectory(wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath()));
+                .withRootDirectory(wireMockConfig().filesRoot().child("wiremock/vipcore").getPath()));
         wireMockServer.start();
         wireMockHost = "http://localhost:" + wireMockServer.port();
         configureFor("localhost", wireMockServer.port());
-
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"123456\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_123456.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"861620\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_861620.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{'agencyId':'191919'}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_191919.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870970\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870970.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870971\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870971.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870974\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870974.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870975\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870975.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870976\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870976.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"870979\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_870979.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"190002\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_190002.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"190004\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_190004.json")));
-        stubFor(post(urlMatching("/libraryrules"))
-                .withRequestBody(equalToJson("{\"agencyId\":\"190007\"}"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-type", "application/json")
-                        .withHeader("Content-type", "application/json")
-                        .withBodyFile("vipcore_libraryrules_190007.json")));
     }
 
     @BeforeAll
@@ -154,7 +72,6 @@ public class RelationHintsOpenAgencyTest {
 
     @AfterAll
     static void stopWireMockServer() {
-        System.out.println("AfterAll");
         wireMockServer.stop();
     }
 
@@ -162,7 +79,6 @@ public class RelationHintsOpenAgencyTest {
     public void testUsesCommonAgency() throws Exception {
         final RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(connector);
 
-        System.out.println("0 " + (relationHints == null));
         relationHints.usesCommonSchoolAgency(191919);
 
         boolean usesCommonAgency;

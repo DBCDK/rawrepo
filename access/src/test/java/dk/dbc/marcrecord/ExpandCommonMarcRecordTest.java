@@ -14,11 +14,12 @@ import dk.dbc.common.records.MarcRecordWriter;
 import dk.dbc.common.records.utils.IOUtils;
 import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -218,22 +219,22 @@ public class ExpandCommonMarcRecordTest {
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")), equalTo(expanded));
     }
 
-//    @Test(expected = RawRepoException.class)
-//    public void noCommonRecord() throws Exception {
-//        Map<String, MarcRecord> collection = new HashMap<>();
-//
-//        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")), equalTo(null));
-//    }
-//
-//    @Test(expected = RawRepoException.class)
-//    public void missingAuthorityRecords() throws Exception {
-//        MarcRecord record = loadMarcRecord(AUT_RAW_90004158);
-//
-//        Map<String, MarcRecord> collection = new HashMap<>();
-//        collection.put("90004158", record);
-//
-//        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")), equalTo(null));
-//    }
+    @Test
+    public void noCommonRecord() throws Exception {
+        Map<String, MarcRecord> collection = new HashMap<>();
+
+        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")));
+    }
+
+    @Test
+    public void missingAuthorityRecords() throws Exception {
+        MarcRecord record = loadMarcRecord(AUT_RAW_90004158);
+
+        Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("90004158", record);
+
+        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")));
+    }
 
     @Test
     public void expandCommonRecordWithoutAuthorityFields() throws Exception {

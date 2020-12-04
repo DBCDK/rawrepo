@@ -1,0 +1,18 @@
+{
+  "request" : {
+    "url" : "/libraryrules",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToJson" : "{\"agencyId\":\"870975\"}",
+      "ignoreArrayOrder" : true,
+      "ignoreExtraElements" : true
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "bodyFileName" : "body-libraryrules-870975.json",
+    "headers" : {
+      "Content-Type" : "application/json"
+    }
+  }
+}

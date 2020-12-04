@@ -22,6 +22,7 @@ package dk.dbc.rawrepo;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import org.hamcrest.core.IsCollectionContaining;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -133,15 +134,15 @@ public class RawRepoQueueTest {
                 "870970:R:CL");
     }
 
-//    @Test(expected = RawRepoExceptionRecordNotFound.class)
-//    public void testEnqueueMissingNoCommon() throws Exception {
-//        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
-//        RawRepoDAO dao = RawRepoMock.builder(enqueued)
-//                .doesNotUseCommon(870970)
-//                .build();
-//        dao.changedRecord("PRO", recordFromString("870970:R"));
-//        System.out.println("enqueued = " + enqueued);
-//    }
+    @Test
+    public void testEnqueueMissingNoCommon() throws Exception {
+        HashMap<String, AtomicInteger> enqueued = new HashMap<>();
+        RawRepoDAO dao = RawRepoMock.builder(enqueued)
+                .doesNotUseCommon(870970)
+                .build();
+
+        Assertions.assertThrows(RawRepoExceptionRecordNotFound.class, () -> dao.changedRecord("PRO", recordFromString("870970:R")));
+    }
 
     @Test
     public void testEnqueueSibling() throws Exception {
@@ -743,7 +744,6 @@ class RawRepoMock {
 
     private Void enqueue(InvocationOnMock invocation) {
         Object[] arguments = invocation.getArguments();
-        int i = 0;
         for (Object argument : arguments) {
             System.out.println(argument);
         }
