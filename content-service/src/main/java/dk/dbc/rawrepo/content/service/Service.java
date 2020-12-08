@@ -174,7 +174,7 @@ public abstract class Service {
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 
                 for (FetchRequestRecord requestRecord : requestRecords) {
-                    boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+                    boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
 
                     logger.info("Request for id : " + requestRecord.bibliographicRecordId + " agency : " + requestRecord.agencyId +
                             " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate == null ? false : requestRecord.includeAgencyPrivate));
@@ -297,7 +297,7 @@ public abstract class Service {
         Record rawRecord;
         try (Timer.Context time = fetchMerged.time();
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
-            boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+            boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecordExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
@@ -323,7 +323,7 @@ public abstract class Service {
             FieldRules customFieldRules = new FieldRules(immutable, overwrite, FieldRules.INVALID_DEFAULT, FieldRules.VALID_REGEX_DANMARC2);
             MarcXMerger merger = new MarcXMerger(customFieldRules, "CONTENT_SERVICE");
 
-            boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+            boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, merger, allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;

@@ -65,16 +65,16 @@ public class JsonService extends Service {
         try {
             webMethodAdaptor.invoke(this, C.OPERATION_FETCH, req, resp);
         } catch (WebMethodCallException ex) {
-            log.error("Caught WebMethodCallException: " + ex.getMessage());
+            log.error("Caught WebMethodCallException: {}", ex.getMessage());
             resp.out = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (WebMethodValidationException ex) {
-            log.error("Caught WebMethodValidationException: " + ex.getMessage());
+            log.error("Caught WebMethodValidationException: {}", ex.getMessage());
             resp.out = new FetchResponseError(ex.getMessage(), FetchResponseError.Type.REQUEST_CONTENT_ERROR);
         } catch (EJBException ex) {
-            log.error("Caught Exception: " + ex.getClass().getSimpleName() + " > " + ex.getMessage());
+            log.error("Caught EJBException: {} > {}", ex.getClass().getSimpleName(), ex.getMessage());
             resp.out = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (RuntimeException ex) {
-            log.error("Caught Exception: " + ex.getClass().getSimpleName() + " > " + ex.getMessage());
+            log.error("Caught Exception: {} > {}", ex.getClass().getSimpleName(), ex.getMessage());
             resp.out = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         }
         return resp;
@@ -92,7 +92,6 @@ public class JsonService extends Service {
 
     @Override
     public String getXForwardedFor() {
-        String header = httpServletRequest.getHeader("x-forwarded-for");
-        return header;
+        return httpServletRequest.getHeader("x-forwarded-for");
     }
 }

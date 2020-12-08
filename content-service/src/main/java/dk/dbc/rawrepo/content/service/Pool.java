@@ -51,7 +51,7 @@ public abstract class Pool<T> {
 
     private final LinkedList<T> list;
 
-    public Pool() {
+    protected Pool() {
         this.list = new LinkedList<>();
     }
 
