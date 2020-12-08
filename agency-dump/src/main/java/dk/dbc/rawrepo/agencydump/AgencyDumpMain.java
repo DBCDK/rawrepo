@@ -20,25 +20,20 @@
  */
 package dk.dbc.rawrepo.agencydump;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
-import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.rawrepo.RawRepoException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class AgencyDumpMain {
@@ -70,28 +65,17 @@ public class AgencyDumpMain {
                     throw new IllegalStateException("Options enrichment, merged, entity are mutually exclusive");
                 }
 
-                if (commandLine.hasOption("open-agency") && !commandLine.hasOption("merged")) {
-                    throw new IllegalStateException("--open-agency doesn't make sense without --merged");
+                if (commandLine.hasOption("vipcore") && !commandLine.hasOption("merged")) {
+                    throw new IllegalStateException("--vipcore doesn't make sense without --merged");
                 }
 
                 if (commandLine.hasOption("output")) {
                     String output = (String) commandLine.getOption("output");
                     out = new FileOutputStream(output);
                 }
-
-                if (commandLine.hasOption("debug")) {
-                    setLogLevel("logback-debug.xml");
-                } else {
-                    setLogLevel("logback-info.xml");
-                }
-
             } catch (IllegalStateException | NumberFormatException ex) {
                 System.err.println(ex.getMessage());
                 System.err.println(commandLine.usage());
-                System.exit(1);
-                return;
-            } catch (JoranException ex) {
-                log.error("Exception", ex);
                 System.exit(1);
                 return;
             } catch (FileNotFoundException ex) {
@@ -101,8 +85,8 @@ public class AgencyDumpMain {
             }
 
             String vipCoreUrl = null;
-            if (commandLine.hasOption("open-agency")) {
-                vipCoreUrl = (String) commandLine.getOption("open-agency");
+            if (commandLine.hasOption("vipcore")) {
+                vipCoreUrl = (String) commandLine.getOption("vipcore");
             }
 
             try (AgencyDump agencyDump = new AgencyDump((String) commandLine.getOption("db"), agencyid, vipCoreUrl)) {
@@ -126,21 +110,9 @@ public class AgencyDumpMain {
             try {
                 out.close();
             } catch (IOException ex) {
-                log.error("Cannot close output: " + ex.getMessage());
+                log.error("Cannot close output: {}", ex.getMessage());
             }
         }
-    }
-
-    private static void setLogLevel(String file) throws JoranException {
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        context.reset();
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        InputStream stream = contextClassLoader.getResourceAsStream(file);
-        JoranConfigurator configurator = new JoranConfigurator();
-        configurator.setContext(context);
-        configurator.doConfigure(stream); // loads logback file
-        StatusPrinter.printInCaseOfErrorsOrWarnings(context); // Internal status data is printed in case of warnings or errors.
-
     }
 
     private static class AgencyDumpCommandLine extends CommandLine {
@@ -153,7 +125,6 @@ public class AgencyDumpMain {
             addOption("vipcore", "url of vipcore service (default: fallback) only valid if --merged is set", false, false, string, null);
             addOption("enrichment", "enrichment records only", false, false, null, yes);
             addOption("entity", "no enrichment records", false, false, null, yes);
-            addOption("debug", "turn on debug logging", false, false, null, yes);
         }
 
         @Override

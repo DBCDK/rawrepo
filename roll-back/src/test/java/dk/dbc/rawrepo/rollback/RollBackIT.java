@@ -95,8 +95,7 @@ public class RollBackIT {
     }
 
     @Test
-    public void testHistoricRecord() throws SQLException, RawRepoException {
-
+    void testHistoricRecord() throws SQLException, RawRepoException {
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         Record record;
@@ -146,7 +145,7 @@ public class RollBackIT {
     }
 
     @Test
-    public void testBulkAgency_with2Records() throws SQLException, RawRepoException {
+    void testBulkAgency_with2Records() throws SQLException, RawRepoException {
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         connection.setAutoCommit(false);
         Record record;

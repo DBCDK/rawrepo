@@ -63,7 +63,7 @@ public abstract class CommandLine {
     abstract String usageCommandLine();
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
-    public CommandLine() {
+    protected CommandLine() {
         requiredOptions = new HashSet<>();
         repeatableOptions = new HashSet<>();
         knownOptions = new HashSet<>();

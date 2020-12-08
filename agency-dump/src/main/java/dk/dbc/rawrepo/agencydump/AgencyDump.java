@@ -112,7 +112,6 @@ public class AgencyDump implements AutoCloseable {
     }
 
     public enum RecordCollection {
-
         ALL,
         ENRICHMENT,
         ENTITY
@@ -147,11 +146,11 @@ public class AgencyDump implements AutoCloseable {
     }
 
     private static final Pattern urlPattern = Pattern.compile("^(jdbc:[^:]*://)?(?:([^:@]*)(?::([^@]*))?@)?((?:([^:/]*)(?::(\\d+))?)(?:/(.*))?)$");
-    private static final String jdbcDefault = "jdbc:postgresql://";
-    private static final int urlPatternPrefix = 1;
-    private static final int urlPatternUser = 2;
-    private static final int urlPatternPassword = 3;
-    private static final int urlPatternHostPortDb = 4;
+    private static final String JDBC_DEFAULT = "jdbc:postgresql://";
+    private static final int URL_PATTERN_PREFIX = 1;
+    private static final int URL_PATTERN_USER = 2;
+    private static final int URL_PATTERN_PASSWORD = 3;
+    private static final int URL_PATTERN_HOST_PORT_DB = 4;
 
     private static Connection getConnection(String url) throws SQLException {
         Matcher matcher = urlPattern.matcher(url);
@@ -159,19 +158,19 @@ public class AgencyDump implements AutoCloseable {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
         }
         Properties properties = new Properties();
-        String jdbc = matcher.group(urlPatternPrefix);
+        String jdbc = matcher.group(URL_PATTERN_PREFIX);
         if (jdbc == null) {
-            jdbc = jdbcDefault;
+            jdbc = JDBC_DEFAULT;
         }
-        if (matcher.group(urlPatternUser) != null) {
-            properties.setProperty("user", matcher.group(urlPatternUser));
+        if (matcher.group(URL_PATTERN_USER) != null) {
+            properties.setProperty("user", matcher.group(URL_PATTERN_USER));
         }
-        if (matcher.group(urlPatternPassword) != null) {
-            properties.setProperty("password", matcher.group(urlPatternPassword));
+        if (matcher.group(URL_PATTERN_PASSWORD) != null) {
+            properties.setProperty("password", matcher.group(URL_PATTERN_PASSWORD));
         }
 
         log.debug("Connecting");
-        Connection connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
+        Connection connection = DriverManager.getConnection(jdbc + matcher.group(URL_PATTERN_HOST_PORT_DB), properties);
         log.debug("Connected");
         return connection;
     }

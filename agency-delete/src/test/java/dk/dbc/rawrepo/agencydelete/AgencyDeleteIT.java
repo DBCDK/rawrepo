@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class AgencyDeleteIT {
+class AgencyDeleteIT {
     private static WireMockServer wireMockServer;
     private static String wireMockHost;
     private static String jdbcUrl;
@@ -113,7 +113,7 @@ public class AgencyDeleteIT {
     }
 
     @Test
-    public void testBasics() throws Exception {
+    void testBasics() throws Exception {
         System.out.println("testBasics()");
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + wireMockServer.port());
 
@@ -150,7 +150,7 @@ public class AgencyDeleteIT {
     }
 
     @Test
-    public void testQueue() throws Exception {
+    void testQueue() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
                     .relationHints(new RelationHintsVipCore(connector))
@@ -169,11 +169,10 @@ public class AgencyDeleteIT {
 
         countQueued("node", 1);
         countQueued("leaf", 1);
-
     }
 
     @Test
-    public void textGetIds() throws Exception {
+    void textGetIds() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
                     .relationHints(new RelationHintsVipCore(connector))
@@ -197,7 +196,7 @@ public class AgencyDeleteIT {
     }
 
     @Test
-    public void testRecordOrder() throws Exception {
+    void testRecordOrder() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
                     .relationHints(new RelationHintsVipCore(connector))

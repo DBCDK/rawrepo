@@ -32,16 +32,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
-public class XmlToolsTest {
+class XmlToolsTest {
 
     /**
      * Test of filterPrivateOut method, of class XmlTools.
      */
     @Test
-    public void testFilterPrivateOut() throws Exception {
+    void testFilterPrivateOut() throws Exception {
         byte[] marcxWith = file("marcx-with-private.xml");
         byte[] marcxWithout = file("marcx-without-private.xml");
 
@@ -58,7 +57,7 @@ public class XmlToolsTest {
     }
 
     @Test
-    public void testCombine() throws Exception {
+    void testCombine() throws Exception {
 
         XmlTools xmlTools = new FakeCDI().build(XmlTools.class);
         byte[] combinedActual = xmlTools.buildCollection().add(file("marcx-with-private_1.xml")).add(file("marcx-with-private_2.xml")).build();
