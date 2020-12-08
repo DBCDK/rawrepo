@@ -38,12 +38,10 @@ import static org.mockito.Mockito.when;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class QueueRecordsIT extends RawRepoTester {
+class QueueRecordsIT extends RawRepoTester {
 
     @Test
-    public void testQueueSingle() throws Exception {
-        System.out.println("testQueueSingle");
-
+    void testQueueSingle() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
         assertThat("Queue is empty", count("queue"), is(0));
@@ -52,9 +50,7 @@ public class QueueRecordsIT extends RawRepoTester {
     }
 
     @Test
-    public void testQueueWithEnrichment() throws Exception {
-        System.out.println("testQueueWithEnrichment");
-
+    void testQueueWithEnrichment() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
         assertThat("Queue is empty", count("queue"), is(0));
@@ -63,9 +59,7 @@ public class QueueRecordsIT extends RawRepoTester {
     }
 
     @Test
-    public void testQueueSection() throws Exception {
-        System.out.println("testQueueSection");
-
+    void testQueueSection() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
         assertThat("Queue is empty", count("queue"), is(0));
@@ -74,9 +68,7 @@ public class QueueRecordsIT extends RawRepoTester {
     }
 
     @Test
-    public void testQueueEnrichmentSection() throws Exception {
-        System.out.println("testQueueEnrichmentSection");
-
+    void testQueueEnrichmentSection() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
         assertThat("Queue is empty", count("queue"), is(0));

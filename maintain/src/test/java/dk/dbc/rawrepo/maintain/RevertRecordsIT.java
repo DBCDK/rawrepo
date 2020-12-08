@@ -50,14 +50,10 @@ import static org.mockito.Mockito.when;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RevertRecordsIT extends RawRepoTester {
-
-    public RevertRecordsIT() {
-    }
+class RevertRecordsIT extends RawRepoTester {
 
     @Test
-    public void testRevertRecords() throws Exception {
-        System.out.println("testRevertRecords");
+    void testRevertRecords() throws Exception {
         RevertRecords mock = makeRevertRecords();
         RawRepoDAO dao = getDao();
         Record recordBefore = dao.fetchRecord("H1", 100000);
@@ -72,8 +68,7 @@ public class RevertRecordsIT extends RawRepoTester {
     }
 
     @Test
-    public void testRevertRecordsWithAuthority() throws Exception {
-        System.out.println("testRevertRecordsWithAuthority");
+    void testRevertRecordsWithAuthority() throws Exception {
         RevertRecords mock = makeRevertRecords();
         RawRepoDAO dao = getDao();
         Set<RecordId> existingRelationsFrom = dao.getRelationsFrom(new RecordId("54248229", 870970));
@@ -86,24 +81,21 @@ public class RevertRecordsIT extends RawRepoTester {
     }
 
     @Test
-    public void testRevertRecordsNewest() throws Exception {
-        System.out.println("testRevertRecordsNewest");
+    void testRevertRecordsNewest() throws Exception {
         RevertRecords mock = makeRevertRecords();
 
         Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "H1", ts("2015-06-01 00:30:00.000"), "", "Track"));
     }
 
     @Test
-    public void testRevertRecordsAncient() throws Exception {
-        System.out.println("testRevertRecordsAncient");
+    void testRevertRecordsAncient() throws Exception {
         RevertRecords mock = makeRevertRecords();
 
         Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "H1", ts("2010-01-01 12:34:56.789"), "", "Track"));
     }
 
     @Test
-    public void testRevertRecordsNotFound() throws Exception {
-        System.out.println("testRevertRecordsNotFound");
+    void testRevertRecordsNotFound() throws Exception {
         RevertRecords mock = makeRevertRecords();
 
         Assertions.assertThrows(RawRepoException.class, () -> mock.revertRecord(100000, "NONE", ts("2015-01-01 00:30:00.000"), "", "Track"));
