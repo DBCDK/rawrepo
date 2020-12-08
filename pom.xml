@@ -38,7 +38,7 @@
         <junit.surefire.provider.version>1.1.0</junit.surefire.provider.version>
         <maven.surefire.version>2.19.1</maven.surefire.version>
         <perf4j.version>0.9.16</perf4j.version>
-        <log4j.over.slj4j.version>1.7.7</log4j.over.slj4j.version>
+        <log4j.over.slj4j.version>1.7.30</log4j.over.slj4j.version>
     </properties>
 
     <modules>
@@ -104,6 +104,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <version>${log4j.over.slj4j.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
