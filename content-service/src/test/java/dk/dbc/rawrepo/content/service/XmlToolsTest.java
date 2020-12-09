@@ -22,47 +22,25 @@ package dk.dbc.rawrepo.content.service;
 
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffTextWriter;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
-public class XmlToolsTest {
-
-    public XmlToolsTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
+class XmlToolsTest {
 
     /**
      * Test of filterPrivateOut method, of class XmlTools.
      */
     @Test
-    public void testFilterPrivateOut() throws Exception {
+    void testFilterPrivateOut() throws Exception {
         byte[] marcxWith = file("marcx-with-private.xml");
         byte[] marcxWithout = file("marcx-without-private.xml");
 
@@ -75,11 +53,11 @@ public class XmlToolsTest {
         if (!equal) {
             System.out.println("writer = " + writer.toString());
         }
-        assertTrue("Identical documents", equal);
+        assertTrue(equal);
     }
 
     @Test
-    public void testCombine() throws Exception {
+    void testCombine() throws Exception {
 
         XmlTools xmlTools = new FakeCDI().build(XmlTools.class);
         byte[] combinedActual = xmlTools.buildCollection().add(file("marcx-with-private_1.xml")).add(file("marcx-with-private_2.xml")).build();
@@ -91,7 +69,7 @@ public class XmlToolsTest {
         if (!equal) {
             System.out.println("writer = " + writer.toString());
         }
-        assertTrue("Identical documents", equal);
+        assertTrue(equal);
 
     }
 

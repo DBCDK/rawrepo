@@ -22,17 +22,19 @@ package dk.dbc.rawrepo.rollback;
 
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 public class DateMatchTest {
 
@@ -81,9 +83,9 @@ public class DateMatchTest {
     @Test
     public void equal_whenExactMatch() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals(DAY_1, DateMatch.equal(DAY_1, historyData).getModified());
-        assertEquals(DAY_3, DateMatch.equal(DAY_3, historyData).getModified());
-        assertEquals(DAY_5, DateMatch.equal(DAY_5, historyData).getModified());
+        assertEquals(DAY_1, Objects.requireNonNull(DateMatch.equal(DAY_1, historyData)).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.equal(DAY_3, historyData)).getModified());
+        assertEquals(DAY_5, Objects.requireNonNull(DateMatch.equal(DAY_5, historyData)).getModified());
     }
 
     @Test
@@ -95,17 +97,17 @@ public class DateMatchTest {
     @Test
     public void before_whenExactMatch() {
         historyData = createHistoryData(DAY_2, DAY_3, DAY_4);
-        assertEquals(DAY_2, DateMatch.before(DAY_3, historyData).getModified());
+        assertEquals(DAY_2, Objects.requireNonNull(DateMatch.before(DAY_3, historyData)).getModified());
         historyData = createHistoryData(DAY_4, DAY_2, DAY_3);
-        assertEquals(DAY_2, DateMatch.before(DAY_3, historyData).getModified());
+        assertEquals(DAY_2, Objects.requireNonNull(DateMatch.before(DAY_3, historyData)).getModified());
     }
 
     @Test
     public void before_whenTwoAreLess() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals(DAY_3, DateMatch.before(DAY_4, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.before(DAY_4, historyData)).getModified());
         historyData = createHistoryData(DAY_5, DAY_3, DAY_1);
-        assertEquals(DAY_3, DateMatch.before(DAY_4, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.before(DAY_4, historyData)).getModified());
     }
 
     @Test
@@ -117,17 +119,17 @@ public class DateMatchTest {
     @Test
     public void beforeOrSame_whenExactMatch() {
         historyData = createHistoryData(DAY_2, DAY_3, DAY_4);
-        assertEquals(DAY_3, DateMatch.beforeOrSame(DAY_3, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.beforeOrSame(DAY_3, historyData)).getModified());
         historyData = createHistoryData(DAY_4, DAY_2, DAY_3);
-        assertEquals(DAY_3, DateMatch.beforeOrSame(DAY_3, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.beforeOrSame(DAY_3, historyData)).getModified());
     }
 
     @Test
     public void beforeOrSame_whenTwoAreLess() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals(DAY_3, DateMatch.beforeOrSame(DAY_4, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.beforeOrSame(DAY_4, historyData)).getModified());
         historyData = createHistoryData(DAY_5, DAY_3, DAY_1);
-        assertEquals(DAY_3, DateMatch.beforeOrSame(DAY_4, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.beforeOrSame(DAY_4, historyData)).getModified());
     }
 
     @Test
@@ -139,19 +141,19 @@ public class DateMatchTest {
     @Test
     public void afterOrSame_whenExactMatch() {
         historyData = createHistoryData(DAY_2, DAY_3, DAY_4);
-        assertEquals(DAY_3, DateMatch.afterOrSame(DAY_3, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.afterOrSame(DAY_3, historyData)).getModified());
 
         historyData = createHistoryData(DAY_3, DAY_2, DAY_4);
-        assertEquals(DAY_3, DateMatch.afterOrSame(DAY_3, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.afterOrSame(DAY_3, historyData)).getModified());
     }
 
     @Test
     public void afterOrSame_whenTwoAreHigher() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals(DAY_3, DateMatch.afterOrSame(DAY_2, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.afterOrSame(DAY_2, historyData)).getModified());
 
         historyData = createHistoryData(DAY_5, DAY_3, DAY_1);
-        assertEquals(DAY_3, DateMatch.afterOrSame(DAY_2, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.afterOrSame(DAY_2, historyData)).getModified());
     }
 
     @Test
@@ -163,19 +165,19 @@ public class DateMatchTest {
     @Test
     public void after_whenExactMatch() {
         historyData = createHistoryData(DAY_2, DAY_3, DAY_4);
-        assertEquals(DAY_4, DateMatch.after(DAY_3, historyData).getModified());
+        assertEquals(DAY_4, Objects.requireNonNull(DateMatch.after(DAY_3, historyData)).getModified());
 
         historyData = createHistoryData(DAY_3, DAY_2, DAY_4);
-        assertEquals(DAY_4, DateMatch.after(DAY_3, historyData).getModified());
+        assertEquals(DAY_4, Objects.requireNonNull(DateMatch.after(DAY_3, historyData)).getModified());
     }
 
     @Test
     public void after_whenTwoAreHigher() {
         historyData = createHistoryData(DAY_1, DAY_3, DAY_5);
-        assertEquals(DAY_3, DateMatch.after(DAY_2, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.after(DAY_2, historyData)).getModified());
 
         historyData = createHistoryData(DAY_5, DAY_3, DAY_1);
-        assertEquals(DAY_3, DateMatch.after(DAY_2, historyData).getModified());
+        assertEquals(DAY_3, Objects.requireNonNull(DateMatch.after(DAY_2, historyData)).getModified());
     }
 
 }

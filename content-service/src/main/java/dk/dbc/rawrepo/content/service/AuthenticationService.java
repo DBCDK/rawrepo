@@ -83,7 +83,7 @@ public class AuthenticationService {
                 C.FORS.CACHE_DEFAULT));
 
         ForsRights.RightsCache rightsCache = new ForsRights.RightsCache(cacheAgeSeconds * 1000);
-        log.debug("cacheAgeSeconds = " + cacheAgeSeconds);
+        log.debug("cacheAgeSeconds = {}", cacheAgeSeconds);
 
         forsRights = service.forsRights(rightsCache);
     }

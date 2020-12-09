@@ -22,7 +22,8 @@ package dk.dbc.rawrepo;
 
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import org.hamcrest.core.IsCollectionContaining;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -46,13 +47,13 @@ import static dk.dbc.marcxmerge.MarcXChangeMimeType.LITANALYSIS;
 import static dk.dbc.marcxmerge.MarcXChangeMimeType.MATVURD;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -92,10 +93,10 @@ public class RawRepoQueueTest {
         recordSetIs(dao.getRelationsSiblingsFromMe(recordFromString("191919:a-h1")),
                 "870970:a-h1");
 
-        assertEquals(ENRICHMENT, dao.getMimeTypeOf("a-h1", 191919));
-        assertEquals(ARTICLE, dao.getMimeTypeOf("anm", 870971));
+        assertThat(dao.getMimeTypeOf("a-h1", 191919), is(ENRICHMENT));
+        assertThat(dao.getMimeTypeOf("anm", 870971), is(ARTICLE));
 
-        assertEquals(300000, dao.findParentRelationAgency("a-h1", 300100));
+        assertThat(dao.findParentRelationAgency("a-h1", 300100), is(300000));
     }
 
     @Test
@@ -133,14 +134,14 @@ public class RawRepoQueueTest {
                 "870970:R:CL");
     }
 
-    @Test(expected = RawRepoExceptionRecordNotFound.class)
+    @Test
     public void testEnqueueMissingNoCommon() throws Exception {
         HashMap<String, AtomicInteger> enqueued = new HashMap<>();
         RawRepoDAO dao = RawRepoMock.builder(enqueued)
                 .doesNotUseCommon(870970)
                 .build();
-        dao.changedRecord("PRO", recordFromString("870970:R"));
-        System.out.println("enqueued = " + enqueued);
+
+        Assertions.assertThrows(RawRepoExceptionRecordNotFound.class, () -> dao.changedRecord("PRO", recordFromString("870970:R")));
     }
 
     @Test
@@ -542,13 +543,13 @@ public class RawRepoQueueTest {
 
     private static void recordSetIs(Set<RecordId> records, String... values) {
         setIs(records.stream()
-                .map(r -> recordToString(r))
+                .map(RawRepoQueueTest::recordToString)
                 .collect(toSet()), values);
     }
 
     private static void setIs(Set<String> set, String... values) {
         assertThat(set, IsCollectionContaining.hasItems(values));
-        assertEquals(values.length, set.size());
+        assertThat(values.length, is(set.size()));
     }
 
 }
@@ -653,10 +654,6 @@ class RawRepoMock {
         return this;
     }
 
-    RawRepoDAO build() throws RawRepoException {
-        return build(true);
-    }
-
     private Set<RecordId> getRecordsWithoutBibrecidMatch(InvocationOnMock invocation, Map<String, Set<String>> ioBoundRelation) {
         RecordId recordId = (RecordId) invocation.getArguments()[0];
         String bibliographicRecordId = recordId.getBibliographicRecordId();
@@ -668,7 +665,7 @@ class RawRepoMock {
         }
         return set.stream()
                 .filter(child -> !child.endsWith(":" + bibliographicRecordId))
-                .map(s -> RawRepoQueueTest.recordFromString(s))
+                .map(RawRepoQueueTest::recordFromString)
                 .collect(toSet());
     }
 
@@ -683,133 +680,83 @@ class RawRepoMock {
         }
         return set.stream()
                 .filter(child -> child.endsWith(":" + bibliographicRecordId))
-                .map(s -> RawRepoQueueTest.recordFromString(s))
+                .map(RawRepoQueueTest::recordFromString)
                 .collect(toSet());
     }
 
-    private RawRepoDAO build(boolean print) throws RawRepoException {
+    RawRepoDAO build() throws RawRepoException {
         RawRepoDAO rawrepo = mock(RawRepoDAO.class);
-        when(rawrepo.recordExists(anyString(), anyInt())).then(new Answer<Boolean>() {
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                String bibliographicRecordId = (String) invocation.getArguments()[0];
-                int agencyId = (int) invocation.getArguments()[1];
-                return recordExists.contains(agencyId + ":" + bibliographicRecordId);
-            }
+        when(rawrepo.recordExists(anyString(), anyInt())).then((Answer<Boolean>) invocation -> {
+            String bibliographicRecordId = (String) invocation.getArguments()[0];
+            int agencyId = (int) invocation.getArguments()[1];
+            return recordExists.contains(agencyId + ":" + bibliographicRecordId);
         });
-        when(rawrepo.recordExistsMaybeDeleted(anyString(), anyInt())).then(new Answer<Boolean>() {
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                String bibliographicRecordId = (String) invocation.getArguments()[0];
-                int agencyId = (int) invocation.getArguments()[1];
-                return recordExists.contains(agencyId + ":" + bibliographicRecordId) ||
-                        recordExistsMaybeDeleted.contains(agencyId + ":" + bibliographicRecordId);
-            }
+        when(rawrepo.recordExistsMaybeDeleted(anyString(), anyInt())).then((Answer<Boolean>) invocation -> {
+            String bibliographicRecordId = (String) invocation.getArguments()[0];
+            int agencyId = (int) invocation.getArguments()[1];
+            return recordExists.contains(agencyId + ":" + bibliographicRecordId) ||
+                    recordExistsMaybeDeleted.contains(agencyId + ":" + bibliographicRecordId);
         });
-        when(rawrepo.getRelationsChildren(anyObject())).thenAnswer(new Answer<Set<RecordId>>() {
-            @Override
-            public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                return getRecordsWithoutBibrecidMatch(invocation, inboundRelation);
+        when(rawrepo.getRelationsChildren(any(RecordId.class))).thenAnswer((Answer<Set<RecordId>>) invocation -> getRecordsWithoutBibrecidMatch(invocation, inboundRelation));
+        when(rawrepo.getRelationsParents(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithoutBibrecidMatch(invocation, outboundRelation));
+        when(rawrepo.getRelationsSiblingsFromMe(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithBibrecidMatch(invocation, outboundRelation));
+        when(rawrepo.getRelationsSiblingsToMe(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithBibrecidMatch(invocation, inboundRelation));
+        when(rawrepo.getMimeTypeOf(anyString(), anyInt())).then((Answer<String>) invocation -> {
+            String bibliographicRecordId = (String) invocation.getArguments()[0];
+            int agencyId = (int) invocation.getArguments()[1];
+            String type = mimetype.get(agencyId + ":" + bibliographicRecordId);
+            if (type == null) {
+                throw new RawRepoExceptionRecordNotFound();
             }
+            return type;
         });
-        when(rawrepo.getRelationsParents(anyObject())).then(new Answer<Set<RecordId>>() {
-            @Override
-            public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                return getRecordsWithoutBibrecidMatch(invocation, outboundRelation);
+        when(rawrepo.allAgenciesForBibliographicRecordId(anyString())).then((Answer<Set<Integer>>) invocation -> {
+            String bibliographicRecordId = (String) invocation.getArguments()[0];
+            Set<Integer> set = agenciesForRecord.get(bibliographicRecordId);
+            if (set == null) {
+                throw new RawRepoExceptionRecordNotFound();
             }
-        });
-        when(rawrepo.getRelationsSiblingsFromMe(anyObject())).then(new Answer<Set<RecordId>>() {
-            @Override
-            public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                return getRecordsWithBibrecidMatch(invocation, outboundRelation);
-            }
-        });
-        when(rawrepo.getRelationsSiblingsToMe(anyObject())).then(new Answer<Set<RecordId>>() {
-            @Override
-            public Set<RecordId> answer(InvocationOnMock invocation) throws Throwable {
-                return getRecordsWithBibrecidMatch(invocation, inboundRelation);
-            }
-        });
-        when(rawrepo.getMimeTypeOf(anyString(), anyInt())).then(new Answer<String>() {
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                String bibliographicRecordId = (String) invocation.getArguments()[0];
-                int agencyId = (int) invocation.getArguments()[1];
-                String type = mimetype.get(agencyId + ":" + bibliographicRecordId);
-                if (type == null) {
-                    throw new RawRepoExceptionRecordNotFound();
-                }
-                return type;
-            }
-        });
-        when(rawrepo.allAgenciesForBibliographicRecordId(anyString())).then(new Answer<Set<Integer>>() {
-            @Override
-            public Set<Integer> answer(InvocationOnMock invocation) throws Throwable {
-                String bibliographicRecordId = (String) invocation.getArguments()[0];
-                Set<Integer> set = agenciesForRecord.get(bibliographicRecordId);
-                if (set == null) {
-                    throw new RawRepoExceptionRecordNotFound();
-                }
-                return set;
-            }
+            return set;
         });
 
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                return enqueue(invocation);
-            }
-        }).when(rawrepo).enqueue(anyObject(), anyString(), anyBoolean(), anyBoolean());
-
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                return enqueue(invocation);
-            }
-        }).when(rawrepo).enqueue(anyObject(), anyString(), anyBoolean(), anyBoolean(), anyInt());
-
+        doAnswer((Answer<Void>) this::enqueue).when(rawrepo).enqueue(any(RecordId.class), anyString(), anyBoolean(), anyBoolean());
+        doAnswer((Answer<Void>) this::enqueue).when(rawrepo).enqueue(any(RecordId.class), anyString(), anyBoolean(), anyBoolean(), anyInt());
         doCallRealMethod().when(rawrepo).agencyFor(anyString(), anyInt(), anyBoolean());
         doCallRealMethod().when(rawrepo).findParentRelationAgency(anyString(), anyInt());
         doCallRealMethod().when(rawrepo).findSiblingRelationAgency(anyString(), anyInt());
-        doCallRealMethod().when(rawrepo).changedRecord(anyString(), anyObject());
+        doCallRealMethod().when(rawrepo).changedRecord(anyString(), any(RecordId.class));
 
-        List<Integer> defaultList = Arrays.asList(870970);
+        List<Integer> defaultList = Collections.singletonList(870970);
 
-        RelationHintsOpenAgency relations = mock(RelationHintsOpenAgency.class);
+        RelationHintsVipCore relations = mock(RelationHintsVipCore.class);
         rawrepo.relationHints = relations;
-        when(relations.usesCommonAgency(anyInt())).then(new Answer<Boolean>() {
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                int agencyid = (int) invocation.getArguments()[0];
-                return !doesNotUseCommon.contains(agencyid);
-            }
+        when(relations.usesCommonAgency(anyInt())).then((Answer<Boolean>) invocation -> {
+            int agencyid = (int) invocation.getArguments()[0];
+            return !doesNotUseCommon.contains(agencyid);
         });
-        when(relations.get(anyInt())).then(new Answer<List<Integer>>() {
-            @Override
-            public List<Integer> answer(InvocationOnMock invocation) throws Throwable {
-                int agencyid = (int) invocation.getArguments()[0];
-                return relationHints.getOrDefault(agencyid, Collections.unmodifiableList(defaultList));
-            }
+        when(relations.get(anyInt())).then((Answer<List<Integer>>) invocation -> {
+            int agencyid = (int) invocation.getArguments()[0];
+            return relationHints.getOrDefault(agencyid, defaultList);
         });
-        if (print) {
-            print();
-        }
+        print();
         return rawrepo;
     }
 
     private Void enqueue(InvocationOnMock invocation) {
         Object[] arguments = invocation.getArguments();
-        int i = 0;
-        RecordId recordId = (RecordId) arguments[i++];
-        String provider = (String) arguments[i++];
-        boolean changed = (boolean) arguments[i++];
-        boolean leaf = (boolean) arguments[i];
-        StringBuilder sb = new StringBuilder();
-        sb.append(recordId.getAgencyId()).append(':').append(recordId.getBibliographicRecordId())
-                .append(':')
-                .append(changed ? 'C' : '-')
-                .append(leaf ? 'L' : '-');
-        String id = sb.toString();
+        for (Object argument : arguments) {
+            System.out.println(argument);
+        }
+        System.out.println(arguments[0]);
+        RecordId recordId = (RecordId) arguments[0];
+        System.out.println(arguments[2]);
+        boolean changed = (boolean) arguments[2];
+        System.out.println(arguments[3]);
+        boolean leaf = (boolean) arguments[3];
+        String id = String.valueOf(recordId.getAgencyId()) + ':' + recordId.getBibliographicRecordId() +
+                ':' +
+                (changed ? 'C' : '-') +
+                (leaf ? 'L' : '-');
         enqueued.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet();
         return null;
     }
@@ -836,7 +783,7 @@ class RawRepoMock {
         while (!toParent.isEmpty()) {
             Optional<String> found = toParent.entrySet().stream()
                     .filter(e -> e.getValue() == null)
-                    .map(e -> e.getKey())
+                    .map(Map.Entry::getKey)
                     .findAny();
             if (!found.isPresent()) {
                 throw new IllegalStateException("Cannot find leaf");
@@ -852,15 +799,13 @@ class RawRepoMock {
         }
         ArrayList<String> list = new ArrayList<>(output.keySet());
         Collections.sort(list);
-        list.stream().forEach(entry -> System.out.println(output.get(entry)));
+        list.forEach(entry -> System.out.println(output.get(entry)));
     }
 
     private void print(StringBuilder sb, HashMap<String, String> toParent, String key, String indent) {
         List<String> children = toParent.entrySet().stream()
                 .filter(e -> key.equals(e.getValue()))
-                .map(e -> e.getKey())
-                .collect(toList());
-        Collections.sort(children);
+                .map(Map.Entry::getKey).sorted().collect(toList());
 
         sb.append(indent).append(key);
         if (indent.endsWith(INDENT_MORE)) {
@@ -884,23 +829,20 @@ class RawRepoMock {
     private void printAgency(StringBuilder out, String rec, String indent) {
         HashMap<Integer, Integer> toSibling = new HashMap<>();
         Set<Integer> set = agenciesForRecord.getOrDefault(rec, Collections.emptySet());
-        set.stream()
-                .forEach(a -> toSibling.put(a, null));
+        set.forEach(a -> toSibling.put(a, null));
         set.stream()
                 .filter(a -> outboundRelation.containsKey(a + ":" + rec))
-                .forEach(a -> {
-                    outboundRelation.get(a + ":" + rec).stream()
-                            .filter(s -> s.endsWith(":" + rec))
-                            .map(s -> s.split(":")[0])
-                            .map(Integer::parseInt)
-                            .forEach(i -> toSibling.put(a, i));
-                });
+                .forEach(a -> outboundRelation.get(a + ":" + rec).stream()
+                        .filter(s -> s.endsWith(":" + rec))
+                        .map(s -> s.split(":")[0])
+                        .map(Integer::parseInt)
+                        .forEach(i -> toSibling.put(a, i)));
         HashMap<Integer, String> output = new HashMap<>();
         while (!toSibling.isEmpty()) {
             Integer agency = toSibling.entrySet().stream()
                     .filter(e -> e.getValue() == null)
                     .limit(1)
-                    .map(e -> e.getKey())
+                    .map(Map.Entry::getKey)
                     .findFirst().get();
             StringBuilder sb = new StringBuilder();
 
@@ -909,8 +851,7 @@ class RawRepoMock {
         }
         ArrayList<Integer> list = new ArrayList<>(output.keySet());
         Collections.sort(list);
-        list.stream()
-                .forEach(a -> out.append(output.get(a)));
+        list.forEach(a -> out.append(output.get(a)));
     }
 
     private void printAgency(StringBuilder sb, HashMap<Integer, Integer> toSibling, Integer agency, String indent) {
@@ -918,7 +859,7 @@ class RawRepoMock {
         sb.append(" << ").append(agency);
         List<Integer> children = toSibling.entrySet().stream()
                 .filter(e -> agency.equals(e.getValue()))
-                .map(e -> e.getKey())
+                .map(Map.Entry::getKey)
                 .collect(toList());
 
         if (!children.isEmpty()) {

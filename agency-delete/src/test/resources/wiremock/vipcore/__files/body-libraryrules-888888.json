@@ -1,0 +1,13 @@
+{
+  "libraryRules": [
+    {
+      "agencyId": "888888",
+      "libraryRule": [
+        {
+          "name": "use_enrichments",
+          "bool": true
+        }
+       ]
+    }
+  ]
+}

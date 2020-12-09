@@ -20,47 +20,31 @@
  */
 package dk.dbc.rawrepo.agencyload;
 
-import java.io.InputStream;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.mockito.Mockito.*;
-//import static org.junit.Assert.*;
+import java.io.InputStream;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class AgencyLoadTest {
-
-    public AgencyLoadTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     @Test
     public void test() throws Exception {
         AgencyLoad agencyLoad = mock(AgencyLoad.class);
         agencyLoad.createMetrics();
 
-        doCallRealMethod().when(agencyLoad).load((InputStream) anyObject());
+        doCallRealMethod().when(agencyLoad).load(any(InputStream.class));
         InputStream is = getClass().getClassLoader().getResourceAsStream("recs.xml");
 
         agencyLoad.load(is);

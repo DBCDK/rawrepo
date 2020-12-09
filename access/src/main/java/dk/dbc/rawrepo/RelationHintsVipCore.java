@@ -5,9 +5,8 @@
 
 package dk.dbc.rawrepo;
 
-import dk.dbc.openagency.client.LibraryRuleHandler;
-import dk.dbc.openagency.client.OpenAgencyException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
+import dk.dbc.vipcore.exception.VipCoreException;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,18 +16,18 @@ import java.util.List;
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RelationHintsOpenAgency {
-    private final OpenAgencyServiceFromURL openAgencyService;
+public class RelationHintsVipCore {
+    private final VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
-    public RelationHintsOpenAgency(OpenAgencyServiceFromURL openAgencyService) {
-        this.openAgencyService = openAgencyService;
+    public RelationHintsVipCore(VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
+        this.vipCoreLibraryRulesConnector = vipCoreLibraryRulesConnector;
     }
 
     public boolean usesCommonAgency(int agencyId) throws RawRepoException {
         try {
-            return openAgencyService.libraryRules().isAllowed(agencyId, LibraryRuleHandler.Rule.USE_ENRICHMENTS);
-        } catch (OpenAgencyException ex) {
-            throw new RawRepoException("Cannot access openagency", ex);
+            return vipCoreLibraryRulesConnector.hasFeature(agencyId, VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS);
+        } catch (VipCoreException ex) {
+            throw new RawRepoException("Cannot access vipcore", ex);
         }
     }
 

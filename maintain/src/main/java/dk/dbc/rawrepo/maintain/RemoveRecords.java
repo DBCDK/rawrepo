@@ -20,14 +20,13 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse;
 import dk.dbc.rawrepo.maintain.transport.StandardResponse.Result.Status;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -69,14 +68,14 @@ class RemoveRecords extends RawRepoWorker {
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
 
-    RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency, ExecutorService executorService) throws MarcXMergerException {
-        super(dataSource, openAgency, executorService);
+    RemoveRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) throws MarcXMergerException {
+        super(dataSource, vipCoreLibraryRulesConnector, executorService);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
     }
 
-    RemoveRecords(DataSource dataSource, OpenAgencyServiceFromURL openAgency) throws MarcXMergerException {
-        super(dataSource, openAgency, null);
+    RemoveRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) throws MarcXMergerException {
+        super(dataSource, vipCoreLibraryRulesConnector, null);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
     }

@@ -25,28 +25,27 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import dk.dbc.xmldiff.XmlDiff;
 import dk.dbc.xmldiff.XmlDiffTextWriter;
 import dk.dbc.xmldiff.XmlDiffWriter;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.xml.xpath.XPathExpressionException;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class RecordInspectorMain {
@@ -78,22 +77,17 @@ public class RecordInspectorMain {
             boolean hasRelationsAndRightArgumentCount = !merge && relations && arguments.size() == 2;
             boolean hasNoRelationsAndRightArgumentCount = !merge && !relations && arguments.size() >= 2 && arguments.size() <= 4;
             if (!hasMerge
-                && !hasRelationsAndRightArgumentCount
-                && !hasNoRelationsAndRightArgumentCount) {
+                    && !hasRelationsAndRightArgumentCount
+                    && !hasNoRelationsAndRightArgumentCount) {
                 throw new IllegalArgumentException("Syntax error");
             }
 
-            OpenAgencyServiceFromURL aso;
-            if (commandLine.hasOption("open-agency")) {
-                String showOrder = (String) commandLine.getOption("open-agency");
-                try {
-                    URL url = new URL(showOrder);
-                    aso = OpenAgencyServiceFromURL.builder().build(url.toExternalForm());
-                } catch (MalformedURLException malformedURLException) {
-                    aso = OpenAgencyServiceFromURL.builder().build(showOrder);
-                }
+            VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
+            if (commandLine.hasOption("vipcore")) {
+                String vipCoreUrl = (String) commandLine.getOption("vipcore");
+                vipCoreLibraryRulesConnector = VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl);
             } else {
-                throw new IllegalArgumentException("open-agency url is mandatory");
+                throw new IllegalArgumentException("vipcore url is mandatory");
             }
 
             int agencyId = Integer.parseInt(arguments.get(0), 10);
@@ -105,7 +99,7 @@ public class RecordInspectorMain {
                 setLogLevel("logback-info.xml");
             }
 
-            try (RecordInspector recordInspector = new RecordInspector((String) commandLine.getOption("db"), aso)) {
+            try (RecordInspector recordInspector = new RecordInspector((String) commandLine.getOption("db"), vipCoreLibraryRulesConnector)) {
                 if (relations) {
                     System.out.println("RELATIONS from me to:");
                     for (String relation : recordInspector.outboundRelations(agencyId, bibliographicRecordId)) {
@@ -123,7 +117,7 @@ public class RecordInspectorMain {
                         System.out.write(record.getContent());
                     } else if (arguments.size() == 2) {
                         System.out.println("VERSIONS:");
-                        for (int i = 0 ; i < timestamps.size() ; i++) {
+                        for (int i = 0; i < timestamps.size(); i++) {
                             System.out.printf("%2d: %s%n", i, timestamps.get(i).toString());
                         }
                     } else if (arguments.size() == 3) {
@@ -193,7 +187,7 @@ public class RecordInspectorMain {
         @Override
         void setOptions() {
             addOption("db", "connectstring for database", true, false, string, null);
-            addOption("open-agency", "openagency url, or int list", true, false, string, null);
+            addOption("vipcore", "vipcore url", true, false, string, null);
             addOption("relations", "show relations", false, false, null, yes);
             addOption("quiet", "text output", false, false, null, yes);
             addOption("text", "text output", false, false, null, yes);

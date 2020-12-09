@@ -21,107 +21,93 @@
 package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoException;
-import org.junit.Test;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.DOMException;
-import org.xml.sax.SAXException;
 
 import javax.sql.DataSource;
-import javax.xml.transform.TransformerException;
-import java.io.IOException;
 import java.sql.SQLException;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-public class RemoveRecordsIT extends RawRepoTester {
+class RemoveRecordsIT extends RawRepoTester {
 
     @Test
-    public void testRemove() throws Exception {
-        System.out.println("testRemove");
-
+    void testRemove() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, count("queue"));
+        assertThat("Empty Queue:", count("queue"), is(0));
 
         mock.removeRecord(191919, "40254692", "test", "track");
 
-        assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        assertEquals("Queue size:", 2, count("queue"));
+        assertThat("Not deleted records:", count("records WHERE NOT deleted"), is(records - 1));
+        assertThat("Queue size:", count("queue"), is(2));
     }
 
     @Test
-    public void testRemoveParentEnrichment() throws Exception {
-        System.out.println("testRemoveParentEnrichment");
-
+    void testRemoveParentEnrichment() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, count("queue"));
+        assertThat("Empty Queue:", count("queue"), is(0));
 
         mock.removeRecord(191919, "40254641", "test", "track");
 
-        assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        assertEquals("Queue size:", 5, count("queue"));
+        assertThat("Not deleted records:", count("records WHERE NOT deleted"), is(records - 1));
+        assertThat("Queue size:", count("queue"), is(5));
     }
 
-    @Test(expected = RawRepoException.class)
-    public void testRemoveDouble() throws Exception {
-        System.out.println("testRemoveDouble");
-
+    @Test
+    void testRemoveDouble() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
         int records = count("records WHERE NOT deleted");
-        assertEquals("Empty Queue:", 0, count("queue"));
+        assertThat("Empty Queue:", count("queue"), is(0));
 
         mock.removeRecord(191919, "40254692", "test", "track");
 
-        assertEquals("Not deleted records:", records - 1, count("records WHERE NOT deleted"));
-        assertEquals("Queue size:", 2, count("queue"));
+        assertThat("Not deleted records:", count("records WHERE NOT deleted"), is(records - 1));
+        assertThat("Queue size:", count("queue"), is(2));
 
-        mock.removeRecord(191919, "40254692", "test", "track");
-
+        Assertions.assertThrows(RawRepoException.class, () -> mock.removeRecord(191919, "40254692", "test", "track"));
     }
 
-    @Test(expected = RawRepoException.class)
-    public void testRemoveNA() throws Exception {
-        System.out.println("testRemoveNA");
-
+    @Test
+    void testRemoveNA() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(191919, "NO SUCH RECORD", "test", "track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.removeRecord(191919, "NO SUCH RECORD", "test", "track"));
     }
 
-    @Test(expected = RawRepoException.class)
-    public void testRemoveSibling() throws Exception {
-        System.out.println("testRemoveSibling");
-
+    @Test
+    void testRemoveSibling() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(870970, "40398910", "test", "track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.removeRecord(870970, "40398910", "test", "track"));
     }
 
-    @Test(expected = RawRepoException.class)
-    public void testRemoveParent() throws Exception {
-        System.out.println("testRemoveParent");
-
+    @Test
+    void testRemoveParent() throws Exception {
         RemoveRecords mock = makeRemoveRecords();
 
-        mock.removeRecord(870970, "40398899", "test", "track");
+        Assertions.assertThrows(RawRepoException.class, () -> mock.removeRecord(870970, "40398899", "test", "track"));
     }
 
-    private RemoveRecords makeRemoveRecords() throws RawRepoException, SQLException, MarcXMergerException, SAXException, TransformerException, DOMException, IOException {
-        DataSource dataSource = mock(DataSource.class);
+    private RemoveRecords makeRemoveRecords() throws SQLException, MarcXMergerException, DOMException {
+        final DataSource dataSource = mock(DataSource.class);
         when(dataSource.getConnection()).thenReturn(pg.getConnection());
 
-        OpenAgencyServiceFromURL openAgency = OpenAgencyServiceFromURL.builder().build("http://openagency.addi.dk/2.34/");
-        return new RemoveRecords(dataSource, openAgency);
-
+        final VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector = VipCoreLibraryRulesConnectorFactory.create("http://vipcore.iscrum-vip-staging.svc.cloud.dbc.dk/");
+        return new RemoveRecords(dataSource, vipCoreLibraryRulesConnector);
     }
 }

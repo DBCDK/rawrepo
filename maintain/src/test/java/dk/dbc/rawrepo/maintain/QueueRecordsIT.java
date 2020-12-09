@@ -22,61 +22,58 @@ package dk.dbc.rawrepo.maintain;
 
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
-import java.sql.SQLException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import java.sql.SQLException;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
-public class QueueRecordsIT extends RawRepoTester {
+class QueueRecordsIT extends RawRepoTester {
 
     @Test
-    public void testQueueSingle() throws Exception {
-        System.out.println("testQueueSingle");
-
+    void testQueueSingle() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, count("queue"));
+        assertThat("Queue is empty", count("queue"), is(0));
         mock.queueRecord(191919, "40398910", "test");
-        assertEquals("Queue size", 2, count("queue"));
+        assertThat("Queue size", count("queue"), is(2));
     }
 
     @Test
-    public void testQueueWithEnrichment() throws Exception {
-        System.out.println("testQueueWithEnrichment");
-
+    void testQueueWithEnrichment() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, count("queue"));
+        assertThat("Queue is empty", count("queue"), is(0));
         mock.queueRecord(870970, "40398910", "test");
-        assertEquals("Queue size", 3, count("queue"));
+        assertThat("Queue size", count("queue"), is(3));
     }
 
     @Test
-    public void testQueueSection() throws Exception {
-        System.out.println("testQueueSection");
-
+    void testQueueSection() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, count("queue"));
+        assertThat("Queue is empty", count("queue"), is(0));
         mock.queueRecord(191919, "40254641", "test");
-        assertEquals("Queue size", 5, count("queue"));
+        assertThat("Queue size", count("queue"), is(5));
     }
 
     @Test
-    public void testQueueEnrichmentSection() throws Exception {
-        System.out.println("testQueueEnrichmentSection");
-
+    void testQueueEnrichmentSection() throws Exception {
         QueueRecords mock = makeQueueRecords();
 
-        assertEquals("Queue is empty", 0, count("queue"));
+        assertThat("Queue is empty", count("queue"), is(0));
         mock.queueRecord(870970, "40254641", "test");
-        assertEquals("Queue size", 9, count("queue"));
+        assertThat("Queue size", count("queue"), is(9));
     }
 
     private QueueRecords makeQueueRecords() throws RawRepoException, SQLException {

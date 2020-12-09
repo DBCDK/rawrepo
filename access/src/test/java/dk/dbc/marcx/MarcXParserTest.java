@@ -21,13 +21,15 @@
 package dk.dbc.marcx;
 
 import dk.dbc.rawrepo.RecordId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -40,7 +42,7 @@ public class MarcXParserTest {
     @Test
     public void testParse() throws Exception {
         String parent = MarcXParser.getParent(getFile("marcx-parent.xml"));
-        assertEquals("50155919", parent);
+        assertThat(parent, is("50155919"));
     }
 
     private InputStream getFile(String name) {
@@ -51,13 +53,13 @@ public class MarcXParserTest {
     public void testAutValues() throws Exception {
         List<RecordId> res = MarcXParser.getAuthorityLinks(getFile("marcxparser/with-authority.xml"));
 
-        assertEquals(Arrays.asList(new RecordId("68359775", 870979)), res);
+        assertThat(res, is(Collections.singletonList(new RecordId("68359775", 870979))));
     }
 
     @Test
     public void testAutNoValues() throws Exception {
         List<RecordId> res = MarcXParser.getAuthorityLinks(getFile("marcxparser/without-authority.xml"));
 
-        assertEquals(Arrays.asList(), res);
+        assertThat(res, is(Collections.emptyList()));
     }
 }

@@ -15,11 +15,11 @@ import dk.dbc.common.records.utils.IOUtils;
 import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +29,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
 
 public class ExpandCommonMarcRecordTest {
     private static final String AUT_RAW_26443784 = "authority/raw-26443784.marc";
@@ -89,11 +89,6 @@ public class ExpandCommonMarcRecordTest {
     private static MarcRecord loadMarcRecord(String filename) throws IOException {
         InputStream is = ExpandCommonMarcRecordTest.class.getResourceAsStream("/" + filename);
         return MarcRecordFactory.readRecord(IOUtils.readAll(is, "UTF-8"));
-    }
-
-    @Before
-    public void before() throws IOException {
-        MockitoAnnotations.initMocks(this);
     }
 
     @Test
@@ -224,21 +219,21 @@ public class ExpandCommonMarcRecordTest {
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")), equalTo(expanded));
     }
 
-    @Test(expected = RawRepoException.class)
+    @Test
     public void noCommonRecord() throws Exception {
         Map<String, MarcRecord> collection = new HashMap<>();
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")), equalTo(null));
+        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")));
     }
 
-    @Test(expected = RawRepoException.class)
+    @Test
     public void missingAuthorityRecords() throws Exception {
         MarcRecord record = loadMarcRecord(AUT_RAW_90004158);
 
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("90004158", record);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")), equalTo(null));
+        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")));
     }
 
     @Test

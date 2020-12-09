@@ -7,7 +7,7 @@ USER=${USER:-WHAT}    # silencing annoying intellij syntax quibble
 
 package=content-service
 cid_file=content-service.cid
-docker_image=docker-io.dbc.dk/rawrepo-content-service-1.13-snapshot
+docker_image=docker-io.dbc.dk/rawrepo-content-service-1.14-snapshot
 version=${USER}
 port=`id -u ${USER}`2
 detached="-d"
@@ -45,7 +45,7 @@ echo "Starting container"
 
 container_id=`docker run -it ${detached} -p ${port}:8080 \
 		-e RAWREPO_DB_URL="rawrepo:thePassword@localhost:${RAWREPO_PORT}/rawrepo" \
-		-e OPENAGENCY_URL="http://openagency.addi.dk/test_2.34/" \
+		-e VIPCORE_ENDPOINT="http://vipcore.iscrum-vip-extern-test.svc.cloud.dbc.dk" \
 		-e FORSRIGHTS_DISABLED="true" \
 		-e INSTANCE_NAME="dev" \
 		-e JAVA_MAX_HEAP_SIZE="2G" \

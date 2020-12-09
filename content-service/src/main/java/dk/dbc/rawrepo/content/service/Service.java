@@ -31,13 +31,14 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestAuthentication;
 import dk.dbc.rawrepo.content.service.transport.FetchRequestRecord;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseError;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecord;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecordContent;
 import dk.dbc.rawrepo.content.service.transport.FetchResponseRecords;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.xml.sax.SAXParseException;
@@ -76,7 +77,7 @@ public abstract class Service {
     AuthenticationService forsRights;
 
     @Inject
-    OpenAgencyEJB openAgency;
+    VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
     @Inject
     MarcXMergerEJB marcXMerger;
@@ -168,12 +169,12 @@ public abstract class Service {
             }
 
             try (Connection connection = dataSource.getConnection()) {
-                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsOpenAgency(openAgency.getOpenAgencyService())).build();
+                RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector)).build();
 
                 FetchResponseRecords fetchResponseRecords = new FetchResponseRecords();
 
                 for (FetchRequestRecord requestRecord : requestRecords) {
-                    boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+                    boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
 
                     logger.info("Request for id : " + requestRecord.bibliographicRecordId + " agency : " + requestRecord.agencyId +
                             " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate == null ? false : requestRecord.includeAgencyPrivate));
@@ -296,7 +297,7 @@ public abstract class Service {
         Record rawRecord;
         try (Timer.Context time = fetchMerged.time();
              Pool.Element<MarcXMerger> marcXMergerElement = marcXMerger.take()) {
-            boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+            boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecordExpanded(requestRecord.bibliographicRecordId, requestRecord.agencyId, marcXMergerElement.getElement(), allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;
@@ -322,7 +323,7 @@ public abstract class Service {
             FieldRules customFieldRules = new FieldRules(immutable, overwrite, FieldRules.INVALID_DEFAULT, FieldRules.VALID_REGEX_DANMARC2);
             MarcXMerger merger = new MarcXMerger(customFieldRules, "CONTENT_SERVICE");
 
-            boolean allowDeleted = requestRecord.allowDeleted == null ? false : requestRecord.allowDeleted;
+            boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
             rawRecord = dao.fetchMergedRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId, merger, allowDeleted);
         } catch (RawRepoException | MarcXMergerException ex) {
             throw ex;

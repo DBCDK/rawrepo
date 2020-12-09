@@ -24,6 +24,10 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -34,45 +38,27 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 public class AgencyPurgeIT {
+    private static Connection connection;
+    private static String jdbcUrl;
 
-    private PostgresITConnection postgresITConnection;
-    private Connection connection;
-    private String jdbcUrl;
-
-    public AgencyPurgeIT() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() throws SQLException {
-        postgresITConnection = new PostgresITConnection("rawrepo");
+    @BeforeEach
+    public static void setUp() throws SQLException {
+        final PostgresITConnection postgresITConnection = new PostgresITConnection("rawrepo");
         postgresITConnection.clearTables("queue", "relations", "records", "records_archive");
         connection = postgresITConnection.getConnection();
         jdbcUrl = postgresITConnection.getUrl();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    public static void tearDown() {
         try {
             if (!connection.getAutoCommit()) {
                 connection.rollback();
@@ -88,7 +74,7 @@ public class AgencyPurgeIT {
     @Test
     public void testCountUndeleted() throws Exception {
         setupRecords("A 870970",
-                     "A 888888 A:870970");
+                "A 888888 A:870970");
         AgencyPurge agencyPurge = new AgencyPurge(jdbcUrl, 888888);
         int notDeleted = agencyPurge.countRecordsNotDeleted();
         assertEquals(1, notDeleted);
@@ -97,7 +83,7 @@ public class AgencyPurgeIT {
 
     @Test
     public void testCountQueue() throws Exception {
-        try(Statement stmt = connection.createStatement()) {
+        try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("INSERT INTO queueworkers VALUES('test')");
             stmt.executeUpdate("INSERT INTO queue(bibliographicrecordid, agencyid, worker) VALUES('A', 888888, 'test')");
         }
@@ -107,10 +93,9 @@ public class AgencyPurgeIT {
     }
 
 
-
     private void setupRecords(String... args) throws SQLException, RawRepoException, UnsupportedEncodingException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .build();
+                .build();
         try {
             connection.setAutoCommit(false);
             for (String arg : args) {

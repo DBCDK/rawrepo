@@ -14,7 +14,7 @@
     <parent>
         <groupId>dk.dbc</groupId>
         <artifactId>rawrepo</artifactId>
-        <version>1.13-SNAPSHOT</version>
+        <version>1.14-SNAPSHOT</version>
     </parent>
 
     <repositories>
@@ -70,6 +70,11 @@
             <version>1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>dk.dbc</groupId>
+            <artifactId>vipcore-connector</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
             <version>3.0.0</version>
@@ -88,6 +93,12 @@
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -22,12 +22,32 @@ package dk.dbc.rawrepo.agencydelete;
 
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
 import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
-import dk.dbc.rawrepo.RelationHintsOpenAgency;
+import dk.dbc.rawrepo.RelationHintsVipCore;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,27 +70,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 class AgencyDelete {
@@ -85,27 +86,27 @@ class AgencyDelete {
     private final MarcXMerger marcXMerger;
     private final List<Integer> commonAgencies;
 
-    public AgencyDelete(String db, int agencyid, String openAgencyURL) throws Exception {
+    public AgencyDelete(String db, int agencyid, String vipCoreUrl) throws Exception {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
-        if (openAgencyURL != null) {
-            OpenAgencyServiceFromURL service = OpenAgencyServiceFromURL.builder().build(openAgencyURL);
-            builder.relationHints(new RelationHintsOpenAgency(service));
-            RelationHintsOpenAgency relationHints = new RelationHintsOpenAgency(service);
+        if (vipCoreUrl != null) {
+            VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector = VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl);
+            builder.relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector));
+            RelationHintsVipCore relationHints = new RelationHintsVipCore(vipCoreLibraryRulesConnector);
             if (relationHints.usesCommonAgency(agencyid)) {
                 this.commonAgencies = relationHints.get(agencyid);
             } else {
-                this.commonAgencies = Collections.EMPTY_LIST;
+                this.commonAgencies = Collections.emptyList();
             }
         } else {
-            builder.relationHints(new RelationHintsOpenAgency(null) {
+            builder.relationHints(new RelationHintsVipCore(null) {
                 @Override
                 public boolean usesCommonAgency(int agencyId) {
                     return false;
                 }
             });
-            this.commonAgencies = Collections.EMPTY_LIST;
+            this.commonAgencies = Collections.emptyList();
         }
 
         this.dao = builder.build();
@@ -167,16 +168,12 @@ class AgencyDelete {
             sb.append(", ").append(commonAgency);
         }
         sb.append(")");
-        log.debug("sb = " + sb);
+        log.debug("sb = {}", sb);
         try (Statement stmt = connection.createStatement()) {
             try (ResultSet resultSet = stmt.executeQuery(sb.toString())) {
                 Map<String, Collection<String>> ret = new HashMap<>();
                 while (resultSet.next()) {
-                    Collection<String> col = ret.get(resultSet.getString(1));
-                    if (col == null) {
-                        col = new HashSet<>();
-                        ret.put(resultSet.getString(1), col);
-                    }
+                    Collection<String> col = ret.computeIfAbsent(resultSet.getString(1), k -> new HashSet<>());
                     col.add(resultSet.getString(2));
                 }
                 return ret;
@@ -188,7 +185,7 @@ class AgencyDelete {
      * Create an xml document parser
      *
      * @return
-     * @throws ParserConfigurationException
+     * @throws MarcXMergerException
      */
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
@@ -209,7 +206,6 @@ class AgencyDelete {
      * Create an xml transformer for writing a document
      *
      * @return new transformer
-     * @throws TransformerConfigurationException
      * @throws TransformerFactoryConfigurationError
      * @throws IllegalArgumentException
      */
@@ -243,7 +239,7 @@ class AgencyDelete {
         return set;
     }
 
-    void queueRecords(Set<String> ids, String role) throws RawRepoException, IOException, SQLException {
+    void queueRecords(Set<String> ids, String role) throws RawRepoException {
         for (String id : ids) {
             dao.changedRecord(role, new RecordId(id, agencyid));
         }
@@ -274,13 +270,13 @@ class AgencyDelete {
         Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
         Element marcx = dom.getDocumentElement();
         Node child = marcx.getFirstChild();
-        for (;;) {
+        for (; ; ) {
             if (child == null ||
-                ( child.getNodeType() == Node.ELEMENT_NODE &&
-                  "datafield".equals(child.getLocalName()) )) {
+                    (child.getNodeType() == Node.ELEMENT_NODE &&
+                            "datafield".equals(child.getLocalName()))) {
                 int cmp = -1;
                 if (child != null) {
-                    String tag = ( (Element) child ).getAttribute("tag");
+                    String tag = ((Element) child).getAttribute("tag");
                     cmp = "004".compareTo(tag);
                 }
                 if (cmp < 0) {
@@ -293,14 +289,14 @@ class AgencyDelete {
                 }
                 if (cmp <= 0) {
                     Node subChild = child.getFirstChild();
-                    for (;;) {
+                    for (; ; ) {
                         // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
                         // r is 1st field
-                        if (subChild == null || ( subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                                  "subfield".equals(subChild.getLocalName()) )) {
+                        if (subChild == null || (subChild.getNodeType() == Node.ELEMENT_NODE &&
+                                "subfield".equals(subChild.getLocalName()))) {
                             boolean isR = false;
                             if (subChild != null) {
-                                String code = ( (Element) subChild ).getAttribute("code");
+                                String code = ((Element) subChild).getAttribute("code");
                                 isR = "r".equals(code);
                             }
                             if (!isR) {
@@ -317,8 +313,8 @@ class AgencyDelete {
                             while (subChild != null) {
                                 Node next = subChild.getNextSibling();
                                 if (subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                    "subfield".equals(subChild.getLocalName()) &&
-                                    "r".equals(( (Element) subChild ).getAttribute("code"))) {
+                                        "subfield".equals(subChild.getLocalName()) &&
+                                        "r".equals(((Element) subChild).getAttribute("code"))) {
                                     child.removeChild(subChild);
                                 }
                                 subChild = next;
@@ -349,16 +345,12 @@ class AgencyDelete {
         connection.commit();
     }
 
-    public void rollback() throws SQLException {
-        connection.rollback();
-    }
-
     private static final Pattern urlPattern = Pattern.compile("^(jdbc:[^:]*://)?(?:([^:@]*)(?::([^@]*))?@)?((?:([^:/]*)(?::(\\d+))?)(?:/(.*))?)$");
-    private static final String jdbcDefault = "jdbc:postgresql://";
-    private static final int urlPatternPrefix = 1;
-    private static final int urlPatternUser = 2;
-    private static final int urlPatternPassword = 3;
-    private static final int urlPatternHostPortDb = 4;
+    private static final String JDBC_DEFAULT = "jdbc:postgresql://";
+    private static final int URL_PATTERN_PREFIX = 1;
+    private static final int URL_PATTERN_USER = 2;
+    private static final int URL_PATTERN_PASSWORD = 3;
+    private static final int URL_PATTERN_HOST_PORT_DB = 4;
 
     private static Connection getConnection(String url) throws SQLException {
         Matcher matcher = urlPattern.matcher(url);
@@ -366,19 +358,19 @@ class AgencyDelete {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
         }
         Properties properties = new Properties();
-        String jdbc = matcher.group(urlPatternPrefix);
+        String jdbc = matcher.group(URL_PATTERN_PREFIX);
         if (jdbc == null) {
-            jdbc = jdbcDefault;
+            jdbc = JDBC_DEFAULT;
         }
-        if (matcher.group(urlPatternUser) != null) {
-            properties.setProperty("user", matcher.group(urlPatternUser));
+        if (matcher.group(URL_PATTERN_USER) != null) {
+            properties.setProperty("user", matcher.group(URL_PATTERN_USER));
         }
-        if (matcher.group(urlPatternPassword) != null) {
-            properties.setProperty("password", matcher.group(urlPatternPassword));
+        if (matcher.group(URL_PATTERN_PASSWORD) != null) {
+            properties.setProperty("password", matcher.group(URL_PATTERN_PASSWORD));
         }
 
         log.debug("Connecting");
-        Connection connection = DriverManager.getConnection(jdbc + matcher.group(urlPatternHostPortDb), properties);
+        Connection connection = DriverManager.getConnection(jdbc + matcher.group(URL_PATTERN_HOST_PORT_DB), properties);
         log.debug("Connected");
         return connection;
     }

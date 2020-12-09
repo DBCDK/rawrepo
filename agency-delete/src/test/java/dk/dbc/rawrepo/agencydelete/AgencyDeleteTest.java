@@ -29,17 +29,19 @@ import java.io.InputStream;
 import java.sql.Connection;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
+
 
 /**
  *
  * @author DBC {@literal <dbc.dk>}
  */
-public class AgencyDeleteTest {
+class AgencyDeleteTest {
 
     private String jdbcUrl;
     private Connection connection;
@@ -50,13 +52,11 @@ public class AgencyDeleteTest {
 
 
     @Test
-    public void MarkMarcContentDeleted() throws Exception {
-
+    void MarkMarcContentDeleted() throws Exception {
         assertEqual(getResource("tmpl_has_004r_expected.xml"), getResource("tmpl_has_004r.xml"));
         assertEqual(getResource("tmpl_has_004_expected.xml"), getResource("tmpl_has_004.xml"));
         assertEqual(getResource("tmpl_has_no_004_expected.xml"), getResource("tmpl_has_no_004.xml"));
         assertEqual(getResource("tmpl_has_004r_misplaced_expected.xml"), getResource("tmpl_has_004r_misplaced.xml"));
-
     }
 
     private static  void assertEqual(byte[] expected, byte[] actual) throws DOMException, XPathExpressionException, Exception, TransformerException, IOException, SAXException {
@@ -70,10 +70,10 @@ public class AgencyDeleteTest {
         }
     }
 
-
     private static byte[] getResource(String res) {
         try {
             try (InputStream is = AgencyDeleteTest.class.getClassLoader().getResourceAsStream(res)) {
+                assert is != null;
                 int available = is.available();
                 byte[] bytes = new byte[available];
                 is.read(bytes);

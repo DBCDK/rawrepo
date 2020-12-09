@@ -20,15 +20,9 @@
  */
 package dk.dbc.marcxmerge;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExternalResource;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -52,59 +46,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author DBC {@literal <dbc.dk>}
  */
-@RunWith(Parameterized.class)
 public class MarcXMergerTest {
-
-    String base;
-
-    @Rule
-    public MarcXResource resource = new MarcXResource();
-
-    MarcXCompare marcXCompare;
-    FieldRules fieldRulesIntermediate;
-    FieldRules fieldRulesFinal;
-    boolean isFinal;
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    public MarcXMergerTest(String base, String immutable, String overwrite, String invalid, String valid_regex, String isFinal)
-            throws ParserConfigurationException, TransformerConfigurationException {
-        this.marcXCompare = new MarcXCompare();
-        this.base = base;
-        this.fieldRulesIntermediate = new FieldRules(immutable, overwrite, invalid, valid_regex);
-        this.fieldRulesFinal = new FieldRules(immutable, overwrite, invalid, ".{3}");
-        this.isFinal = Boolean.valueOf(isFinal);
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
-    @Parameterized.Parameters(name = "{0}")
     public static Collection filenames() {
         return Arrays.asList(new String[][]{ // Constructor arguments
                 {"append", "", "", "", ".*", "false"}, // Append
@@ -119,58 +75,22 @@ public class MarcXMergerTest {
         });
     }
 
-    @Test
-    public void testMerge() throws SAXException, MarcXMergerException, IOException, UnsupportedEncodingException, TransformerException {
+    @ParameterizedTest
+    @MethodSource("filenames")
+    public void testMerge(String base, String immutableString, String overwriteString, String invalidString, String valid_regex, String isFinalString)
+            throws SAXException, MarcXMergerException, IOException, TransformerException, ParserConfigurationException {
+        final MarcXCompare marcXCompare = new MarcXCompare();
+        final FieldRules fieldRulesIntermediate = new FieldRules(immutableString, overwriteString, invalidString, valid_regex);
+        final boolean isFinal = Boolean.parseBoolean(isFinalString);
 
-        System.out.println("base = " + base);
-        byte[] common = resource.get(base + "/common");
-        byte[] local = resource.get(base + "/local");
-        byte[] result = resource.get(base + "/result");
+        final MarcXResource resource = new MarcXResource();
+        final byte[] common = resource.get(base + "/common");
+        final byte[] local = resource.get(base + "/local");
+        final byte[] result = resource.get(base + "/result");
 
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
-        byte[] merge = marcxMerger.merge(common, local, isFinal);
+        final MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
+        final byte[] merge = marcxMerger.merge(common, local, isFinal);
         marcXCompare.compare(result, merge);
-    }
-
-    @Test
-    public void testCanMerge() throws MarcXMergerException {
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
-
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.MATVURD, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.LITANALYSIS, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.HOSTPUB, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT));
-        assertTrue(marcxMerger.canMerge(MarcXChangeMimeType.SIMPLE, MarcXChangeMimeType.ENRICHMENT));
-
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.MARCXCHANGE));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ARTICLE));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.MATVURD, MarcXChangeMimeType.MATVURD));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.LITANALYSIS, MarcXChangeMimeType.LITANALYSIS));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.HOSTPUB, MarcXChangeMimeType.HOSTPUB));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.AUTHORITY));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.SIMPLE, MarcXChangeMimeType.SIMPLE));
-
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ENRICHMENT));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.MARCXCHANGE));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.ARTICLE));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.MATVURD));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.LITANALYSIS));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.HOSTPUB));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.AUTHORITY));
-        assertFalse(marcxMerger.canMerge(MarcXChangeMimeType.ENRICHMENT, MarcXChangeMimeType.SIMPLE));
-    }
-
-    @Test
-    public void testMergedMimetype() throws MarcXMergerException {
-        MarcXMerger marcxMerger = new MarcXMerger(fieldRulesIntermediate, "custom");
-
-        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MARCXCHANGE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MARCXCHANGE);
-        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.ARTICLE, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.ARTICLE);
-        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.AUTHORITY, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.AUTHORITY);
-        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.LITANALYSIS, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.LITANALYSIS);
-        assertEquals(marcxMerger.mergedMimetype(MarcXChangeMimeType.MATVURD, MarcXChangeMimeType.ENRICHMENT), MarcXChangeMimeType.MATVURD);
     }
 
 
@@ -180,15 +100,15 @@ public class MarcXMergerTest {
     // |  _  |  __/ | |_) |  __/ |    |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
     // |_| |_|\___|_| .__/ \___|_|    |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
     //              |_|
-    public static class MarcXResource extends ExternalResource {
+    public static class MarcXResource {
 
         public byte[] get(String id) throws IOException {
-            InputStream stream = getClass().getResourceAsStream("/" + id + ".xml");
+            final InputStream stream = getClass().getResourceAsStream("/" + id + ".xml");
             if (stream == null) {
                 throw new IllegalStateException("Cannot open file: /" + id + ".xml");
             }
-            int bytes = stream.available();
-            byte[] data = new byte[bytes];
+            final int bytes = stream.available();
+            final byte[] data = new byte[bytes];
             if (stream.read(data) != bytes) {
                 throw new IllegalStateException("Cannot read all content");
             }
@@ -203,22 +123,19 @@ public class MarcXMergerTest {
      * Dom comparator
      */
     public static class MarcXCompare {
-
-        private final DocumentBuilderFactory documentBuilderFactory;
         private final DocumentBuilder documentBuilder;
-        private final TransformerFactory transformerFactory;
         private final Transformer transformer;
 
         public MarcXCompare() throws ParserConfigurationException, TransformerConfigurationException {
             synchronized (DocumentBuilderFactory.class) {
-                documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 documentBuilderFactory.setIgnoringComments(true);
                 documentBuilderFactory.setIgnoringElementContentWhitespace(true);
                 documentBuilder = documentBuilderFactory.newDocumentBuilder();
             }
             synchronized (TransformerFactory.class) {
-                transformerFactory = TransformerFactory.newInstance();
+                final TransformerFactory transformerFactory = TransformerFactory.newInstance();
                 transformer = transformerFactory.newTransformer();
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
                 transformer.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -227,49 +144,49 @@ public class MarcXMergerTest {
             }
         }
 
-        public void compare(byte[] expected, byte[] actual) throws SAXException, IOException, UnsupportedEncodingException, TransformerException {
-            Document expectedDom = documentBuilder.parse(new ByteArrayInputStream(expected));
-            Document actualDom = documentBuilder.parse(new ByteArrayInputStream(actual));
-            Element expectedRoot = expectedDom.getDocumentElement();
-            Element actualRoot = actualDom.getDocumentElement();
+        public void compare(byte[] expected, byte[] actual) throws SAXException, IOException, TransformerException {
+            final Document expectedDom = documentBuilder.parse(new ByteArrayInputStream(expected));
+            final Document actualDom = documentBuilder.parse(new ByteArrayInputStream(actual));
+            final Element expectedRoot = expectedDom.getDocumentElement();
+            final Element actualRoot = actualDom.getDocumentElement();
             compare(expectedRoot, actualRoot, "");
         }
 
         private void compare(Node expected, Node actual, String location) throws UnsupportedEncodingException, TransformerException {
-            short type = expected.getNodeType();
-            assertEquals("Different nodetypes @" + location, type, actual.getNodeType());
+            final short type = expected.getNodeType();
+            assertThat("Different nodetypes @" + location, actual.getNodeType(), is(type));
 
             if (type == Node.TEXT_NODE) {
-                assertEquals("Different value @" + location, expected.getNodeValue(), actual.getNodeValue());
+                assertThat("Different value @" + location, actual.getNodeValue(), is(expected.getNodeValue()));
             } else {
-                assertEquals("Different node @" + location, expected.getLocalName(), actual.getLocalName());
+                assertThat("Different node @" + location, actual.getLocalName(), is(expected.getLocalName()));
 
-                NamedNodeMap expectedAttributes = expected.getAttributes();
-                NamedNodeMap actualAttributes = actual.getAttributes();
-                ArrayList<String> expectedAttributeNames = attributesInSet(expectedAttributes);
-                ArrayList<String> actualAttributeNames = attributesInSet(actualAttributes);
-                assertEquals("Different attributes @" + location + "<" + expected.getLocalName() + ">", expectedAttributeNames, actualAttributeNames);
+                final NamedNodeMap expectedAttributes = expected.getAttributes();
+                final NamedNodeMap actualAttributes = actual.getAttributes();
+                final ArrayList<String> expectedAttributeNames = attributesInSet(expectedAttributes);
+                final ArrayList<String> actualAttributeNames = attributesInSet(actualAttributes);
+                assertThat("Different attributes @" + location + "<" + expected.getLocalName() + ">", actualAttributeNames, is(expectedAttributeNames));
                 for (String attr : actualAttributeNames) {
-                    String expectedValue = expectedAttributes.getNamedItem(attr).getNodeValue();
-                    String actualValue = actualAttributes.getNamedItem(attr).getNodeValue();
-                    assertEquals("Different attributes @" + location + "<" + expected.getLocalName() + ">#" + attr,
-                            expectedValue, actualValue);
+                    final String expectedValue = expectedAttributes.getNamedItem(attr).getNodeValue();
+                    final String actualValue = actualAttributes.getNamedItem(attr).getNodeValue();
+                    assertThat("Different attributes @" + location + "<" + expected.getLocalName() + ">#" + attr,
+                            actualValue, is(expectedValue));
                 }
 
                 location = location + nodeText(expected);
 
-                Iterator<Node> expectedNodes = nodeIterator(expected);
-                Iterator<Node> actualNodes = nodeIterator(actual);
+                final Iterator<Node> expectedNodes = nodeIterator(expected);
+                final Iterator<Node> actualNodes = nodeIterator(actual);
                 for (; ; ) {
-                    Node expectedNode = nextNode(expectedNodes);
-                    Node actualNode = nextNode(actualNodes);
+                    final Node expectedNode = nextNode(expectedNodes);
+                    final Node actualNode = nextNode(actualNodes);
                     if (expectedNode == null && actualNode == null) {
                         return;
                     }
                     if (expectedNode != null && actualNode == null) {
                         fail("Missing node @" + location + ": " + nodeText(expectedNode));
                     }
-                    if (expectedNode == null && actualNode != null) {
+                    if (expectedNode == null) {
                         fail("Extra node @" + location + ": " + nodeText(actualNode));
                     }
                     compare(expectedNode, actualNode, location);
@@ -279,15 +196,14 @@ public class MarcXMergerTest {
         }
 
         private String nodeText(Node node) throws UnsupportedEncodingException, TransformerException {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            final ByteArrayOutputStream os = new ByteArrayOutputStream();
             transformer.transform(new DOMSource(node.cloneNode(false)),
-                    new StreamResult(new OutputStreamWriter(os, "UTF-8")));
-            final String nodeText = os.toString("UTF-8");
-            return nodeText;
+                    new StreamResult(new OutputStreamWriter(os, StandardCharsets.UTF_8)));
+            return os.toString("UTF-8");
         }
 
         private ArrayList<String> attributesInSet(NamedNodeMap attributes) {
-            ArrayList<String> names = new ArrayList<>();
+            final ArrayList<String> names = new ArrayList<>();
             for (int i = 0; i < attributes.getLength(); i++) {
                 names.add(attributes.item(i).getNodeName());
             }
@@ -319,7 +235,7 @@ public class MarcXMergerTest {
 
         private static Node nextNode(Iterator<Node> it) {
             while (it.hasNext()) {
-                Node node = it.next();
+                final Node node = it.next();
                 switch (node.getNodeType()) {
                     case Node.COMMENT_NODE:
                         break;

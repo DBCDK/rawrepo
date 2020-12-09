@@ -20,15 +20,29 @@
  */
 package dk.dbc.rawrepo.agencydelete;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
+import dk.dbc.httpclient.HttpClient;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
-import dk.dbc.openagency.client.OpenAgencyServiceFromURL;
-import dk.dbc.rawrepo.*;
+import dk.dbc.rawrepo.QueueJob;
+import dk.dbc.rawrepo.RawRepoDAO;
+import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.rawrepo.Record;
+import dk.dbc.rawrepo.RecordId;
+import dk.dbc.rawrepo.RelationHintsVipCore;
+import dk.dbc.vipcore.VipCoreConnector;
+import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,95 +51,57 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.*;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
-public class AgencyDeleteIT {
+class AgencyDeleteIT {
+    private static WireMockServer wireMockServer;
+    private static String wireMockHost;
+    private static String jdbcUrl;
+    private static Connection connection;
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(getPort()).withRootDirectory(getPath()));
+    final static Client CLIENT = HttpClient.newClient(new ClientConfig()
+            .register(new JacksonFeature()));
+    private static VipCoreLibraryRulesConnector connector;
 
-    static int fallbackPort = (int) ( 15000.0 * Math.random() ) + 15000;
-
-    static int getPort() {
-        int port = Integer.parseInt(System.getProperty("wiremock.port", "0"));
-        if (port == 0) {
-            port = fallbackPort;
-        }
-        return port;
+    @BeforeAll
+    static void startWireMockServer() {
+        wireMockServer = new WireMockServer(options().dynamicPort()
+                .dynamicHttpsPort()
+                .withRootDirectory(wireMockConfig().filesRoot().child("wiremock/vipcore").getPath()));
+        wireMockServer.start();
+        wireMockHost = "http://localhost:" + wireMockServer.port();
+        configureFor("localhost", wireMockServer.port());
     }
 
-    static String getPath() {
-        return wireMockConfig().filesRoot().child("RelationHintsOpenAgency").getPath();
+    @BeforeAll
+    static void setConnector() {
+        connector = new VipCoreLibraryRulesConnector(CLIENT, wireMockHost, 0, VipCoreConnector.TimingLogLevel.INFO);
     }
 
-    private String jdbcUrl;
-    private Connection connection;
-    private PostgresITConnection postgresITConnection;
-
-    public AgencyDeleteIT() {
+    @AfterAll
+    static void stopWireMockServer() {
+        wireMockServer.stop();
     }
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:libraryRulesRequest/ns1:agencyId[.='777777']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_777777.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:showOrderRequest/ns1:agencyId[.='777777']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_showOrder_777777.xml")));
-
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:libraryRulesRequest/ns1:agencyId[.='888888']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_libraryRules_888888.xml")));
-        stubFor(post(urlMatching("/openagency/"))
-                .withRequestBody(
-                        matchingXPath("//ns1:showOrderRequest/ns1:agencyId[.='888888']")
-                        .withXPathNamespace("ns1", "http://oss.dbc.dk/ns/openagency"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("openagency_showOrder_888888.xml")));
-
-        postgresITConnection = new PostgresITConnection("rawrepo");
+        PostgresITConnection postgresITConnection = new PostgresITConnection("rawrepo");
         connection = postgresITConnection.getConnection();
         jdbcUrl = postgresITConnection.getUrl();
         setupRecords();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         try {
             if (!connection.getAutoCommit()) {
@@ -137,9 +113,9 @@ public class AgencyDeleteIT {
     }
 
     @Test
-    public void testBasics() throws Exception {
+    void testBasics() throws Exception {
         System.out.println("testBasics()");
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + getPort() + "/openagency/");
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + wireMockServer.port());
 
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
@@ -152,12 +128,12 @@ public class AgencyDeleteIT {
         agencyDelete.commit();
 
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                   .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
-                   .build();
+                .relationHints(new RelationHintsVipCore(connector))
+                .build();
 
         countQueued("leaf", 2);
         HashSet<String> leafs = new HashSet<>();
-        for (QueueJob dequeue = dao.dequeue("leaf") ; dequeue != null ; dequeue = dao.dequeue("leaf")) {
+        for (QueueJob dequeue = dao.dequeue("leaf"); dequeue != null; dequeue = dao.dequeue("leaf")) {
             leafs.add(dequeue.getJob().getBibliographicRecordId());
         }
         testArray(leafs, "leafs", "B", "E");
@@ -165,7 +141,7 @@ public class AgencyDeleteIT {
         HashSet<String> nodes = new HashSet<>();
         countQueued("node", 2);
         System.out.println("nodes = " + nodes);
-        for (QueueJob dequeue = dao.dequeue("node") ; dequeue != null ; dequeue = dao.dequeue("node")) {
+        for (QueueJob dequeue = dao.dequeue("node"); dequeue != null; dequeue = dao.dequeue("node")) {
             nodes.add(dequeue.getJob().getBibliographicRecordId());
         }
         testArray(nodes, "nodes", "H", "S");
@@ -174,16 +150,16 @@ public class AgencyDeleteIT {
     }
 
     @Test
-    public void testQueue() throws Exception {
+    void testQueue() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
-                       .build();
+                    .relationHints(new RelationHintsVipCore(connector))
+                    .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
             connection.commit();
         }
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
 
@@ -193,38 +169,37 @@ public class AgencyDeleteIT {
 
         countQueued("node", 1);
         countQueued("leaf", 1);
-
     }
 
     @Test
-    public void textGetIds() throws Exception {
+    void textGetIds() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
-                       .build();
+                    .relationHints(new RelationHintsVipCore(connector))
+                    .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "H", 888888, "S:870970");
             setupRecord(dao, "E", 888888, "S:870970");
             connection.commit();
         }
 
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
 
         Set<String> nodes = agencyDelete.getIds();
         System.out.println("nodes = " + nodes);
 
-        assertTrue("has H", nodes.contains("H"));
-        assertTrue("has S", nodes.contains("S"));
-        assertTrue("has B", nodes.contains("B"));
-        assertTrue("has E", nodes.contains("E"));
-        assertEquals("has no extras", 4, nodes.size());
+        assertTrue(nodes.contains("H"));
+        assertTrue(nodes.contains("S"));
+        assertTrue(nodes.contains("B"));
+        assertTrue(nodes.contains("E"));
+        assertThat("has no extras", nodes.size(), is(4));
     }
 
     @Test
-    public void testRecordOrder() throws Exception {
+    void testRecordOrder() throws Exception {
         {
             RawRepoDAO dao = RawRepoDAO.builder(connection)
-                    .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
+                    .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "H-local", 888888);
@@ -233,20 +208,19 @@ public class AgencyDeleteIT {
             connection.commit();
         }
 
-        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + getPort() + "/openagency/");
+        AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
 
-        assertEquals("Sibling size", 0, agencyDelete.getSiblingRelations().size());
+        assertThat("Sibling size", agencyDelete.getSiblingRelations().size(), is(0));
 
         Set<String> ids = agencyDelete.getIds();
 
-        assertEquals("ids size", 3, ids.size());
+        assertThat("ids size", ids.size(), is(3));
 
         Iterator<String> itr = ids.iterator();
 
-        assertEquals("Order of records, B2", "B2", itr.next());
-        assertEquals("Order of records, B1", "B1", itr.next());
-        assertEquals("Order of records, H", "H-local", itr.next());
-
+        assertThat("Order of records, B2", itr.next(), is("B2"));
+        assertThat("Order of records, B1", itr.next(), is("B1"));
+        assertThat("Order of records, H", itr.next(), is("H-local"));
     }
 
     private static final String TMPL = new String(getResource("tmpl.xml"), StandardCharsets.UTF_8);
@@ -272,9 +246,9 @@ public class AgencyDeleteIT {
         }
     }
 
-    private void setupRecords() throws RawRepoException, SQLException, UnsupportedEncodingException {
+    private static void setupRecords() throws RawRepoException, SQLException {
         RawRepoDAO dao = RawRepoDAO.builder(connection)
-                .relationHints(new RelationHintsOpenAgency(OpenAgencyServiceFromURL.builder().build("http://localhost:" + getPort() + "/openagency/")))
+                .relationHints(new RelationHintsVipCore(connector))
                 .build();
         connection.setAutoCommit(false);
         connection.prepareStatement("DELETE FROM relations").execute();
@@ -310,10 +284,9 @@ public class AgencyDeleteIT {
         setupRecord(dao, "E", 777777);
 
         connection.commit();
-
     }
 
-    private void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException, UnsupportedEncodingException {
+    private static void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException {
         System.out.println("bibliographicRecordId = " + bibliographicRecordId + "; agencyId = " + agencyId);
         Record rec = dao.fetchRecord(bibliographicRecordId, agencyId);
         rec.setContent(content(bibliographicRecordId, String.valueOf(agencyId)));
@@ -332,9 +305,9 @@ public class AgencyDeleteIT {
     }
 
     private void testArray(Set<String> ids, String message, String... strings) {
-        assertEquals(message + " size mismatch", ids.size(), strings.length);
+        assertThat(message + " size mismatch", ids.size(), is(strings.length));
         for (String string : strings) {
-            assertTrue(message + " has " + string, ids.contains(string));
+            assertTrue(ids.contains(string));
         }
     }
 
@@ -344,7 +317,7 @@ public class AgencyDeleteIT {
         ResultSet resultSet = stmt.executeQuery();
         resultSet.next();
         int fromQueue = resultSet.getInt(1);
-        assertEquals("queue: " + queue, count, fromQueue);
+        assertThat("queue: " + queue, fromQueue, is(count));
     }
 
 }
