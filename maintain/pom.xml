@@ -87,6 +87,7 @@
             <groupId>dk.dbc.commoms.testutils</groupId>
             <artifactId>dbc-commons-testutil-postgres-connection</artifactId>
             <version>1.3-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
