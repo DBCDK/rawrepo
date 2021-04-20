@@ -114,7 +114,6 @@ class AgencyDeleteIT {
 
     @Test
     void testBasics() throws Exception {
-        System.out.println("testBasics()");
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + wireMockServer.port());
 
         agencyDelete.begin();
@@ -131,21 +130,16 @@ class AgencyDeleteIT {
                 .relationHints(new RelationHintsVipCore(connector))
                 .build();
 
-        countQueued("leaf", 2);
-        HashSet<String> leafs = new HashSet<>();
-        for (QueueJob dequeue = dao.dequeue("leaf"); dequeue != null; dequeue = dao.dequeue("leaf")) {
-            leafs.add(dequeue.getJob().getBibliographicRecordId());
-        }
-        testArray(leafs, "leafs", "B", "E");
+        // All the 777777 records exists so there are no leafs/derived enqueued records
+        countQueued("leaf", 0);
 
-        HashSet<String> nodes = new HashSet<>();
-        countQueued("node", 2);
+        final HashSet<String> nodes = new HashSet<>();
+        countQueued("node", 4);
         System.out.println("nodes = " + nodes);
         for (QueueJob dequeue = dao.dequeue("node"); dequeue != null; dequeue = dao.dequeue("node")) {
             nodes.add(dequeue.getJob().getBibliographicRecordId());
         }
-        testArray(nodes, "nodes", "H", "S");
-        System.out.println("Done!");
+        testArray(nodes, "nodes", "H", "S", "B", "E");
         connection.commit();
     }
 
@@ -162,6 +156,7 @@ class AgencyDeleteIT {
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
+        testArray(ids, "nodes", "S", "B");
 
         agencyDelete.queueRecords(ids, "provider");
         agencyDelete.deleteRecords(ids);
@@ -178,21 +173,16 @@ class AgencyDeleteIT {
                     .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
-            setupRecord(dao, "H", 888888, "S:870970");
-            setupRecord(dao, "E", 888888, "S:870970");
+            setupRecord(dao, "H", 888888, "H:870970");
+            setupRecord(dao, "E", 888888);
             connection.commit();
         }
 
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
 
         Set<String> nodes = agencyDelete.getIds();
-        System.out.println("nodes = " + nodes);
 
-        assertTrue(nodes.contains("H"));
-        assertTrue(nodes.contains("S"));
-        assertTrue(nodes.contains("B"));
-        assertTrue(nodes.contains("E"));
-        assertThat("has no extras", nodes.size(), is(4));
+        testArray(nodes, "nodes", "H", "B", "S", "E");
     }
 
     @Test
