@@ -121,21 +121,21 @@ class AgencyDeleteIT {
         testArray(ids, "Ids", "H", "S", "B", "E");
 
         agencyDelete.queueRecords(ids, "provider");
-        System.out.println("queued records");
         agencyDelete.deleteRecords(ids);
-        System.out.println("deleted records");
         agencyDelete.commit();
 
         RawRepoDAO dao = RawRepoDAO.builder(connection)
                 .relationHints(new RelationHintsVipCore(connector))
                 .build();
 
+        countQueuedTotal(4);
+
         // All the 777777 records exists so there are no leafs/derived enqueued records
         countQueued("leaf", 0);
 
         final HashSet<String> nodes = new HashSet<>();
+        countQueued(777777, 4);
         countQueued("node", 4);
-        System.out.println("nodes = " + nodes);
         for (QueueJob dequeue = dao.dequeue("node"); dequeue != null; dequeue = dao.dequeue("node")) {
             nodes.add(dequeue.getJob().getBibliographicRecordId());
         }
@@ -151,6 +151,7 @@ class AgencyDeleteIT {
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
+            setupRecord(dao, "B", 999999, "B:870970");
             connection.commit();
         }
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
@@ -162,6 +163,8 @@ class AgencyDeleteIT {
         agencyDelete.deleteRecords(ids);
         agencyDelete.commit();
 
+        countQueuedTotal(2);
+        countQueued(888888, 2);
         countQueued("node", 1);
         countQueued("leaf", 1);
     }
@@ -266,6 +269,7 @@ class AgencyDeleteIT {
         setupRecord(dao, "H", 870970);
         setupRecord(dao, "S", 870970, "H:870970");
         setupRecord(dao, "B", 870970, "S:870970");
+        setupRecord(dao, "A", 870971, "B:870970");
         setupRecord(dao, "E", 870970);
 
         setupRecord(dao, "H", 777777, "H:870970");
@@ -277,7 +281,6 @@ class AgencyDeleteIT {
     }
 
     private static void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException {
-        System.out.println("bibliographicRecordId = " + bibliographicRecordId + "; agencyId = " + agencyId);
         Record rec = dao.fetchRecord(bibliographicRecordId, agencyId);
         rec.setContent(content(bibliographicRecordId, String.valueOf(agencyId)));
         rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
@@ -308,6 +311,23 @@ class AgencyDeleteIT {
         resultSet.next();
         int fromQueue = resultSet.getInt(1);
         assertThat("queue: " + queue, fromQueue, is(count));
+    }
+
+    private void countQueued(int agencyId, int count) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue WHERE agencyid=?");
+        stmt.setInt(1, agencyId);
+        ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        int fromQueue = resultSet.getInt(1);
+        assertThat("queued for: " + agencyId, fromQueue, is(count));
+    }
+
+    private void countQueuedTotal(int count) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue");
+        ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        int fromQueue = resultSet.getInt(1);
+        assertThat("queued total", fromQueue, is(count));
     }
 
 }
