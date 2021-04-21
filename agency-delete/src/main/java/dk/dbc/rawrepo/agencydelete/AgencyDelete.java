@@ -240,9 +240,7 @@ class AgencyDelete {
 
     void queueRecords(Set<String> ids, String provider) throws RawRepoException {
         for (String id : ids) {
-            final boolean exists = dao.recordExistsMaybeDeleted(id, agencyid);
-            // Existing records are enqueued as "changed" while non-existing records are queued as "leaf"
-            dao.enqueue(new RecordId(id, agencyid), provider, exists, !exists);
+            dao.enqueue(new RecordId(id, agencyid), provider, true, true);
         }
     }
 
