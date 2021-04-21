@@ -128,13 +128,17 @@ class AgencyDeleteIT {
                 .relationHints(new RelationHintsVipCore(connector))
                 .build();
 
-        countQueuedTotal(4);
+        countQueuedTotal(8);
+        countQueued(777777, 8);
 
-        // All the 777777 records exists so there are no leafs/derived enqueued records
-        countQueued("leaf", 0);
+        countQueued("leaf", 4);
+        HashSet<String> leafs = new HashSet<>();
+        for (QueueJob dequeue = dao.dequeue("leaf"); dequeue != null; dequeue = dao.dequeue("leaf")) {
+            leafs.add(dequeue.getJob().getBibliographicRecordId());
+        }
+        testArray(leafs, "leafs", "H", "S", "B", "E");
 
         final HashSet<String> nodes = new HashSet<>();
-        countQueued(777777, 4);
         countQueued("node", 4);
         for (QueueJob dequeue = dao.dequeue("node"); dequeue != null; dequeue = dao.dequeue("node")) {
             nodes.add(dequeue.getJob().getBibliographicRecordId());
@@ -163,10 +167,10 @@ class AgencyDeleteIT {
         agencyDelete.deleteRecords(ids);
         agencyDelete.commit();
 
-        countQueuedTotal(2);
-        countQueued(888888, 2);
-        countQueued("node", 1);
-        countQueued("leaf", 1);
+        countQueuedTotal(4);
+        countQueued(888888, 4);
+        countQueued("node", 2);
+        countQueued("leaf", 2);
     }
 
     @Test
@@ -256,14 +260,16 @@ class AgencyDeleteIT {
         stmt.setString(1, "node");
         stmt.execute();
 
-        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, 'A', ?)");
+        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, ?, ?)");
         stmt.setString(1, "provider");
         stmt.setString(2, "leaf");
-        stmt.setString(3, "Y");
+        stmt.setString(3, "A");
+        stmt.setString(4, "Y");
         stmt.execute();
         stmt.setString(1, "provider");
         stmt.setString(2, "node");
-        stmt.setString(3, "N");
+        stmt.setString(3, "Y");
+        stmt.setString(4, "A");
         stmt.execute();
 
         setupRecord(dao, "H", 870970);
