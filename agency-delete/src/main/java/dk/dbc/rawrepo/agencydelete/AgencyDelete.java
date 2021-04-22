@@ -86,10 +86,10 @@ class AgencyDelete {
     private final MarcXMerger marcXMerger;
     private final List<Integer> commonAgencies;
 
-    public AgencyDelete(String db, int agencyid, String vipCoreUrl) throws Exception {
+    public AgencyDelete(String db, int agencyid, String vipCoreUrl) throws MarcXMergerException, SQLException, RawRepoException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
-        RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
+        final RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
         if (vipCoreUrl != null) {
             VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector = VipCoreLibraryRulesConnectorFactory.create(vipCoreUrl);
             builder.relationHints(new RelationHintsVipCore(vipCoreLibraryRulesConnector));
@@ -115,7 +115,7 @@ class AgencyDelete {
         this.marcXMerger = new MarcXMerger();
     }
 
-    private AgencyDelete() throws Exception {
+    private AgencyDelete() throws MarcXMergerException {
         this.agencyid = 0;
         this.connection = null;
         this.dao = null;
@@ -125,12 +125,12 @@ class AgencyDelete {
         this.commonAgencies = null;
     }
 
-    static AgencyDelete unittestObject() throws Exception {
+    static AgencyDelete unittestObject() throws MarcXMergerException {
         return new AgencyDelete();
     }
 
     public Set<String> getIds() throws SQLException {
-        Set<String> ids = new HashSet<>();
+        final Set<String> ids = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM records WHERE deleted = false AND agencyid = ?")) {
             stmt.setInt(1, agencyid);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -139,8 +139,8 @@ class AgencyDelete {
                 }
             }
         }
-        Map<String, Collection<String>> children = getChildrenRelationMap();
-        LinkedHashSet<String> nodes = new LinkedHashSet<>();
+        final Map<String, Collection<String>> children = getChildrenRelationMap();
+        final LinkedHashSet<String> nodes = new LinkedHashSet<>();
         for (String id : ids) {
             expandChildren(id, children, nodes);
         }
@@ -151,7 +151,7 @@ class AgencyDelete {
         if (nodes.contains(bibliographicRecordId)) {
             return;
         }
-        Collection<String> childIds = children.get(bibliographicRecordId);
+        final Collection<String> childIds = children.get(bibliographicRecordId);
         if (childIds != null) {
             for (String childId : childIds) {
                 expandChildren(childId, children, nodes);
@@ -161,7 +161,7 @@ class AgencyDelete {
     }
 
     private Map<String, Collection<String>> getChildrenRelationMap() throws SQLException {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("SELECT refer_bibliographicrecordid, bibliographicrecordid FROM relations WHERE agencyid = refer_agencyid AND agencyid IN (");
         sb.append(agencyid);
         for (Integer commonAgency : commonAgencies) {
@@ -171,7 +171,7 @@ class AgencyDelete {
         log.debug("sb = {}", sb);
         try (Statement stmt = connection.createStatement()) {
             try (ResultSet resultSet = stmt.executeQuery(sb.toString())) {
-                Map<String, Collection<String>> ret = new HashMap<>();
+                final Map<String, Collection<String>> ret = new HashMap<>();
                 while (resultSet.next()) {
                     Collection<String> col = ret.computeIfAbsent(resultSet.getString(1), k -> new HashSet<>());
                     col.add(resultSet.getString(2));
@@ -184,13 +184,13 @@ class AgencyDelete {
     /**
      * Create an xml document parser
      *
-     * @return
+     * @return DocumentBuilder
      * @throws MarcXMergerException
      */
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
             synchronized (DocumentBuilderFactory.class) {
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 documentBuilderFactory.setIgnoringComments(true);
                 documentBuilderFactory.setIgnoringElementContentWhitespace(true);
@@ -206,14 +206,13 @@ class AgencyDelete {
      * Create an xml transformer for writing a document
      *
      * @return new transformer
-     * @throws TransformerFactoryConfigurationError
-     * @throws IllegalArgumentException
+     * @throws MarcXMergerException
      */
     private static Transformer newTransformer() throws MarcXMergerException {
         try {
             synchronized (TransformerFactory.class) {
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
+                final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                final Transformer transformer = transformerFactory.newTransformer();
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
                 transformer.setOutputProperty(OutputKeys.METHOD, "xml");
                 transformer.setOutputProperty(OutputKeys.INDENT, "no");
@@ -227,7 +226,7 @@ class AgencyDelete {
     }
 
     public Set<String> getSiblingRelations() throws SQLException {
-        Set<String> set = new HashSet<>();
+        final Set<String> set = new HashSet<>();
         try (PreparedStatement stmt = connection.prepareStatement("SELECT bibliographicrecordid FROM relations WHERE refer_agencyid = ? AND agencyid <> refer_agencyid")) {
             stmt.setInt(1, agencyid);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -239,9 +238,9 @@ class AgencyDelete {
         return set;
     }
 
-    void queueRecords(Set<String> ids, String role) throws RawRepoException {
+    void queueRecords(Set<String> ids, String provider) throws RawRepoException {
         for (String id : ids) {
-            dao.changedRecord(role, new RecordId(id, agencyid));
+            dao.enqueue(new RecordId(id, agencyid), provider, true, true);
         }
     }
 
@@ -259,7 +258,7 @@ class AgencyDelete {
                 r.setMimeType(record.getMimeType());
                 record = r;
             }
-            byte[] content = markMarcContentDeleted(record.getContent());
+            final byte[] content = markMarcContentDeleted(record.getContent());
             record.setContent(content);
             record.setDeleted(true);
             dao.saveRecord(record);
@@ -267,8 +266,8 @@ class AgencyDelete {
     }
 
     byte[] markMarcContentDeleted(byte[] content) throws SAXException, TransformerException, DOMException, IOException {
-        Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
-        Element marcx = dom.getDocumentElement();
+        final Document dom = documentBuilder.parse(new ByteArrayInputStream(content));
+        final Element marcx = dom.getDocumentElement();
         Node child = marcx.getFirstChild();
         for (; ; ) {
             if (child == null ||
@@ -353,11 +352,11 @@ class AgencyDelete {
     private static final int URL_PATTERN_HOST_PORT_DB = 4;
 
     private static Connection getConnection(String url) throws SQLException {
-        Matcher matcher = urlPattern.matcher(url);
+        final Matcher matcher = urlPattern.matcher(url);
         if (!matcher.find()) {
             throw new IllegalArgumentException(url + " Is not a valid jdbc uri");
         }
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
         String jdbc = matcher.group(URL_PATTERN_PREFIX);
         if (jdbc == null) {
             jdbc = JDBC_DEFAULT;
@@ -370,7 +369,7 @@ class AgencyDelete {
         }
 
         log.debug("Connecting");
-        Connection connection = DriverManager.getConnection(jdbc + matcher.group(URL_PATTERN_HOST_PORT_DB), properties);
+        final Connection connection = DriverManager.getConnection(jdbc + matcher.group(URL_PATTERN_HOST_PORT_DB), properties);
         log.debug("Connected");
         return connection;
     }

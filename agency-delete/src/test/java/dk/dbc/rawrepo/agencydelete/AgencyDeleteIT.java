@@ -114,7 +114,6 @@ class AgencyDeleteIT {
 
     @Test
     void testBasics() throws Exception {
-        System.out.println("testBasics()");
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 777777, "http://localhost:" + wireMockServer.port());
 
         agencyDelete.begin();
@@ -122,30 +121,29 @@ class AgencyDeleteIT {
         testArray(ids, "Ids", "H", "S", "B", "E");
 
         agencyDelete.queueRecords(ids, "provider");
-        System.out.println("queued records");
         agencyDelete.deleteRecords(ids);
-        System.out.println("deleted records");
         agencyDelete.commit();
 
         RawRepoDAO dao = RawRepoDAO.builder(connection)
                 .relationHints(new RelationHintsVipCore(connector))
                 .build();
 
-        countQueued("leaf", 2);
+        countQueuedTotal(8);
+        countQueued(777777, 8);
+
+        countQueued("leaf", 4);
         HashSet<String> leafs = new HashSet<>();
         for (QueueJob dequeue = dao.dequeue("leaf"); dequeue != null; dequeue = dao.dequeue("leaf")) {
             leafs.add(dequeue.getJob().getBibliographicRecordId());
         }
-        testArray(leafs, "leafs", "B", "E");
+        testArray(leafs, "leafs", "H", "S", "B", "E");
 
-        HashSet<String> nodes = new HashSet<>();
-        countQueued("node", 2);
-        System.out.println("nodes = " + nodes);
+        final HashSet<String> nodes = new HashSet<>();
+        countQueued("node", 4);
         for (QueueJob dequeue = dao.dequeue("node"); dequeue != null; dequeue = dao.dequeue("node")) {
             nodes.add(dequeue.getJob().getBibliographicRecordId());
         }
-        testArray(nodes, "nodes", "H", "S");
-        System.out.println("Done!");
+        testArray(nodes, "nodes", "H", "S", "B", "E");
         connection.commit();
     }
 
@@ -157,18 +155,22 @@ class AgencyDeleteIT {
                     .build();
             connection.setAutoCommit(false);
             setupRecord(dao, "S", 888888, "S:870970");
+            setupRecord(dao, "B", 999999, "B:870970");
             connection.commit();
         }
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
         agencyDelete.begin();
         Set<String> ids = agencyDelete.getIds();
+        testArray(ids, "nodes", "S", "B");
 
         agencyDelete.queueRecords(ids, "provider");
         agencyDelete.deleteRecords(ids);
         agencyDelete.commit();
 
-        countQueued("node", 1);
-        countQueued("leaf", 1);
+        countQueuedTotal(4);
+        countQueued(888888, 4);
+        countQueued("node", 2);
+        countQueued("leaf", 2);
     }
 
     @Test
@@ -178,21 +180,16 @@ class AgencyDeleteIT {
                     .relationHints(new RelationHintsVipCore(connector))
                     .build();
             connection.setAutoCommit(false);
-            setupRecord(dao, "H", 888888, "S:870970");
-            setupRecord(dao, "E", 888888, "S:870970");
+            setupRecord(dao, "H", 888888, "H:870970");
+            setupRecord(dao, "E", 888888);
             connection.commit();
         }
 
         AgencyDelete agencyDelete = new AgencyDelete(jdbcUrl, 888888, "http://localhost:" + wireMockServer.port());
 
         Set<String> nodes = agencyDelete.getIds();
-        System.out.println("nodes = " + nodes);
 
-        assertTrue(nodes.contains("H"));
-        assertTrue(nodes.contains("S"));
-        assertTrue(nodes.contains("B"));
-        assertTrue(nodes.contains("E"));
-        assertThat("has no extras", nodes.size(), is(4));
+        testArray(nodes, "nodes", "H", "B", "S", "E");
     }
 
     @Test
@@ -263,19 +260,22 @@ class AgencyDeleteIT {
         stmt.setString(1, "node");
         stmt.execute();
 
-        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, 'A', ?)");
+        stmt = connection.prepareStatement("INSERT INTO queuerules(provider, worker, changed, leaf) VALUES(?, ?, ?, ?)");
         stmt.setString(1, "provider");
         stmt.setString(2, "leaf");
-        stmt.setString(3, "Y");
+        stmt.setString(3, "A");
+        stmt.setString(4, "Y");
         stmt.execute();
         stmt.setString(1, "provider");
         stmt.setString(2, "node");
-        stmt.setString(3, "N");
+        stmt.setString(3, "Y");
+        stmt.setString(4, "A");
         stmt.execute();
 
         setupRecord(dao, "H", 870970);
         setupRecord(dao, "S", 870970, "H:870970");
         setupRecord(dao, "B", 870970, "S:870970");
+        setupRecord(dao, "A", 870971, "B:870970");
         setupRecord(dao, "E", 870970);
 
         setupRecord(dao, "H", 777777, "H:870970");
@@ -287,7 +287,6 @@ class AgencyDeleteIT {
     }
 
     private static void setupRecord(RawRepoDAO dao, String bibliographicRecordId, int agencyId, String... relations) throws RawRepoException {
-        System.out.println("bibliographicRecordId = " + bibliographicRecordId + "; agencyId = " + agencyId);
         Record rec = dao.fetchRecord(bibliographicRecordId, agencyId);
         rec.setContent(content(bibliographicRecordId, String.valueOf(agencyId)));
         rec.setMimeType(MarcXChangeMimeType.MARCXCHANGE);
@@ -318,6 +317,23 @@ class AgencyDeleteIT {
         resultSet.next();
         int fromQueue = resultSet.getInt(1);
         assertThat("queue: " + queue, fromQueue, is(count));
+    }
+
+    private void countQueued(int agencyId, int count) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue WHERE agencyid=?");
+        stmt.setInt(1, agencyId);
+        ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        int fromQueue = resultSet.getInt(1);
+        assertThat("queued for: " + agencyId, fromQueue, is(count));
+    }
+
+    private void countQueuedTotal(int count) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM queue");
+        ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        int fromQueue = resultSet.getInt(1);
+        assertThat("queued total", fromQueue, is(count));
     }
 
 }
