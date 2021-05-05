@@ -141,17 +141,20 @@ public class ExpandCommonMarcRecord {
         final MarcRecord expandedRecord = new MarcRecord();
         /*
          * Okay, here are (some) of the rules for expanding with auth records:
-         * Fields that can contain AUT are: 100, 600, 700, 770 or 780
+         * Fields that can contain AUT are: 100, 110, 600, 610, 700, 710, 770 or 780
          * AUT reference are located in *5 and *6
          *
          * A field points to AUT data if:
-         * Field name is either 100, 600, 700, 770 or 780
+         * Field name is either 100, 110, 600, 610, 700, 710, 770 or 780
          * And contains subfields *5 and *6
          *
          * Rules for expanding are:
          * Remove *5 and *6
-         * Add all subfields from AUT record field 100 at the same location as *5
+         * Add all subfields from AUT record field 100 or 110 at the same location as *5
+         * For fields 100, 600, 700, 770:
          * If AUT record contains field 400 or 500 then add that field as well to the expanded record but as field 900
+         * For fields 110, 610, 710, 780:
+         * If AUT record contains field 410 or 510 then add that field as well to the expanded record but as field 910
          */
 
         // Record doesn't have any authority record references, so just return the same record
