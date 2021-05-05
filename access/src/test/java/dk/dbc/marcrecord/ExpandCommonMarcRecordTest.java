@@ -15,7 +15,6 @@ import dk.dbc.common.records.utils.IOUtils;
 import dk.dbc.common.records.utils.RecordContentTransformer;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
-import dk.dbc.rawrepo.RawRepoExceptionRecordNotFound;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import org.junit.jupiter.api.Assertions;
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +30,18 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class ExpandCommonMarcRecordTest {
+class ExpandCommonMarcRecordTest {
+    private static final String AUT_RAW_126350333 = "authority/raw-126350333.marc";
+    private static final String AUT_RAW_126850298 = "authority/raw-126850298.marc";
+    private static final String AUT_RAW_22642448 = "authority/raw-22642448.marc";
+    private static final String AUT_RAW_26081718 = "authority/raw-26081718.marc";
     private static final String AUT_RAW_26443784 = "authority/raw-26443784.marc";
+    private static final String AUT_RAW_27568602 = "authority/raw-27568602.marc";
+    private static final String AUT_RAW_47625475 = "authority/raw-47625475.marc";
+    private static final String AUT_RAW_48141943 = "authority/raw-48141943.marc";
+    private static final String AUT_RAW_48776108 = "authority/raw-48776108.marc";
+    private static final String AUT_RAW_48802362 = "authority/raw-48802362.marc";
+    private static final String AUT_RAW_48867472 = "authority/raw-48867472.marc";
     private static final String AUT_RAW_52846943 = "authority/raw-52846943.marc";
     private static final String AUT_RAW_53025757 = "authority/raw-53025757.marc";
     private static final String AUT_RAW_53161510 = "authority/raw-53161510.marc";
@@ -41,22 +49,22 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUT_RAW_53213642 = "authority/raw-53213642.marc";
     private static final String AUT_RAW_53214592 = "authority/raw-53214592.marc";
     private static final String AUT_RAW_53214827 = "authority/raw-53214827.marc";
-    private static final String AUT_RAW_90004158 = "authority/raw-90004158.marc";
-    private static final String AUT_RAW_126350333 = "authority/raw-126350333.marc";
-    private static final String AUT_RAW_126850298 = "authority/raw-126850298.marc";
-    private static final String AUT_RAW_22642448 = "authority/raw-22642448.marc";
-    private static final String AUT_RAW_26081718 = "authority/raw-26081718.marc";
-    private static final String AUT_RAW_27568602 = "authority/raw-27568602.marc";
-    private static final String AUT_RAW_47625475 = "authority/raw-47625475.marc";
-    private static final String AUT_RAW_48141943 = "authority/raw-48141943.marc";
-    private static final String AUT_RAW_48776108 = "authority/raw-48776108.marc";
-    private static final String AUT_RAW_48802362 = "authority/raw-48802362.marc";
-    private static final String AUT_RAW_48867472 = "authority/raw-48867472.marc";
     private static final String AUT_RAW_53333338 = "authority/raw-53333338.marc";
     private static final String AUT_RAW_53356478 = "authority/raw-53356478.marc";
     private static final String AUT_RAW_53551173 = "authority/raw-53551173.marc";
+    private static final String AUT_RAW_90004158 = "authority/raw-90004158.marc";
 
+    private static final String AUT_EXPANDED_126350333 = "authority/expanded-126350333.marc";
+    private static final String AUT_EXPANDED_126850298 = "authority/expanded-126850298.marc";
+    private static final String AUT_EXPANDED_22642448 = "authority/expanded-22642448.marc";
+    private static final String AUT_EXPANDED_26081718 = "authority/expanded-26081718.marc";
     private static final String AUT_EXPANDED_26443784 = "authority/expanded-26443784.marc";
+    private static final String AUT_EXPANDED_27568602 = "authority/expanded-27568602.marc";
+    private static final String AUT_EXPANDED_47625475 = "authority/expanded-47625475.marc";
+    private static final String AUT_EXPANDED_48141943 = "authority/expanded-48141943.marc";
+    private static final String AUT_EXPANDED_48776108 = "authority/expanded-48776108.marc";
+    private static final String AUT_EXPANDED_48802362 = "authority/expanded-48802362.marc";
+    private static final String AUT_EXPANDED_48867472 = "authority/expanded-48867472.marc";
     private static final String AUT_EXPANDED_52846943 = "authority/expanded-52846943.marc";
     private static final String AUT_EXPANDED_53025757 = "authority/expanded-53025757.marc";
     private static final String AUT_EXPANDED_53161510 = "authority/expanded-53161510.marc";
@@ -64,47 +72,16 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUT_EXPANDED_53213642 = "authority/expanded-53213642.marc";
     private static final String AUT_EXPANDED_53214592 = "authority/expanded-53214592.marc";
     private static final String AUT_EXPANDED_53214827 = "authority/expanded-53214827.marc";
-    private static final String AUT_EXPANDED_90004158 = "authority/expanded-90004158.marc";
-    private static final String AUT_EXPANDED_126350333 = "authority/expanded-126350333.marc";
-    private static final String AUT_EXPANDED_126850298 = "authority/expanded-126850298.marc";
-    private static final String AUT_EXPANDED_22642448 = "authority/expanded-22642448.marc";
-    private static final String AUT_EXPANDED_26081718 = "authority/expanded-26081718.marc";
-    private static final String AUT_EXPANDED_27568602 = "authority/expanded-27568602.marc";
-    private static final String AUT_EXPANDED_47625475 = "authority/expanded-47625475.marc";
-    private static final String AUT_EXPANDED_48141943 = "authority/expanded-48141943.marc";
-    private static final String AUT_EXPANDED_48776108 = "authority/expanded-48776108.marc";
-    private static final String AUT_EXPANDED_48802362 = "authority/expanded-48802362.marc";
-    private static final String AUT_EXPANDED_48867472 = "authority/expanded-48867472.marc";
     private static final String AUT_EXPANDED_53333338 = "authority/expanded-53333338.marc";
     private static final String AUT_EXPANDED_53356478 = "authority/expanded-53356478.marc";
     private static final String AUT_EXPANDED_53551173 = "authority/expanded-53551173.marc";
+    private static final String AUT_EXPANDED_90004158 = "authority/expanded-90004158.marc";
 
     private static final String AUTHORITY_19024687 = "authority/authority-19024687.marc";
     private static final String AUTHORITY_19024709 = "authority/authority-19024709.marc";
     private static final String AUTHORITY_19043800 = "authority/authority-19043800.marc";
     private static final String AUTHORITY_19064689 = "authority/authority-19064689.marc";
     private static final String AUTHORITY_19130452 = "authority/authority-19130452.marc";
-    private static final String AUTHORITY_68098203 = "authority/authority-68098203.marc";
-    private static final String AUTHORITY_68058953 = "authority/authority-68058953.marc";
-    private static final String AUTHORITY_68313686 = "authority/authority-68313686.marc";
-    private static final String AUTHORITY_68354153 = "authority/authority-68354153.marc";
-    private static final String AUTHORITY_68432359 = "authority/authority-68432359.marc";
-    private static final String AUTHORITY_68472806 = "authority/authority-68472806.marc";
-    private static final String AUTHORITY_68560985 = "authority/authority-68560985.marc";
-    private static final String AUTHORITY_68570492 = "authority/authority-68570492.marc";
-    private static final String AUTHORITY_68584566 = "authority/authority-68584566.marc";
-    private static final String AUTHORITY_68585627 = "authority/authority-68585627.marc";
-    private static final String AUTHORITY_68712742 = "authority/authority-68712742.marc";
-    private static final String AUTHORITY_68839734 = "authority/authority-68839734.marc";
-    private static final String AUTHORITY_68895650 = "authority/authority-68895650.marc";
-    private static final String AUTHORITY_68900719 = "authority/authority-68900719.marc";
-    private static final String AUTHORITY_69094139 = "authority/authority-69094139.marc";
-    private static final String AUTHORITY_69294685 = "authority/authority-69294685.marc";
-    private static final String AUTHORITY_69328776 = "authority/authority-69328776.marc";
-    private static final String AUTHORITY_68046335 = "authority/authority-68046335.marc";
-    private static final String AUTHORITY_68139864 = "authority/authority-68139864.marc";
-    private static final String AUTHORITY_68619858 = "authority/authority-68619858.marc";
-    private static final String AUTHORITY_68679265 = "authority/authority-68679265.marc";
     private static final String AUTHORITY_47220882 = "authority/authority-47220882.marc";
     private static final String AUTHORITY_47919142 = "authority/authority-47919142.marc";
     private static final String AUTHORITY_48280129 = "authority/authority-48280129.marc";
@@ -121,19 +98,41 @@ public class ExpandCommonMarcRecordTest {
     private static final String AUTHORITY_48872328 = "authority/authority-48872328.marc";
     private static final String AUTHORITY_48872336 = "authority/authority-48872336.marc";
     private static final String AUTHORITY_48873073 = "authority/authority-48873073.marc";
+    private static final String AUTHORITY_68046335 = "authority/authority-68046335.marc";
+    private static final String AUTHORITY_68058953 = "authority/authority-68058953.marc";
+    private static final String AUTHORITY_68098203 = "authority/authority-68098203.marc";
+    private static final String AUTHORITY_68139864 = "authority/authority-68139864.marc";
+    private static final String AUTHORITY_68313686 = "authority/authority-68313686.marc";
+    private static final String AUTHORITY_68354153 = "authority/authority-68354153.marc";
+    private static final String AUTHORITY_68432359 = "authority/authority-68432359.marc";
+    private static final String AUTHORITY_68472806 = "authority/authority-68472806.marc";
+    private static final String AUTHORITY_68560985 = "authority/authority-68560985.marc";
+    private static final String AUTHORITY_68570492 = "authority/authority-68570492.marc";
+    private static final String AUTHORITY_68584566 = "authority/authority-68584566.marc";
+    private static final String AUTHORITY_68585627 = "authority/authority-68585627.marc";
+    private static final String AUTHORITY_68619858 = "authority/authority-68619858.marc";
+    private static final String AUTHORITY_68679265 = "authority/authority-68679265.marc";
+    private static final String AUTHORITY_68712742 = "authority/authority-68712742.marc";
     private static final String AUTHORITY_68750679 = "authority/authority-68750679.marc";
     private static final String AUTHORITY_68759498 = "authority/authority-68759498.marc";
+    private static final String AUTHORITY_68839734 = "authority/authority-68839734.marc";
+    private static final String AUTHORITY_68895650 = "authority/authority-68895650.marc";
+    private static final String AUTHORITY_68900719 = "authority/authority-68900719.marc";
+    private static final String AUTHORITY_69094139 = "authority/authority-69094139.marc";
+    private static final String AUTHORITY_69294685 = "authority/authority-69294685.marc";
+    private static final String AUTHORITY_69328776 = "authority/authority-69328776.marc";
     private static final String AUTHORITY_69518060 = "authority/authority-69518060.marc";
 
     private static final String COMMON_SINGLE_RECORD_RESOURCE = "authority/common_enrichment.marc";
 
     private static MarcRecord loadMarcRecord(String filename) throws IOException {
         InputStream is = ExpandCommonMarcRecordTest.class.getResourceAsStream("/" + filename);
+        assert is != null;
         return MarcRecordFactory.readRecord(IOUtils.readAll(is, "UTF-8"));
     }
 
     @Test
-    public void expandCommonRecordOk_52846943() throws Exception {
+    void expandCommonRecordOk_52846943() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_52846943);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_52846943);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_19024709);
@@ -148,7 +147,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53025757() throws Exception {
+    void expandCommonRecordOk_53025757() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53025757);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53025757);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68432359);
@@ -165,7 +164,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53161510() throws Exception {
+    void expandCommonRecordOk_53161510() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53161510);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53161510);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_69094139);
@@ -182,7 +181,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53180485() throws Exception {
+    void expandCommonRecordOk_53180485() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53180485);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53180485);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68839734);
@@ -201,7 +200,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53213642() throws Exception {
+    void expandCommonRecordOk_53213642() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53213642);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53213642);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68895650);
@@ -216,7 +215,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53214592() throws Exception {
+    void expandCommonRecordOk_53214592() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53214592);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214592);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68354153);
@@ -233,7 +232,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_53214827() throws Exception {
+    void expandCommonRecordOk_53214827() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_53214827);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214827);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68570492);
@@ -246,7 +245,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordOk_90004158() throws Exception {
+    void expandCommonRecordOk_90004158() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_90004158);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_90004158);
         MarcRecord auth1 = loadMarcRecord(AUTHORITY_68712742);
@@ -261,14 +260,14 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void noCommonRecord() throws Exception {
+    void noCommonRecord() {
         Map<String, MarcRecord> collection = new HashMap<>();
 
         Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")));
     }
 
     @Test
-    public void missingAuthorityRecords() throws Exception {
+    void missingAuthorityRecords() throws Exception {
         MarcRecord record = loadMarcRecord(AUT_RAW_90004158);
 
         Map<String, MarcRecord> collection = new HashMap<>();
@@ -278,7 +277,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordWithoutAuthorityFields() throws Exception {
+    void expandCommonRecordWithoutAuthorityFields() throws Exception {
         MarcRecord record = loadMarcRecord(COMMON_SINGLE_RECORD_RESOURCE);
 
         Map<String, MarcRecord> collection = new HashMap<>();
@@ -288,7 +287,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandCommonRecordWithTwoReferencesToSameAuthorityRecord() throws Exception {
+    void expandCommonRecordWithTwoReferencesToSameAuthorityRecord() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_26443784);
         MarcRecord authority = loadMarcRecord(AUTHORITY_68313686);
         MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_26443784);
@@ -301,7 +300,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandLittolkRecordWithDoubleA() throws Exception {
+    void expandLittolkRecordWithDoubleA() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_126350333);
 
         MarcRecord authority1 = loadMarcRecord(AUTHORITY_68058953);
@@ -318,7 +317,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandLittolkRecordWithExistingReferenceEarlierName() throws Exception {
+    void expandLittolkRecordWithExistingReferenceEarlierName() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
 
         MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
@@ -340,7 +339,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandLittolkRecordWithExistingReferenceLaterName() throws Exception {
+    void expandLittolkRecordWithExistingReferenceLaterName() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
 
         MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
@@ -366,7 +365,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void expandLittolkRecordWithExistingReferenceCustomText() throws Exception {
+    void expandLittolkRecordWithExistingReferenceCustomText() throws Exception {
         MarcRecord raw = loadMarcRecord(AUT_RAW_126850298);
 
         MarcRecord authority1 = loadMarcRecord(AUTHORITY_68046335);
@@ -528,11 +527,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     private MarcRecord sortRecord(MarcRecord record) {
-        Collections.sort(record.getFields(), new Comparator<MarcField>() {
-            public int compare(MarcField o1, MarcField o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        record.getFields().sort(Comparator.comparing(MarcField::getName));
 
         return record;
     }
@@ -652,7 +647,7 @@ public class ExpandCommonMarcRecordTest {
     }
 
     @Test
-    public void testExpandRecord_1() throws Exception {
+    void testExpandRecord_1() throws Exception {
         Record raw = recordFromContent(loadMarcRecord(AUT_RAW_52846943));
         Record expanded = recordFromContent(loadMarcRecord(AUT_EXPANDED_52846943));
         Record auth1 = recordFromContent(loadMarcRecord(AUTHORITY_19024709));
