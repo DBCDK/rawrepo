@@ -1,0 +1,32 @@
+001 00 *a 22642448 *b 870970 *c 20040121001330 *d 20030904 *f a
+004 00 *r c *a e
+008 00 *t s *u f *a 1999 *b dk *l eng *v 0
+009 00 *a s *g xc
+032 00 *a DMO199945 *x DAT200404
+039 00 *a und
+245 00 *a Irish drinking songs *e various artists
+260 00 *a [Pandrup] *b Elap *c p 1999
+300 00 *n 1 cd
+531 00 *a Indhold:
+538 00 *f Elap *g 10012622
+652 00 *m 78.797 *v 38
+666 00 *m folkemusik *m keltisk musik *m viser *m drikkeviser *n vokal *p 1900-1999 *l Irland
+770 00 *å 18 *a O'Neill *h Terry
+770 00 *å 19 *A macfoley *a McFoley *h Connie
+770 00 *å 20 *a Bugge *h Camilla Toldi
+780 00 *å 12 *a Tara Folk
+780 00 *å 13 *a Fianna Folk
+780 00 *å 15 *a Corrib Folk
+795 00 *å 12 *a The ¤fields of Athenry
+795 00 *å 13 *a Whiskey in the jar
+795 00 *å 14 *a The ¤cliffs of Dooneen *a Big strong man
+795 00 *å 15 *a Arthur McBride *a Lord of the dance *a Galway races
+795 00 *å 16 *a As I roved out
+795 00 *å 17 *a Johnston's motor car
+795 00 *å 18 *a A ¤nation once again
+795 00 *å 19 *a The ¤Galway shawl
+795 00 *å 20 *a Follow me up to Carlow
+900 00 *a Toldi Bugge *h Camilla *x se *w Bugge, Camilla Toldi *z 770/20
+910 00 *a TinTara Folk *x se *w Tara Folk *z 780/12
+910 00 *a FinFianna Folk *x se også under det senere navn *w Fianna Folk *z 780/13
+996 00 *a DBC

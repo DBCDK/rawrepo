@@ -1,0 +1,38 @@
+001 00 *a 47625475 *b 870970 *c 20200114104825 *d 20200114 *f a
+004 00 *r n *a e
+008 00 *t s *u f *a 2019 *b dk *l eng *n b *v 5
+009 00 *a s *g xe
+032 00 *x BKM202005 *a DMO202005
+039 00 *a jaz
+110 00 *a Tara Folk
+245 00 *a Live at the Village *j songs written by Lennon/McCartney ... [et al.] *i arranged by Søren Baun *j Baun on Beatles (Søren Baun, Andreas Møllerhøj, Ulrik Brohuus) with Mads Ole Erhardsen *i Baun on Beatles (Søren Baun, Andreas Møllerhøj, Ulrik Brohuus)
+260 00 *b Gateway Music *g [sælges på internettet] *c 2019
+512 00 *a Live-optagelser, The Village, København 28. februar og 1. marts 2019
+531 00 *a Indhold:
+652 00 *m 78.793 *v 8
+652 00 *p 78.793 *v 5
+666 00 *0  *m jazz *m evergreen *n vokal *n klaver *p 2010-2019 *l Danmark
+700 00 *a Brohuus *h Ulrik
+700 00 *å 1 *a Erhardsen *h Mads Ole
+700 00 *a Møllerhøj *h Andreas
+700 00 *A maccartney *a McCartney *h Paul
+700 00 *a Lennon *h John
+710 00 *a The ¤Beatles
+795 00 *å 11 *a In My Life *z DKTE41900101 *l 5:52 min *& spotify:track:6uarpqBqGvntzUD6Wl2lTH *i written by Lennon/McCartney
+795 00 *å 12 *a I'm Only Sleeping *z DKTE41900102 *l 4:45 min *& spotify:track:1dAY63rkradpDcRhtKtuTf *i written by Lennon/McCartney *i with Mads Ole Erhardsen
+795 00 *å 13 *a Eight Days a Week *z DKTE41900103 *l 3:59 min *& spotify:track:0TiwyR9HHx4LDOJqCIssYH *i written by Lennon/McCartney
+795 00 *å 14 *a Norwegian Wood *z DKTE41900104 *l 6:22 min *& spotify:track:1ZFwjLJpVFtcYeQKsNVh7U *i written by Lennon/McCartney
+795 00 *å 15 *a Things We Said Today *z DKTE41900105 *l 4:33 min *& spotify:track:4h9AUSPHBdYEM3l54rBxnN *i written by Lennon/McCartney
+795 00 *å 16 *a She's a Woman *z DKTE41900106 *l 4:28 min *& spotify:track:78KsDFU7qhQyO4Lu4LtBwZ *i written by Lennon/McCartney
+795 00 *å 17 *a Here Comes the Sun *z DKTE41900107 *l 4:26 min *& spotify:track:6DDSii3LTHmcap7emQOSnx *i written by George Harrison
+795 00 *å 18 *a I'll Cry Instead *z DKTE41900108 *l 4:42 min *& spotify:track:6YPbmFSHhOendvmUB9UWPb *i written by Lennon/McCartney *i with Mads Ole Erhardsen
+795 00 *å 19 *a Nowhere Man *z DKTE41900109 *l 4:13 min *& spotify:track:4R7akZUxf5g1xo4lBrBMsk *i written by Lennon/McCartney *i with Mads Ole Erhardsen
+795 00 *å 20 *a For no One *z DKTE41900110 *l 2:55 min *& spotify:track:1PkzDwIAULtMtygNDReuQN *i written by Lennon/McCartney
+795 00 *å 21 *a I Wanna Be Your Man *z DKTE41900111 *l 4:55 min *& spotify:track:28ee7ev9Uvnhlu56LMJU4Q *i written by Lennon/McCartney
+795 00 *å 22 *a Julia *z DKTE41900112 *l 4:48 min *& spotify:track:7LIeuMJI3e9RXQGELmyHvQ *i written by Lennon/McCartney *i with Mads Ole Erhardsen
+795 00 *å 99 *y 0 *a 8 days a week
+900 00 *a Madsole *x se også *z 700/1
+900 00 *a Mads Ole *x se også *z 700/1
+910 00 *a TinTara Folk *x se *w Tara Folk *z 110
+990 00 *b v *u nt
+996 00 *a DBC

@@ -1,0 +1,19 @@
+001 00 *a 53356478 *b 870971 *c 20180911173000 *d 20170807 *f a
+004 00 *r n *a i
+008 00 *t a *u f *a 2017 *b us *d s *l eng *r ap *v 0
+009 00 *a a *g xe
+014 00 *a 53333338 *x ANM
+016 00 *a 26081718
+032 00 *x PLA201708
+245 00 *a [Anmeldelse]
+504 00 *a "The 18-year-old UK singer-songwriter Declan McKenna has been called a voice of his generation. His major label debut is scattershot, though it includes a Rostam-helmed standout"
+504 00 *a Vurdering: 5.9/10
+557 00 *a Pitchfork *j 2017 *V 2017-08-01 *v 2017-08-01
+700 00 *& ANM *5 870979 *6 69518060
+710 00 *& ANM *5 870979 *6 48327826
+856 00 *z Adgangsmåde: Internet *u http://pitchfork.com/reviews/albums/declan-mckenna-what-do-you-think-about-the-car/
+996 00 *a DBC
+d08 00 *o dnj
+s12 00 *t TeamBAM201732
+z98 00 *a Minus korrekturprint
+z99 00 *a dnj
