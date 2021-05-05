@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
-    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "600", "610", "700", "710", "770", "780");
+    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "110", "600", "610", "700", "710", "770", "780");
 
     /**
      * This function performs authority expansion on a rawrepo Record.
@@ -161,7 +161,11 @@ public class ExpandCommonMarcRecord {
 
         final MarcRecordReader reader = new MarcRecordReader(commonRecord);
         final int authIndicator = findMaxAuthIndicator(commonRecord.getFields());
-        handleNonRepeatableField(reader.getField("100"), expandedRecord, authorityRecords, keepAutFields);
+        if (reader.hasField("110")) {
+            handleNonRepeatableField(reader.getField("110"), expandedRecord, authorityRecords, keepAutFields);
+        } else {
+            handleNonRepeatableField(reader.getField("100"), expandedRecord, authorityRecords, keepAutFields);
+        }
         handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
         handleRepeatableField(reader.getFieldAll("610"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
         handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
@@ -214,9 +218,17 @@ public class ExpandCommonMarcRecord {
 
                 final MarcField expandedField = new MarcField(field);
                 final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
-                final MarcField authField100 = new MarcField(authRecordReader.getField("100"));
+                final String authAuthorFieldName;
 
-                addMainField(expandedField, authField100, keepAutFields);
+                if (authRecordReader.hasField("110")) {
+                    authAuthorFieldName = "110";
+                } else {
+                    authAuthorFieldName = "100";
+                }
+
+                final MarcField authAuthorField = new MarcField(authRecordReader.getField(authAuthorFieldName));
+
+                addMainField(expandedField, authAuthorField, keepAutFields);
 
                 if (authRecordReader.hasField("400")
                         || authRecordReader.hasField("410")
@@ -234,10 +246,10 @@ public class ExpandCommonMarcRecord {
                         indicator += "/" + fieldReader.getValue("å");
                     }
 
-                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authField100, indicator);
-                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authField100, indicator);
-                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authField100, indicator);
-                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authField100, indicator);
+                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authAuthorField, indicator);
+                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authAuthorField, indicator);
+                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authAuthorField, indicator);
+                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authAuthorField, indicator);
                 }
 
                 expandedRecord.getFields().add(new MarcField(expandedField));
@@ -263,17 +275,23 @@ public class ExpandCommonMarcRecord {
 
                 final MarcField expandedField = new MarcField(field);
                 final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
-                final MarcField authField100 = new MarcField(authRecordReader.getField("100"));
+                final String authAuthorFieldName;
+
+                if (authRecordReader.hasField("110")) {
+                    authAuthorFieldName = "110";
+                } else {
+                    authAuthorFieldName = "100";
+                }
+
+                final MarcField authAuthorField = new MarcField(authRecordReader.getField(authAuthorFieldName));
                 final String indicator = field.getName();
 
-                addMainField(expandedField, new MarcField(authField100), keepAutFields);
-
+                addMainField(expandedField, new MarcField(authAuthorField), keepAutFields);
                 expandedRecord.getFields().add(new MarcField(expandedField));
-
-                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authField100, indicator);
-                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authField100, indicator);
-                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authField100, indicator);
-                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authField100, indicator);
+                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authAuthorField, indicator);
+                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authAuthorField, indicator);
+                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authAuthorField, indicator);
+                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authAuthorField, indicator);
             } else {
                 expandedRecord.getFields().add(new MarcField(field));
             }
@@ -305,7 +323,7 @@ public class ExpandCommonMarcRecord {
         }
     }
 
-    private static void addAdditionalFields(String fieldName, MarcRecord record, List<MarcField> authFields, MarcField authField100, String indicator) {
+    private static void addAdditionalFields(String fieldName, MarcRecord record, List<MarcField> authFields, MarcField authAuthorField, String indicator) {
         for (MarcField authField : authFields) {
             final MarcField additionalField = new MarcField(fieldName, "00");
             String subfieldwValue = null;
@@ -335,16 +353,57 @@ public class ExpandCommonMarcRecord {
 
             final StringBuilder sb = new StringBuilder();
 
-            final MarcFieldReader authField100Reader = new MarcFieldReader(authField100);
-            sb.append(authField100Reader.getValue("a"));
-            sb.append(", ");
-            sb.append(authField100Reader.getValue("h"));
-            if (authField100Reader.hasSubfield("c")) {
-                sb.append(" (");
-                sb.append(authField100Reader.getValue("c"));
-                sb.append(")");
-            }
+            /*
+             * Generelt om ekspansion af felt 410 til 910:
+             * For ekspansion af felt 410 i A-posten (som henvisning til 610, 710 og 780) gælder:
+             * Indhold fra felt 110 - alle delfelterne undtagen eijk - skal skrives i B-postens felt 910 *w i den rækkefølge de optræder i A-posten. Efter hvert delfelt skal skrives et punktum.
+             * Indhold fra delfelterne e, i, j og k skal skrives i en blød parentes med : mellem. Der skal være blanktegn på begge sider af semikolon. Se eksempler.
+             * Kommer et delfelt c efter et af delfelterne e, i, j eller k skal der være et punktum efter den bløde parentes afsluttes. Se eksempel.
+             */
+            if ("110".equals(authAuthorField.getName())) {
+                final List<String> parenthesesSubFieldNames = Arrays.asList("e", "i", "j", "k");
 
+                String previousSubFieldName = "";
+
+                for (MarcSubField subField : authAuthorField.getSubfields()) {
+                    if (parenthesesSubFieldNames.contains(subField.getName())) {
+                        if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                            // Continue parentheses
+                            sb.append(" : ");
+                            sb.append(subField.getValue());
+                        } else {
+                            // New parentheses
+                            sb.append(" (");
+                            sb.append(subField.getValue());
+                        }
+                    } else {
+                        if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                            // End parentheses
+                            sb.append("). ");
+                            sb.append(subField.getValue());
+                        } else {
+                            if (!"".equals(previousSubFieldName)) {
+                                sb.append(". ");
+                            }
+                            sb.append(subField.getValue());
+                        }
+                    }
+                    previousSubFieldName = subField.getName();
+                }
+                if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                    sb.append(")");
+                }
+            } else {
+                final MarcFieldReader authField100Reader = new MarcFieldReader(authAuthorField);
+                sb.append(authField100Reader.getValue("a"));
+                sb.append(", ");
+                sb.append(authField100Reader.getValue("h"));
+                if (authField100Reader.hasSubfield("c")) {
+                    sb.append(" (");
+                    sb.append(authField100Reader.getValue("c"));
+                    sb.append(")");
+                }
+            }
             additionalField.getSubfields().add(new MarcSubField("w", sb.toString()));
 
             additionalField.getSubfields().add(new MarcSubField("z", indicator));
