@@ -1,0 +1,37 @@
+001 00 *a 48802362 *b 870970 *c 20200916152356 *d 20200908 *f a
+004 00 *r n *a e
+005 00 *i a *k a
+008 00 *t s *u f *a 2020 *b dk *l dan *v 0
+009 00 *a c *g xx
+021 00 *e 9788791802140 *x 87-91802-14-8
+028 00 *a 9790706779256 *c hf. *x M-706779-25-6
+032 00 *x ACM202037 *x BKM202039
+100 00 *5 870979 *6 48872174
+245 00 *a 7 kompositioner for kor og orgel *e Hans Sørensen
+260 00 *a Dyssegård *d Kildebakkegårds Allé 23, 2870 *b André Palsgård *c 2020
+300 00 *n 1 \partitur\ *a 24 sider *c 30 cm
+531 00 *a Indhold:
+652 00 *m 78.652
+652 00 *p 78.655
+666 00 *0 *m kirkemusik *m salme *m davidssalme *m kantate *n vokal *n kor *n kvindekor *p 1990-1999 *p 2010-2019 *l Danmark
+770 00 *å 11 *5 870979 *6 48872174
+770 00 *å 12 *5 870979 *6 48872174
+770 00 *å 13 *5 870979 *6 48872174
+770 00 *å 14 *5 870979 *6 48872174
+770 00 *å 15 *5 870979 *6 48872174
+770 00 *å 16 *5 870979 *6 48872174
+770 00 *å 17 *5 870979 *6 48872174
+795 00 *å 11 *a Antifon til salme 103, 1992 *u Lov Herren, alt, hvad han skabte *c for blandet kor (SSAATB) og orgel
+795 00 *å 12 *a Antifon til advent, 1991 *u Lyset fra det høje har besøgt os *c for blandet kor (SSATB) og orgel
+795 00 *å 13 *a En ¤sød og liflig klang *c for 2-stemmigt kvindekor (SS) og orgel
+795 00 *å 14 *a Lad det klinge sødt i sky *c for 3-stemmigt kvindekor (SSA) og orgel
+795 00 *å 15 *a Vi kræver tegn *c for blandet kor (SSATB) og orgel
+795 00 *å 16 *a Behold os, Herre! ved dit ord *c for 3-stemmigt kvindekor (SSA), fløjte og orgel
+795 00 *å 17 *a Kantate for baryton, 3-stemmigt kvindekor (SSA) og orgel, 2012 *u Som forårssolen morgenrød
+990 00 *b v *n F1 *u nt
+996 00 *a DBC
+d08 00 *f jni *o jni *k lhp
+d09 00 *z SFM202039
+s12 00 *t TeamBAM202037
+z98 00 *a Minus korrekturprint
+z99 00 *a lhp

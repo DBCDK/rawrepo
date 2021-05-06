@@ -1,0 +1,44 @@
+001 00 *a 48141943 *b 870970 *c 20200810090225 *d 20200421 *f a
+004 00 *r n *a e
+008 00 *t s *u f *a 2020 *b gb *l dan *x 06 *v 0
+009 00 *a m *b s *g th *a s *g xc *b a *h xx
+021 00 *b Brugsretskategori: D
+023 00 *b 0714298322248
+032 00 *x ACM202017 *x BKM202034
+245 00 *a Searching for secret heroes *c the story behind Samuel B. Charters' legendary lost 1962 film, "The blues"
+260 00 *a [S.l.] *b Document Records *c 2020
+300 00 *n 1 dvd-video *l ca. 77 min. *n 1 cd *d 1 kommentarbilag
+504 00 *& 1 *a Gennem interviews foretaget i 2013 fortæller Samuel og Ann Charters om tilblivelsen af filmen "The blues", der i 1962 dokumenterede en række betydningsfulde blueskunstnere for første gang. Dvd'en indeholder også hele filmen "The blues", på cd'en findes filmens soundtrack, og bilaget indeholder kunstnerbiografier m.m.
+512 00 *a Dvd: Engelsk tale. Produktion: Document Records (Storbritannien), 2018
+512 00 *i Cd *e Compiled by: Gary Atkinson *b . Indspillet 1927-1962. "Soundtrack from "The blues" with unreleased outtakes plus original, pre-war recordings"
+530 00 *i Indhold (dvd) *t Searching for secret heroes *b  : the making of the film "The blues" *e interviews with Sam and Ann Charters conducted by Gary Atkinson *e directed by Gary Atkinson *t The ¤blues *e a film by Samuel Charters
+531 00 *a Indhold (cd):
+538 00 *f Document *g DODVD-32-20-24
+600 00 *5 870979 *6 48623964
+610 00 *5 870979 *6 48280129
+652 00 *m 78.9062 *v 2
+652 00 *p 77.64
+652 00 *p 78.7921
+652 00 *å 1 *p 99.4 *a Charters *h Samuel
+666 00 *0 *m blues *m country blues *m delta blues *n vokal *p 1920-1929 *p 1930-1939 *p 1960-1969 *l USA
+666 00 *0 *f dokumentarfilm
+666 00 *0 *f musikere
+666 00 *0 *o soundtracks
+666 00 *0 *o interviews
+600 00 *5 870979 *6 48623964
+700 00 *5 870979 *6 48623972
+770 00 *å 11 *5 870979 *6 48623999
+770 00 *å 12 *5 870979 *6 48623999
+770 00 *å 13 *5 870979 *6 48623999
+795 00 *å 11 *a Dark was the night, cold was the ground
+795 00 *å 12 *a Alone in the evening hours
+795 00 *å 13 *a Telephone arguin' again
+900 00 *a Charters *h Sam *z 652/1(a,h)
+900 00 *a Charters *h Samuel B. *z 652/1(a,h)
+990 00 *b v *u nt
+996 00 *a DBC
+d08 00 *f jaw *o jaw *k dnj
+d09 00 *z ACP202017 *z SFG202034
+s12 00 *t TeamBAM202031
+z98 00 *a Minus korrekturprint
+z99 00 *a jaw
