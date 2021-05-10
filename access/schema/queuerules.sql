@@ -7,12 +7,13 @@ INSERT INTO queueworkers (worker) VALUES ('broend-sync');
 INSERT INTO queueworkers (worker) VALUES ('danbib-ph-libv3');
 INSERT INTO queueworkers (worker) VALUES ('dataio-bulk-sync');
 INSERT INTO queueworkers (worker) VALUES ('dataio-socl-sync-bulk');
+INSERT INTO queueworkers (worker) VALUES ('holdings-096');
 INSERT INTO queueworkers (worker) VALUES ('ims-bulk-sync');
 INSERT INTO queueworkers (worker) VALUES ('ims-sync');
 INSERT INTO queueworkers (worker) VALUES ('oai-set-matcher');
 INSERT INTO queueworkers (worker) VALUES ('socl-sync');
-INSERT INTO queueworkers (worker) VALUES ('solr-sync-bulk');
 INSERT INTO queueworkers (worker) VALUES ('solr-sync-basis');
+INSERT INTO queueworkers (worker) VALUES ('solr-sync-bulk');
 
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('agency-delete','broend-sync','A','Y');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('agency-delete','socl-sync','Y','A');
@@ -45,5 +46,8 @@ INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('solr-sync-bulk
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','basis-decentral','Y','A');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','broend-sync','A','Y');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('opencataloging-update','socl-sync','Y','A');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('public-rr-corepo-update', 'broend-sync', 'A', 'Y');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('public-rr-corepo-update', 'holdings-096', 'A', 'Y');
+INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('public-rr-corepo-update', 'socl-sync', 'Y', 'A');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr','socl-sync','Y','A');
 INSERT INTO queuerules (provider, worker, changed, leaf) VALUES ('update-rawrepo-solr','solr-sync-basis','A','A');
