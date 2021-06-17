@@ -7,6 +7,8 @@ package dk.dbc.marcrecord;
 
 
 import dk.dbc.common.records.MarcField;
+import dk.dbc.common.records.MarcFieldReader;
+import dk.dbc.common.records.MarcFieldWriter;
 import dk.dbc.common.records.MarcRecord;
 import dk.dbc.common.records.MarcRecordFactory;
 import dk.dbc.common.records.MarcRecordReader;
@@ -524,6 +526,62 @@ class ExpandCommonMarcRecordTest {
         collection.put("48873073", loadMarcRecord(AUTHORITY_48873073));
 
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "48776108")), equalTo(expanded));
+    }
+
+    @Test
+    void missingPartOfAuthorName_A() throws Exception {
+        final MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214592);
+        final MarcRecordReader expandedRecordReader = new MarcRecordReader(expanded);
+        final MarcRecordWriter expandedRecordWriter = new MarcRecordWriter(expanded);
+        expandedRecordWriter.addOrReplaceSubfield("900", "w", "Michael");
+
+        for (MarcField field : expandedRecordReader.getFieldAll("700")) {
+            final MarcFieldReader fieldReader = new MarcFieldReader(field);
+            if ("Michael".equals(fieldReader.getValue("h"))) {
+                new MarcFieldWriter(field).removeSubfield("a");
+            }
+        }
+
+        final MarcRecord auth1 = loadMarcRecord(AUTHORITY_68354153);
+        final MarcRecord auth2 = loadMarcRecord(AUTHORITY_68472806);
+        final MarcRecord auth3 = loadMarcRecord(AUTHORITY_68585627);
+        new MarcRecordWriter(auth2).removeSubfield("100", "a");
+
+        final Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("5 321 459 2", loadMarcRecord(AUT_RAW_53214592));
+        collection.put("68354153", auth1);
+        collection.put("68472806", auth2);
+        collection.put("68585627", auth3);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
+    }
+
+    @Test
+    void missingPartOfAuthorName_H() throws Exception {
+        final MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_53214592);
+        final MarcRecordReader expandedRecordReader = new MarcRecordReader(expanded);
+        final MarcRecordWriter expandedRecordWriter = new MarcRecordWriter(expanded);
+        expandedRecordWriter.addOrReplaceSubfield("900", "w", "Hviid Jacobsen");
+
+        for (MarcField field : expandedRecordReader.getFieldAll("700")) {
+            final MarcFieldReader fieldReader = new MarcFieldReader(field);
+            if ("Hviid Jacobsen".equals(fieldReader.getValue("a"))) {
+                new MarcFieldWriter(field).removeSubfield("h");
+            }
+        }
+
+        final MarcRecord auth1 = loadMarcRecord(AUTHORITY_68354153);
+        final MarcRecord auth2 = loadMarcRecord(AUTHORITY_68472806);
+        final MarcRecord auth3 = loadMarcRecord(AUTHORITY_68585627);
+        new MarcRecordWriter(auth2).removeSubfield("100", "h");
+
+        final Map<String, MarcRecord> collection = new HashMap<>();
+        collection.put("5 321 459 2", loadMarcRecord(AUT_RAW_53214592));
+        collection.put("68354153", auth1);
+        collection.put("68472806", auth2);
+        collection.put("68585627", auth3);
+
+        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
     }
 
     private MarcRecord sortRecord(MarcRecord record) {
