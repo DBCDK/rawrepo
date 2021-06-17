@@ -20,8 +20,6 @@
  */
 package dk.dbc.marcxmerge;
 
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -39,8 +37,6 @@ import java.util.regex.Pattern;
  * @author DBC {@literal <dbc.dk>}
  */
 public class FieldRules {
-    private static final XLogger logger = XLoggerFactory.getXLogger(FieldRules.class);
-
     public static final String INVALID_DEFAULT = "";
     public static final String OVERWRITE_DEFAULT = "001;004;005;006;013;014;017;035;036;240;243;247;300"
             + ";008 009 038 039 100 110 239 245 652 654"; // Opstillingsdata

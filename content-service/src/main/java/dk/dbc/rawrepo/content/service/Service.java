@@ -177,7 +177,7 @@ public abstract class Service {
                     boolean allowDeleted = requestRecord.allowDeleted != null && requestRecord.allowDeleted;
 
                     logger.info("Request for id : " + requestRecord.bibliographicRecordId + " agency : " + requestRecord.agencyId +
-                            " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate == null ? false : requestRecord.includeAgencyPrivate));
+                            " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate != null && requestRecord.includeAgencyPrivate));
                     FetchResponseRecord record = new FetchResponseRecord(requestRecord.bibliographicRecordId, requestRecord.agencyId);
                     try {
                         switch (requestRecord.mode) {
@@ -205,7 +205,7 @@ public abstract class Service {
                     }
                     fetchResponseRecords.records.add(record);
                     logger.info("Response added for id : " + requestRecord.bibliographicRecordId + " agency : " + requestRecord.agencyId +
-                            " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate == null ? false : requestRecord.includeAgencyPrivate));
+                            " Delete allowed : " + allowDeleted + " mode " + requestRecord.mode.name() + " private " + (requestRecord.includeAgencyPrivate != null && requestRecord.includeAgencyPrivate));
                 }
                 out.value = fetchResponseRecords;
             }

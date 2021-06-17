@@ -55,12 +55,10 @@ public class StandardResponse {
     public static class Result {
 
         @XmlType(namespace = C.NS)
-        public static enum Status {
+        public enum Status {
 
             SUCCESS, PARTIAL, FAILURE
         }
-
-        ;
 
         @XmlElement(namespace = C.NS, required = true, nillable = false)
         public Status status;

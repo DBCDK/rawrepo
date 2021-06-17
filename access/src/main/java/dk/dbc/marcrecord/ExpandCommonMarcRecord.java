@@ -398,9 +398,19 @@ public class ExpandCommonMarcRecord {
                 }
             } else {
                 final MarcFieldReader authField100Reader = new MarcFieldReader(authAuthorField);
-                sb.append(authField100Reader.getValue("a"));
-                sb.append(", ");
-                sb.append(authField100Reader.getValue("h"));
+                final boolean hasAuthField100A = authField100Reader.hasSubfield("a");
+                final boolean hasAuthField100H = authField100Reader.hasSubfield("h");
+
+                if (hasAuthField100A && hasAuthField100H) {
+                    sb.append(authField100Reader.getValue("a"));
+                    sb.append(", ");
+                    sb.append(authField100Reader.getValue("h"));
+                } else if (hasAuthField100A) {
+                    sb.append(authField100Reader.getValue("a"));
+                } else if (hasAuthField100H) {
+                    sb.append(authField100Reader.getValue("h"));
+                }
+
                 if (authField100Reader.hasSubfield("c")) {
                     sb.append(" (");
                     sb.append(authField100Reader.getValue("c"));

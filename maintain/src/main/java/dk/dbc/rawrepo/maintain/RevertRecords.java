@@ -46,7 +46,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -55,8 +54,8 @@ public class RevertRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(RevertRecords.class);
 
-    RevertRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) {
-        super(dataSource, vipCoreLibraryRulesConnector, executorService);
+    RevertRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
+        super(dataSource, vipCoreLibraryRulesConnector);
     }
 
     HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {
