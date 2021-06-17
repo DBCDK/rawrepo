@@ -68,14 +68,8 @@ class RemoveRecords extends RawRepoWorker {
     private final DocumentBuilder documentBuilder;
     private final Transformer transformer;
 
-    RemoveRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) throws MarcXMergerException {
-        super(dataSource, vipCoreLibraryRulesConnector, executorService);
-        this.documentBuilder = newDocumentBuilder();
-        this.transformer = newTransformer();
-    }
-
     RemoveRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) throws MarcXMergerException {
-        super(dataSource, vipCoreLibraryRulesConnector, null);
+        super(dataSource, vipCoreLibraryRulesConnector);
         this.documentBuilder = newDocumentBuilder();
         this.transformer = newTransformer();
     }
@@ -178,8 +172,8 @@ class RemoveRecords extends RawRepoWorker {
         Node child = marcx.getFirstChild();
         for (; ; ) {
             if (child == null ||
-                    (child.getNodeType() == Node.ELEMENT_NODE &&
-                            "datafield".equals(child.getLocalName()))) {
+                    child.getNodeType() == Node.ELEMENT_NODE &&
+                            "datafield".equals(child.getLocalName())) {
                 int cmp = -1;
                 if (child != null) {
                     final String tag = ((Element) child).getAttribute("tag");
@@ -198,8 +192,8 @@ class RemoveRecords extends RawRepoWorker {
                     for (; ; ) {
                         // http://www.kat-format.dk/danMARC2/Danmarc2.7.htm
                         // r is 1st field
-                        if (subChild == null || (subChild.getNodeType() == Node.ELEMENT_NODE &&
-                                "subfield".equals(subChild.getLocalName()))) {
+                        if (subChild == null || subChild.getNodeType() == Node.ELEMENT_NODE &&
+                                "subfield".equals(subChild.getLocalName())) {
                             boolean isR = false;
                             if (subChild != null) {
                                 String code = ((Element) subChild).getAttribute("code");

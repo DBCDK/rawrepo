@@ -20,9 +20,6 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,7 +35,7 @@ import java.util.Map;
 public class QueueRules extends RawRepoWorker {
 
     public QueueRules(DataSource dataSource) {
-        super(dataSource, null, null);
+        super(dataSource, null);
     }
 
     public ArrayList<Provider> getQueueRules() throws SQLException {

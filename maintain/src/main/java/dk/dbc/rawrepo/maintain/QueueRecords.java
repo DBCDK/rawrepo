@@ -43,8 +43,8 @@ public class QueueRecords extends RawRepoWorker {
 
     private static final Logger log = LoggerFactory.getLogger(QueueRecords.class);
 
-    public QueueRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) {
-        super(dataSource, vipCoreLibraryRulesConnector, executorService);
+    public QueueRecords(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
+        super(dataSource, vipCoreLibraryRulesConnector);
     }
 
     public HashMap<String, ArrayList<String>> getValues(HashMap<String, List<String>> valuesSet, String leaving) {

@@ -51,8 +51,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -70,8 +68,6 @@ public class Service {
 
     private String name;
 
-    private ExecutorService executorService;
-
     @Inject
     private VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
 
@@ -80,7 +76,6 @@ public class Service {
         log.info("init()");
 
         this.name = System.getenv(C.NAME);
-        this.executorService = Executors.newFixedThreadPool(2);
     }
 
     @WebMethod(operationName = C.OPERATION_PAGE_CONTENT)
@@ -111,17 +106,17 @@ public class Service {
 
             switch (method) {
                 case "queueRecords":
-                    try (QueueRecords queueRecords = new QueueRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+                    try (QueueRecords queueRecords = new QueueRecords(dataSource, vipCoreLibraryRulesConnector)) {
                         valuesOut = queueRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "removeRecords":
-                    try (RemoveRecords removeRecords = new RemoveRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+                    try (RemoveRecords removeRecords = new RemoveRecords(dataSource, vipCoreLibraryRulesConnector)) {
                         valuesOut = removeRecords.getValues(valuesSet, leaving);
                     }
                     break;
                 case "revertRecords":
-                    try (RevertRecords revertRecords = new RevertRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+                    try (RevertRecords revertRecords = new RevertRecords(dataSource, vipCoreLibraryRulesConnector)) {
                         valuesOut = revertRecords.getValues(valuesSet, leaving);
                     }
                     break;
@@ -165,7 +160,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (QueueRecords queueRecords = new QueueRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+            try (QueueRecords queueRecords = new QueueRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = queueRecords.queueRecords(agencyId, ids.list, provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {
@@ -190,7 +185,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RemoveRecords removeRecords = new RemoveRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+            try (RemoveRecords removeRecords = new RemoveRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = removeRecords.removeRecords(agencyId, ids.list, provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {
@@ -216,7 +211,7 @@ public class Service {
         try {
             log.debug("Remote IP: " + getIp());
             validateInput();
-            try (RevertRecords revertRecords = new RevertRecords(dataSource, vipCoreLibraryRulesConnector, executorService)) {
+            try (RevertRecords revertRecords = new RevertRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = revertRecords.revertRecords(agencyId, ids.list, time.getMillis(), provider, trackingId.value);
             }
         } catch (ResponseErrorException ex) {

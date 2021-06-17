@@ -467,7 +467,7 @@ public abstract class RawRepoDAO {
     }
 
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger)
-            throws dk.dbc.rawrepo.RawRepoException, dk.dbc.marcxmerge.MarcXMergerException {
+            throws RawRepoException, MarcXMergerException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true);
     }
 

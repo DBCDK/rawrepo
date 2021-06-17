@@ -49,7 +49,7 @@ public class RawRepoWorker implements AutoCloseable {
     private Connection connection;
     private RawRepoDAO dao;
 
-    public RawRepoWorker(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector, ExecutorService executorService) {
+    public RawRepoWorker(DataSource dataSource, VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector) {
         this.dataSource = dataSource;
         this.vipCoreLibraryRulesConnector = vipCoreLibraryRulesConnector;
         this.connection = null;

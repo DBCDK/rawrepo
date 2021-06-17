@@ -22,13 +22,13 @@ package dk.dbc.rawrepo.content.service.transport;
 
 import dk.dbc.rawrepo.content.service.C;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- *
  * @author DBC {@literal <dbc.dk>}
  */
 @XmlType(namespace = C.NS)
@@ -43,8 +43,7 @@ public class FetchResponseError {
     public Type type;
 
     @XmlType(namespace = C.NS, name = "fetchResponseErrorType")
-    public static enum Type {
-
+    public enum Type {
         UNKNOWN, REQUEST_CONTENT_ERROR, AUTHENTICATION_DENIED, INTERNAL_SERVER_ERROR
     }
 
