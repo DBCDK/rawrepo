@@ -38,6 +38,7 @@ INSERT INTO version VALUES (25);
 INSERT INTO version VALUES (26);
 INSERT INTO version VALUES (27);
 INSERT INTO version VALUES (28);
+INSERT INTO version VALUES (29);
 
 CREATE TABLE configurations (-- V23
   key VARCHAR PRIMARY KEY NOT NULL,
@@ -85,13 +86,12 @@ CREATE TABLE records_archive (-- V2
   content               TEXT, -- base64 encoded
   created               TIMESTAMP WITH TIME ZONE NOT NULL,
   modified              TIMESTAMP WITH TIME ZONE NOT NULL,
-  trackingId            VARCHAR(256)             NOT NULL DEFAULT ''
+  trackingId            VARCHAR(256)             NOT NULL DEFAULT '',
+  CONSTRAINT records_archive_pkey PRIMARY KEY (bibliographicrecordid, agencyid, modified)
 );
 
 --
 -- index for looking up records in archive
-CREATE INDEX records_archive_pk
-  ON records_archive (bibliographicrecordid, agencyid, modified);
 CREATE INDEX records_archive_id
   ON records_archive (bibliographicrecordid, agencyid);
 CREATE INDEX records_archive_modified
@@ -273,6 +273,8 @@ CREATE TABLE queue (-- V2
   worker                VARCHAR(32)              NOT NULL, -- name of designated worker
   queued                TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timeofday() :: TIMESTAMP, -- timestamp for when it has been put into the queue
   priority              NUMERIC(4)               NOT NULL DEFAULT 500,
+  id                    BIGSERIAL                NOT NULL,
+  CONSTRAINT queue_pkey PRIMARY KEY (id),
   CONSTRAINT queue_fk_worker FOREIGN KEY (worker) REFERENCES queueworkers (worker)
   -- NO primary key
   -- if it's claimed by worker
@@ -286,8 +288,9 @@ CREATE TABLE jobdiag (-- V17
   worker                VARCHAR(32)              NOT NULL, -- name of designated worker
   error                 TEXT                     NOT NULL, -- errormessage
   queued                TIMESTAMP WITH TIME ZONE NOT NULL, -- timestamp for when it has been put into the queue
-  priority              NUMERIC(4)               NOT NULL DEFAULT 500
-  -- NO primary key
+  priority              NUMERIC(4)               NOT NULL DEFAULT 500,
+  id                    BIGSERIAL                NOT NULL,
+  CONSTRAINT jobdiag_pkey PRIMARY KEY (id)
   -- if it's claimed by worker
   -- a new job should be reinserted
 );
