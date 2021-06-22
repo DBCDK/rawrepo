@@ -148,21 +148,18 @@ CREATE TABLE records_summary (-- V23
 CREATE OR REPLACE FUNCTION refresh_records_summary()
     RETURNS SETOF records_summary AS $$
 DECLARE
-    agencyid_ NUMERIC;
     row records_summary;
 BEGIN
-    FOR agencyid_ IN SELECT DISTINCT(agencyid) FROM records LOOP
+    FOR row  IN
             SELECT agencyid,
                    count(*) FILTER (WHERE deleted = 'F' AND mimetype != 'text/enrichment+marcxchange') AS original_count,
                    count(*) FILTER (WHERE deleted = 'F' AND mimetype = 'text/enrichment+marcxchange') AS enrichment_count,
                    count(*) FILTER (WHERE deleted = 'T') AS deleted_count,
                    max(modified) AS ajour_date
-            INTO row
             FROM records
-            WHERE agencyid = agencyid_
             GROUP BY agencyid
-            ORDER BY agencyid;
-
+            ORDER BY agencyid
+        LOOP
             INSERT INTO records_summary (agencyId,
                                          original_count,
                                          enrichment_count,
