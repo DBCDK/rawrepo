@@ -87,7 +87,7 @@ public class RelationHintsVipCoreTest {
 
         List<Integer> agencies;
         agencies = relationHints.get(191919);
-        assertThat(Arrays.asList(870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         usesCommonAgency = relationHints.usesCommonAgency(123456);
         assertFalse(usesCommonAgency);
@@ -99,34 +99,37 @@ public class RelationHintsVipCoreTest {
         assertThat(Collections.singletonList(123456), is(agencies));
 
         agencies = relationHints.getAgencyPriority(861620);
-        assertThat(Arrays.asList(861620, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(861620, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870970);
-        assertThat(Arrays.asList(870970, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870970, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870971);
-        assertThat(Arrays.asList(870971, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870971, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870974);
-        assertThat(Arrays.asList(870974, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870974, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870975);
-        assertThat(Arrays.asList(870975, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870975, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870976);
-        assertThat(Arrays.asList(870976, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870976, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
+
+        agencies = relationHints.getAgencyPriority(870978);
+        assertThat(Arrays.asList(870978, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(870979);
-        assertThat(Arrays.asList(870979, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(870979, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190002);
-        assertThat(Arrays.asList(190002, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(190002, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190004);
-        assertThat(Arrays.asList(190004, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(190004, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
 
         agencies = relationHints.getAgencyPriority(190007);
-        assertThat(Arrays.asList(190007, 870970, 870971, 870974, 870975, 870976, 870979, 190002, 190004, 190007), is(agencies));
+        assertThat(Arrays.asList(190007, 870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007), is(agencies));
     }
 
 }
