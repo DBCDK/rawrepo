@@ -88,6 +88,7 @@ CREATE TABLE records_archive (-- V2
   trackingId            VARCHAR(256)             NOT NULL DEFAULT '',
   CONSTRAINT records_archive_pkey PRIMARY KEY (bibliographicrecordid, agencyid, modified)
 );
+-- Primary key is the same as the records table plus 'modified'.
 
 --
 -- index for looking up records in archive
@@ -272,10 +273,9 @@ CREATE TABLE queue (-- V2
   worker                VARCHAR(32)              NOT NULL, -- name of designated worker
   queued                TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timeofday() :: TIMESTAMP, -- timestamp for when it has been put into the queue
   priority              NUMERIC(4)               NOT NULL DEFAULT 500,
-  id                    BIGSERIAL                NOT NULL,
-  CONSTRAINT queue_pkey PRIMARY KEY (id),
+  id                    BIGSERIAL                NOT NULL, -- auto-incremented BIGINT with DEFAULT nextval for a sequence
+  CONSTRAINT queue_pkey PRIMARY KEY (id), -- Primary key is added to support live migration of the database, as that operation needs a primary key on all tables, but otherwise the key is not used
   CONSTRAINT queue_fk_worker FOREIGN KEY (worker) REFERENCES queueworkers (worker)
-  -- NO primary key
   -- if it's claimed by worker
   -- a new job should be reinserted
 );
@@ -288,8 +288,8 @@ CREATE TABLE jobdiag (-- V17
   error                 TEXT                     NOT NULL, -- errormessage
   queued                TIMESTAMP WITH TIME ZONE NOT NULL, -- timestamp for when it has been put into the queue
   priority              NUMERIC(4)               NOT NULL DEFAULT 500,
-  id                    BIGSERIAL                NOT NULL,
-  CONSTRAINT jobdiag_pkey PRIMARY KEY (id)
+  id                    BIGSERIAL                NOT NULL, -- auto-incremented BIGINT with DEFAULT nextval for a sequence
+  CONSTRAINT jobdiag_pkey PRIMARY KEY (id) --Primary key is added to support live migration of the database, as that operation needs a primary key on all tables, but otherwise the key is not used
   -- if it's claimed by worker
   -- a new job should be reinserted
 );
