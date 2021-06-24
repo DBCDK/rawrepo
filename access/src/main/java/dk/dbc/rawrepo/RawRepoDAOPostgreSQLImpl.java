@@ -417,12 +417,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             stmt.setString(pos, record.getEnrichmentTrail());
             stmt.execute();
         } catch (SQLException ex) {
-            if (ex.getMessage().contains("deadlock detected")) {
-                logger.error("Deadlock detected during saveRecordCache - ignoring error as it is non-critical", ex);
-            } else {
-                // Rethrow exception if is not a deadlock
-                throw new RawRepoException(LOG_DATABASE_ERROR, ex);
-            }
+            logger.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error updating record", ex);
         } finally {
             watch.stop("rawrepo.query.CALL_UPSERT_RECORDS_CACHE");
         }
