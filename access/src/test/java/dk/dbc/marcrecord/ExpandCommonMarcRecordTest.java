@@ -158,7 +158,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("19024709", auth1);
         collection.put("19024687", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 284 694 3")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 284 694 3"), equalTo(expanded));
     }
 
     @Test
@@ -175,7 +175,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("69328776", auth2);
         collection.put("19043800", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 302 575 7")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 302 575 7"), equalTo(expanded));
     }
 
     @Test
@@ -192,7 +192,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68098203", auth2);
         collection.put("19064689", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 316 151 0")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 316 151 0"), equalTo(expanded));
     }
 
     @Test
@@ -211,7 +211,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68900719", auth3);
         collection.put("68560985", auth4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 318 048 5")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 318 048 5"), equalTo(expanded));
     }
 
     @Test
@@ -226,7 +226,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68895650", auth1);
         collection.put("19130452", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 364 2")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 364 2"), equalTo(expanded));
     }
 
     @Test
@@ -243,7 +243,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68472806", auth3);
         collection.put("68585627", auth4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2"), equalTo(expanded));
     }
 
     @Test
@@ -256,7 +256,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("5 321 482 7", raw);
         collection.put("68570492", auth1);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 482 7")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 482 7"), equalTo(expanded));
     }
 
     @Test
@@ -271,14 +271,14 @@ class ExpandCommonMarcRecordTest {
         collection.put("68712742", auth1);
         collection.put("69294685", auth2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158"), equalTo(expanded));
     }
 
     @Test
     void noCommonRecord() {
         Map<String, MarcRecord> collection = new HashMap<>();
 
-        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "")));
+        Assertions.assertThrows(RawRepoException.class, () -> ExpandCommonMarcRecord.expandMarcRecord(collection, ""));
     }
 
     @Test
@@ -288,7 +288,7 @@ class ExpandCommonMarcRecordTest {
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("90004158", record);
 
-        Assertions.assertThrows(RawRepoException.class, () -> sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158")));
+        Assertions.assertThrows(RawRepoException.class, () -> ExpandCommonMarcRecord.expandMarcRecord(collection, "90004158"));
     }
 
     @Test
@@ -298,7 +298,7 @@ class ExpandCommonMarcRecordTest {
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("20611529", record);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "20611529")), equalTo(record));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "20611529"), equalTo(record));
     }
 
     @Test
@@ -311,7 +311,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("26443784", raw);
         collection.put("68313686", authority);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "26443784")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "26443784"), equalTo(expanded));
     }
 
     @Test
@@ -328,7 +328,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68058953", authority1);
         collection.put("68560985", authority2);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126350333")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "126350333"), equalTo(expanded));
     }
 
     @Test
@@ -350,7 +350,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68619858", authority3);
         collection.put("68679265", authority4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298"), equalTo(expanded));
     }
 
     @Test
@@ -376,7 +376,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68619858", authority3);
         collection.put("68679265", authority4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298"), equalTo(expanded));
     }
 
     @Test
@@ -402,7 +402,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68619858", authority3);
         collection.put("68679265", authority4);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "126850298"), equalTo(expanded));
     }
 
     @Test
@@ -417,7 +417,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48872336", loadMarcRecord(AUTHORITY_48872336));
         collection.put("48872247", loadMarcRecord(AUTHORITY_48872247));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "22642448")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "22642448"), equalTo(expanded));
     }
 
     @Test
@@ -427,7 +427,7 @@ class ExpandCommonMarcRecordTest {
         Map<String, MarcRecord> collection = new HashMap<>();
         collection.put("26081718", loadMarcRecord(AUT_RAW_26081718));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "26081718")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "26081718"), equalTo(expanded));
     }
 
     @Test
@@ -442,7 +442,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68759498", loadMarcRecord(AUTHORITY_68759498));
         collection.put("48872247", loadMarcRecord(AUTHORITY_48872247));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "27568602")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "27568602"), equalTo(expanded));
     }
 
     @Test
@@ -453,7 +453,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("47625475", loadMarcRecord(AUT_RAW_47625475));
         collection.put("48872336", loadMarcRecord(AUTHORITY_48872336));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "47625475")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "47625475"), equalTo(expanded));
     }
 
     @Test
@@ -468,7 +468,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48623999", loadMarcRecord(AUTHORITY_48623999));
 
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "48141943")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "48141943"), equalTo(expanded));
     }
 
     @Test
@@ -479,7 +479,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48802362", loadMarcRecord(AUT_RAW_48802362));
         collection.put("48872174", loadMarcRecord(AUTHORITY_48872174));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "48802362")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "48802362"), equalTo(expanded));
     }
 
     @Test
@@ -490,7 +490,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48867472", loadMarcRecord(AUT_RAW_48867472));
         collection.put("47220882", loadMarcRecord(AUTHORITY_47220882));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "48867472")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "48867472"), equalTo(expanded));
     }
 
     @Test
@@ -501,7 +501,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("53333338", loadMarcRecord(AUT_RAW_53333338));
         collection.put("47919142", loadMarcRecord(AUTHORITY_47919142));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "53333338")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "53333338"), equalTo(expanded));
     }
 
     @Test
@@ -513,7 +513,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("69518060", loadMarcRecord(AUTHORITY_69518060));
         collection.put("48327826", loadMarcRecord(AUTHORITY_48327826));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "53356478")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "53356478"), equalTo(expanded));
     }
 
     @Test
@@ -527,7 +527,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48872328", loadMarcRecord(AUTHORITY_48872328));
         collection.put("48872158", loadMarcRecord(AUTHORITY_48872158));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "53551173")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "53551173"), equalTo(expanded));
     }
 
     @Test
@@ -538,7 +538,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("48776108", loadMarcRecord(AUT_RAW_48776108));
         collection.put("48873073", loadMarcRecord(AUTHORITY_48873073));
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "48776108")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "48776108"), equalTo(expanded));
     }
 
     @Test
@@ -566,7 +566,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68472806", auth2);
         collection.put("68585627", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2"), equalTo(expanded));
     }
 
     @Test
@@ -594,7 +594,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("68472806", auth2);
         collection.put("68585627", auth3);
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2"), equalTo(expanded));
     }
 
     @Test
@@ -617,13 +617,7 @@ class ExpandCommonMarcRecordTest {
         collection.put("69242162", loadMarcRecord(AUTHORITY_69242162));
 
 
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "130955754")), equalTo(expanded));
-    }
-
-    private MarcRecord sortRecord(MarcRecord record) {
-        record.getFields().sort(Comparator.comparing(MarcField::getName));
-
-        return record;
+        assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "130955754"), equalTo(expanded));
     }
 
     private static Record recordFromContent(final MarcRecord marcRecord) throws Exception {
@@ -635,7 +629,7 @@ class ExpandCommonMarcRecordTest {
             boolean deleted = false;
             boolean enriched = false;
             byte[] content = RecordContentTransformer.encodeRecord(marcRecord);
-            String trackingId = "Track-" + id + ":" + Integer.toString(agencyId);
+            String trackingId = "Track-" + id + ":" + agencyId;
             String mimeType = findMimeType();
 
             private String findMimeType() {

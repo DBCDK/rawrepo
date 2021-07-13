@@ -75,7 +75,7 @@ public class ExpandCommonMarcRecord {
             final MarcRecord expandedMarcRecord = doExpand(commonMarcRecord, authorityMarcRecords, keepAutFields);
             logger.debug("Stopwatch - {} took {} ms", "doExpand", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
-            sortFields(expandedMarcRecord);
+
             logger.debug("Stopwatch - {} took {} ms", "sortFields", stopWatch.getElapsedTime(TimeUnit.MILLISECONDS));
             stopWatch.reset();
 
@@ -181,6 +181,8 @@ public class ExpandCommonMarcRecord {
                 expandedRecord.getFields().add(new MarcField(field));
             }
         }
+
+        sortFields(expandedRecord);
 
         return expandedRecord;
     }
@@ -431,15 +433,10 @@ public class ExpandCommonMarcRecord {
                 final MarcFieldReader fr1 = new MarcFieldReader(m1);
                 final MarcFieldReader fr2 = new MarcFieldReader(m2);
 
-                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : 0;
-                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : 0;
+                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : -1;
+                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : -1;
 
-                // One or both fields doesn't have *å so don't rearrange
-                if (aa1 == 0 || aa2 == 0) {
-                    return 0;
-                } else {
-                    return aa2 - aa1;
-                }
+                return aa1 - aa2;
             }
 
             return m1.getName().compareTo(m2.getName());
