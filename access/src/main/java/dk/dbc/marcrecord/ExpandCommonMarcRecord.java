@@ -431,15 +431,10 @@ public class ExpandCommonMarcRecord {
                 final MarcFieldReader fr1 = new MarcFieldReader(m1);
                 final MarcFieldReader fr2 = new MarcFieldReader(m2);
 
-                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : 0;
-                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : 0;
+                final String aa1 = fr1.hasSubfield("å") ? fr1.getValue("å") : "";
+                final String aa2 = fr2.hasSubfield("å") ? fr2.getValue("å") : "";
 
-                // One or both fields doesn't have *å so don't rearrange
-                if (aa1 == 0 || aa2 == 0) {
-                    return 0;
-                } else {
-                    return aa2 - aa1;
-                }
+                return aa1.compareTo(aa2);
             }
 
             return m1.getName().compareTo(m2.getName());

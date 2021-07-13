@@ -55,7 +55,6 @@ class ExpandCommonMarcRecordTest {
     private static final String AUT_RAW_53356478 = "authority/raw-53356478.marc";
     private static final String AUT_RAW_53551173 = "authority/raw-53551173.marc";
     private static final String AUT_RAW_90004158 = "authority/raw-90004158.marc";
-    private static final String AUT_RAW_130955754 = "authority/raw-130955754.marc";
 
     private static final String AUT_EXPANDED_126350333 = "authority/expanded-126350333.marc";
     private static final String AUT_EXPANDED_126850298 = "authority/expanded-126850298.marc";
@@ -79,13 +78,11 @@ class ExpandCommonMarcRecordTest {
     private static final String AUT_EXPANDED_53356478 = "authority/expanded-53356478.marc";
     private static final String AUT_EXPANDED_53551173 = "authority/expanded-53551173.marc";
     private static final String AUT_EXPANDED_90004158 = "authority/expanded-90004158.marc";
-    private static final String AUT_EXPANDED_130955754 = "authority/expanded-130955754.marc";
 
     private static final String AUTHORITY_19024687 = "authority/authority-19024687.marc";
     private static final String AUTHORITY_19024709 = "authority/authority-19024709.marc";
     private static final String AUTHORITY_19043800 = "authority/authority-19043800.marc";
     private static final String AUTHORITY_19064689 = "authority/authority-19064689.marc";
-    private static final String AUTHORITY_19104869 = "authority/authority-19104869.marc";
     private static final String AUTHORITY_19130452 = "authority/authority-19130452.marc";
     private static final String AUTHORITY_47220882 = "authority/authority-47220882.marc";
     private static final String AUTHORITY_47919142 = "authority/authority-47919142.marc";
@@ -107,33 +104,23 @@ class ExpandCommonMarcRecordTest {
     private static final String AUTHORITY_68058953 = "authority/authority-68058953.marc";
     private static final String AUTHORITY_68098203 = "authority/authority-68098203.marc";
     private static final String AUTHORITY_68139864 = "authority/authority-68139864.marc";
-    private static final String AUTHORITY_68219027 = "authority/authority-68219027.marc";
     private static final String AUTHORITY_68313686 = "authority/authority-68313686.marc";
     private static final String AUTHORITY_68354153 = "authority/authority-68354153.marc";
     private static final String AUTHORITY_68432359 = "authority/authority-68432359.marc";
     private static final String AUTHORITY_68472806 = "authority/authority-68472806.marc";
     private static final String AUTHORITY_68560985 = "authority/authority-68560985.marc";
-    private static final String AUTHORITY_68562554 = "authority/authority-68562554.marc";
     private static final String AUTHORITY_68570492 = "authority/authority-68570492.marc";
     private static final String AUTHORITY_68584566 = "authority/authority-68584566.marc";
     private static final String AUTHORITY_68585627 = "authority/authority-68585627.marc";
-    private static final String AUTHORITY_68611490 = "authority/authority-68611490.marc";
     private static final String AUTHORITY_68619858 = "authority/authority-68619858.marc";
-    private static final String AUTHORITY_68630258 = "authority/authority-68630258.marc";
     private static final String AUTHORITY_68679265 = "authority/authority-68679265.marc";
     private static final String AUTHORITY_68712742 = "authority/authority-68712742.marc";
     private static final String AUTHORITY_68750679 = "authority/authority-68750679.marc";
     private static final String AUTHORITY_68759498 = "authority/authority-68759498.marc";
-    private static final String AUTHORITY_68799406 = "authority/authority-68799406.marc";
-    private static final String AUTHORITY_68801451 = "authority/authority-68801451.marc";
     private static final String AUTHORITY_68839734 = "authority/authority-68839734.marc";
     private static final String AUTHORITY_68895650 = "authority/authority-68895650.marc";
-    private static final String AUTHORITY_68897785 = "authority/authority-68897785.marc";
     private static final String AUTHORITY_68900719 = "authority/authority-68900719.marc";
-    private static final String AUTHORITY_68942667 = "authority/authority-68942667.marc";
-    private static final String AUTHORITY_68955076 = "authority/authority-68955076.marc";
     private static final String AUTHORITY_69094139 = "authority/authority-69094139.marc";
-    private static final String AUTHORITY_69242162 = "authority/authority-69242162.marc";
     private static final String AUTHORITY_69294685 = "authority/authority-69294685.marc";
     private static final String AUTHORITY_69328776 = "authority/authority-69328776.marc";
     private static final String AUTHORITY_69518060 = "authority/authority-69518060.marc";
@@ -595,29 +582,6 @@ class ExpandCommonMarcRecordTest {
         collection.put("68585627", auth3);
 
         assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "5 321 459 2")), equalTo(expanded));
-    }
-
-    @Test
-    void testSortingAa() throws Exception {
-        MarcRecord expanded = loadMarcRecord(AUT_EXPANDED_130955754);
-
-        Map<String, MarcRecord> collection = new HashMap<>();
-        collection.put("130955754", loadMarcRecord(AUT_RAW_130955754));
-        collection.put("19104869", loadMarcRecord(AUTHORITY_19104869));
-        collection.put("68139864", loadMarcRecord(AUTHORITY_68139864));
-        collection.put("68219027", loadMarcRecord(AUTHORITY_68219027));
-        collection.put("68562554", loadMarcRecord(AUTHORITY_68562554));
-        collection.put("68611490", loadMarcRecord(AUTHORITY_68611490));
-        collection.put("68630258", loadMarcRecord(AUTHORITY_68630258));
-        collection.put("68799406", loadMarcRecord(AUTHORITY_68799406));
-        collection.put("68801451", loadMarcRecord(AUTHORITY_68801451));
-        collection.put("68897785", loadMarcRecord(AUTHORITY_68897785));
-        collection.put("68942667", loadMarcRecord(AUTHORITY_68942667));
-        collection.put("68955076", loadMarcRecord(AUTHORITY_68955076));
-        collection.put("69242162", loadMarcRecord(AUTHORITY_69242162));
-
-
-        assertThat(sortRecord(ExpandCommonMarcRecord.expandMarcRecord(collection, "130955754")), equalTo(expanded));
     }
 
     private MarcRecord sortRecord(MarcRecord record) {
