@@ -1,0 +1,72 @@
+001 00 *a 130955754 *b 870970 *c 20210617084650 *d 20201222 *f a *t faust
+004 00 *r n *a i
+032 00 *x LIT202112
+600 00 *å 1 *a Larsen *h Thøger *c f. 1875
+600 00 *å 2 *a Paludan *h Jacob
+600 00 *å 3 *a Williams *h John *c f. 1922
+600 00 *å 4 *a Skjoldborg *h Johan
+600 00 *å 5 *a Blixen *h Karen
+600 00 *å 6 *a Hamsun *h Marie
+600 00 *å 6 *a Claussen *h Sophus
+600 00 *å 7 *a Lie *h Jonas
+600 00 *å 8 *a Lie *h Jonas
+600 00 *å 9 *a Lie *h Jonas
+600 00 *å 10 *a Salinger *h J. D.
+600 00 *å 10 *a Knausgård *h Karl Ove
+600 00 *å 11 *a Söderberg *h Hjalmar
+666 00 *å 1 *f dansk litteratur *f digte
+666 00 *å 2 *t Jørgen Stein *f dansk litteratur *f romaner
+666 00 *å 3 *t Stoner *f amerikansk litteratur *f romaner
+666 00 *å 4 *t Nye mænd *t Præsten i Løgum *f dansk litteratur *f romaner
+666 00 *å 5 *t Den ¤udødelige historie *f dansk litteratur *f noveller
+666 00 *å 6 *t Pan *f norsk litteratur *f romaner *t Frøken Regnvejr *f dansk litteratur *f
+666 00 *å 7 *f forfatterskaber *f norsk litteratur *f romaner
+666 00 *å 8 *t Familien pꜳ Gilje *t Kommandørens døtre *f norsk litteratur *f romaner
+666 00 *å 9 *t Onde magter *t Grabows kat *t Dyre Rein *f norsk litteratur *f romaner
+666 00 *å 10 *t Forbandede ungdom *f amerikansk litteratur *f romaner *t Min kamp *f norsk
+666 00 *å 11 *t Martin Bircks ungdom *f svensk litteratur *f romaner
+666 00 *å 12 *f forfatterskaber *f russisk litteratur *f skuespil
+666 00 *å 13 *t Howards end *f engelsk litteratur *f romaner
+666 00 *å 14 *f forfatterskaber *f tysk litteratur *f romaner
+666 00 *å 15 *t Støv og stjerner *t To verdener *t Hans Rꜳskov *f dansk litteratur *f roma
+666 00 *å 16 *t Tine *f dansk litteratur *f romaner
+770 00 *å 1 *a Pahuus *h Mogens
+770 00 *å 2 *a Pahuus *h Mogens
+770 00 *å 3 *a Pahuus *h Mogens
+770 00 *å 4 *a Pahuus *h Mogens
+770 00 *å 5 *a Pahuus *h Mogens
+770 00 *å 6 *a Pahuus *h Mogens
+770 00 *å 7 *a Pahuus *h Mogens
+770 00 *å 8 *a Pahuus *h Mogens
+770 00 *å 9 *a Pahuus *h Mogens
+770 00 *å 10 *a Pahuus *h Mogens
+770 00 *å 11 *a Pahuus *h Mogens
+770 00 *å 12 *a Pahuus *h Mogens
+770 00 *å 13 *a Pahuus *h Mogens
+770 00 *å 14 *a Pahuus *h Mogens
+770 00 *å 15 *a Pahuus *h Mogens
+770 00 *å 16 *a Pahuus *h Mogens
+795 00 *å 1 *a Digtningen og det hele menneske *c Thøger Larsen *l s. 13-33
+795 00 *å 2 *a De givne betingelser *c Jacob Paludan *l s. 33-39
+795 00 *å 3 *a At blive sig sit eget selv bevidst og at leve sin lidenskab ud *c Joh
+795 00 *å 4 *a At være sin natur tro *c Johan Skjoldborg *l s. 56-60
+795 00 *å 5 *a Involverethed og udveksling med verden *c Karen Blixen *l s. 60-67
+795 00 *å 6 *a Den ¤sværmeriske kærlighed og forelskelsen *c Hamsun og Claussen *l s.
+795 00 *å 7 *a Kærlighed, ægteskab og samliv *c Jonas Lie *l s. 73-85
+795 00 *å 8 *a Det ¤konventionelles livsundertrykkelse *c Jonas Lie *l s. 88-92
+795 00 *å 9 *a Indre magter *c Jonas Lie *l s. 99-104
+795 00 *å 10 *a Forstillelse og forløjethed i forholdet til andre *c J. D. Salinger
+795 00 *å 11 *a Resignation og livsforagt *c Hjalmar Söderberg *l s. 110-117
+795 00 *å 12 *a Hverdagslighed og melankoli *c Anton Tjekhov *l s. 117-124
+795 00 *å 13 *a Tilfældigheder *c E.M. Forster *l s. 124-132
+795 00 *å 14 *a Splittethed og harmoni *c Herman Hesse *l s. 132-143
+795 00 *å 15 *a Ensidighed i personligheden *c Knud Hjortø *l s. 143-151
+795 00 *å 16 *a Afslutning *l s. 181-192
+900 00 *a Dinesen *h Isak *x se også *w Blixen, Karen *z 600/5
+900 00 *a Andrézel *h Pierre *x se også *w Blixen, Karen *z 600/5
+900 00 *a Osceola *x se også *w Blixen, Karen *z 600/5
+900 00 *a Søderberg *h Hjalmar *x se *w Söderberg, Hjalmar *z 600/11
+966 00 *å 6 *t Frk. Regnvejr
+996 00 *a DBC
+d08 00 *o kfm *k crp
+z99 00 *a nk
