@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -629,7 +628,7 @@ class ExpandCommonMarcRecordTest {
             boolean deleted = false;
             boolean enriched = false;
             byte[] content = RecordContentTransformer.encodeRecord(marcRecord);
-            String trackingId = "Track-" + id + ":" + agencyId;
+            final String trackingId = "Track-" + id + ":" + agencyId;
             String mimeType = findMimeType();
 
             private String findMimeType() {

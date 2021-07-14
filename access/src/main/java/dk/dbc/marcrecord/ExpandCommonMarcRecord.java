@@ -433,8 +433,8 @@ public class ExpandCommonMarcRecord {
                 final MarcFieldReader fr1 = new MarcFieldReader(m1);
                 final MarcFieldReader fr2 = new MarcFieldReader(m2);
 
-                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : -1;
-                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : -1;
+                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : 0;
+                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : 0;
 
                 return aa1 - aa2;
             }
