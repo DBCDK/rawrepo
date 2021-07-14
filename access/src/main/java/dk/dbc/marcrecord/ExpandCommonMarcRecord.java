@@ -430,17 +430,26 @@ public class ExpandCommonMarcRecord {
         // First sort by field name then sort by subfield å
         record.getFields().sort((m1, m2) -> {
             if (m1.getName().equals(m2.getName())) {
-                final MarcFieldReader fr1 = new MarcFieldReader(m1);
-                final MarcFieldReader fr2 = new MarcFieldReader(m2);
-
-                final int aa1 = fr1.hasSubfield("å") ? Integer.parseInt(fr1.getValue("å")) : 0;
-                final int aa2 = fr2.hasSubfield("å") ? Integer.parseInt(fr2.getValue("å")) : 0;
-
-                return aa1 - aa2;
+                return getAaIntegerValue(m1) - getAaIntegerValue(m2);
             }
 
             return m1.getName().compareTo(m2.getName());
         });
+    }
+
+    private static int getAaIntegerValue(MarcField marcField) {
+        final MarcFieldReader marcFieldReader = new MarcFieldReader(marcField);
+
+        if (marcFieldReader.hasSubfield("å")) {
+            try {
+                return Integer.parseInt(marcFieldReader.getValue("å"));
+            } catch (NumberFormatException e) {
+                logger.error("Got invalid integer value in *å: {}", marcFieldReader.getValue("å"));
+                return 0;
+            }
+        } else {
+            return 0;
+        }
     }
 
     private static boolean hasAutFields(MarcRecord record) {
