@@ -41,7 +41,7 @@ public class RelationHintsVipCore {
 
     public List<Integer> get(Integer agencyId) throws RawRepoException {
         if (usesCommonAgency(agencyId)) {
-            return Arrays.asList(870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007);
+            return Arrays.asList(870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007, 190008);
         }
         return Collections.singletonList(agencyId);
     }
@@ -65,6 +65,7 @@ public class RelationHintsVipCore {
             agencyPriorityList.add(190002);
             agencyPriorityList.add(190004);
             agencyPriorityList.add(190007);
+            agencyPriorityList.add(190008);
         } else if (usesAuthorityAgency(agencyId)) {
             agencyPriorityList.add(870979);
         }
