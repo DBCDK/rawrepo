@@ -38,6 +38,7 @@ INSERT INTO version VALUES (26);
 INSERT INTO version VALUES (27);
 INSERT INTO version VALUES (28);
 INSERT INTO version VALUES (29);
+INSERT INTO version VALUES (30);
 
 CREATE TABLE configurations (-- V23
                                 key VARCHAR PRIMARY KEY NOT NULL,
@@ -319,7 +320,7 @@ CREATE INDEX queue_idx_job
 CREATE INDEX queue_idx_worker
     ON queue (worker, priority, queued); --V4, V22
 CREATE INDEX jobdiag_idx
-    ON jobdiag (worker, error, queued, priority); --V7, V22
+    ON jobdiag (worker, queued, priority); --V7, V22, V30
 -- DROP TYPE enqueueResult;
 CREATE TYPE ENQUEUERESULT AS (worker VARCHAR(32), queued BOOLEAN);
 
@@ -482,7 +483,7 @@ $$
 
 CREATE OR REPLACE FUNCTION upsert_records_cache(_bibliographicrecordid character varying, _agencyid numeric, _cachekey text, _deleted boolean, _mimetype character varying, _content text, _created timestamp with time zone, _modified timestamp with time zone, _trackingid character varying, _enrichmenttrail text) RETURNS void
     LANGUAGE plpgsql
-AS $$ -- V18
+    AS $$ -- V18
 BEGIN
     INSERT INTO records_cache (bibliographicrecordid,
                                agencyid,
