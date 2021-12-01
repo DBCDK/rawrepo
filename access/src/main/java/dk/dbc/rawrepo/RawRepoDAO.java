@@ -39,7 +39,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 
@@ -859,6 +858,7 @@ public abstract class RawRepoDAO {
 
     /**
      * Given a RecordId this function finds all children under that record and loads data relevant for changedRecord
+     *
      * @param recordId The RecordId of the top most record
      * @throws RawRepoException done at failure
      */
@@ -882,7 +882,7 @@ public abstract class RawRepoDAO {
         this.getRelationsSiblingsToMeCache = new HashMap<>();
 
         // Generate list of existing records by checking if a record is deleted or not, or if not present at all
-        for (RecordId foundRecordId: allRecordIds) {
+        for (RecordId foundRecordId : allRecordIds) {
             if (isRecordDeletedMap.containsKey(foundRecordId)) {
                 final Boolean value = isRecordDeletedMap.get(foundRecordId);
                 this.recordExistsCache.put(foundRecordId, value != null && !value);
