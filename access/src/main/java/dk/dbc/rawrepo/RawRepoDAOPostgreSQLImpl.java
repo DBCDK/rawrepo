@@ -181,7 +181,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RECORD");
+            watch.stop(String.format("rawrepo.query.SELECT_RECORD(%s, %s)", bibliographicRecordId, agencyId));
         }
         return new RecordImpl(new RecordId(bibliographicRecordId, agencyId));
     }
@@ -215,7 +215,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RECORD_CACHE");
+            watch.stop(String.format("rawrepo.query.SELECT_RECORD_CACHE(%s, %s, %s)", bibliographicRecordId, agencyId, cacheKey));
         }
         return null;
     }
@@ -280,7 +280,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.HISTORIC_METADATA");
+            watch.stop(String.format("rawrepo.query.HISTORIC_METADATA(%s, %s)", bibliographicRecordId, agencyId));
         }
     }
 
@@ -313,7 +313,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException | RawRepoExceptionRecordNotFound ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.HISTORIC_CONTENT");
+            watch.stop(String.format("rawrepo.query.HISTORIC_CONTENT(%s)", recordMetaData));
         }
 
     }
@@ -341,7 +341,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.TRACKING_IDS_SINCE");
+            watch.stop(String.format("rawrepo.query.TRACKING_IDS_SINCE(%s, %s, %s)", bibliographicRecordId, agencyId, timestamp));
         }
     }
 
@@ -378,7 +378,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error updating record", ex);
         } finally {
-            watch.stop("rawrepo.query.UPDATE_RECORD");
+            watch.stop(String.format("rawrepo.query.UPDATE_RECORD(%s:%s)",
+                    record.getId().getBibliographicRecordId(), record.getId().getAgencyId()));
         }
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
             int pos = 1;
@@ -395,7 +396,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error saving record", ex);
         } finally {
-            watch.stop("rawrepo.query.INSERT_RECORD");
+            watch.stop(String.format("rawrepo.query.INSERT_RECORD(%s:%s)",
+                    record.getId().getBibliographicRecordId(), record.getId().getAgencyId()));
         }
         if (record instanceof RecordImpl) {
             ((RecordImpl) record).original = false;
@@ -425,7 +427,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error updating record", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_UPSERT_RECORDS_CACHE");
+            watch.stop(String.format("rawrepo.query.CALL_UPSERT_RECORDS_CACHE(%s, %s)", record.getId(), cacheKey));
         }
     }
 
@@ -499,7 +501,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 logger.error(LOG_DATABASE_ERROR, ex);
                 throw new RawRepoException("Error fetching mimetype", ex);
             } finally {
-                watch.stop("rawrepo.query.SELECT_MIMETYPE_LIST");
+                watch.stop(String.format("rawrepo.query.SELECT_MIMETYPE_LIST for %s RecordIds", originalRecordIds.size()));
             }
         }
         return result;
@@ -573,7 +575,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 logger.error(LOG_DATABASE_ERROR, ex);
                 throw new RawRepoException("Error fetching deleted state", ex);
             } finally {
-                watch.stop("rawrepo.query.SELECT_DELETED_BULK");
+                watch.stop(String.format("rawrepo.query.SELECT_DELETED_BULK for %s RecordIds", originalRecordIds.size()));
             }
         }
         return result;
@@ -628,7 +630,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting relations", ex);
         } finally {
-            watch.stop("rawrepo.query.DELETE_RELATIONS");
+            watch.stop(String.format("rawrepo.query.DELETE_RELATIONS(%s)", recordId));
         }
     }
 
@@ -787,7 +789,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                 logger.error(LOG_DATABASE_ERROR, ex);
                 throw new RawRepoException("Error fetching mimetype", ex);
             } finally {
-                watch.stop("rawrepo.query.SELECT_RELATIONS_CHILDREN_LIST");
+                watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_CHILDREN_LIST for %s RecordIds",
+                        originalRecordIds.size()));
             }
         }
         return result;
@@ -870,7 +873,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordId relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID");
+            watch.stop(String.format("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID(%s)", bibliographicRecordId));
         }
         return collection;
     }
@@ -897,7 +900,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordIdSkipDeleted relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED");
+            watch.stop(String.format("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED(%s)", bibliographicRecordId));
         }
         return collection;
     }
@@ -919,7 +922,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException {
-        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
         StopWatch watch = new Log4JStopWatch();
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
@@ -942,7 +944,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_ENQUEUE");
+            watch.stop(String.format("rawrepo.query.CALL_ENQUEUE(%s:%s, %s, %s, %s, %s)",
+                    job.getBibliographicRecordId(), job.getAgencyId(), provider, changed, leaf, priority));
         }
         watch = new Log4JStopWatch();
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RECORD_CACHE)) {
@@ -953,7 +956,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting cache", ex);
         } finally {
-            watch.stop("rawrepo.query.DELETE_RECORD_CACHE");
+            watch.stop(String.format("rawrepo.query.DELETE_RECORD_CACHE(%s, %s)",
+                    job.getBibliographicRecordId(), job.getAgencyId()));
         }
     }
 
@@ -989,7 +993,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error during enqueue_bulk", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_ENQUEUE_BULK");
+            watch.stop(String.format("rawrepo.query.CALL_ENQUEUE_BULK for %s EnqueueJobs", jobs.size()));
         }
 
     }
@@ -1012,7 +1016,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error checking provider", ex);
         } finally {
-            watch.stop("rawrepo.query.CHECK_PROVIDER");
+            watch.stop(String.format("rawrepo.query.CHECK_PROVIDER(%s)", provider));
         }
     }
 
@@ -1047,7 +1051,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing jobs", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_DEQUEUE_MULTI");
+            watch.stop(String.format("rawrepo.query.CALL_DEQUEUE_MULTI(%s, %s)", worker, wanted));
         }
     }
 
@@ -1079,7 +1083,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_DEQUEUE");
+            watch.stop(String.format("rawrepo.query.CALL_DEQUEUE(%s)", worker));
         }
     }
 
