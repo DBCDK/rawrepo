@@ -669,6 +669,22 @@ class RawRepoMock {
                 .collect(toSet());
     }
 
+    private Map<RecordId, String> getMimeTypeOfListWithRecidMatch(InvocationOnMock invocation, Map<String, Set<String>> ioBoundRelation) throws RawRepoException {
+        final Set<RecordId> input = invocation.getArgument(0);
+        final Map<RecordId, String> result = new HashMap<>();
+        for (RecordId recordId : input) {
+            String bibliographicRecordId = recordId.getBibliographicRecordId();
+            int agencyId = recordId.getAgencyId();
+            String type = mimetype.get(agencyId + ":" + bibliographicRecordId);
+            if (type == null) {
+                throw new RawRepoExceptionRecordNotFound();
+            } else {
+                result.put(new RecordId(bibliographicRecordId, agencyId), type);
+            }
+        }
+        return result;
+    }
+
     private Set<RecordId> getRecordsWithBibrecidMatch(InvocationOnMock invocation, Map<String, Set<String>> ioBoundRelation) {
         RecordId recordId = (RecordId) invocation.getArguments()[0];
         String bibliographicRecordId = recordId.getBibliographicRecordId();
@@ -701,6 +717,7 @@ class RawRepoMock {
         when(rawrepo.getRelationsParents(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithoutBibrecidMatch(invocation, outboundRelation));
         when(rawrepo.getRelationsSiblingsFromMe(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithBibrecidMatch(invocation, outboundRelation));
         when(rawrepo.getRelationsSiblingsToMe(any(RecordId.class))).then((Answer<Set<RecordId>>) invocation -> getRecordsWithBibrecidMatch(invocation, inboundRelation));
+        when(rawrepo.getMimeTypeOfList(any(Set.class))).then((Answer<Map<RecordId, String>>) invocation -> getMimeTypeOfListWithRecidMatch(invocation, inboundRelation));
         when(rawrepo.getMimeTypeOf(anyString(), anyInt())).then((Answer<String>) invocation -> {
             String bibliographicRecordId = (String) invocation.getArguments()[0];
             int agencyId = (int) invocation.getArguments()[1];
@@ -721,6 +738,7 @@ class RawRepoMock {
 
         doAnswer((Answer<Void>) this::enqueue).when(rawrepo).enqueue(any(RecordId.class), anyString(), anyBoolean(), anyBoolean());
         doAnswer((Answer<Void>) this::enqueue).when(rawrepo).enqueue(any(RecordId.class), anyString(), anyBoolean(), anyBoolean(), anyInt());
+        doAnswer((Answer<Void>) this::enqueueBulk).when(rawrepo).enqueueBulk(any(List.class));
         doCallRealMethod().when(rawrepo).agencyFor(anyString(), anyInt(), anyBoolean());
         doCallRealMethod().when(rawrepo).findParentRelationAgency(anyString(), anyInt());
         doCallRealMethod().when(rawrepo).findSiblingRelationAgency(anyString(), anyInt());
@@ -760,6 +778,23 @@ class RawRepoMock {
         enqueued.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet();
         return null;
     }
+
+    private Void enqueueBulk(InvocationOnMock invocation) {
+        final Object[] arguments = invocation.getArguments();
+        for (Object argument : arguments) {
+            System.out.println(argument);
+        }
+        final List<EnqueueJob> enqueueJobList = (List<EnqueueJob>) arguments[0];
+        for (EnqueueJob obj : enqueueJobList) {
+            final String id = String.valueOf(obj.getJob().getAgencyId()) + ':' + obj.getJob().getBibliographicRecordId() +
+                    ':' +
+                    (obj.isChanged() ? 'C' : '-') +
+                    (obj.isLeaf() ? 'L' : '-');
+            enqueued.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet();
+        }
+        return null;
+    }
+
 
     private void print() {
         HashMap<String, String> toParent = new HashMap<>();

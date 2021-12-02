@@ -34,9 +34,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -83,6 +87,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final String INSERT_RELATION = "INSERT INTO relations (bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid) VALUES(?, ?, ?, ?)";
 
     private static final String CALL_ENQUEUE = "SELECT * FROM enqueue(?, ?, ?, ?, ?, ?)";
+    private static final String CALL_ENQUEUE_BULK = "SELECT * FROM enqueue_bulk(?, ?, ?, ?, ?, ?)";
     private static final String CALL_DEQUEUE = "SELECT * FROM dequeue(?)";
     private static final String CALL_DEQUEUE_MULTI = "SELECT * FROM dequeue(?, ?)";
     private static final String QUEUE_ERROR = "INSERT INTO jobdiag(bibliographicrecordid, agencyid, worker, error, queued) VALUES(?, ?, ?, ?, ?)";
@@ -176,7 +181,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RECORD");
+            watch.stop(String.format("rawrepo.query.SELECT_RECORD(%s, %s)", bibliographicRecordId, agencyId));
         }
         return new RecordImpl(new RecordId(bibliographicRecordId, agencyId));
     }
@@ -210,7 +215,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching record", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RECORD_CACHE");
+            watch.stop(String.format("rawrepo.query.SELECT_RECORD_CACHE(%s, %s, %s)", bibliographicRecordId, agencyId, cacheKey));
         }
         return null;
     }
@@ -275,7 +280,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.HISTORIC_METADATA");
+            watch.stop(String.format("rawrepo.query.HISTORIC_METADATA(%s, %s)", bibliographicRecordId, agencyId));
         }
     }
 
@@ -308,7 +313,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException | RawRepoExceptionRecordNotFound ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.HISTORIC_CONTENT");
+            watch.stop(String.format("rawrepo.query.HISTORIC_CONTENT(%s)", recordMetaData));
         }
 
     }
@@ -336,7 +341,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         } catch (SQLException ex) {
             throw new RawRepoException("Error getting record history", ex);
         } finally {
-            watch.stop("rawrepo.query.TRACKING_IDS_SINCE");
+            watch.stop(String.format("rawrepo.query.TRACKING_IDS_SINCE(%s, %s, %s)", bibliographicRecordId, agencyId, timestamp));
         }
     }
 
@@ -373,7 +378,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error updating record", ex);
         } finally {
-            watch.stop("rawrepo.query.UPDATE_RECORD");
+            watch.stop(String.format("rawrepo.query.UPDATE_RECORD(%s:%s)",
+                    record.getId().getBibliographicRecordId(), record.getId().getAgencyId()));
         }
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RECORD)) {
             int pos = 1;
@@ -390,7 +396,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error saving record", ex);
         } finally {
-            watch.stop("rawrepo.query.INSERT_RECORD");
+            watch.stop(String.format("rawrepo.query.INSERT_RECORD(%s:%s)",
+                    record.getId().getBibliographicRecordId(), record.getId().getAgencyId()));
         }
         if (record instanceof RecordImpl) {
             ((RecordImpl) record).original = false;
@@ -420,7 +427,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error updating record", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_UPSERT_RECORDS_CACHE");
+            watch.stop(String.format("rawrepo.query.CALL_UPSERT_RECORDS_CACHE(%s, %s)", record.getId(), cacheKey));
         }
     }
 
@@ -441,11 +448,67 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching mimetype", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_MIMETYPE");
+            watch.stop(String.format("rawrepo.query.SELECT_MIMETYPE(%s, %s)", bibliographicRecordId, agencyId));
         }
     }
 
-    private Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
+    @Override
+    protected Map<RecordId, String> getMimeTypeOfList(Set<RecordId> originalRecordIds) throws RawRepoException {
+        final StopWatch watch = new Log4JStopWatch();
+        final Map<RecordId, String> result = new HashMap<>();
+
+        // If input is empty then return empty result
+        if (originalRecordIds.isEmpty()) {
+            return result;
+        }
+
+        final int sliceSize = 1000;
+        int index = 0;
+        while (index < originalRecordIds.size()) {
+            final Set<RecordId> recordIds = originalRecordIds.stream()
+                    .skip(index)
+                    .limit(sliceSize)
+                    .collect(Collectors.toSet());
+            index += sliceSize;
+
+            final StringBuilder query = new StringBuilder();
+            query.append("SELECT bibliographicrecordid, agencyid, mimetype FROM records WHERE (bibliographicrecordid, agencyid) IN (");
+            final List<String> placeHolders = new ArrayList<>();
+            for (int i = 0; i < recordIds.size(); i++) {
+                placeHolders.add("(?, ?)");
+            }
+            query.append(String.join(",", placeHolders));
+            query.append(")");
+
+            try (PreparedStatement stmt = connection.prepareStatement(query.toString())) {
+                int pos = 1;
+                for (RecordId recordId : recordIds) {
+                    stmt.setString(pos++, recordId.getBibliographicRecordId());
+                    stmt.setInt(pos++, recordId.getAgencyId());
+                }
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String bibliographicRecordId = resultSet.getString(1);
+                        final int agencyId = resultSet.getInt(2);
+                        final String mimetype = resultSet.getString(3);
+
+                        result.put(new RecordId(bibliographicRecordId, agencyId), mimetype);
+                    }
+                }
+
+
+            } catch (SQLException ex) {
+                logger.error(LOG_DATABASE_ERROR, ex);
+                throw new RawRepoException("Error fetching mimetype", ex);
+            } finally {
+                watch.stop(String.format("rawrepo.query.SELECT_MIMETYPE_LIST for %s RecordIds", originalRecordIds.size()));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    protected Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
         final StopWatch watch = new Log4JStopWatch();
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_DELETED)) {
             int pos = 1;
@@ -461,9 +524,63 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching deleted state", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_DELETED");
+            watch.stop(String.format("rawrepo.query.SELECT_DELETED(%s, %s)", bibliographicRecordId, agencyId));
         }
     }
+
+    @Override
+    protected HashMap<RecordId, Boolean> isRecordDeletedList(Set<RecordId> originalRecordIds) throws RawRepoException {
+        final StopWatch watch = new Log4JStopWatch();
+        final HashMap<RecordId, Boolean> result = new HashMap<>();
+
+        if (originalRecordIds.isEmpty()) {
+            return result;
+        }
+
+        final int sliceSize = 1000;
+        int index = 0;
+        while (index < originalRecordIds.size()) {
+            final Set<RecordId> recordIds = originalRecordIds.stream()
+                    .skip(index)
+                    .limit(sliceSize)
+                    .collect(Collectors.toSet());
+            index += sliceSize;
+
+            final StringBuilder query = new StringBuilder();
+            query.append("SELECT bibliographicrecordid, agencyid, deleted FROM records where (bibliographicrecordid, agencyid) in (");
+            final List<String> placeHolders = new ArrayList<>();
+            for (int i = 0; i < recordIds.size(); i++) {
+                placeHolders.add("(?, ?)");
+            }
+            query.append(String.join(",", placeHolders));
+            query.append(")");
+
+            try (PreparedStatement stmt = connection.prepareStatement(query.toString())) {
+                int pos = 1;
+                for (RecordId recordId : recordIds) {
+                    stmt.setString(pos++, recordId.getBibliographicRecordId());
+                    stmt.setInt(pos++, recordId.getAgencyId());
+                }
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String bibliographicRecordId = resultSet.getString(1);
+                        final int agencyId = resultSet.getInt(2);
+                        final boolean deleted = resultSet.getBoolean(3);
+
+                        final RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
+                        result.put(recordId, deleted);
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.error(LOG_DATABASE_ERROR, ex);
+                throw new RawRepoException("Error fetching deleted state", ex);
+            } finally {
+                watch.stop(String.format("rawrepo.query.SELECT_DELETED_BULK for %s RecordIds", originalRecordIds.size()));
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Get a collection of my "dependencies". All relations that
@@ -490,7 +607,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching getRelationsFrom relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RELATIONS");
+            watch.stop(String.format("rawrepo.query.SELECT_RELATIONS(%s)", recordId.toString()));
         }
         return collection;
     }
@@ -513,7 +630,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting relations", ex);
         } finally {
-            watch.stop("rawrepo.query.DELETE_RELATIONS");
+            watch.stop(String.format("rawrepo.query.DELETE_RELATIONS(%s)", recordId));
         }
     }
 
@@ -574,7 +691,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching getRelationsChildren relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RELATIONS_CHILDREN");
+            watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_CHILDREN(%s)", recordId.toString()));
         }
         return collection;
     }
@@ -604,10 +721,81 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching getRelationsParents relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RELATIONS_PARENTS");
+            watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_PARENTS(%s)", recordId.toString()));
         }
         return collection;
     }
+
+    @Override
+    protected Set<RelationsPair> getAllChildRelations(RecordId recordId) throws RawRepoException {
+        final Set<RelationsPair> result = getAllChildRelations(new HashSet<>(Collections.singletonList(recordId)));
+
+        Set<RecordId> children = result.stream().map(RelationsPair::getChild).collect(Collectors.toSet());
+        while (!children.isEmpty()) {
+            Set<RelationsPair> tmp = getAllChildRelations(children);
+            result.addAll(tmp);
+            children = tmp.stream().map(RelationsPair::getChild).collect(Collectors.toSet());
+        }
+
+        return result;
+    }
+
+    private Set<RelationsPair> getAllChildRelations(Set<RecordId> originalRecordIds) throws RawRepoException {
+        final StopWatch watch = new Log4JStopWatch();
+        final Set<RelationsPair> result = new HashSet<>();
+
+        // If input is empty then return empty result
+        if (originalRecordIds.isEmpty()) {
+            return result;
+        }
+
+        final int sliceSize = 1000;
+        int index = 0;
+        while (index < originalRecordIds.size()) {
+            final Set<RecordId> recordIds = originalRecordIds.stream()
+                    .skip(index)
+                    .limit(sliceSize)
+                    .collect(Collectors.toSet());
+            index += sliceSize;
+            final StringBuilder query = new StringBuilder();
+            query.append("SELECT bibliographicrecordid, agencyid, refer_bibliographicrecordid, refer_agencyid FROM relations WHERE (refer_bibliographicrecordid, refer_agencyid) IN (");
+            final List<String> placeHolders = new ArrayList<>();
+            for (int i = 0; i < recordIds.size(); i++) {
+                placeHolders.add("(?, ?)");
+            }
+            query.append(String.join(",", placeHolders));
+            query.append(")");
+
+            try (PreparedStatement stmt = connection.prepareStatement(query.toString())) {
+                int pos = 1;
+                for (RecordId recordId : recordIds) {
+                    stmt.setString(pos++, recordId.getBibliographicRecordId());
+                    stmt.setInt(pos++, recordId.getAgencyId());
+                }
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String bibliographicRecordId = resultSet.getString(1);
+                        final int agencyId = resultSet.getInt(2);
+                        final String referBibliographicRecordId = resultSet.getString(3);
+                        final int referAgencyId = resultSet.getInt(4);
+
+                        final RecordId recordId = new RecordId(bibliographicRecordId, agencyId);
+                        final RecordId referRecordId = new RecordId(referBibliographicRecordId, referAgencyId);
+
+                        result.add(new RelationsPair(recordId, referRecordId));
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.error(LOG_DATABASE_ERROR, ex);
+                throw new RawRepoException("Error fetching mimetype", ex);
+            } finally {
+                watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_CHILDREN_LIST for %s RecordIds",
+                        originalRecordIds.size()));
+            }
+        }
+        return result;
+    }
+
 
     /**
      * @param recordId complex key for a record
@@ -631,7 +819,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching getRelationsSiblingsToMe relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RELATIONS_SIBLINGS_TO_ME");
+            watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_SIBLINGS_TO_ME(%s)", recordId.toString()));
         }
         return collection;
     }
@@ -658,7 +846,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching getRelationsSiblingsFromMe relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_RELATIONS_SIBLINGS_FROM_ME");
+            watch.stop(String.format("rawrepo.query.SELECT_RELATIONS_SIBLINGS_FROM_ME(%s)", recordId.toString()));
         }
         return collection;
     }
@@ -685,7 +873,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordId relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID");
+            watch.stop(String.format("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID(%s)", bibliographicRecordId));
         }
         return collection;
     }
@@ -712,7 +900,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching allAgenciesForBibliographicRecordIdSkipDeleted relations", ex);
         } finally {
-            watch.stop("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED");
+            watch.stop(String.format("rawrepo.query.SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED(%s)", bibliographicRecordId));
         }
         return collection;
     }
@@ -734,7 +922,6 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException {
-        logger.info("Enqueue: job = {}; provider = {}; changed = {}; leaf = {}, priority = {}", job, provider, changed, leaf, priority);
         StopWatch watch = new Log4JStopWatch();
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
@@ -757,7 +944,8 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error queueing job", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_ENQUEUE");
+            watch.stop(String.format("rawrepo.query.CALL_ENQUEUE(%s:%s, %s, %s, %s, %s)",
+                    job.getBibliographicRecordId(), job.getAgencyId(), provider, changed, leaf, priority));
         }
         watch = new Log4JStopWatch();
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RECORD_CACHE)) {
@@ -768,8 +956,46 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error deleting cache", ex);
         } finally {
-            watch.stop("rawrepo.query.DELETE_RECORD_CACHE");
+            watch.stop(String.format("rawrepo.query.DELETE_RECORD_CACHE(%s, %s)",
+                    job.getBibliographicRecordId(), job.getAgencyId()));
         }
+    }
+
+    @Override
+    protected void enqueueBulk(List<EnqueueJob> jobs) throws RawRepoException {
+        List<String> bibliographicRecordIdList = new ArrayList<>();
+        List<Integer> agencyList = new ArrayList<>();
+        List<String> providerList = new ArrayList<>();
+        List<String> changedList = new ArrayList<>();
+        List<String> leafList = new ArrayList<>();
+        List<Integer> priorityList = new ArrayList<>();
+
+        StopWatch watch = new Log4JStopWatch();
+        for (EnqueueJob job : jobs) {
+            bibliographicRecordIdList.add(job.getJob().getBibliographicRecordId());
+            agencyList.add(job.getJob().getAgencyId());
+            providerList.add(job.getProvider());
+            changedList.add(job.isChanged() ? "Y" : "N");
+            leafList.add(job.isLeaf() ? "Y" : "N");
+            priorityList.add(job.getPriority());
+        }
+
+        try (CallableStatement stmt = connection.prepareCall(CALL_ENQUEUE_BULK)) {
+            stmt.setArray(1, stmt.getConnection().createArrayOf("varchar", bibliographicRecordIdList.toArray()));
+            stmt.setArray(2, stmt.getConnection().createArrayOf("int4", agencyList.toArray()));
+            stmt.setArray(3, stmt.getConnection().createArrayOf("varchar", providerList.toArray()));
+            stmt.setArray(4, stmt.getConnection().createArrayOf("varchar", changedList.toArray()));
+            stmt.setArray(5, stmt.getConnection().createArrayOf("varchar", leafList.toArray()));
+            stmt.setArray(6, stmt.getConnection().createArrayOf("int4", priorityList.toArray()));
+
+            stmt.executeQuery();
+        } catch (SQLException ex) {
+            logger.error(LOG_DATABASE_ERROR, ex);
+            throw new RawRepoException("Error during enqueue_bulk", ex);
+        } finally {
+            watch.stop(String.format("rawrepo.query.CALL_ENQUEUE_BULK for %s EnqueueJobs", jobs.size()));
+        }
+
     }
 
     public boolean checkProvider(String provider) throws RawRepoException {
@@ -790,7 +1016,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error checking provider", ex);
         } finally {
-            watch.stop("rawrepo.query.CHECK_PROVIDER");
+            watch.stop(String.format("rawrepo.query.CHECK_PROVIDER(%s)", provider));
         }
     }
 
@@ -825,7 +1051,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing jobs", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_DEQUEUE_MULTI");
+            watch.stop(String.format("rawrepo.query.CALL_DEQUEUE_MULTI(%s, %s)", worker, wanted));
         }
     }
 
@@ -857,7 +1083,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error dequeueing job", ex);
         } finally {
-            watch.stop("rawrepo.query.CALL_DEQUEUE");
+            watch.stop(String.format("rawrepo.query.CALL_DEQUEUE(%s)", worker));
         }
     }
 
