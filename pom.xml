@@ -10,7 +10,7 @@
     <repositories>
         <repository>
             <id>mavenrepo.dbc.dk</id>
-            <url>http://mavenrepo.dbc.dk/content/groups/public</url>
+            <url>https://mavenrepo.dbc.dk/content/groups/public</url>
         </repository>
     </repositories>
 
@@ -28,6 +28,7 @@
     <url>http://oss.dbc.dk</url>
 
     <properties>
+        <rawrepo.version>1.15-SNAPSHOT</rawrepo.version>
         <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
         <hamcrest-all.version>1.3</hamcrest-all.version>
         <commons-cli.version>1.4</commons-cli.version>
