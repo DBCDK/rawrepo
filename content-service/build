@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+case "$1" in
+    docker)
+        echo "### building rawrepo-content-service docker ###"
+        docker build . -t docker-io.dbc.dk/rawrepo-content-service:devel || exit 1
+        if [[ ! -z "$BUILD_NUMBER" ]]; then
+            docker tag docker-io.dbc.dk/rawrepo-content-service:devel docker-io.dbc.dk/rawrepo-content-service:${BRANCH_NAME}-${BUILD_NUMBER}
+        fi
+        ;;
+
+    *)
+        echo "### building rawrepo-content-service project ###"
+        echo "### Look for build artifacts in target/ ###"
+
+        mvn package -Dmaven.test.skip=true || exit 1
+        ;;
+esac

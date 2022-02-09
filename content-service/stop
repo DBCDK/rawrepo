@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+echo "### Stopping rawrepo-content-service docker ###"
+
+docker stop rawrepo-content-service || exit 1
