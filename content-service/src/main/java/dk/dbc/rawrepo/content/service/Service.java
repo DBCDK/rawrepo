@@ -1,28 +1,7 @@
-/*
- * dbc-rawrepo-content-service
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043*
- *
- * This file is part of dbc-rawrepo-content-service.
- *
- * dbc-rawrepo-content-service is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * dbc-rawrepo-content-service is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with dbc-rawrepo-content-service.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.content.service;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import dk.dbc.forsrights.client.ForsRightsException;
 import dk.dbc.marcxmerge.FieldRules;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
@@ -55,14 +34,11 @@ import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author DBC {@literal <dbc.dk>}
@@ -72,9 +48,6 @@ public abstract class Service {
 
     @Resource(lookup = "jdbc/rawrepo")
     private DataSource dataSource;
-
-    @Inject
-    AuthenticationService forsRights;
 
     @Inject
     VipCoreLibraryRulesConnector vipCoreLibraryRulesConnector;
@@ -92,16 +65,7 @@ public abstract class Service {
     Counter requestErrors;
 
     @Inject
-    Counter authorizationDenied;
-
-    @Inject
     Counter requestSyntaxError;
-
-    @Inject
-    Timer authenticationRequest;
-
-    @Inject
-    Counter authenticationErrors;
 
     @Inject
     Timer fetchRaw;
@@ -115,28 +79,10 @@ public abstract class Service {
     @Inject
     Timer fetchCollection;
 
-
-    List<IPRange> ipRanges;
-
     ExecutorService executorService;
 
     @PostConstruct
     public void init() {
-        logger.info("init()");
-        ipRanges = new ArrayList<>();
-
-        String xForwardedFor = System.getenv(C.X_FORWARDED_FOR);
-
-        if (xForwardedFor != null) {
-            for (String range : xForwardedFor.split("[,;:\\s]+")) {
-                try {
-                    ipRanges.add(new IPRange(range));
-                } catch (RuntimeException ex) {
-                    logger.warn("ipRange init - " + ex.getMessage());
-                    logger.debug(ex.getMessage(), ex);
-                }
-            }
-        }
         executorService = Executors.newFixedThreadPool(2);
     }
 
@@ -153,19 +99,6 @@ public abstract class Service {
             if (exception != null) {
                 requestSyntaxError.inc();
                 throw new ErrorException(exception.getMessage(), FetchResponseError.Type.REQUEST_CONTENT_ERROR);
-            }
-
-            boolean authenticated;
-            try (Timer.Context time2 = authenticationRequest.time()) {
-                if (authentication == null) {
-                    authenticated = forsRights.validate(getClientIP());
-                } else {
-                    authenticated = forsRights.validate(authentication);
-                }
-            }
-            if (!authenticated) {
-                authorizationDenied.inc();
-                throw new ErrorException("Authentication denied", FetchResponseError.Type.AUTHENTICATION_DENIED);
             }
 
             try (Connection connection = dataSource.getConnection()) {
@@ -224,11 +157,6 @@ public abstract class Service {
             logger.error("SQL Error: " + ex.getMessage());
             logger.debug("SQL Error", ex);
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
-        } catch (ForsRightsException ex) {
-            authenticationErrors.inc();
-            logger.error("Error Validating User: " + ex.getMessage());
-            logger.debug("Error Validating User", ex);
-            out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         } catch (ErrorException e) {
             requestErrors.inc();
             out.value = e.getError();
@@ -239,28 +167,6 @@ public abstract class Service {
             logger.debug("Runtime Exception", ex.getCause());
             out.value = new FetchResponseError("Internal Server Error", FetchResponseError.Type.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private static final String NUM = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])";
-    private static final String IP = NUM + "\\." + NUM + "\\." + NUM + "\\." + NUM;
-    private static final Pattern LAST_IP_PATTERN = Pattern.compile("\\b" + IP + "$", Pattern.DOTALL);
-
-    @WebMethod(exclude = true)
-    private String getClientIP() {
-        String ip = getIp();
-        String xForwardedFor = getXForwardedFor();
-        if (xForwardedFor != null) {
-            Matcher matcher = LAST_IP_PATTERN.matcher(xForwardedFor);
-            if (matcher.find()) {
-                xForwardedFor = matcher.group();
-                for (IPRange ipRange : ipRanges) {
-                    if (ipRange.inRange(ip)) {
-                        return xForwardedFor;
-                    }
-                }
-            }
-        }
-        return ip;
     }
 
     @WebMethod(exclude = true)
