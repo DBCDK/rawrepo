@@ -1,4 +1,4 @@
-def workerNode = "devel10"
+def workerNode = "devel11"
 
 pipeline {
     agent { label workerNode }
@@ -77,7 +77,7 @@ pipeline {
             }
             steps {
                 script {
-                    def repo = "docker-io.dbc.dk"
+                    def repo = "docker-metascrum.artifacts.dbccloud.dk"
                     def imageNamePostgres = "rawrepo-postgres-${PROJECT_VERSION}".toLowerCase()
                     def imageNameMaintain = "rawrepo-maintain-${PROJECT_VERSION}".toLowerCase()
                     def imageNameContentService = "rawrepo-content-service-${PROJECT_VERSION}".toLowerCase()

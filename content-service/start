@@ -12,7 +12,7 @@ docker run --rm --name rawrepo-content-service -d -p ${content_service_port}:808
     -e VIPCORE_ENDPOINT="http://vipcore.iscrum-vip-extern-test.svc.cloud.dbc.dk" \
     -e RAWREPO_DB_URL=${RAWREPO_DB_URL} \
     -e JAVA_MAX_HEAP_SIZE=2G \
-    docker-io.dbc.dk/rawrepo-content-service:devel
+    docker-metascrum.artifacts.dbccloud.dk/rawrepo-content-service:devel
 attempts=0
 max_attempts=60
 until $(curl --output /dev/null --silent --head --fail http://localhost:${content_service_port}/RawRepoContentService); do
