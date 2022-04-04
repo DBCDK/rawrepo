@@ -26,7 +26,6 @@ import java.io.InputStream;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
@@ -49,7 +48,7 @@ public class AgencyLoadTest {
 
         agencyLoad.load(is);
 
-        verify(agencyLoad, times(1)).store(any(byte[].class), eq(191919), eq("01704036"), isNull(String.class), anyBoolean());
+        verify(agencyLoad, times(1)).store(any(byte[].class), eq(191919), eq("01704036"), isNull(), anyBoolean());
         verify(agencyLoad, times(1)).store(any(byte[].class), eq(191919), eq("01990810"), eq("50155919"), anyBoolean());
     }
 
