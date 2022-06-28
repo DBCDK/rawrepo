@@ -128,7 +128,7 @@ public class ValidateRelations {
                     String type = dao.getMimeTypeOf(refer.getBibliographicRecordId(), refer.agencyId);
                     if(!MarcXChangeMimeType.AUTHORITY.equals(type)) {
                         logger.error("Validate constraint: " + recordId + " -> " + refers);
-                        throw new RawRepoException("AUTHORITY records can have outbound relations to other AUTHORITY records");
+                        throw new RawRepoException("AUTHORITY records can only have outbound relations to other AUTHORITY records");
                     }
                 }
             }
