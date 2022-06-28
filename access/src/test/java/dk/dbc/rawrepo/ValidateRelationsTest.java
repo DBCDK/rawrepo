@@ -9,7 +9,6 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -113,6 +112,7 @@ public class ValidateRelationsTest {
     @Test
     public void makeValidatorAuthority_Valid() throws RawRepoException {
         ValidateRelations.validate(dao, new RecordId("child", agencyIdAuthority), noParents);
+        ValidateRelations.validate(dao, new RecordId("child", agencyIdAuthority), authorityParents);
     }
 
     @Test
@@ -122,7 +122,6 @@ public class ValidateRelationsTest {
         testInvalidParent(agencyIdAuthority, articleParent);
         testInvalidParent(agencyIdAuthority, hostpubParent);
         testInvalidParent(agencyIdAuthority, littolkParent);
-        testInvalidParent(agencyIdAuthority, authorityParent);
         testInvalidParent(agencyIdAuthority, matvurdParent);
         testInvalidParent(agencyIdAuthority, simpleParent);
     }
