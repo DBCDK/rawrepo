@@ -1,0 +1,14 @@
+001 00 *a 69029868 *b 870979 *c 20211202200135 *d 20131129 *f a
+004 00 *r n *a e *x n *x m
+008 00 *t h *v 9
+025 00 *a 95218067 *2 viaf *& VIAF
+025 00 *a 0000000121441970 *2 isni *& VIAF
+025 00 *a Q892 *2 wikidata *& VIAF
+040 00 *a DBC *b dan
+043 00 *c gb *c za *& VIAF
+046 00 *f 1892 *& VIAF
+046 00 *g 1973 *& VIAF
+100 00 *a Tolkien *h J. R. R.
+375 00 *a 1 *2 iso5218 *& VIAF
+670 00 *a 06327354
+996 00 *a DBCAUT

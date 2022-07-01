@@ -1,7 +1,3 @@
-/*
- * Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
- *  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
- */
 
 package dk.dbc.marcrecord;
 
@@ -21,6 +17,7 @@ import org.slf4j.ext.XLoggerFactory;
 
 import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
+import java.lang.String;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
-    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "110", "600", "610", "700", "710", "770", "780");
+    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "110", "600", "610", "700", "710", "770", "780", "845", "846");
 
     /**
      * This function performs authority expansion on a rawrepo Record.
@@ -141,15 +138,15 @@ public class ExpandCommonMarcRecord {
         final MarcRecord expandedRecord = new MarcRecord();
         /*
          * Okay, here are (some) of the rules for expanding with auth records:
-         * Fields that can contain AUT are: 100, 110, 600, 610, 700, 710, 770 or 780
+         * Fields that can contain AUT are: 100, 110, 600, 610, 700, 710, 770, 780, 845 or 846
          * AUT reference are located in *5 and *6
          *
          * A field points to AUT data if:
-         * Field name is either 100, 110, 600, 610, 700, 710, 770 or 780
+         * Field name is either 100, 110, 600, 610, 700, 710, 770, 780, 845 or 846
          * And contains subfields *5 and *6
          *
          * Rules for expanding are:
-         * Remove *5 and *6
+         * Remove *5 and *6 if keepAutFields are false
          * Add all subfields from AUT record field 100 or 110 at the same location as *5
          * For fields 100, 600, 700, 770:
          * If AUT record contains field 400 or 500 then add that field as well to the expanded record but as field 900
@@ -163,18 +160,17 @@ public class ExpandCommonMarcRecord {
         }
 
         final MarcRecordReader reader = new MarcRecordReader(commonRecord);
-        final int authIndicator = findMaxAuthIndicator(commonRecord.getFields());
-        if (reader.hasField("110")) {
-            handleNonRepeatableField(reader.getField("110"), expandedRecord, authorityRecords, keepAutFields);
-        } else {
-            handleNonRepeatableField(reader.getField("100"), expandedRecord, authorityRecords, keepAutFields);
-        }
-        handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
-        handleRepeatableField(reader.getFieldAll("610"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
-        handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
-        handleRepeatableField(reader.getFieldAll("710"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
-        handleRepeatableField(reader.getFieldAll("770"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
-        handleRepeatableField(reader.getFieldAll("780"), expandedRecord, authorityRecords, keepAutFields, authIndicator);
+        final int authNumerator = findMaxAuthNumerator(commonRecord.getFields());
+        handleRepeatableField(reader.getFieldAll("100"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("110"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("610"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("710"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("770"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("780"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("845"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("846"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
 
         for (MarcField field : commonRecord.getFields()) {
             if (!AUTHORITY_FIELD_LIST.contains(field.getName())) {
@@ -187,15 +183,15 @@ public class ExpandCommonMarcRecord {
         return expandedRecord;
     }
 
-    private static int findMaxAuthIndicator(List<MarcField> fields) {
-        int authIndicator = 1001;
+    private static int findMaxAuthNumerator(List<MarcField> fields) {
+        int authNumerator = 1001;
         for (MarcField field : fields) {
             final MarcFieldReader fieldReader = new MarcFieldReader(field);
             if (fieldReader.hasSubfield("å")) {
                 try {
-                    final int indicator = Integer.parseInt(fieldReader.getValue("å"));
-                    if (indicator > authIndicator) {
-                        authIndicator = indicator + 1;
+                    final int numerator = Integer.parseInt(fieldReader.getValue("å"));
+                    if (numerator > authNumerator) {
+                        authNumerator = numerator + 1;
                     }
                 } catch (NumberFormatException ex) {
                     final String message = String.format("Ugyldig værdi i delfelt %s *å. Forventede et tal men fik '%s' - ignorerer", field.getName(), fieldReader.getValue("å"));
@@ -204,10 +200,10 @@ public class ExpandCommonMarcRecord {
             }
         }
 
-        return authIndicator;
+        return authNumerator;
     }
 
-    private static void handleRepeatableField(List<MarcField> fields, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields, int authIndicator) throws RawRepoException {
+    private static void handleRepeatableField(List<MarcField> fields, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields, int authNumerator) throws RawRepoException {
         for (MarcField field : fields) {
             final MarcFieldReader fieldReader = new MarcFieldReader(field);
 
@@ -223,80 +219,93 @@ public class ExpandCommonMarcRecord {
 
                 final MarcField expandedField = new MarcField(field);
                 final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
-                final String authAuthorFieldName;
+                String authAuthorFieldName = "";
 
-                if (authRecordReader.hasField("110")) {
-                    authAuthorFieldName = "110";
-                } else {
-                    authAuthorFieldName = "100";
+                int mode = 0;
+                switch (field.getName()) {
+                    case "100":
+                        mode = 1;
+                        authAuthorFieldName = "100";
+                        break;
+                    case "600":
+                    case "700":
+                    case "770":
+                        mode = 2;
+                        authAuthorFieldName = "100";
+                        break;
+                    case "110":
+                        mode = 1;
+                        authAuthorFieldName = "110";
+                        break;
+                    case "610":
+                    case "710":
+                    case "780":
+                        mode = 2;
+                        authAuthorFieldName = "110";
+                        break;
+                    case "845":
+                        mode = 3;
+                        authAuthorFieldName = "133";
+                        break;
+                    case "846":
+                        mode = 4;
+                        authAuthorFieldName = "134";
+                        break;
                 }
-
+                if (!authRecordReader.hasField(authAuthorFieldName)) {
+                    return;
+                }
                 final MarcField authAuthorField = new MarcField(authRecordReader.getField(authAuthorFieldName));
 
                 addMainField(expandedField, authAuthorField, keepAutFields);
 
-                if (authRecordReader.hasField("400")
-                        || authRecordReader.hasField("410")
-                        || authRecordReader.hasField("500")
-                        || authRecordReader.hasField("510")) {
-                    String indicator = field.getName();
-                    // If the field doesn't have *å then it will be added and new indicator generate
-                    // But if the field already have *å then use that value
-                    // If multiple fields have same *å value the 900 references will be weird/wrong, but we won't handle that
-                    if (!fieldReader.hasSubfield("å")) {
-                        expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authIndicator)));
-                        indicator += "/" + authIndicator;
-                        authIndicator++;
+                String fieldReference = field.getName();
+                if (mode == 1 || mode == 2) {
+                    // x00 and 770 puts 400 and 500 in 900 fields and x10 and 780 puts 410 and 510 in 910 fields - this is so fun
+                    boolean hasAdditionalFields;
+                    List<String> mayNeedFourFiveHundred = Arrays.asList("00", "70");
+                    if (mayNeedFourFiveHundred.contains(field.getName().substring(1))) {
+                        hasAdditionalFields = authRecordReader.hasField("400") || authRecordReader.hasField("500");
                     } else {
-                        indicator += "/" + fieldReader.getValue("å");
+                        hasAdditionalFields = authRecordReader.hasField("410") || authRecordReader.hasField("510");
                     }
-
-                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authAuthorField, indicator);
-                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authAuthorField, indicator);
-                    addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authAuthorField, indicator);
-                    addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authAuthorField, indicator);
-                }
-
-                expandedRecord.getFields().add(new MarcField(expandedField));
-            } else {
-                expandedRecord.getFields().add(new MarcField(field));
-            }
-        }
-    }
-
-    private static void handleNonRepeatableField(MarcField field, MarcRecord expandedRecord, Map<String, MarcRecord> authorityRecords, boolean keepAutFields) throws RawRepoException {
-        if (field != null) {
-            final MarcFieldReader fieldReader = new MarcFieldReader(field);
-            if (fieldReader.hasSubfield("5") && fieldReader.hasSubfield("6")) {
-                final String authRecordId = fieldReader.getValue("6");
-
-                final MarcRecord authRecord = authorityRecords.get(authRecordId);
-
-                if (authRecord == null) {
-                    final String message = String.format("Autoritetsposten '%s' blev ikke fundet i forbindelse med ekspandering af fællesskabsposten", authRecordId);
-                    logger.error(message);
-                    throw new RawRepoException(message);
-                }
-
-                final MarcField expandedField = new MarcField(field);
-                final MarcRecordReader authRecordReader = new MarcRecordReader(authRecord);
-                final String authAuthorFieldName;
-
-                if (authRecordReader.hasField("110")) {
-                    authAuthorFieldName = "110";
+                    if (mode == 2 && hasAdditionalFields) {
+                        // The field is repeatable, so we add a numerator value to the *z content
+                        if (!fieldReader.hasSubfield("å")) {
+                            expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authNumerator)));
+                            fieldReference += "/" + authNumerator;
+                            authNumerator++;
+                        } else {
+                            fieldReference += "/" + fieldReader.getValue("å");
+                        }
+                    }
+                    if (mayNeedFourFiveHundred.contains(field.getName().substring(1))) {
+                        if (hasAdditionalFields) {
+                            addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authAuthorField, fieldReference);
+                            addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authAuthorField, fieldReference);
+                        }
+                    } else {
+                        if (hasAdditionalFields) {
+                            addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authAuthorField, fieldReference);
+                            addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authAuthorField, fieldReference);
+                        }
+                    }
                 } else {
-                    authAuthorFieldName = "100";
+                    // The universe/series fields is repeatable, so we add a numerator value to the *z content
+                    if (!fieldReader.hasSubfield("å")) {
+                        expandedField.getSubfields().add(0, new MarcSubField("å", Integer.toString(authNumerator)));
+                        fieldReference += "/" + authNumerator;
+                        authNumerator++;
+                    } else {
+                        fieldReference += "/" + fieldReader.getValue("å");
+                    }
+                    if (mode == 3) {
+                        addAdditionalFields("945", expandedRecord, authRecordReader.getFieldAll("433"), authAuthorField, fieldReference);
+                    } else {
+                        addAdditionalFields("945", expandedRecord, authRecordReader.getFieldAll("434"), authAuthorField, fieldReference);
+                    }
                 }
-
-                final MarcField authAuthorField = new MarcField(authRecordReader.getField(authAuthorFieldName));
-                final String indicator = field.getName();
-
-                addMainField(expandedField, new MarcField(authAuthorField), keepAutFields);
                 expandedRecord.getFields().add(new MarcField(expandedField));
-                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("400"), authAuthorField, indicator);
-                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("410"), authAuthorField, indicator);
-                addAdditionalFields("900", expandedRecord, authRecordReader.getFieldAll("500"), authAuthorField, indicator);
-                addAdditionalFields("910", expandedRecord, authRecordReader.getFieldAll("510"), authAuthorField, indicator);
             } else {
                 expandedRecord.getFields().add(new MarcField(field));
             }
@@ -323,36 +332,56 @@ public class ExpandCommonMarcRecord {
             expandedFieldWriter.removeSubfield("6");
         }
         field.setIndicator("00");
-        for (MarcSubField authSubfield : authField.getSubfields()) {
-            field.getSubfields().add(authSubfieldIndex++, new MarcSubField(authSubfield));
+        if ("845".equals(field.getName()) || "846".equals(field.getName())) {
+            for (MarcSubField authSubfield : authField.getSubfields()) {
+                if ("a".equals(authSubfield.getName())) {
+                    field.getSubfields().add(authSubfieldIndex++, new MarcSubField(authSubfield));
+                }
+            }
+        } else {
+            for (MarcSubField authSubfield : authField.getSubfields()) {
+                field.getSubfields().add(authSubfieldIndex++, new MarcSubField(authSubfield));
+            }
         }
     }
 
-    private static void addAdditionalFields(String fieldName, MarcRecord record, List<MarcField> authFields, MarcField authAuthorField, String indicator) {
+    private static void addAdditionalFields(String fieldName, MarcRecord record, List<MarcField> authFields, MarcField authAuthorField, String fieldReference) {
+        final boolean universeFields = "945".equals(fieldName); // I don't like this, but for the moment only universe/series put things in 945
         for (MarcField authField : authFields) {
             final MarcField additionalField = new MarcField(fieldName, "00");
             String subfieldwValue = null;
             for (MarcSubField authSubfield : authField.getSubfields()) {
                 if ("w".equals(authSubfield.getName())) {
-                    subfieldwValue = authSubfield.getValue();
+                    if (!universeFields) {
+                        subfieldwValue = authSubfield.getValue();
+                    }
                 } else {
-                    additionalField.getSubfields().add(new MarcSubField(authSubfield));
+                    if (universeFields) {
+                        if ("a".equals(authSubfield.getName())) {
+                            // there will at least be a subfield 8 which isn't wanted - only subfield a should be copied
+                            additionalField.getSubfields().add(new MarcSubField(authSubfield));
+                        }
+                    } else {
+                        additionalField.getSubfields().add(new MarcSubField(authSubfield));
+                    }
                 }
             }
 
-            if (subfieldwValue != null) {
-                if ("tidligere navn".equals(subfieldwValue)) {
-                    additionalField.getSubfields().add(new MarcSubField("x", "se også under det senere navn"));
-                } else if ("senere navn".equals(subfieldwValue)) {
-                    additionalField.getSubfields().add(new MarcSubField("x", "se også under det tidligere navn"));
+            if (!universeFields) {
+                if (subfieldwValue != null) {
+                    if ("tidligere navn".equals(subfieldwValue)) {
+                        additionalField.getSubfields().add(new MarcSubField("x", "se også under det senere navn"));
+                    } else if ("senere navn".equals(subfieldwValue)) {
+                        additionalField.getSubfields().add(new MarcSubField("x", "se også under det tidligere navn"));
+                    } else {
+                        additionalField.getSubfields().add(new MarcSubField("x", subfieldwValue));
+                    }
                 } else {
-                    additionalField.getSubfields().add(new MarcSubField("x", subfieldwValue));
-                }
-            } else {
-                if (Arrays.asList("500", "510").contains(authField.getName())) {
-                    additionalField.getSubfields().add(new MarcSubField("x", "se også"));
-                } else {
-                    additionalField.getSubfields().add(new MarcSubField("x", "se"));
+                    if (Arrays.asList("500", "510").contains(authField.getName())) {
+                        additionalField.getSubfields().add(new MarcSubField("x", "se også"));
+                    } else {
+                        additionalField.getSubfields().add(new MarcSubField("x", "se"));
+                    }
                 }
             }
 
@@ -365,63 +394,65 @@ public class ExpandCommonMarcRecord {
              * Indhold fra delfelterne e, i, j og k skal skrives i en blød parentes med : mellem. Der skal være blanktegn på begge sider af semikolon. Se eksempler.
              * Kommer et delfelt c efter et af delfelterne e, i, j eller k skal der være et punktum efter den bløde parentes afsluttes. Se eksempel.
              */
-            if ("110".equals(authAuthorField.getName())) {
-                final List<String> parenthesesSubFieldNames = Arrays.asList("e", "i", "j", "k");
+            if (!universeFields) {
+                if ("110".equals(authAuthorField.getName())) {
+                    final List<String> parenthesesSubFieldNames = Arrays.asList("e", "i", "j", "k");
 
-                String previousSubFieldName = "";
+                    String previousSubFieldName = "";
 
-                for (MarcSubField subField : authAuthorField.getSubfields()) {
-                    if (parenthesesSubFieldNames.contains(subField.getName())) {
-                        if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
-                            // Continue parentheses
-                            sb.append(" : ");
-                            sb.append(subField.getValue());
-                        } else {
-                            // New parentheses
-                            sb.append(" (");
-                            sb.append(subField.getValue());
-                        }
-                    } else {
-                        if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
-                            // End parentheses
-                            sb.append("). ");
-                            sb.append(subField.getValue());
-                        } else {
-                            if (!"".equals(previousSubFieldName)) {
-                                sb.append(". ");
+                    for (MarcSubField subField : authAuthorField.getSubfields()) {
+                        if (parenthesesSubFieldNames.contains(subField.getName())) {
+                            if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                                // Continue parentheses
+                                sb.append(" : ");
+                                sb.append(subField.getValue());
+                            } else {
+                                // New parentheses
+                                sb.append(" (");
+                                sb.append(subField.getValue());
                             }
-                            sb.append(subField.getValue());
+                        } else {
+                            if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                                // End parentheses
+                                sb.append("). ");
+                                sb.append(subField.getValue());
+                            } else {
+                                if (!"".equals(previousSubFieldName)) {
+                                    sb.append(". ");
+                                }
+                                sb.append(subField.getValue());
+                            }
                         }
+                        previousSubFieldName = subField.getName();
                     }
-                    previousSubFieldName = subField.getName();
-                }
-                if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
-                    sb.append(")");
-                }
-            } else {
-                final MarcFieldReader authField100Reader = new MarcFieldReader(authAuthorField);
-                final boolean hasAuthField100A = authField100Reader.hasSubfield("a");
-                final boolean hasAuthField100H = authField100Reader.hasSubfield("h");
+                    if (parenthesesSubFieldNames.contains(previousSubFieldName)) {
+                        sb.append(")");
+                    }
+                } else {
+                    final MarcFieldReader authField100Reader = new MarcFieldReader(authAuthorField);
+                    final boolean hasAuthField100A = authField100Reader.hasSubfield("a");
+                    final boolean hasAuthField100H = authField100Reader.hasSubfield("h");
 
-                if (hasAuthField100A && hasAuthField100H) {
-                    sb.append(authField100Reader.getValue("a"));
-                    sb.append(", ");
-                    sb.append(authField100Reader.getValue("h"));
-                } else if (hasAuthField100A) {
-                    sb.append(authField100Reader.getValue("a"));
-                } else if (hasAuthField100H) {
-                    sb.append(authField100Reader.getValue("h"));
-                }
+                    if (hasAuthField100A && hasAuthField100H) {
+                        sb.append(authField100Reader.getValue("a"));
+                        sb.append(", ");
+                        sb.append(authField100Reader.getValue("h"));
+                    } else if (hasAuthField100A) {
+                        sb.append(authField100Reader.getValue("a"));
+                    } else if (hasAuthField100H) {
+                        sb.append(authField100Reader.getValue("h"));
+                    }
 
-                if (authField100Reader.hasSubfield("c")) {
-                    sb.append(" (");
-                    sb.append(authField100Reader.getValue("c"));
-                    sb.append(")");
+                    if (authField100Reader.hasSubfield("c")) {
+                        sb.append(" (");
+                        sb.append(authField100Reader.getValue("c"));
+                        sb.append(")");
+                    }
                 }
+                additionalField.getSubfields().add(new MarcSubField("w", sb.toString()));
+
             }
-            additionalField.getSubfields().add(new MarcSubField("w", sb.toString()));
-
-            additionalField.getSubfields().add(new MarcSubField("z", indicator));
+            additionalField.getSubfields().add(new MarcSubField("z", fieldReference));
             record.getFields().add(additionalField);
         }
     }
