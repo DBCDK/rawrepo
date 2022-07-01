@@ -252,7 +252,9 @@ public class ExpandCommonMarcRecord {
                         authAuthorFieldName = "134";
                         break;
                 }
-                if (!authRecordReader.hasField(authAuthorFieldName)) return;
+                if (!authRecordReader.hasField(authAuthorFieldName)) {
+                    return;
+                }
                 final MarcField authAuthorField = new MarcField(authRecordReader.getField(authAuthorFieldName));
 
                 addMainField(expandedField, authAuthorField, keepAutFields);

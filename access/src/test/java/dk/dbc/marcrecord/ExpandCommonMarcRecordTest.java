@@ -276,8 +276,6 @@ class ExpandCommonMarcRecordTest {
         collection.put("133990054", auth2);
         collection.put("133990119", auth3);
 
-        System.out.println("EXP " + expanded);
-        System.out.println("IND " + collection.toString());
         assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "61777431"), equalTo(expanded));
     }
 
