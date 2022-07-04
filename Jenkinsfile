@@ -65,7 +65,8 @@ pipeline {
                         $class          : 'hudson.plugins.pmd.PmdPublisher',
                         pattern         : '**/target/pmd.xml',
                         unstableTotalAll: "0",
-                        failedTotalAll  : "0"
+                        failedTotalAll  : "0",
+                        canRunOnFailed  : true
                 ])
             }
         }
