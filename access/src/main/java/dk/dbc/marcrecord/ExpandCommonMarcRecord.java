@@ -17,6 +17,7 @@ import org.slf4j.ext.XLoggerFactory;
 
 import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
+import java.lang.String;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
