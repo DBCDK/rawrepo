@@ -826,7 +826,7 @@ public class RawRepoDAOIT {
         try {
             logger.info("Nothing should be written here " + dao.getMimeTypeOf("E", 898989));
         } catch (RawRepoExceptionRecordNotFound t) {
-            assertEquals("Trying to find mimetype", t.getMessage());
+            assertTrue(t.getMessage().startsWith("Trying to find mimetype"));
         }
     }
 

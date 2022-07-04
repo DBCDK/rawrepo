@@ -380,7 +380,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
                     return resultSet.getString(1);
                 }
             }
-            throw new RawRepoExceptionRecordNotFound("Trying to find mimetype");
+            throw new RawRepoExceptionRecordNotFound("Trying to find mimetype for recordId " + bibliographicRecordId + ", agencyId " + agencyId);
         } catch (SQLException ex) {
             logger.error(LOG_DATABASE_ERROR, ex);
             throw new RawRepoException("Error fetching mimetype", ex);
