@@ -23,6 +23,7 @@ pipeline {
     }
     tools {
         maven 'maven 3.5'
+        jdk 'jdk11'
     }
     stages {
         stage("Clean Workspace") {
@@ -34,12 +35,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    withMaven(maven: 'maven 3.5', options: [
-                            findbugsPublisher(disabled: true),
-                            openTasksPublisher(highPriorityTaskIdentifiers: 'todo', ignoreCase: true, lowPriorityTaskIdentifiers: 'review', normalPriorityTaskIdentifiers: 'fixme,fix')
-                    ]) {
-                        sh "mvn verify pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
-                    }
+                    sh "mvn verify pmd:pmd -Dmaven.test.failure.ignore=false  -pl '!debian'"
                 }
             }
             post {

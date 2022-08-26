@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExpandCommonMarcRecord {
     private static final XLogger logger = XLoggerFactory.getXLogger(ExpandCommonMarcRecord.class);
-    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "110", "600", "610", "700", "710", "770", "780", "845", "846");
+    public static final List<String> AUTHORITY_FIELD_LIST = Arrays.asList("100", "110", "233", "234", "600", "610", "700", "710", "770", "780", "845", "846");
 
     /**
      * This function performs authority expansion on a rawrepo Record.
@@ -162,6 +162,8 @@ public class ExpandCommonMarcRecord {
         final int authNumerator = findMaxAuthNumerator(commonRecord.getFields());
         handleRepeatableField(reader.getFieldAll("100"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
         handleRepeatableField(reader.getFieldAll("110"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("233"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
+        handleRepeatableField(reader.getFieldAll("234"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
         handleRepeatableField(reader.getFieldAll("600"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
         handleRepeatableField(reader.getFieldAll("610"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
         handleRepeatableField(reader.getFieldAll("700"), expandedRecord, authorityRecords, keepAutFields, authNumerator);
@@ -244,10 +246,12 @@ public class ExpandCommonMarcRecord {
                         break;
                     case "845":
                         mode = 3;
+                    case "233":
                         authAuthorFieldName = "133";
                         break;
                     case "846":
                         mode = 4;
+                    case "234":
                         authAuthorFieldName = "134";
                         break;
                 }

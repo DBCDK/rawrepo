@@ -1011,7 +1011,7 @@ public class RawRepoDAOIT {
      * (b)   G
      * (b)   H
      */
-    private static final String[] RELATIONS = new String[]{
+    private static final String[] RELATIONS = new String[] {
             "A:1,A:870970",
             "A:2,A:870970",
             "B:1,B:870970",
