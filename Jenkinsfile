@@ -23,6 +23,7 @@ pipeline {
     }
     tools {
         maven 'maven 3.5'
+        jdk 'jdk11'
     }
     stages {
         stage("Clean Workspace") {
