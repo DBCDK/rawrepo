@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -138,7 +139,10 @@ class ExpandCommonMarcRecordTest {
     private static final String AUTHORITY_69328776 = "authority/authority-69328776.marc";
     private static final String AUTHORITY_69518060 = "authority/authority-69518060.marc";
     private static final String AUTHORITY_69029868 = "authority/authority-69029868.marc";
+    private static final String AUTHORITY_222222222 = "authority/authority-222222222.marc";
+    private static final String AUTHORITY_444444444 = "authority/authority-444444444.marc";
     private static final String AUTHORITY_133990054 = "authority/authority-133990054.marc";
+    private static final String EXPANDED_133990054 = "authority/expanded-133990054.marc";
     private static final String AUTHORITY_133990119 = "authority/authority-133990119.marc";
 
     private static final String COMMON_SINGLE_RECORD_RESOURCE = "authority/common_enrichment.marc";
@@ -277,6 +281,17 @@ class ExpandCommonMarcRecordTest {
         collection.put("133990119", auth3);
 
         assertThat(ExpandCommonMarcRecord.expandMarcRecord(collection, "61777431"), equalTo(expanded));
+    }
+
+    @Test
+    void expandAuthSeriesAndUniverse() throws Exception {
+        MarcRecord auth1 = loadMarcRecord(AUTHORITY_133990054);
+        MarcRecord auth2 = loadMarcRecord(AUTHORITY_222222222);
+        MarcRecord auth3 = loadMarcRecord(AUTHORITY_444444444);
+        MarcRecord expanded = loadMarcRecord(EXPANDED_133990054);
+        Map<String, MarcRecord> collection = Map.of("133990054", auth1, "222222222", auth2, "444444444", auth3);
+        MarcRecord record = ExpandCommonMarcRecord.expandMarcRecord(collection, "133990054");
+        assertThat(record, equalTo(expanded));
     }
 
     @Test
@@ -737,6 +752,6 @@ class ExpandCommonMarcRecordTest {
         assertThat(raw.getId(), equalTo(expanded.getId()));
         assertThat(raw.getMimeType(), equalTo(expanded.getMimeType()));
         assertThat(raw.getTrackingId(), equalTo(expanded.getTrackingId()));
-        assertThat(raw.getCreated(), equalTo(expanded.getCreated()));
+        assertThat(raw.getCreated().truncatedTo(ChronoUnit.SECONDS), equalTo(expanded.getCreated().truncatedTo(ChronoUnit.SECONDS)));
     }
 }

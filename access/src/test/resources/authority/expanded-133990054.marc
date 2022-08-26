@@ -4,7 +4,8 @@
 040 00 *b dan *e local
 075 00 *b s
 133 00 *a Ringenes herre *8 dan
-233 00 *w er oversættelse af *5 870979 *6 222222222
-234 00 *w del af univers *5 870979 *6 444444444
+233 00 *å 1001 *w er oversættelse af *a The ¤lord of the rings *8 eng
+234 00 *å 1001 *w del af univers *a Middle-earth *8 eng
 680 00 *a Hobbitten Frodo forsøger at bringe en magisk ring, der giver uindskrænket magt, frem til Dommedagsbjerget, hvor den skal ødelægges. I eventyrets og mytens form skildres kampen mellem det gode og det onde *8 dan
+945 00 *a Midgård *z 234/1001
 996 00 *a DBCAUT
