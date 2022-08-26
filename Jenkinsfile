@@ -35,11 +35,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    withMaven(maven: 'maven 3.5', options: [
-                            openTasksPublisher(highPriorityTaskIdentifiers: 'todo', ignoreCase: true, lowPriorityTaskIdentifiers: 'review', normalPriorityTaskIdentifiers: 'fixme,fix')
-                    ]) {
-                        sh "mvn verify javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
-                    }
+                    sh "mvn verify javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
                 }
             }
             post {
