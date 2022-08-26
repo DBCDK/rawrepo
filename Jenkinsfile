@@ -36,10 +36,9 @@ pipeline {
             steps {
                 script {
                     withMaven(maven: 'maven 3.5', options: [
-                            findbugsPublisher(disabled: true),
                             openTasksPublisher(highPriorityTaskIdentifiers: 'todo', ignoreCase: true, lowPriorityTaskIdentifiers: 'review', normalPriorityTaskIdentifiers: 'fixme,fix')
                     ]) {
-                        sh "mvn verify findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
+                        sh "mvn verify javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
                     }
                 }
             }
