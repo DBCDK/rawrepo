@@ -39,7 +39,7 @@ pipeline {
                             findbugsPublisher(disabled: true),
                             openTasksPublisher(highPriorityTaskIdentifiers: 'todo', ignoreCase: true, lowPriorityTaskIdentifiers: 'review', normalPriorityTaskIdentifiers: 'fixme,fix')
                     ]) {
-                        sh "mvn verify pmd:pmd findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
+                        sh "mvn verify findbugs:findbugs javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
                     }
                 }
             }
