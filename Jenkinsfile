@@ -35,7 +35,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh "mvn verify javadoc:aggregate -Dmaven.test.failure.ignore=false  -pl '!debian'"
+                    sh "mvn verify -Dmaven.test.failure.ignore=false  -pl '!debian'"
                 }
             }
             post {
