@@ -55,6 +55,17 @@ pipeline {
                         failedTotalAll: "0"
             }
         }
+        stage('PMD') {
+            steps {
+                step([
+                        $class          : 'hudson.plugins.pmd.PmdPublisher',
+                        pattern         : '**/target/pmd.xml',
+                        unstableTotalAll: "0",
+                        failedTotalAll  : "0",
+                        canRunOnFailed  : true
+                ])
+            }
+        }
         stage('Docker') {
             when {
                 expression {
