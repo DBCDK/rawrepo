@@ -447,7 +447,7 @@ public abstract class RawRepoDAO {
             RecordId expandableRecordId = null;
 
             // Only these agencies can have authority parents
-            final List<Integer> expandableAgencies = Arrays.asList(190002, 190004, 870970, 870971, 870974);
+            final List<Integer> expandableAgencies = Arrays.asList(190002, 190004, 870970, 870971, 870974, 870979);
 
             if (expandableAgencies.contains(recordId.agencyId)) {
                 expandableRecordId = recordId;
