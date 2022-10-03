@@ -15,7 +15,7 @@ docker run --rm --name rawrepo-content-service -d -p ${content_service_port}:808
     docker-metascrum.artifacts.dbccloud.dk/rawrepo-content-service:devel
 attempts=0
 max_attempts=60
-until $(curl --output /dev/null --silent --head --fail http://localhost:${content_service_port}/RawRepoContentService); do
+until $(curl --output /dev/null --silent --fail http://localhost:${content_service_port}/RawRepoContentService); do
     if [ ${attempts} -eq ${max_attempts} ]; then
         break
     fi
