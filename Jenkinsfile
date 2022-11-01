@@ -113,15 +113,6 @@ pipeline {
                     dir("deploy") {
                         sh """
                             set-new-version databases/rawrepo-database.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/dit-gitops-secrets ${DOCKER_IMAGE_DIT_VERSION} -b master
-                            set-new-version services/rawrepo-content-service.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/dit-gitops-secrets ${DOCKER_IMAGE_DIT_VERSION} -b master
-                            set-new-version services/rawrepo-maintain-service.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/dit-gitops-secrets ${DOCKER_IMAGE_DIT_VERSION} -b master
-
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-maintain-deploy ${DOCKER_IMAGE_DIT_VERSION} -b basismig
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-maintain-deploy ${DOCKER_IMAGE_DIT_VERSION} -b fbstest
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-maintain-deploy ${DOCKER_IMAGE_DIT_VERSION} -b metascrum-staging
-
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-content-service-deploy ${DOCKER_IMAGE_DIT_VERSION} -b basismig
-                            set-new-version deploy.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/rawrepo-content-service-deploy ${DOCKER_IMAGE_DIT_VERSION} -b fbstest
                         """
                     }
                 }
