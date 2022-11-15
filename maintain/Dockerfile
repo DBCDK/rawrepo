@@ -1,4 +1,4 @@
-FROM docker.dbc.dk/payara5-full:latest
+FROM docker-dbc.artifacts.dbccloud.dk/payara5-full:latest
 
 ADD target/*.war app.json deployments/
 
