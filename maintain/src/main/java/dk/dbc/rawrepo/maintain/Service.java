@@ -20,8 +20,6 @@
  */
 package dk.dbc.rawrepo.maintain;
 
-import com.sun.xml.ws.developer.SchemaValidation;
-import dk.dbc.commons.webservice.WsdlValidationErrorHandler;
 import dk.dbc.rawrepo.maintain.transport.C;
 import dk.dbc.rawrepo.maintain.transport.PageContentResponse;
 import dk.dbc.rawrepo.maintain.transport.RecordIds;
@@ -31,7 +29,6 @@ import dk.dbc.rawrepo.maintain.transport.ValueEntry;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -56,7 +53,6 @@ import java.util.Map;
  * @author DBC {@literal <dbc.dk>}
  */
 @WebService(targetNamespace = C.NS, serviceName = C.SERVICE, portName = C.PORT)
-@SchemaValidation(handler = WsdlValidationErrorHandler.class)
 public class Service {
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
@@ -88,7 +84,6 @@ public class Service {
                             @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.INOUT, name = "trackingId") Holder<String> trackingId,
                             @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "result") Holder<Object> out) {
         try {
-            validateInput();
 
             HashMap<String, List<String>> valuesSet = new HashMap<>();
             if (values != null) {
@@ -159,12 +154,9 @@ public class Service {
                              @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "timestamp") Holder<TS> outTimestamp) {
         try {
             log.debug("Remote IP: " + getIp());
-            validateInput();
             try (QueueRecords queueRecords = new QueueRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = queueRecords.queueRecords(agencyId, ids.list, provider, trackingId.value);
             }
-        } catch (ResponseErrorException ex) {
-            out.value = ex.getError();
         } catch (Exception ex) {
             log.error("Error: " + ex);
             log.info("Error: ", ex);
@@ -184,12 +176,9 @@ public class Service {
                               @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "timestamp") Holder<TS> outTimestamp) {
         try {
             log.debug("Remote IP: " + getIp());
-            validateInput();
             try (RemoveRecords removeRecords = new RemoveRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = removeRecords.removeRecords(agencyId, ids.list, provider, trackingId.value);
             }
-        } catch (ResponseErrorException ex) {
-            out.value = ex.getError();
         } catch (Exception ex) {
             log.error("Error: " + ex);
             log.info("Error: ", ex);
@@ -210,12 +199,9 @@ public class Service {
                               @WebParam(targetNamespace = C.NS, mode = WebParam.Mode.OUT, name = "timestamp") Holder<TS> outTimestamp) {
         try {
             log.debug("Remote IP: " + getIp());
-            validateInput();
             try (RevertRecords revertRecords = new RevertRecords(dataSource, vipCoreLibraryRulesConnector)) {
                 out.value = revertRecords.revertRecords(agencyId, ids.list, time.getMillis(), provider, trackingId.value);
             }
-        } catch (ResponseErrorException ex) {
-            out.value = ex.getError();
         } catch (Exception ex) {
             log.error("Error: " + ex);
             log.info("Error: ", ex);
@@ -231,12 +217,6 @@ public class Service {
      *   /_/ /_/\___/_/ .___/\___/_/  /____/
      *               /_/
      */
-    private void validateInput() throws ResponseErrorException {
-        SAXException exception = WsdlValidationErrorHandler.fetchSAXParseException(webServiceContext);
-        if (exception != null) {
-            throw new ResponseErrorException(exception.getMessage(), ResponseError.Type.REQUEST_CONTENT_ERROR);
-        }
-    }
 
     private String getIp() {
         MessageContext messageContext = webServiceContext.getMessageContext();
