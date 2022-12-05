@@ -1,4 +1,4 @@
-FROM docker.dbc.dk/dbc-postgres:9.5
+FROM docker-dbc.artifacts.dbccloud.dk/dbc-postgres-14
 
 ENV POSTGRES_DB=rawrepo
 ENV POSTGRES_USER=rawrepo
@@ -12,9 +12,9 @@ RUN chown -R $POSTGRES_LINUX_USER:$POSTGRES_LINUX_USER /docker-entrypoint.d/
 USER $POSTGRES_LINUX_USER
 
 # Increate max_connections to 200
-RUN sed -i -e '/max_connections =/ s/= .*/= 200/' /etc/postgresql/9.5/main/postgresql.conf
+RUN sed -i -e '/max_connections =/ s/= .*/= 200/' /etc/postgresql/14/main/postgresql.conf
 # Enable XA transactions
-RUN echo "max_prepared_transactions=100" >> /etc/postgresql/9.5/main/postgresql.conf
+RUN echo "max_prepared_transactions=100" >> /etc/postgresql/14/main/postgresql.conf
 
 LABEL POSTGRES_DB="Name of db (optional). Default is 'rawrepo'" \
       POSTGRES_USER="(optional). Default is 'rawrepo'" \
