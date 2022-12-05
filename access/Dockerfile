@@ -1,4 +1,4 @@
-FROM docker.dbc.dk/dbc-postgres:9.5
+FROM docker-dbc.artifacts.dbccloud.dk/dbc-postgres-14
 
 ENV POSTGRES_DB=rawrepo
 ENV POSTGRES_USER=rawrepo
