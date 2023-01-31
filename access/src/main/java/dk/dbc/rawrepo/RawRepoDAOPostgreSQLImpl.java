@@ -50,6 +50,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     private static final XLogger logger = XLoggerFactory.getXLogger(RawRepoDAOPostgreSQLImpl.class);
 
     private final Connection connection;
+    private static final long TIMER_THRESHOLD_MS = 10;
 
     private static final int SCHEMA_VERSION = 28;
     private static final int SCHEMA_VERSION_COMPATIBLE = 26;
@@ -153,7 +154,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public Record fetchRecord(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RECORD)) {
             stmt.setString(1, bibliographicRecordId);
             stmt.setInt(2, agencyId);
@@ -214,7 +215,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public List<RecordMetaDataHistory> getRecordHistory(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try {
             ArrayList<RecordMetaDataHistory> ret = new ArrayList<>();
             try (PreparedStatement stmt = connection.prepareStatement(HISTORIC_METADATA)) {
@@ -250,7 +251,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public Record getHistoricRecord(RecordMetaDataHistory recordMetaData) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try {
             int agencyId = recordMetaData.getId().getAgencyId();
             String bibliographicRecordId = recordMetaData.getId().getBibliographicRecordId();
@@ -284,7 +285,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public List<String> getTrackingIdsSince(String bibliographicRecordId, int agencyId, Timestamp timestamp) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         ArrayList<String> list = new ArrayList<>();
         try {
             try (PreparedStatement stmt = connection.prepareStatement(TRACKING_IDS_SINCE)) {
@@ -324,7 +325,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         if (record.getMimeType().isEmpty()) {
             throw new RawRepoException("Record has unset mimetype, cannot save");
         }
-        StopWatch watch = new Log4JStopWatch();
+        StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_RECORD)) {
             int pos = 1;
             stmt.setBoolean(pos++, record.isDeleted());
@@ -370,7 +371,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public String getMimeTypeOf(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_MIMETYPE)) {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
@@ -391,7 +392,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     protected Map<RecordId, String> getMimeTypeOfList(Set<RecordId> originalRecordIds) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         final Map<RecordId, String> result = new HashMap<>();
 
         // If input is empty then return empty result
@@ -446,7 +447,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     protected Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_DELETED)) {
             int pos = 1;
             stmt.setString(pos++, bibliographicRecordId);
@@ -467,7 +468,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     protected HashMap<RecordId, Boolean> isRecordDeletedList(Set<RecordId> originalRecordIds) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         final HashMap<RecordId, Boolean> result = new HashMap<>();
 
         if (originalRecordIds.isEmpty()) {
@@ -530,7 +531,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsFrom(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -557,7 +558,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public void deleteRelationsFrom(RecordId recordId) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(DELETE_RELATIONS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -583,7 +584,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         ValidateRelations.validate(this, recordId, refers);
 
         deleteRelationsFrom(recordId);
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_RELATION)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -614,7 +615,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsChildren(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_CHILDREN)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -644,7 +645,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsParents(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_PARENTS)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -678,7 +679,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     }
 
     private Set<RelationsPair> getAllChildRelations(Set<RecordId> originalRecordIds) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         final Set<RelationsPair> result = new HashSet<>();
 
         // If input is empty then return empty result
@@ -742,7 +743,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsSiblingsToMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_TO_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -769,7 +770,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<RecordId> getRelationsSiblingsFromMe(RecordId recordId) throws RawRepoException {
         Set<RecordId> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_RELATIONS_SIBLINGS_FROM_ME)) {
             int pos = 1;
             stmt.setString(pos++, recordId.getBibliographicRecordId());
@@ -798,7 +799,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<Integer> allAgenciesForBibliographicRecordId(String bibliographicRecordId) throws RawRepoException {
         Set<Integer> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_AGENCIES_FOR_ID)) {
             stmt.setString(1, bibliographicRecordId);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -825,7 +826,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public Set<Integer> allAgenciesForBibliographicRecordIdSkipDeleted(String bibliographicRecordId) throws RawRepoException {
         Set<Integer> collection = new HashSet<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_AGENCIES_FOR_ID_SKIP_DELETED)) {
             stmt.setString(1, bibliographicRecordId);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -859,7 +860,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
 
     @Override
     public void enqueue(RecordId job, String provider, boolean changed, boolean leaf, int priority) throws RawRepoException {
-        StopWatch watch = new Log4JStopWatch();
+        StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(CALL_ENQUEUE)) {
             int pos = 1;
             stmt.setString(pos++, job.getBibliographicRecordId());
@@ -895,7 +896,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         List<String> leafList = new ArrayList<>();
         List<Integer> priorityList = new ArrayList<>();
 
-        StopWatch watch = new Log4JStopWatch();
+        StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         for (EnqueueJob job : jobs) {
             bibliographicRecordIdList.add(job.getJob().getBibliographicRecordId());
             agencyList.add(job.getJob().getAgencyId());
@@ -927,7 +928,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         logger.info("Check provider: {}", provider);
 
         int count = 0;
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (CallableStatement stmt = connection.prepareCall(CHECK_PROVIDER)) {
             stmt.setString(1, provider);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -955,7 +956,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
     @Override
     public List<QueueJob> dequeue(String worker, int wanted) throws RawRepoException {
         List<QueueJob> result = new ArrayList<>();
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE_MULTI)) {
             int pos = 1;
             stmt.setString(pos++, worker);
@@ -989,7 +990,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
      */
     @Override
     public QueueJob dequeue(String worker) throws RawRepoException {
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (CallableStatement stmt = connection.prepareCall(CALL_DEQUEUE)) {
             stmt.setString(1, worker);
             try (ResultSet resultSet = stmt.executeQuery()) {
@@ -1024,7 +1025,7 @@ public class RawRepoDAOPostgreSQLImpl extends RawRepoDAO {
         if (error == null || error.equals("")) {
             throw new RawRepoException("Error cannot be empty in queueFail");
         }
-        final StopWatch watch = new Log4JStopWatch();
+        final StopWatch watch = new Log4JStopWatch().setTimeThreshold(TIMER_THRESHOLD_MS);
         try (PreparedStatement stmt = connection.prepareStatement(QUEUE_ERROR)) {
             int pos = 1;
             stmt.setString(pos++, queueJob.job.bibliographicRecordId);
