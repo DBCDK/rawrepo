@@ -20,7 +20,7 @@
  */
 package dk.dbc.marcx;
 
-import dk.dbc.marcrecord.ExpandCommonMarcRecord;
+import dk.dbc.common.records.ExpandCommonMarcRecord;
 import dk.dbc.rawrepo.RecordId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
