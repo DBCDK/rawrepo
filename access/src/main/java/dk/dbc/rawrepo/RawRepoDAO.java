@@ -20,7 +20,9 @@
  */
 package dk.dbc.rawrepo;
 
-import dk.dbc.marcrecord.ExpandCommonMarcRecord;
+import dk.dbc.common.records.MarcRecordExpandException;
+import dk.dbc.marc.reader.MarcReaderException;
+import dk.dbc.marcrecord.ExpandCommonRecord;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
@@ -270,7 +272,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
         fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, includeAutRecords, keepAutFields);
@@ -290,7 +292,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
         fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, false, false);
@@ -299,7 +301,7 @@ public abstract class RawRepoDAO {
     }
 
     private void fetchRecordCollectionExpanded(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws
-            RawRepoException, MarcXMergerException {
+            RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
         if (!collection.containsKey(bibliographicRecordId)) {
             Record record = fetchRecord(bibliographicRecordId, agencyId);
             if (record == null) {
@@ -436,7 +438,7 @@ public abstract class RawRepoDAO {
      * @param keepAutField Determines whether to keep the *5 and *6 subfields
      * @throws RawRepoException done at failure
      */
-    public void expandRecord(Record record, boolean keepAutField) throws RawRepoException {
+    public void expandRecord(Record record, boolean keepAutField) throws RawRepoException, MarcReaderException, MarcRecordExpandException {
         final RecordId recordId = record.getId();
         final String bibliographicRecordId = recordId.getBibliographicRecordId();
         final int agencyId = recordId.getAgencyId();
@@ -475,13 +477,13 @@ public abstract class RawRepoDAO {
                         autRecords.put(parentId.getBibliographicRecordId(), fetchRecord(parentId.getBibliographicRecordId(), parentId.getAgencyId()));
                     }
                 }
-                ExpandCommonMarcRecord.expandRecord(record, autRecords, keepAutField);
+                ExpandCommonRecord.expandRecord(record, autRecords, keepAutField);
             }
         }
     }
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean keepAutFields)
-            throws RawRepoException, MarcXMergerException {
+            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
         Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
 
         expandRecord(record, keepAutFields);
@@ -490,7 +492,7 @@ public abstract class RawRepoDAO {
     }
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
-            throws RawRepoException, MarcXMergerException {
+            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
         Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
 
         expandRecord(record, false);
