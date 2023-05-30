@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-agency-load
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-agency-load.
- *
- * dbc-rawrepo-agency-load is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-agency-load is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-agency-load.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.agencyload;
 
 import com.codahale.metrics.Counter;
@@ -29,6 +9,7 @@ import dk.dbc.rawrepo.RawRepoDAO;
 import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
+import dk.dbc.vipcore.exception.VipCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -314,7 +295,7 @@ public class AgencyLoad implements AutoCloseable {
                     }
                     try {
                         dao.changedRecord(role, recordId);
-                    } catch (RawRepoException ex) {
+                    } catch (VipCoreException | RawRepoException ex) {
                         log.error("Error queueing record: " + recordId.getBibliographicRecordId() +
                                   " from " + recordId.getAgencyId() + " got: " + ex.getMessage());
                         success = false;

@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-agency-delete
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-agency-delete.
- *
- * dbc-rawrepo-agency-delete is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-agency-delete is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-agency-delete.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.agencydelete;
 
 import dk.dbc.marcxmerge.MarcXMerger;
@@ -27,6 +7,7 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RelationHintsVipCore;
+import dk.dbc.vipcore.exception.VipCoreException;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.slf4j.Logger;
@@ -86,7 +67,7 @@ class AgencyDelete {
     private final MarcXMerger marcXMerger;
     private final List<Integer> commonAgencies;
 
-    public AgencyDelete(String db, int agencyid, String vipCoreUrl) throws MarcXMergerException, SQLException, RawRepoException {
+    public AgencyDelete(String db, int agencyid, String vipCoreUrl) throws MarcXMergerException, SQLException, RawRepoException, VipCoreException {
         this.agencyid = agencyid;
         this.connection = getConnection(db);
         final RawRepoDAO.Builder builder = RawRepoDAO.builder(connection);
@@ -185,7 +166,7 @@ class AgencyDelete {
      * Create an xml document parser
      *
      * @return DocumentBuilder
-     * @throws MarcXMergerException
+     * @throws MarcXMergerException Bad xml
      */
     private static DocumentBuilder newDocumentBuilder() throws MarcXMergerException {
         try {
@@ -203,10 +184,10 @@ class AgencyDelete {
     }
 
     /**
-     * Create an xml transformer for writing a document
+     * Create a xml transformer for writing a document
      *
      * @return new transformer
-     * @throws MarcXMergerException
+     * @throws MarcXMergerException Bad xml
      */
     private static Transformer newTransformer() throws MarcXMergerException {
         try {
@@ -244,7 +225,7 @@ class AgencyDelete {
         }
     }
 
-    void deleteRecords(Set<String> ids) throws RawRepoException, MarcXMergerException, SAXException, IOException, TransformerException {
+    void deleteRecords(Set<String> ids) throws RawRepoException, MarcXMergerException, SAXException, IOException, TransformerException, VipCoreException {
         log.debug("Setting content of records to deleted");
         for (String id : ids) {
             dao.deleteRelationsFrom(new RecordId(id, agencyid));

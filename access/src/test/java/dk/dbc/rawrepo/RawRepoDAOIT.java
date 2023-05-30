@@ -1,29 +1,10 @@
-/*
- * dbc-rawrepo-access
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-access.
- *
- * dbc-rawrepo-access is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-access is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-access.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo;
 
 import dk.dbc.commons.testutils.postgres.connection.PostgresITConnection;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
+import dk.dbc.vipcore.exception.VipCoreException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -235,7 +216,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException {
+    public void testFetchRecordCollection() throws RawRepoException, MarcXMergerException, SQLException, VipCoreException {
         setupData(100000, "B:2,870970", "C:870970", "D:1,870970", "E:870970", "F:1,870970", "G:870970", "H:1,870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -255,7 +236,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollectionNoCommonLibrary() throws SQLException, RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollectionNoCommonLibrary() throws SQLException, RawRepoException, MarcXMergerException, VipCoreException {
         setupData(0, "B:1", "C:1", "D:1", "E:1", "F:1", "G:1", "H:1");
         setupRelations("C:1,B:1", "D:1,C:1", "E:1,C:1", "F:1,B:1", "G:1,F:1", "H:1,F:1");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -264,7 +245,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollectionArticle() throws SQLException, RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollectionArticle() throws SQLException, RawRepoException, MarcXMergerException, VipCoreException {
         setupData(800000, "A:870970", "B:870971", "B:191919");
         setupRelations("B:870971,A:870970", "B:191919,B:870971");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -274,7 +255,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollectionLittolk() throws SQLException, RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollectionLittolk() throws SQLException, RawRepoException, MarcXMergerException, VipCoreException {
         setupData(800000, "A:870970", "B:870974", "B:191919");
         setupRelations("B:870974,A:870970", "B:191919,B:870974");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -284,7 +265,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollectionMatvurd() throws SQLException, RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollectionMatvurd() throws SQLException, RawRepoException, MarcXMergerException, VipCoreException {
         setupData(800000, "A:870970", "B:870976", "B:191919", "C:870970");
         setupRelations("B:870976,A:870970", "B:870976,C:870970", "B:191919,B:870976");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -294,7 +275,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testFetchRecordCollectionAuthority() throws SQLException, RawRepoException, MarcXMergerException {
+    public void testFetchRecordCollectionAuthority() throws SQLException, RawRepoException, MarcXMergerException, VipCoreException {
         setupData(800000, "A:870979", "A:191919", "B:870979", "C:870970");
         setupRelations("C:870970,A:870979", "C:870970,B:870979", "A:191919,A:870979");
         final RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
@@ -344,7 +325,7 @@ public class RawRepoDAOIT {
      */
 
     @Test
-    public void testQueueEntityWithout() throws SQLException, RawRepoException {
+    public void testQueueEntityWithout() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "A:870970");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -356,7 +337,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueEntityWith() throws SQLException, RawRepoException {
+    public void testQueueEntityWith() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "A:870970", "A:1", "A:2");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -370,7 +351,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueEntityLocalData() throws SQLException, RawRepoException {
+    public void testQueueEntityLocalData() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "A:870970", "A:1", "A:2");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -382,7 +363,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueSectionWithComplexLocal() throws SQLException, RawRepoException {
+    public void testQueueSectionWithComplexLocal() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", // HEAD
                 "C:870970", // SECTION
                 "D:870970", // BIND
@@ -401,7 +382,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexLocal() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexLocal() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", // HEAD
                 "C:870970", "C:1", // SECTION
                 "D:870970", // BIND
@@ -424,7 +405,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexLocalHead() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexLocalHead() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", "B:2", // HEAD
                 "C:870970", "C:1", "C:2",// SECTION
                 "D:870970", "D:1", "D:2", // BIND
@@ -447,7 +428,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexLocalHeadNoEnrichments() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexLocalHeadNoEnrichments() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", "B:2", // HEAD
                 "C:870970", "C:2",// SECTION
                 "D:870970", "D:2", // BIND
@@ -470,7 +451,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexLocalSection() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexLocalSection() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", "B:2", // HEAD
                 "C:870970", "C:1", "C:2",// SECTION
                 "D:870970", "D:1", "D:2", // BIND
@@ -489,7 +470,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexLocalVolume() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexLocalVolume() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", "B:2", // HEAD
                 "C:870970", "C:1", "C:2",// SECTION
                 "D:870970", "D:1", "D:2", // BIND
@@ -506,7 +487,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueHeadWithComplexCommonVolume() throws SQLException, RawRepoException {
+    public void testQueueHeadWithComplexCommonVolume() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", "B:1", "B:2", // HEAD
                 "C:870970", "C:1", "C:2",// SECTION
                 "D:870970", "D:1", "D:2", // BIND
@@ -524,7 +505,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testQueueNotUsingCommon() throws SQLException, RawRepoException {
+    public void testQueueNotUsingCommon() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "B:870970", // HEAD
                 "C:870970", "C:1", // SECTION
                 "D:870970", // BIND
@@ -542,7 +523,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void testEnqueueWithChainedSiblings() throws SQLException, RawRepoException {
+    public void testEnqueueWithChainedSiblings() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "H:870970,1",
                 "S1:870970,2,3",
                 "B11:870970",
@@ -582,7 +563,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void enqueueUpdatePriority() throws SQLException, RawRepoException {
+    public void enqueueUpdatePriority() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "S1:870970:changed");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -599,7 +580,7 @@ public class RawRepoDAOIT {
     }
 
     @Test
-    public void enqueueKeepPriority() throws SQLException, RawRepoException {
+    public void enqueueKeepPriority() throws SQLException, RawRepoException, VipCoreException {
         setupData(100000, "S1:870970:changed");
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
@@ -645,7 +626,7 @@ public class RawRepoDAOIT {
         RawRepoDAO dao = RawRepoDAO.builder(connection).relationHints(new MyRelationHints()).build();
         connection.setAutoCommit(false);
 
-        // Lower number = faster dequeuing
+        // Lower number = faster dequeue
         // No priority defaults to 1000
         dao.enqueue(new RecordId("RECORD_0", 870970), "test", true, true);
         dao.enqueue(new RecordId("RECORD_1", 870970), "test", true, true, 1000);
@@ -984,7 +965,7 @@ public class RawRepoDAOIT {
         extra.removeAll(missing);
         missing.removeAll(col);
         if (!extra.isEmpty() || !missing.isEmpty()) {
-            throw new RuntimeException("missing:" + missing.toString() + ", extra=" + extra.toString());
+            throw new RuntimeException("missing:" + missing + ", extra=" + extra);
         }
     }
 

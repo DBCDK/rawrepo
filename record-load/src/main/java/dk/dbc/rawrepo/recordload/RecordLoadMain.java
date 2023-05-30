@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-record-load
- * Copyright (C) 2014 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-record-load.
- *
- * dbc-rawrepo-record-load is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-record-load is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-record-load.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.recordload;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -26,6 +6,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.rawrepo.RawRepoException;
+import dk.dbc.vipcore.exception.VipCoreException;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -100,7 +81,7 @@ public class RecordLoadMain {
                 }
                 recordLoad.commit();
             }
-        } catch (RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException e) {
+        } catch (VipCoreException | RawRepoException | JoranException | IOException | IllegalStateException | IllegalArgumentException | SQLException e) {
             System.err.println(commandLine.usage());
             System.err.println("Caught: " + e.getClass().getName() + ": " + e.getLocalizedMessage());
             System.exit(1);

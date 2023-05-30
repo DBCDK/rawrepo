@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-access
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-access.
- *
- * dbc-rawrepo-access is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-access is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-access.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo;
 
 import dk.dbc.common.records.MarcRecordExpandException;
@@ -27,6 +7,7 @@ import dk.dbc.marcxmerge.MarcXChangeMimeType;
 import dk.dbc.marcxmerge.MarcXMerger;
 import dk.dbc.marcxmerge.MarcXMergerException;
 import dk.dbc.marcxmerge.MarcXMimeTypeMerger;
+import dk.dbc.vipcore.exception.VipCoreException;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -202,10 +183,8 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = recordExists(bibliographicRecordId, agencyId);
             recordExistsCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     protected abstract Boolean isRecordDeleted(String bibliographicRecordId, int agencyId) throws RawRepoException;
@@ -237,14 +216,12 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = recordExistsMaybeDeleted(bibliographicRecordId, agencyId);
             recordExistsMaybeDeletedCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
-     * Get a collection of all the records, that are that are related to this
+     * Get a collection of all the records, that are related to this
      *
      * @param bibliographicRecordId String with record id
      * @param agencyId              library number
@@ -253,7 +230,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException {
+    public Map<String, Record> fetchRecordCollection(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException, VipCoreException {
         logger.info("fetchRecordCollection 1 for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> ret = new HashMap<>();
         fetchRecordCollection(ret, bibliographicRecordId, agencyId, merger, true);
@@ -272,7 +249,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException, VipCoreException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
         fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, includeAutRecords, keepAutFields);
@@ -292,7 +269,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException     done at failure
      * @throws MarcXMergerException done at failure
      */
-    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
+    public Map<String, Record> fetchRecordCollectionExpanded(String bibliographicRecordId, int agencyId, MarcXMerger merger) throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException, VipCoreException {
         logger.info("fetchRecordCollectionExpanded for {}:{}", bibliographicRecordId, agencyId);
         HashMap<String, Record> collection = new HashMap<>();
         fetchRecordCollectionExpanded(collection, bibliographicRecordId, agencyId, merger, false, false);
@@ -301,7 +278,7 @@ public abstract class RawRepoDAO {
     }
 
     private void fetchRecordCollectionExpanded(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAutRecords, boolean keepAutFields) throws
-            RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
+            RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException, VipCoreException {
         if (!collection.containsKey(bibliographicRecordId)) {
             Record record = fetchRecord(bibliographicRecordId, agencyId);
             if (record == null) {
@@ -338,7 +315,7 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException done at failure
      */
     private void fetchRecordCollection(Map<String, Record> collection, String bibliographicRecordId, int agencyId, MarcXMerger merger, boolean includeAut) throws
-            RawRepoException, MarcXMergerException {
+            RawRepoException, MarcXMergerException, VipCoreException {
         if (!collection.containsKey(bibliographicRecordId)) {
             Record record = fetchMergedRecord(bibliographicRecordId, agencyId, merger, false);
             collection.put(bibliographicRecordId, record);
@@ -365,7 +342,7 @@ public abstract class RawRepoDAO {
      * @return agency that has the wanted record
      * @throws RawRepoException if no agency could be found
      */
-    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException {
+    public int agencyFor(String bibliographicRecordId, int originalAgencyId, boolean fetchDeleted) throws RawRepoException, VipCoreException {
         Set<Integer> allAgenciesWithRecord = allAgenciesForBibliographicRecordId(bibliographicRecordId);
         logger.debug("agencyFor record {}:{} has record for the following agencies: {}", bibliographicRecordId, originalAgencyId, allAgenciesWithRecord);
 
@@ -393,7 +370,7 @@ public abstract class RawRepoDAO {
      * @return agencyid of whom to make a sibling relation
      * @throws RawRepoException if no agency could be found for record
      */
-    public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
+    public int findSiblingRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException, VipCoreException {
         if (!relationHints.usesCommonAgency(originalAgencyId)) {
             throw new RawRepoException("agency " + originalAgencyId + " does not use enrichments (Common agency)");
         } else {
@@ -414,7 +391,7 @@ public abstract class RawRepoDAO {
      * @return agencyid of whom to make a parent relation
      * @throws RawRepoException if no agency could be found for record
      */
-    public int findParentRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException {
+    public int findParentRelationAgency(String bibliographicRecordId, int originalAgencyId) throws RawRepoException, VipCoreException {
         if (relationHints.usesCommonAgency(originalAgencyId)) {
             List<Integer> list = relationHints.get(originalAgencyId);
             if (!list.isEmpty()) {
@@ -483,7 +460,7 @@ public abstract class RawRepoDAO {
     }
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted, boolean keepAutFields)
-            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
+            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException, VipCoreException {
         Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
 
         expandRecord(record, keepAutFields);
@@ -492,7 +469,7 @@ public abstract class RawRepoDAO {
     }
 
     public Record fetchMergedRecordExpanded(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
-            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException {
+            throws RawRepoException, MarcXMergerException, MarcReaderException, MarcRecordExpandException, VipCoreException {
         Record record = fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, fetchDeleted);
 
         expandRecord(record, false);
@@ -501,7 +478,7 @@ public abstract class RawRepoDAO {
     }
 
     public Record fetchRecordOrMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger)
-            throws RawRepoException, MarcXMergerException {
+            throws RawRepoException, MarcXMergerException, VipCoreException {
         return fetchMergedRecord(bibliographicRecordId, originalAgencyId, merger, true);
     }
 
@@ -518,7 +495,7 @@ public abstract class RawRepoDAO {
      * @throws MarcXMergerException if we can't merge record
      */
     public Record fetchMergedRecord(String bibliographicRecordId, int originalAgencyId, MarcXMerger merger, boolean fetchDeleted)
-            throws RawRepoException, MarcXMergerException {
+            throws RawRepoException, MarcXMergerException, VipCoreException {
         int agencyId = agencyFor(bibliographicRecordId, originalAgencyId, fetchDeleted);
         LinkedList<Record> records = new LinkedList<>();
         for (; ; ) {
@@ -604,7 +581,7 @@ public abstract class RawRepoDAO {
      * Get a collection of my "dependencies".
      *
      * @param recordId complex key for a record
-     * @return collection of record ids of whom id depends
+     * @return collection of record ids of whom id is depending on
      * @throws RawRepoException done at failure
      */
     public abstract Set<RecordId> getRelationsFrom(RecordId recordId) throws RawRepoException;
@@ -621,7 +598,7 @@ public abstract class RawRepoDAO {
      * Clear all existing relations and set the new ones
      *
      * @param recordId recordid to update
-     * @param refers   collection of record ids id depends on
+     * @param refers   collection of record ids' id depends on
      * @throws RawRepoException done at failure
      */
     public abstract void setRelationsFrom(RecordId recordId, Set<RecordId> refers) throws RawRepoException;
@@ -643,10 +620,8 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = getRelationsParents(recordId);
             getRelationsParentsCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
@@ -666,14 +641,12 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = getRelationsChildren(recordId);
             getRelationsChildrenCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
-     * Get all records that points to me with same localid (less common
+     * Get all records that point to me with same localid (less common
      * siblings)
      * <p>
      * What "points sideways" to me
@@ -690,14 +663,12 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = getRelationsSiblingsToMe(recordId);
             getRelationsSiblingsToMeCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
-     * Get all records that points from me with same localid (more common
+     * Get all records that point from me with same localid (more common
      * siblings)
      * <p>
      * What "points sideways" from me
@@ -714,14 +685,12 @@ public abstract class RawRepoDAO {
         if (result == null) {
             result = getRelationsSiblingsFromMe(recordId);
             getRelationsSiblingsFromMeCache.put(recordId, result);
-            return result;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
-     * Get all libraries that has id
+     * Get all libraries that have id
      *
      * @param bibliographicRecordId local id
      * @return Collection of libraries that has localid
@@ -891,7 +860,7 @@ public abstract class RawRepoDAO {
      * @param recordId the record that has been changed
      * @throws RawRepoException done at failure
      */
-    public void changedRecord(String provider, RecordId recordId) throws RawRepoException {
+    public void changedRecord(String provider, RecordId recordId) throws RawRepoException, VipCoreException {
         prepareCache(recordId);
 
         final List<EnqueueJob> jobs = new ArrayList<>();
@@ -910,7 +879,7 @@ public abstract class RawRepoDAO {
      * @throws RawRepoException done at failure
      *                          Default value is 1000
      */
-    public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException {
+    public void changedRecord(String provider, RecordId recordId, int priority) throws RawRepoException, VipCoreException {
         prepareCache(recordId);
 
         final List<EnqueueJob> jobs = new ArrayList<>();
@@ -919,7 +888,7 @@ public abstract class RawRepoDAO {
         enqueueBulk(jobs);
     }
 
-    private void changedRecord(List<EnqueueJob> jobs, String provider, RecordId recordId, int originalAgencyId, boolean changed, int priority) throws RawRepoException {
+    private void changedRecord(List<EnqueueJob> jobs, String provider, RecordId recordId, int originalAgencyId, boolean changed, int priority) throws RawRepoException, VipCoreException {
         String bibliographicRecordId = recordId.getBibliographicRecordId();
         int agencyId = recordId.getAgencyId();
         if (recordExistsMaybeDeletedWithCache(bibliographicRecordId, agencyId)) {
@@ -948,7 +917,7 @@ public abstract class RawRepoDAO {
     }
 
     private void changedRecord(List<EnqueueJob> jobs, String provider, String bibliographicRecordId, Set<Integer> agencyIds, int originalAgencyId, boolean changed, int priority)
-            throws RawRepoException {
+            throws RawRepoException, VipCoreException {
         Set<Integer> agencies = new HashSet<>();
         for (Integer agencyId : agencyIds) {
             findMinorSiblingsAdd(agencies, bibliographicRecordId, agencyId, true);
@@ -960,8 +929,8 @@ public abstract class RawRepoDAO {
             } else {
                 try {
                     searchChildrenAgencies.add(findSiblingRelationAgency(bibliographicRecordId, agency));
-                } catch (RawRepoExceptionRecordNotFound ex) {
-                    logger.warn("When trying to queue: " + bibliographicRecordId + " for " + agency + " could not find record");
+                } catch (RawRepoExceptionRecordNotFound | VipCoreException ex) {
+                    logger.warn("When trying to queue: " + bibliographicRecordId + " for " + agency + " could not find record or agency");
                     logger.debug("relation hints showed no record");
                     logger.debug(ex.getMessage());
                 }
@@ -1048,7 +1017,7 @@ public abstract class RawRepoDAO {
      * @param agencies              output of agencies seen
      * @param bibliographicRecordId record to start from
      * @param agencyId              agency to start from
-     * @param add                   whether or not to add this
+     * @param add                   whether to add this
      * @throws RawRepoException if unable to find relations
      */
     private void findMinorSiblingsAdd(Set<Integer> agencies, String bibliographicRecordId, int agencyId, boolean add) throws RawRepoException {
@@ -1118,7 +1087,7 @@ public abstract class RawRepoDAO {
             try {
                 return a != agencyId && recordExistsMaybeDeletedWithCache(bibliographicRecordId, a);
             } catch (RawRepoException ex) {
-                logger.warn("Some SQLException converted to RawRepoException has been caught - why, oh why ? " + ex.toString());
+                logger.warn("Some SQLException converted to RawRepoException has been caught - why, oh why ? " + ex);
             }
             return false;
         });
