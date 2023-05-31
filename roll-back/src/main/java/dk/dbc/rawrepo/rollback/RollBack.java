@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-rollback
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-rollback.
- *
- * dbc-rawrepo-rollback is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-rollback is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-rollback.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.rollback;
 
 import dk.dbc.rawrepo.RawRepoDAO;
@@ -25,6 +5,7 @@ import dk.dbc.rawrepo.RawRepoException;
 import dk.dbc.rawrepo.Record;
 import dk.dbc.rawrepo.RecordId;
 import dk.dbc.rawrepo.RecordMetaDataHistory;
+import dk.dbc.vipcore.exception.VipCoreException;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
@@ -129,7 +110,7 @@ class RollBack {
         return deleted;
     }
 
-    public static boolean rollbackRecord(Connection connection, RecordId id, Instant matchDate, DateMatch.Match matchType, State state, String queueRole) throws RawRepoException {
+    public static boolean rollbackRecord(Connection connection, RecordId id, Instant matchDate, DateMatch.Match matchType, State state, String queueRole) throws RawRepoException, VipCoreException {
         log.info("Rolling record {} back to {}", id, matchDate);
         RawRepoDAO dao = RawRepoDAO.builder(connection).build();
         boolean modified = rollbackRecord(dao, id, matchDate, matchType, state);
@@ -178,7 +159,7 @@ class RollBack {
         }
     }
 
-    private static void queueRecord(RawRepoDAO dao, RecordId id, String role) throws RawRepoException {
+    private static void queueRecord(RawRepoDAO dao, RecordId id, String role) throws RawRepoException, VipCoreException {
         dao.changedRecord(role, id);
     }
 
@@ -221,7 +202,7 @@ class RollBack {
         log.info("Rolled back {}, skipped {}, failed {}. Done.", success, skipped, failed);
     }
 
-    private static void queueRecords(RawRepoDAO dao, int agencyId, Set<String> ids, String role) throws RawRepoException {
+    private static void queueRecords(RawRepoDAO dao, int agencyId, Set<String> ids, String role) throws RawRepoException, VipCoreException {
         int no = 0;
         log.info("Queueing {} ids", ids.size());
 
@@ -247,7 +228,7 @@ class RollBack {
             if (queueRole != null) {
                 queueRecords(dao, agencyId, ids, queueRole);
             }
-        } catch (SQLException ex) {
+        } catch (SQLException | VipCoreException ex) {
             throw new RawRepoException(ex);
         }
     }

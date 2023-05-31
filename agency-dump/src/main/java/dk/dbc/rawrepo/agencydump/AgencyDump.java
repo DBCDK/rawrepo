@@ -1,23 +1,3 @@
-/*
- * dbc-rawrepo-agency-dump
- * Copyright (C) 2015 Dansk Bibliotekscenter a/s, Tempovej 7-11, DK-2750 Ballerup,
- * Denmark. CVR: 15149043
- *
- * This file is part of dbc-rawrepo-agency-dump.
- *
- * dbc-rawrepo-agency-dump is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * dbc-rawrepo-agency-dump is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with dbc-rawrepo-agency-dump.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dk.dbc.rawrepo.agencydump;
 
 import dk.dbc.marcxmerge.MarcXMerger;
@@ -40,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dk.dbc.rawrepo.RelationHintsVipCore;
+import dk.dbc.vipcore.exception.VipCoreException;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +55,7 @@ public class AgencyDump implements AutoCloseable {
         }
     }
 
-    void dumpRecords(List<String> bibliographicRecordIds, OutputStream out, boolean merged) throws IOException, RawRepoException, MarcXMergerException {
+    void dumpRecords(List<String> bibliographicRecordIds, OutputStream out, boolean merged) throws IOException, RawRepoException, MarcXMergerException, VipCoreException {
         out.write("<?xml version=\"1.0\" encoding=\"utf8\"?>\n".getBytes(StandardCharsets.UTF_8));
         out.write("<marcx:collection xmlns:marcx=\"info:lc/xmlns/marcxchange-v1\">\n".getBytes(StandardCharsets.UTF_8));
         MarcXMerger marcXMerger = new MarcXMerger();

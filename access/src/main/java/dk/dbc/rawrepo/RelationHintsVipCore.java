@@ -1,12 +1,8 @@
-/*
- * Copyright Dansk Bibliotekscenter a/s. Licensed under GNU GPL v3
- *  See license text at https://opensource.dbc.dk/licenses/gpl-3.0
- */
-
 package dk.dbc.rawrepo;
 
 import dk.dbc.vipcore.exception.VipCoreException;
 import dk.dbc.vipcore.libraryrules.VipCoreLibraryRulesConnector;
+import dk.dbc.vipcore.marshallers.ErrorType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,11 +19,15 @@ public class RelationHintsVipCore {
         this.vipCoreLibraryRulesConnector = vipCoreLibraryRulesConnector;
     }
 
-    public boolean usesCommonAgency(int agencyId) throws RawRepoException {
+    public boolean usesCommonAgency(int agencyId) throws RawRepoException, VipCoreException {
         try {
             return vipCoreLibraryRulesConnector.hasFeature(agencyId, VipCoreLibraryRulesConnector.Rule.USE_ENRICHMENTS);
         } catch (VipCoreException ex) {
-            throw new RawRepoException("Cannot access vipcore", ex);
+            if (ex.getMessage().equals(ErrorType.SERVICE_UNAVAILABLE.value())) {
+                throw new RawRepoException("Cannot access vipcore", ex);
+            } else {
+                throw ex;
+            }
         }
     }
 
@@ -39,14 +39,14 @@ public class RelationHintsVipCore {
         return 300000 < agencyId && agencyId <= 399999;
     }
 
-    public List<Integer> get(Integer agencyId) throws RawRepoException {
+    public List<Integer> get(Integer agencyId) throws RawRepoException, VipCoreException {
         if (usesCommonAgency(agencyId)) {
             return Arrays.asList(870970, 870971, 870974, 870975, 870976, 870978, 870979, 190002, 190004, 190007, 190008);
         }
         return Collections.singletonList(agencyId);
     }
 
-    public List<Integer> getAgencyPriority(int agencyId) throws RawRepoException {
+    public List<Integer> getAgencyPriority(int agencyId) throws RawRepoException, VipCoreException {
         List<Integer> agencyPriorityList = new ArrayList<>();
         agencyPriorityList.add(agencyId); // Always use own agency first
 
